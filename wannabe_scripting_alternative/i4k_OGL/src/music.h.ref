@@ -1,0 +1,34 @@
+#define NUM_SAMPLES 1
+#define SUM_SAMPLE_FRAMES 4
+#define LOG_NUM_FILTERS 4
+#define NUM_FILTERS 16
+
+const static unsigned char logSampleFrames[NUM_SAMPLES] =
+{
+	4,
+};
+
+const static signed char rleValues[] =
+{
+	127, 127, 81
+};
+
+const static unsigned char rleZeroes[] =
+{
+	255, 255, 15
+};
+
+static union
+{
+	struct
+	{
+		signed int energies[NUM_FILTERS*SUM_SAMPLE_FRAMES];
+		signed int voicedness[NUM_FILTERS*SUM_SAMPLE_FRAMES];
+		signed int diffMarkers[SUM_SAMPLE_FRAMES];
+	} wavelet;
+
+	signed int musicData[(2*NUM_FILTERS+1)*SUM_SAMPLE_FRAMES];
+};
+
+static signed int energiesTMP[NUM_FILTERS*SUM_SAMPLE_FRAMES];
+static signed int voicednessTMP[NUM_FILTERS*SUM_SAMPLE_FRAMES];

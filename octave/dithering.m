@@ -1,0 +1,10 @@
+orig = repmat((0:400)./400, 60, 1);
+fs = floydSteinberg(orig);
+fsc = floydSteinberg(orig, 1);
+fsc2 = floydSteinberg(orig, 1, 1);
+j = jarvis(orig);
+jc = jarvis(orig, 1);
+jc2 = jarvis(orig, 1, 1);
+colormap(gray);
+fil = 0.5 * ones(5, size(orig, 2));
+image([orig;fil;fs;fil;fsc;fil;fsc2;fil;j;fil;jc;fil;jc2] * 64);
