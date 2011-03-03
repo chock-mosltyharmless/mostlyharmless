@@ -996,7 +996,7 @@ Pass 1]]></RmTextDataBlock></RmStringVariable>
     </RmRegistryBranch>
     <RmRegistryBranch NAME="WORKSPACE" API="" XML_VERSION="RenderMonkey 1.71">
      <RmStringVariable NAME="LAST_SAVE" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
-3/3/2011 9:46:57]]></RmTextDataBlock></RmStringVariable>
+3/3/2011 10:12:14]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 RenderMonkey Version 1.82 (build 322)]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="XML_VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
@@ -1080,9 +1080,9 @@ vec3 color(vec3 pos, float sphereSize)
 
 vec3 color(vec3 pos, float sphereSize)
 {
-   vec3 relpos = pos * 0.1;
+   vec3 relpos = pos * 0.5;
    
-   relpos += noise(relpos * 2.0 , 5, 0.4, 0.0) * 0.02;
+   //relpos += noise(relpos * 2.0 , 5, 0.4, 0.0) * 0.02;
    
    //relpos.y = cos(fTime0_X * 0.2) * relpos.y - sin(fTime0_X * 0.2) * relpos.z;
    //relpos.z = cos(fTime0_X * 0.2) * relpos.z + sin(fTime0_X * 0.2) * relpos.y;
@@ -1090,7 +1090,7 @@ vec3 color(vec3 pos, float sphereSize)
    float brightness = -1.0, color, whiteness;
       
    //brightness = noise(relpos * 0.5, 12, 0.6, 0.).r * 0.3;
-   brightness = noise(relpos, 6, 0.6, 0.).r * 0.2 + 1.5*length(pos) - 0.75;
+   brightness = noise(relpos, 3, 0.6, 0.).r * 0.2 + 1.5*length(pos) - 0.75;
    
    color = abs(brightness * 3.0);
    whiteness = brightness * 1.0;
@@ -1105,8 +1105,11 @@ vec3 color(vec3 pos, float sphereSize)
 }
 
 void main(void)
-{
-   vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));
+{  
+   vec3 tvNoise =  noise(objectPosition*0.05 + fTime0_X*0.01, 8, 0.6, 0.0);
+   vec3 objPos = objectPosition + tvNoise * 0.05;
+
+   vec3 rayDir = normalize(objPos * vec3(1.0, 0.6, 1.0));
    //vec3 camPos = vec3(0.0, 0.0, -1.75);
    vec3 camPos = vec3(0.0, 0.0, -1.5 + 0.5 * sin(fTime0_X*0.3));
    
@@ -1131,25 +1134,27 @@ void main(void)
       //distort = sqrt(distort);
       float distort = 1.;
       float noiseVal = 
-         noise(rayPos*0.07 - vec3(fTime0_X*0.01), 3, 0.4,
-               2.*(implicitVal-0.05)).r * 0.4 * distort;
+         noise(rayPos*0.07 - vec3(fTime0_X*0.01), 3, 0.5,
+               2.*(implicitVal-0.05)).r * 0.5 * distort;
       
-      totalColor += vec3(1./50., 1./70., 1./90.);
-      totalDensity += 1./80.;
+      totalColor += vec3(1./50., 1./70., 1./90.) * 0.4;
+      totalDensity += 1./160.;
       if (implicitVal - noiseVal < 0.02)
       {
          //totalColor = totalColor + (vec3(1.)-totalColor) * color(rayPos, 0.);
          //float localDensity = 1. - min(1., exp2(-0.01 / stepSize));
-         float localDensity = 0.1;
+         float localDensity = 0.05;
          totalColor = totalColor + (1.-totalDensity) * color(rayPos, 0.) * localDensity;
          totalDensity = totalDensity + (1.-totalDensity) * localDensity;
       }
       
       stepSize = (implicitVal - noiseVal) * 0.2;
       if (implicitVal > 0.6) stepSize += (implicitVal - 0.6);
-      stepSize = max(0.02, stepSize);
+      stepSize = max(0.01, stepSize);
       rayPos += rayDir * stepSize;
    }
+
+   totalColor += vec3(tvNoise.r*0.05);
 
 /*   
    if (length(rayPos) > sceneSize)
@@ -1180,10 +1185,12 @@ void main(void)
      <RmTextureObject NAME="Texture0" API="OpenGL" STATE_INDEX="0" VERTEX_TEXTURE="FALSE">
       <RmTextureReference NAME="RandomRGB3D-new" API=""/>
      </RmTextureObject>
+     <RmSampler NAME="Texture0" API="" REGISTER="-1"/>
+     <RmShaderConstant NAME="fTime0_X" API="" REGISTER="-1"/>
     </RmGLPass>
    </RmOpenGLEffect>
   </RmEffectGroup>
-  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="52.738636" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
+  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="74.349075" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
   <Rm3DTextureVariable NAME="RandomRGB3D-new" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" FILE_NAME="..\noise\RandomRGB3D-new.dds" ORIGIN="0"/>
  </RmEffectWorkspace>
 </RENDER_MONKEY>
