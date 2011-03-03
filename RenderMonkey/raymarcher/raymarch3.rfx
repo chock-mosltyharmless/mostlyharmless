@@ -909,7 +909,7 @@
   <RmRegistryBranch NAME="RM_REGISTRY" API="" XML_VERSION="RenderMonkey 1.71">
    <RmRegistryBranch NAME="RM_LOCAL" API="" XML_VERSION="RenderMonkey 1.71">
     <RmRegistryBranch NAME="RM_PLUGIN" API="" XML_VERSION="RenderMonkey 1.71"><RmTextDataBlock TYPE="TEXT"><![CDATA[
-<DockingPaneLayouts><Application_Layout><Pane-1><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Artist Editor</Title><ID>1001</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>7</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>7</LastHolder></Pane-1><Pane-2><Type>2</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><Horiz>0</Horiz><Pane-1>3</Pane-1><Pane-2>8</Pane-2><Panes>2</Panes></Pane-2><Pane-3><Type>2</Type><DockingCX>0</DockingCX><DockingCY>752</DockingCY><Horiz>1</Horiz><Pane-1>4</Pane-1><Pane-2>6</Pane-2><Pane-3>7</Pane-3><Panes>3</Panes></Pane-3><Pane-4><Type>1</Type><DockingCX>150</DockingCX><DockingCY>250</DockingCY><Selected>5</Selected><Panes>1</Panes><Pane-1>5</Pane-1></Pane-4><Pane-5><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Workspace</Title><ID>1000</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>4</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>4</LastHolder></Pane-5><Pane-6><Type>4</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY></Pane-6><Pane-7><Type>1</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-7><Pane-8><Type>1</Type><DockingCX>250</DockingCX><DockingCY>177</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-8><Pane-9><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Output</Title><ID>1002</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>8</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>8</LastHolder></Pane-9><Summary><TopContainer>2</TopContainer><Client>6</Client><Panes>9</Panes></Summary></Application_Layout></DockingPaneLayouts>
+<DockingPaneLayouts><Application_Layout><Pane-1><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Artist Editor</Title><ID>1001</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>7</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>7</LastHolder></Pane-1><Pane-2><Type>2</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><Horiz>0</Horiz><Pane-1>3</Pane-1><Pane-2>8</Pane-2><Panes>2</Panes></Pane-2><Pane-3><Type>2</Type><DockingCX>0</DockingCX><DockingCY>440</DockingCY><Horiz>1</Horiz><Pane-1>4</Pane-1><Pane-2>6</Pane-2><Pane-3>7</Pane-3><Panes>3</Panes></Pane-3><Pane-4><Type>1</Type><DockingCX>150</DockingCX><DockingCY>250</DockingCY><Selected>5</Selected><Panes>1</Panes><Pane-1>5</Pane-1></Pane-4><Pane-5><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Workspace</Title><ID>1000</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>4</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>4</LastHolder></Pane-5><Pane-6><Type>4</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY></Pane-6><Pane-7><Type>1</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-7><Pane-8><Type>1</Type><DockingCX>250</DockingCX><DockingCY>177</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-8><Pane-9><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Output</Title><ID>1002</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>8</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>8</LastHolder></Pane-9><Summary><TopContainer>2</TopContainer><Client>6</Client><Panes>9</Panes></Summary></Application_Layout></DockingPaneLayouts>
 ]]></RmTextDataBlock>
      <RmRegistryBranch NAME="RmPreviewDx9Window" API="" XML_VERSION="RenderMonkey 1.71"/>
      <RmRegistryBranch NAME="RmPreviewGLESWindow" API="" XML_VERSION="RenderMonkey 1.71"/>
@@ -917,8 +917,8 @@
      <RmRegistryBranch NAME="RmPreviewGLWindow" API="" XML_VERSION="RenderMonkey 1.71">
       <RmRegistryBranch NAME="EffectPlacementRepository" API="" XML_VERSION="RenderMonkey 1.71">
        <RmRegistryBranch NAME="Effect Workspace.Effect Group 1.Effect1" API="" XML_VERSION="RenderMonkey 1.71">
-        <RmIntegerVariable NAME="X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1044" MIN="-10" MAX="10" CLAMP="FALSE"/>
-        <RmIntegerVariable NAME="Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="115" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="602" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="0" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Width" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="602" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Height" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="410" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="ShowStatus" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="3" MIN="-10" MAX="10" CLAMP="FALSE"/>
@@ -948,10 +948,10 @@ Fragment Program]]></RmTextDataBlock></RmStringVariable>
        <RmStringVariable NAME="Editing Pass" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 Pass 1]]></RmTextDataBlock></RmStringVariable>
        <RmIntegerVariable NAME="Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="0" MIN="-10" MAX="10" CLAMP="FALSE"/>
-       <RmIntegerVariable NAME="Width" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="907" MIN="-10" MAX="10" CLAMP="FALSE"/>
-       <RmIntegerVariable NAME="Height" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="673" MIN="-10" MAX="10" CLAMP="FALSE"/>
+       <RmIntegerVariable NAME="Width" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="602" MIN="-10" MAX="10" CLAMP="FALSE"/>
+       <RmIntegerVariable NAME="Height" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="410" MIN="-10" MAX="10" CLAMP="FALSE"/>
        <RmIntegerVariable NAME="ShowStatus" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1" MIN="-10" MAX="10" CLAMP="FALSE"/>
-       <RmIntegerVariable NAME="Visible" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1" MIN="-10" MAX="10" CLAMP="FALSE"/>
+       <RmIntegerVariable NAME="Visible" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="0" MIN="-10" MAX="10" CLAMP="FALSE"/>
        <RmIntegerVariable NAME="Minimized X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="-1" MIN="-10" MAX="10" CLAMP="FALSE"/>
        <RmIntegerVariable NAME="Minimized Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="-1" MIN="-10" MAX="10" CLAMP="FALSE"/>
        <RmIntegerVariable NAME="X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="0" MIN="-10" MAX="10" CLAMP="FALSE"/>
@@ -996,13 +996,13 @@ Pass 1]]></RmTextDataBlock></RmStringVariable>
     </RmRegistryBranch>
     <RmRegistryBranch NAME="WORKSPACE" API="" XML_VERSION="RenderMonkey 1.71">
      <RmStringVariable NAME="LAST_SAVE" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
-3/3/2011 10:21:33]]></RmTextDataBlock></RmStringVariable>
+3/3/2011 14:38:3]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 RenderMonkey Version 1.82 (build 322)]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="XML_VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 RenderMonkey 1.71]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="BASE_WORKSPACE_PATH" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
-C:\Users\Joachim Hofer\Documents\mostlyharmless\RenderMonkey\raymarcher\]]></RmTextDataBlock></RmStringVariable>
+C:\Users\Public\Documents\mostlyharmless\RenderMonkey\raymarcher\]]></RmTextDataBlock></RmStringVariable>
     </RmRegistryBranch>
    </RmRegistryBranch>
   </RmRegistryBranch>
@@ -1042,7 +1042,7 @@ varying vec3 objectNormal;
 
 uniform float fTime0_X;
 
-vec3 noise(vec3 pos, int iterations, float reduction, float rflooring)
+vec3 noise(vec3 pos, int iterations, float reduction)
 {
    float intensity = 1.;
    float size = 1.;
@@ -1050,11 +1050,6 @@ vec3 noise(vec3 pos, int iterations, float reduction, float rflooring)
 
    for (int k = 0; k < iterations; k++)
    {
-      if (intensity/(1.-reduction)+max(0.,result.r) < rflooring)
-      {
-         result.r += intensity/(1.-reduction);
-         return result;
-      }
       vec3 pos2 = floor(pos*size*32.) + smoothstep(0.,1., (pos*size*32.) - floor(pos*size*32.)) - 0.5;
       vec4 inp = texture3D(Texture0, pos2/32.) - vec4(.5);
       vec3 intermediate = normalize(inp).xyz;
@@ -1082,7 +1077,7 @@ vec3 color(vec3 pos, float sphereSize)
 {
    vec3 relpos = pos * 0.5;
    
-   //relpos += noise(relpos * 2.0 , 5, 0.4, 0.0) * 0.02;
+    relpos += noise(relpos * 0.1 , 2, 0.6) * 0.1;
    
    //relpos.y = cos(fTime0_X * 0.2) * relpos.y - sin(fTime0_X * 0.2) * relpos.z;
    //relpos.z = cos(fTime0_X * 0.2) * relpos.z + sin(fTime0_X * 0.2) * relpos.y;
@@ -1090,24 +1085,25 @@ vec3 color(vec3 pos, float sphereSize)
    float brightness = -1.0, color, whiteness;
       
    //brightness = noise(relpos * 0.5, 12, 0.6, 0.).r * 0.3;
-   brightness = noise(relpos, 3, 0.6, 0.).r * 0.2 + 1.5*length(pos) - 0.75;
+   brightness = noise(relpos, 5, 0.8).r * 0.2 + 1.5*length(pos) - 0.75;
    
    color = abs(brightness * 3.0);
    whiteness = brightness * 1.0;
    
    //vec3 bumpNormal = normalize(objectNormal);
-   vec3 bumpNormal = vec3(1.0, 0.0, 0.0);
+   //vec3 bumpNormal = vec3(1.0, 0.0, 0.0);
+   vec3 bumpNormal = 0.3*pos;
    
    float hemi = 0.5 + 0.5 * bumpNormal.y;   
-   float hemiSpec = pow(hemi, 10.0) * clamp(0.2 + 5.0 * whiteness, 0.0, 1.0);
+   float hemiSpec = pow(hemi,2.) * clamp(0.2 + 5.0 * whiteness, 0.0, 1.0);
 
-   return hemiSpec + hemi * (whiteness + color * vec3(0.5, 0.75, 1.0)); 
+   return hemiSpec + hemi * (whiteness + color * vec3(0.3, 0.6, 1.0)); 
 }
 
 void main(void)
 {  
-   vec3 tvNoise =  noise(objectPosition*0.05 + vec3(0.,0.,fTime0_X*0.01), 8, 0.65, 0.0);
-   vec3 objPos = objectPosition + tvNoise * 0.05;
+   vec3 tvNoise =  noise(objectPosition*0.05 + vec3(0.,0.,fTime0_X*0.01), 8, 0.65);
+   vec3 objPos = objectPosition + tvNoise * 0.02;
 
    vec3 rayDir = normalize(objPos * vec3(1.0, 0.6, 1.0));
    //vec3 camPos = vec3(0.0, 0.0, -1.75);
@@ -1134,16 +1130,15 @@ void main(void)
       //distort = sqrt(distort);
       float distort = 1.;
       float noiseVal = 
-         noise(rayPos*0.07 - vec3(fTime0_X*0.01), 3, 0.5,
-               2.*(implicitVal-0.05)).r * 0.5 * distort;
+         noise(rayPos*0.07 - vec3(fTime0_X*0.01), 5, 0.5).r * 0.5 * distort;
       
       totalColor += vec3(1./50., 1./70., 1./90.) * 0.6;
       totalDensity += 1./150.;
-      if (implicitVal - noiseVal < 0.02)
+      if (implicitVal - noiseVal < 0.05)
       {
          //totalColor = totalColor + (vec3(1.)-totalColor) * color(rayPos, 0.);
          //float localDensity = 1. - min(1., exp2(-0.01 / stepSize));
-         float localDensity = 0.05;
+         float localDensity = min(1.0, 0.05 - implicitVal + noiseVal);
          totalColor = totalColor + (1.-totalDensity) * color(rayPos, 0.) * localDensity;
          totalDensity = totalDensity + (1.-totalDensity) * localDensity;
       }
@@ -1190,7 +1185,7 @@ void main(void)
     </RmGLPass>
    </RmOpenGLEffect>
   </RmEffectGroup>
-  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="52.777294" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
+  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="34.756886" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
   <Rm3DTextureVariable NAME="RandomRGB3D-new" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" FILE_NAME="..\noise\RandomRGB3D-new.dds" ORIGIN="0"/>
  </RmEffectWorkspace>
 </RENDER_MONKEY>
