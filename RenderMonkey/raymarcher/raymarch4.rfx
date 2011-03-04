@@ -996,7 +996,7 @@ Pass 1]]></RmTextDataBlock></RmStringVariable>
     </RmRegistryBranch>
     <RmRegistryBranch NAME="WORKSPACE" API="" XML_VERSION="RenderMonkey 1.71">
      <RmStringVariable NAME="LAST_SAVE" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
-3/3/2011 15:38:34]]></RmTextDataBlock></RmStringVariable>
+4/3/2011 11:10:44]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 RenderMonkey Version 1.82 (build 322)]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="XML_VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
@@ -1109,7 +1109,7 @@ void main(void)
 
    vec3 rayDir = normalize(objPos * vec3(1.0, 0.6, 1.0));
    //vec3 camPos = vec3(0.0, 0.0, -1.75);
-   vec3 camPos = vec3(0.0, 0.0, -1.2 + 0.5 * sin(fTime0_X*0.3));
+   vec3 camPos = vec3(0.0, 0.0, -1.7 + 1.0 * sin(fTime0_X*0.3));
    
    // rotate camera around y axis
    float alpha = fTime0_X * 1.;
@@ -1127,7 +1127,8 @@ void main(void)
    
    while(length(rayPos)<sceneSize && totalDensity < 0.95)
    {
-      float implicitVal = length(rayPos) - 0.5;
+      float implicitVal = length(rayPos * vec3(1.2, 0.5, 1.2)) - 0.5;
+      implicitVal = min(implicitVal, rayPos.y + 0.7);
       //float distort = 0.9 * abs(sin(fTime0_X)) + 0.1;
       //distort = sqrt(distort);
       float distort = 1.;
@@ -1187,7 +1188,7 @@ void main(void)
     </RmGLPass>
    </RmOpenGLEffect>
   </RmEffectGroup>
-  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="57.285107" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
+  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="65.806694" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
   <Rm3DTextureVariable NAME="RandomRGB3D-new" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" FILE_NAME="..\noise\RandomRGB3D-new.dds" ORIGIN="0"/>
  </RmEffectWorkspace>
 </RENDER_MONKEY>
