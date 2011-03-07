@@ -10,6 +10,7 @@
 #include <GL/glu.h>
 #include "glext.h"
 
+#include "config.h"
 #include "intro.h"
 #include "mzk.h"
 #include "Parameter.h"
@@ -22,22 +23,21 @@ int rand();
 // -------------------------------------------------------------------
 
 const GLchar *fragmentMainBackground="\
-#version 140\n\
 uniform sampler3D Texture0;\n\
 varying vec3 objectPosition;\n\
 varying mat4 parameters;\n\
 \n\
 vec3 noise(vec3 pos, int iterations, float reduction)\n\
 {\n\
-   pos *= 4.; /*adjust texture size*/\n\
+   pos *= 2.; /*adjust texture size*/\n\
    float intensity = 1.;\n\
    float size = 1.;\n\
    vec3 result = vec3(0.);\n\
 \n\
    for (int k = 0; k < iterations; k++)\n\
    {\n\
-      vec3 pos2 = floor(pos*size*8.) + smoothstep(0.,1., (pos*size*8.) - floor(pos*size*8.)) - 0.5;\n\
-      vec4 inp = texture3D(Texture0, pos2/8.);\n\
+      vec3 pos2 = floor(pos*size*16.) + smoothstep(0.,1., (pos*size*16.) - floor(pos*size*16.)) - 0.5;\n\
+      vec4 inp = texture3D(Texture0, pos2/16.);\n\
       result += inp.xyz * intensity;\n\
       intensity = intensity * reduction;\n\
       size = size * 1.93;\n\
@@ -48,35 +48,43 @@ vec3 noise(vec3 pos, int iterations, float reduction)\n\
 \n\
 vec3 color(vec3 pos, float sphereSize)\n\
 {\n\
+   float fTime0_X = parameters[0][0];\n\
+   float transform = parameters[1][0];\n\
    vec3 relpos = pos * 0.5;\n\
    \n\
-   relpos += noise(relpos * 0.32 * 0.25, 3, 0.7) * 0.29;\n\
-   \n\
+   relpos += noise(relpos * 0.4, 3, 0.6) * 0.2 + fTime0_X * 0.03;\n\
    float brightness = -1.0, color, whiteness;\n\
+      \n\
+   brightness = noise(relpos, 3, 0.7).r * 0.2 + 1.3*length(pos) - 0.75;\n\
    \n\
-   brightness = noise(relpos, 5, 0.8).r * 0.2 + 1.5*length(pos) - 0.75;\n\
+   color = abs(brightness * 8.0) * (1.0 - 0.9*transform);\n\
+   whiteness = brightness * 0.6 * (1.0 - 0.9*transform);\n\
    \n\
-   color = abs(brightness * 6.0);\n\
-   whiteness = brightness * parameters[1][3];\n\
+   vec3 bumpNormal = (2.5-transform)*pos + 1.0;\n\
    \n\
-   vec3 bumpNormal = +1.0*pos + 0.2;\n\
+   float hemi = 0.5 + 0.5 * bumpNormal.y;\n\
+   hemi = 0.6 * smoothstep(-0.1, 0.5, hemi) - 0.1;\n\
+   float hemiSpec = clamp(1.0 * whiteness, 0.0, 0.5);\n\
    \n\
-   float hemi = 0.5 + 0.5 * bumpNormal.y;   \n\
-   hemi = clamp(hemi, -0.1, 1.0);\n\
-   float hemiSpec = exp2(-hemi*10.) * clamp(0.2 + 5.0 * whiteness, 0.0, 0.25);\n\
-   \n\
-   return hemiSpec + hemi * (whiteness + color * vec3(parameters[2][3], parameters[3][0], parameters[3][1])); \n\
+   return clamp(hemiSpec + hemi * (whiteness + color * vec3(0.3, .6, 1.)), -0.2, 1.5);\n\
 }\n\
 \n\
 void main(void)\n\
 {  \n\
    float fTime0_X = parameters[0][0];\n\
-   vec3 tvNoise =  noise(objectPosition*5. + vec3(0.,0.,fTime0_X*0.01), 4, 0.8);\n\
+   float whitecolor = parameters[1][1];\n\
+   vec3 tvNoise =  noise(objectPosition*0.05 + vec3(0.,0.,fTime0_X*0.01), 8, 0.65);\n\
 \n\
    vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));\n\
-   vec3 camPos = vec3(0.0, 0.0, -2.7 + 2.0 * parameters[2][1] * sin(fTime0_X*0.3) + parameters[3][2] * 2.);\n\
+   vec3 camPos = vec3(0.0, 0.0, -3.7 + 3.4 * parameters[0][1]);\n\
    \n\
-   float alpha = fTime0_X * 2. * parameters[2][2] + 6.28 * parameters[3][3];\n\
+   // rotate camera around y axis\n\
+   float alpha = parameters[0][2]*9.42;\n\
+   camPos.yz = vec2(cos(alpha)*camPos.y - sin(alpha)*camPos.z,\n\
+                    sin(alpha)*camPos.y + cos(alpha)*camPos.z);\n\
+   rayDir.yz = vec2(cos(alpha)*rayDir.y - sin(alpha)*rayDir.z,\n\
+                    sin(alpha)*rayDir.y + cos(alpha)*rayDir.z);\n\
+   alpha = parameters[0][3]*9.42;\n\
    camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,\n\
                     sin(alpha)*camPos.x + cos(alpha)*camPos.z);\n\
    rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,\n\
@@ -84,36 +92,65 @@ void main(void)\n\
                     \n\
    \n\
    vec3 rayPos = camPos;\n\
-   float sceneSize = 3.0;\n\
-   vec3 totalColor = vec3(0.0);\n\
+   float sceneSize = 12.0;\n\
+   vec3 totalColor = vec3(0.,0.,0.);\n\
    float stepSize;\n\
    float totalDensity = 0.0;\n\
+   vec3 totalColorAdder = (vec3(0.02, 0.014, 0.009) + whitecolor*vec3(0.,0.004,0.008)) * (parameters[1][2]);\n\
    \n\
-   while(length(rayPos)<sceneSize && totalDensity < 0.95)\n\
+   while(length(rayPos)<sceneSize && totalDensity < 0.9)\n\
    {\n\
-      float implicitVal = length(rayPos * vec3(1.1, 0.7, 1.1)) - 0.5;\n\
-      implicitVal = min(implicitVal, rayPos.y + 0.7);\n\
-	  float noiseVal = noise(rayPos*0.14*parameters[1][0] - vec3(0.0, fTime0_X*0.01, 0.0), 5, parameters[1][1]).r * parameters[1][2];\n\
+      // base head\n\
+      vec3 tmpPos = rayPos;\n\
+      float base1 = abs(tmpPos.y+0.1);\n\
+	  float base2 = abs(length(rayPos.xz) - 0.4);\n\
+	  float socket = length(rayPos + vec3(0., 5., 0.)) - 4.2;  \n\
+	  float base = (max(base1 - 1.1 - parameters[2][3]*11., base2 - parameters[2][2] + 0.5));\n\
+      float implicitVal = min(socket+10000., base);\n\
+\n\
+float noiseVal = noise(rayPos*0.15*vec3(1.0,0.05+0.95*parameters[3][3],1.0) - vec3(0.0, fTime0_X*0.1, 0.0), 6, 0.7).r * 0.4;\n\
+      implicitVal -= noiseVal;\n\
       \n\
-	  totalColor += vec3(parameters[0][1]/20., parameters[0][2]/20., parameters[0][3]/20.) * 0.5;\n\
-      totalDensity += 1./150.;\n\
-      if (implicitVal - noiseVal < 0.05)\n\
+	  totalColor += totalColorAdder;\n\
+      totalDensity += 0.005;\n\
+      if (implicitVal < 0.05)\n\
       {\n\
-	  float localDensity = min(1.0, 2. * (0.05 - implicitVal + noiseVal));\n\
-         totalColor = totalColor + (1.-totalDensity) * color(rayPos, 0.) * localDensity;\n\
-         totalDensity = totalDensity + (1.-totalDensity) * localDensity;\n\
+         float localDensity = min(1.0, 0.05 - implicitVal);\n\
+		 localDensity = (1.-totalDensity) * localDensity;\n\
+         totalColor += color(rayPos, 0.) * localDensity;\n\
+         totalDensity += localDensity ;\n\
       }\n\
       \n\
-      stepSize = (implicitVal - noiseVal) * 0.2;\n\
-      stepSize = max(0.015, stepSize) * (tvNoise.r*0.04+0.96);;\n\
+      stepSize = (implicitVal) * 0.2;\n\
+      stepSize = max(0.008, stepSize) * (tvNoise.r*0.04+0.96);\n\
       rayPos += rayDir * stepSize;\n\
    }\n\
+   \n\
+   float grad = normalize(rayPos).y;\n\
+   totalColor += (1.-totalDensity) * (grad * vec3(0.0,0.0,0.1) + (1.-grad)*vec3(0.0,0.1,0.2));\n\
+   \n\
+   gl_FragColor = vec4(totalColor-vec3(0.3), 1.0);\n\
 \n\
-   gl_FragColor = vec4(totalColor, 1.0);\n\
+}";
+
+const GLchar *fragmentOffscreenCopy="\
+uniform sampler2D Texture0;\n\
+varying vec3 objectPosition;\n\
+varying mat4 parameters;\n\
+\n\
+void main(void)\n\
+{  \n\
+   float fTime0_X = parameters[0][0];\n\
+   vec3 noisePos = objectPosition + fTime0_X;\n\
+   vec2 noiseVal;\n\
+   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43758.5453);\n\
+   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43753.5453);\n\
+   gl_FragColor = texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.03;\n\
+\n\
 }";
 
 const GLchar *vertexMainObject="\
-#version 140\n\
+#version 120\n\
 varying vec3 objectPosition;\
 varying mat4 parameters;\
 \
@@ -128,21 +165,6 @@ void main(void)\
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define fzn  0.125f
-#define fzf  32.0f
-
-#pragma data_seg(".projectionMatrix")
-static const float projectionMatrix[16] = {
-    4.0f, 0.00f,  0.0f,                    0.0f,
-	0.0f, 8.0f,  0.0f,                    0.0f,
-    0.0f, 0.00f, -(fzf+fzn)/(fzf-fzn),    -1.0f,
-    0.0f, 0.00f, -2.0f*fzf*fzn/(fzf-fzn),  0.0f };
-/*static const float projectionMatrix[16] = {
-    10.0f, 0.00f,  0.0f,                    0.0f,
-	0.0f, 17.7f,  0.0f,                    0.0f,
-    0.0f, 0.00f, -(fzf+fzn)/(fzf-fzn),    -1.0f,
-    0.0f, 0.00f, -2.0f*fzf*fzn/(fzf-fzn),  0.0f };*/
-
 HWND hWnd;
 
 #define NUM_GL_NAMES 10
@@ -152,12 +174,24 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glTexImage3D", "glGetShaderiv","glGetShaderInfoLog",
 };
 
+#define glCreateShader ((PFNGLCREATESHADERPROC)glFP[0])
+#define glCreateProgram ((PFNGLCREATEPROGRAMPROC)glFP[1])
+#define glShaderSource ((PFNGLSHADERSOURCEPROC)glFP[2])
+#define glCompileShader ((PFNGLCOMPILESHADERPROC)glFP[3])
+#define glAttachShader ((PFNGLATTACHSHADERPROC)glFP[4])
+#define glLinkProgram ((PFNGLLINKPROGRAMPROC)glFP[5])
+#define glUseProgram ((PFNGLUSEPROGRAMPROC)glFP[6])
+#define glTexImage3D ((PFNGLTEXIMAGE3DPROC)glFP[7])
+#define glGetShaderiv ((PFNGLGETSHADERIVPROC)glFP[8])
+#define glGetShaderInfoLog ((PFNGLGETSHADERINFOLOGPROC)glFP[9])
+
 // The model matrix is used to send the parameters to the hardware...
 static float parameterMatrix[16];
 
+static GLuint offscreenTexture;
 // Name of the 32x32x32 noise texture
 #define FLOAT_TEXTURE
-#define NOISE_TEXTURE_SIZE 8 // try smaller?
+#define NOISE_TEXTURE_SIZE 16 // try smaller?
 static GLuint noiseTexture;
 #ifdef FLOAT_TEXTURE
 static float noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
@@ -168,7 +202,7 @@ static int noiseTmp[4];
 
 typedef void (*GenFP)(void); // pointer to openGL functions
 static GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
-static GLuint shaderProgram;
+static GLuint shaderPrograms[2];
 
 // -------------------------------------------------------------------
 //                          Code:
@@ -197,43 +231,54 @@ void intro_init( void )
 	// TODO: I should make some sort of compiling and linking loop...
 	
 	// init objects:	
-	GLuint vMainObject = ((PFNGLCREATESHADERPROC)(glFP[0]))(GL_VERTEX_SHADER);
-	//GLuint fNoise = ((PFNGLCREATESHADERPROC)(glFP[0]))(GL_FRAGMENT_SHADER);	
-	GLuint fMainBackground = ((PFNGLCREATESHADERPROC)(glFP[0]))(GL_FRAGMENT_SHADER);	
-	shaderProgram = ((PFNGLCREATEPROGRAMPROC)glFP[1])();
+	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
+	GLuint fMainBackground = glCreateShader(GL_FRAGMENT_SHADER);	
+	GLuint fOffscreenCopy = glCreateShader(GL_FRAGMENT_SHADER);
+	shaderPrograms[0] = glCreateProgram();
+	shaderPrograms[1] = glCreateProgram();
 	// compile sources:
-	((PFNGLSHADERSOURCEPROC)glFP[2]) (vMainObject, 1, &vertexMainObject, NULL);
-	((PFNGLCOMPILESHADERPROC)glFP[3])(vMainObject);
-	//((PFNGLSHADERSOURCEPROC)glFP[2]) (fNoise, 1, &fragmentNoise, NULL);
-	//((PFNGLCOMPILESHADERPROC)glFP[3])(fNoise);
-	((PFNGLSHADERSOURCEPROC)glFP[2]) (fMainBackground, 1, &fragmentMainBackground, NULL);
-	((PFNGLCOMPILESHADERPROC)glFP[3])(fMainBackground);
+	glShaderSource(vMainObject, 1, &vertexMainObject, NULL);
+	glCompileShader(vMainObject);
+	glShaderSource(fMainBackground, 1, &fragmentMainBackground, NULL);
+	glCompileShader(fMainBackground);
+	glShaderSource(fOffscreenCopy, 1, &fragmentOffscreenCopy, NULL);
+	glCompileShader(fOffscreenCopy);
 
 	// Check programs
 	int tmp, tmp2;
 	char err[4097];
-	((PFNGLGETSHADERIVPROC)glFP[8])(vMainObject, GL_COMPILE_STATUS, &tmp);
+	glGetShaderiv(vMainObject, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
 	{
-		((PFNGLGETSHADERINFOLOGPROC)glFP[9])(vMainObject, 4096, &tmp2, err);
+		glGetShaderInfoLog(vMainObject, 4096, &tmp2, err);
 		err[tmp2]=0;
 		MessageBox(hWnd, err, "vMainObject shader error", MB_OK);
 		return;
 	}
-	((PFNGLGETSHADERIVPROC)glFP[8])(fMainBackground, GL_COMPILE_STATUS, &tmp);
+	glGetShaderiv(fMainBackground, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
 	{
-		((PFNGLGETSHADERINFOLOGPROC)glFP[9])(fMainBackground, 4096, &tmp2, err);
+		glGetShaderInfoLog(fMainBackground, 4096, &tmp2, err);
 		err[tmp2]=0;
 		MessageBox(hWnd, err, "fMainBackground shader error", MB_OK);
 		return;
 	}
+	glGetShaderiv(fOffscreenCopy, GL_COMPILE_STATUS, &tmp);
+	if (!tmp)
+	{
+		glGetShaderInfoLog(fOffscreenCopy, 4096, &tmp2, err);
+		err[tmp2]=0;
+		MessageBox(hWnd, err, "fOffscreeCopy shader error", MB_OK);
+		return;
+	}
 
 	// link shaders:
-	((PFNGLATTACHSHADERPROC)glFP[4])(shaderProgram, vMainObject);
-	//((PFNGLATTACHSHADERPROC)glFP[4])(shaderPrograms[0], fNoise);
-	((PFNGLATTACHSHADERPROC)glFP[4])(shaderProgram, fMainBackground);
-	((PFNGLLINKPROGRAMPROC)glFP[5])(shaderProgram);
+	glAttachShader(shaderPrograms[0], vMainObject);
+	glAttachShader(shaderPrograms[0], fMainBackground);
+	glLinkProgram(shaderPrograms[0]);
+	glAttachShader(shaderPrograms[1], vMainObject);
+	glAttachShader(shaderPrograms[1], fOffscreenCopy);
+	glLinkProgram(shaderPrograms[1]);
 
 	// Set texture.
 	glEnable(GL_TEXTURE_3D); // automatic?
@@ -247,14 +292,28 @@ void intro_init( void )
 	//glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, 0, GL_RGBA, 
 	//	         GL_UNSIGNED_BYTE, noiseData);
 #ifdef FLOAT_TEXTURE
-	((PFNGLTEXIMAGE3DPROC) glFP[7])(GL_TEXTURE_3D, 0, GL_RGBA32F,
-									NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
-									0, GL_RGBA, GL_FLOAT, noiseData);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F,
+				 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
+				 0, GL_RGBA, GL_FLOAT, noiseData);
 #else
-	((PFNGLTEXIMAGE3DPROC) glFP[7])(GL_TEXTURE_3D, 0, GL_RGBA8,
-									NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
-									0, GL_RGBA, GL_UNSIGNED_BYTE, noiseData);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8,
+				 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
+				 0, GL_RGBA, GL_UNSIGNED_BYTE, noiseData);
 #endif
+
+	// Create a rendertarget texture
+	/*glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+			     OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT,
+				 0, GL_RGBA, GL_UNSIGNED_BYTE, &offscreenTexture);*/
+	glGenTextures(1, &offscreenTexture);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT, 0,
+		         GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	//glBindTexture(GL_TEXTURE_2D, 0);
 
 	// RLY?
 	//glEnable(GL_CULL_FACE);
@@ -265,16 +324,6 @@ void fallingBall(float ftime)
 	GLUquadric* quad = gluNewQuadric();
 
 	glDisable(GL_BLEND);
-
-	// attenuate time...
-	//ftime = atan(ftime) * 1.9f;
-	float spritzer = (ftime * ftime - 1.5f);
-	if (spritzer < 0.0f) spritzer = -5.0f;	
-
-	// Use background shader:	
-	((PFNGLUSEPROGRAMPROC) glFP[6])(shaderProgram);	
-
-	//glCullFace(GL_FRONT);
 
 	// draw background:
 #if 0
@@ -290,25 +339,35 @@ void fallingBall(float ftime)
 
 	parameterMatrix[0] = ftime; // time	
 	/* shader parameters */
-	//5:0.27 14:0.19 15:0.53 16:1.00
-	//2:1.00 3:0.61 4:0.29 5:0.59 6:0.65 8:0.54 9:0.00 13:0.46 25:0.00 35:0.00 
 	parameterMatrix[1] = params.getParam(2, 1.0f);
-	parameterMatrix[2] = params.getParam(3, 0.61f);
-	parameterMatrix[3] = params.getParam(4, 0.29f);
-	parameterMatrix[4] = params.getParam(5, 0.59f);
-	parameterMatrix[5] = params.getParam(6, 0.65f);
+	parameterMatrix[2] = params.getParam(3, 1.0f);
+	parameterMatrix[3] = params.getParam(4, 1.0f);
+	parameterMatrix[4] = params.getParam(5, 1.0f);
+	parameterMatrix[5] = params.getParam(6, 1.0f);
 	parameterMatrix[6] = params.getParam(8, 0.54f);
 	parameterMatrix[7] = params.getParam(9, 0.0f);
-	parameterMatrix[8] = params.getParam(9, 0.0f);
-	parameterMatrix[9] = params.getParam(12, 0.5f);
-	parameterMatrix[10] = params.getParam(13, 0.5f);
-	parameterMatrix[11] = params.getParam(14, 0.19f);
-	parameterMatrix[12] = params.getParam(15, 0.53f);
-	parameterMatrix[13] = params.getParam(16, 1.0f);
-	parameterMatrix[14] = params.getParam(21, 0.5f);
-	parameterMatrix[15] = params.getParam(22, 0.5f);
+	parameterMatrix[8] = params.getParam(12, 0.0f);
+	parameterMatrix[9] = params.getParam(13, 0.5f);
+	parameterMatrix[10] = params.getParam(14, 0.5f);
+	parameterMatrix[11] = params.getParam(15, 0.19f);
+	parameterMatrix[12] = params.getParam(16, 0.53f);
+	parameterMatrix[13] = params.getParam(19, 1.0f);
+	parameterMatrix[14] = params.getParam(20, 0.5f);
+	parameterMatrix[15] = params.getParam(21, 0.5f);
+	glLoadMatrixf(parameterMatrix);
 
-	glLoadMatrixf(parameterMatrix);		
+	// draw offscreen
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	glBindTexture(GL_TEXTURE_3D, offscreenTexture);
+	glUseProgram(shaderPrograms[0]);
+	glBindTexture(GL_TEXTURE_3D, noiseTexture);
+	gluSphere(quad, 2.0f, 16, 16);
+
+	// copy to front
+	glViewport(0, 0, XRES, YRES);
+	glBindTexture(GL_TEXTURE_3D, offscreenTexture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+	glUseProgram(shaderPrograms[1]);	
 	gluSphere(quad, 2.0f, 16, 16);
 }
 
@@ -320,6 +379,7 @@ void intro_do( long itime )
 	//glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_BLEND);
     glEnable( GL_CULL_FACE );
+	//glCullFace( GL_FRONT );
 	//glDisable( GL_BLEND );
     //glEnable( GL_LIGHTING );
     //glEnable( GL_LIGHT0 );
@@ -328,7 +388,7 @@ void intro_do( long itime )
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
 	// clear screan:
-	glClear(GL_COLOR_BUFFER_BIT);
+	//glClear(GL_COLOR_BUFFER_BIT);
 
 	//glBindTexture(GL_TEXTURE_3D, noiseTexture); // 3D noise?	
 
