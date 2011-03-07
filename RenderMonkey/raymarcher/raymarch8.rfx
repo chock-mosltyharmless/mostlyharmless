@@ -922,7 +922,7 @@
         <RmIntegerVariable NAME="Width" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="602" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Height" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="410" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="ShowStatus" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1" MIN="-10" MAX="10" CLAMP="FALSE"/>
-        <RmIntegerVariable NAME="Visible" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="0" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="Visible" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Minimized X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="-1" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Minimized Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="-1" MIN="-10" MAX="10" CLAMP="FALSE"/>
        </RmRegistryBranch>
@@ -996,7 +996,7 @@ Pass 1]]></RmTextDataBlock></RmStringVariable>
     </RmRegistryBranch>
     <RmRegistryBranch NAME="WORKSPACE" API="" XML_VERSION="RenderMonkey 1.71">
      <RmStringVariable NAME="LAST_SAVE" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
-4/3/2011 12:3:2]]></RmTextDataBlock></RmStringVariable>
+5/3/2011 23:2:15]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 RenderMonkey Version 1.82 (build 322)]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="XML_VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
@@ -1060,58 +1060,41 @@ vec3 noise(vec3 pos, int iterations, float reduction)
    return result;
 }
 
-/*
-// Color in RGB (This could change...)
-// This requires the sphereSize???
-vec3 color(vec3 pos, float sphereSize)
-{
-   vec3 col = smoothstep(0., 1., noise(pos * 0.2, 4, 0.6, -100.) * vec3(0.0, 0.0, 0.2));
-   //vec3 col = vec3(0.3, 0.5, 0.7);
-   
-   return col;
-}
-*/
-
 vec3 color(vec3 pos, float sphereSize)
 {
    vec3 relpos = pos * 0.5;
    
-    relpos += noise(relpos * 0.1 , 2, 0.6) * 0.1;
-   
-   //relpos.y = cos(fTime0_X * 0.2) * relpos.y - sin(fTime0_X * 0.2) * relpos.z;
-   //relpos.z = cos(fTime0_X * 0.2) * relpos.z + sin(fTime0_X * 0.2) * relpos.y;
-   //relpos.z -= fTime0_X * 0.005;   
+   relpos += noise(relpos * 0.1 , 2, 0.6) * 0.2;
    float brightness = -1.0, color, whiteness;
       
-   //brightness = noise(relpos * 0.5, 12, 0.6, 0.).r * 0.3;
-   brightness = noise(relpos, 5, 0.8).r * 0.2 + 1.5*length(pos) - 0.75;
+   brightness = noise(relpos, 5, 0.8).r * 0.2 + 1.3*length(pos) - 0.75;
    
-   color = abs(brightness * 3.0);
-   whiteness = brightness * 1.0;
+   color = abs(brightness * 8.0);
+   whiteness = brightness * 0.6;
    
-   //vec3 bumpNormal = normalize(objectNormal);
-   //vec3 bumpNormal = vec3(1.0, 0.0, 0.0);
-   vec3 bumpNormal = +5.0*pos + 1.0;
+   vec3 bumpNormal = +2.5*pos + 1.0;
    
    float hemi = 0.5 + 0.5 * bumpNormal.y;   
-   hemi = clamp(hemi, -0.1, 1.0);
-   float hemiSpec = exp2(-hemi) * clamp(0.2 + 5.0 * whiteness, 0.0, 0.25);
+   hemi = 0.6 * smoothstep(-0.1, 0.5, hemi) - 0.1;
+   float hemiSpec = clamp(1.0 * whiteness, 0.0, 0.5);
 
-   return hemiSpec + hemi * (whiteness + color * vec3(0.3, 0.6, 1.0)); 
-   //return vec3(0.);
+   return clamp(hemiSpec + hemi * (whiteness + color * vec3(0.3, 0.6, 1.0)), -0.2, 1.5); 
 }
 
 void main(void)
 {  
    vec3 tvNoise =  noise(objectPosition*0.05 + vec3(0.,0.,fTime0_X*0.01), 8, 0.65);
-   vec3 objPos = objectPosition + tvNoise * 0.03;
 
-   vec3 rayDir = normalize(objPos * vec3(1.0, 0.6, 1.0));
-   //vec3 camPos = vec3(0.0, 0.0, -1.75);
-   vec3 camPos = vec3(0.0, 0.0, -1.7 + 1.0 * sin(fTime0_X*0.3));
+   vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));
+   vec3 camPos = vec3(0.0, 0.0, -2.7 + 0.0 * sin(fTime0_X*0.5));
    
    // rotate camera around y axis
-   float alpha = fTime0_X * 1.;
+   float alpha = -0.42 + noise(vec3(fTime0_X) * 0.05, 4, 0.7).r * 0.02;
+   camPos.yz = vec2(cos(alpha)*camPos.y - sin(alpha)*camPos.z,
+                    sin(alpha)*camPos.y + cos(alpha)*camPos.z);
+   rayDir.yz = vec2(cos(alpha)*rayDir.y - sin(alpha)*rayDir.z,
+                    sin(alpha)*rayDir.y + cos(alpha)*rayDir.z);
+   alpha = fTime0_X * 0.25;
    camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,
                     sin(alpha)*camPos.x + cos(alpha)*camPos.z);
    rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,
@@ -1119,64 +1102,44 @@ void main(void)
                     
    
    vec3 rayPos = camPos;
-   float sceneSize = 3.0;
-   vec3 totalColor = vec3(0.0);
+   float sceneSize = 4.0;
+   vec3 totalColor = vec3(0.,0.,0.);
    float stepSize;
    float totalDensity = 0.0;
    
    while(length(rayPos)<sceneSize && totalDensity < 0.95)
    {
-      float implicitVal = length(rayPos * vec3(1.2, 0.5, 1.2)) - 0.5;
-      implicitVal = min(implicitVal, rayPos.y + 0.7);
-      //float distort = 0.9 * abs(sin(fTime0_X)) + 0.1;
-      //distort = sqrt(distort);
-      float distort = 1.;
-      float noiseVal = 
-         noise(rayPos*0.07 - vec3(fTime0_X*0.01), 5, 0.5 + 0.25 * sin(fTime0_X*0.6)).r * 0.5 * distort;
+      // base head
+      vec3 tmpPos = rayPos;
+      float base1 = abs(tmpPos.y+0.1);
+      float base2 = abs(length(tmpPos.xz*vec2(1.2,1.0)+vec2(0.2,0.0)));
+      float socket = length(rayPos + vec3(0., 5., 0.)) - 4.2;  
+      float base = max(base1 - 1.1, base2 - 0.45);
+      float movement = abs(sin(fTime0_X * 6.)) * 0.5;
+      float implicitVal = min(socket, base);
+
+      float noiseVal = noise(rayPos*0.07 - vec3(0.0, fTime0_X*0.01, 0.0), 5, 0.7).r * 0.54 * (1+0.*sin(fTime0_X * 0.3));
+      implicitVal -= noiseVal;
       
-      totalColor += vec3(1./50., 1./70., 1./110.) * 0.4;
+      totalColor += vec3(1./50., 1./70., 1./110.) * 0.1 * (4+1.*exp2(4.*noise(vec3(fTime0_X*0.02), 2, 0.7)).r);
       totalDensity += 1./200.;
-      if (implicitVal - noiseVal < 0.05)
+      if (implicitVal < 0.05)
       {
-         //totalColor = totalColor + (vec3(1.)-totalColor) * color(rayPos, 0.);
-         //float localDensity = 1. - min(1., exp2(-0.01 / stepSize));
-         float localDensity = min(1.0, 0.05 - implicitVal + noiseVal);
+         float localDensity = min(1.0, 0.05 - implicitVal);
          totalColor = totalColor + (1.-totalDensity) * color(rayPos, 0.) * localDensity;
          totalDensity = totalDensity + (1.-totalDensity) * localDensity;
       }
       
-      stepSize = (implicitVal - noiseVal) * 0.15;
-      //if (implicitVal > 0.6) stepSize += (implicitVal - 0.6);
-      stepSize = max(0.01, stepSize);
+      stepSize = (implicitVal) * 0.15;
+      stepSize = max(0.01, stepSize) * (tvNoise.r*0.04+0.96);
       rayPos += rayDir * stepSize;
    }
-
-   totalColor += vec3(tvNoise.r*0.05);
-
-/*   
-   if (length(rayPos) > sceneSize)
-   {
-      float implicitVal = (length(rayPos) - sceneSize) / stepSize *0.5;
-      totalColor += vec3(implicitVal/40., implicitVal/55., implicitVal/70.);
-   }
-*/
    
-   gl_FragColor = vec4(totalColor, 1.0);
+   float grad = normalize(rayPos).y;
+   totalColor += (1.-totalDensity) * (grad * vec3(0.0,0.0,0.1) + (1.-grad)*vec3(0.0,0.1,0.2));
+   //totalColor += (1.-totalDensity) * (grad * vec3(0.3,0.6,1.0) + (1.-grad)*vec3(0.6,0.8,1.0));
    
-/*
-   //float brightness = normalize(texture3D(Texture0, objectPosition*0.1).rgb - 0.5).r +1.0;
-   //float brightness = normalize(texture3D(Texture0, normalize(objectPosition)*0.3 + 0.5).rgb - 0.5).r * 1.0 + 1.0;
-   //float brightness = normalize(texture3D(Texture0, normalize(objectPosition)*0.3 + 0.5).rgb - 0.35).r * 0.5 + 0.5;
-   vec3 relpos = objectPosition * vec3(0.2, 0.2, 0.2);
-   relpos.z -= fTime0_X * 0.02;
-   //relpos.y -= fTime0_X * 0.005;   
-   relpos += 0.05 * noise(0.3*relpos, 4, 0.4);
-   float brightness = 0.05 * objectPosition.y + noise(relpos, 12, 0.6).r * 0.4 + 0.7;
-
-   gl_FragColor = vec4(0.8 * brightness, 0.9 * brightness, brightness, 1.0);
-   //gl_FragColor = vec4(1.0 * brightness * hemi + hemiSpec, 0.5 * brightness * hemi + hemiSpec, 0.2 * brightness * hemi + hemiSpec, 1.0);
-   //gl_FragColor = normalize(texture3D(Texture0, normalize(objectPosition)*0.3 + 0.5));
-*/
+   gl_FragColor = vec4(totalColor-vec3(0.2), 1.0);
 }]]></RmShaderCode></RmGLShader>
      <RmStreamMapReference NAME="Stream Mapping" API=""/>
      <RmTextureObject NAME="Texture0" API="OpenGL" STATE_INDEX="0" VERTEX_TEXTURE="FALSE">
@@ -1187,7 +1150,7 @@ void main(void)
     </RmGLPass>
    </RmOpenGLEffect>
   </RmEffectGroup>
-  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="48.014599" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
+  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="49.083958" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
   <Rm3DTextureVariable NAME="RandomRGB3D-new" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" FILE_NAME="..\noise\RandomRGB3D-new.dds" ORIGIN="0"/>
  </RmEffectWorkspace>
 </RENDER_MONKEY>
