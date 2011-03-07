@@ -38,8 +38,8 @@ static const PIXELFORMATDESCRIPTOR pfd =
     1,
     PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER,
     PFD_TYPE_RGBA,
-    32,
-    0, 0, 0, 0, 0, 0, 8, 0,
+    24,
+    0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,  // accum
     0,             // zbuffer
     0,              // stencil!
@@ -137,7 +137,7 @@ static int window_init( WININFO *info )
     {
         dmScreenSettings.dmSize       = sizeof(DEVMODE);
         dmScreenSettings.dmFields     = DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
-        dmScreenSettings.dmBitsPerPel = 32;
+        dmScreenSettings.dmBitsPerPel = 24;
         dmScreenSettings.dmPelsWidth  = XRES;
         dmScreenSettings.dmPelsHeight = YRES;
         if( ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
