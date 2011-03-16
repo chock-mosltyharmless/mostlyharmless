@@ -50,49 +50,40 @@ vec3 color(vec3 pos, float sphereSize)\n\
 {\n\
    float fTime0_X = parameters[0][0];\n\
    float transform = parameters[1][0];\n\
-   vec3 relpos = pos * 0.5;\n\
+   vec3 relpos = (pos - vec3(0.0, fTime0_X*0.6, 0.0)) * 0.5;\n\
    \n\
-   relpos += noise(relpos * 0.4, 3, 0.6) * 0.2 + fTime0_X * 0.03;\n\
-   float brightness = -1.0, color, whiteness;\n\
-      \n\
-   brightness = noise(relpos, 3, 0.7).r * 0.2 + 1.3*length(pos) - 0.75;\n\
+   //relpos += noise(relpos*0.03, 3, 0.6) * 1. + fTime0_X * 0.03;\n\
+   float brightness, color;\n\
+   brightness = noise(relpos*0.2, 5, 0.8).r + dot(pos, vec3(0., 1., 0.));\n\
    \n\
-   color = abs(brightness * 8.0) * (1.0 - 0.9*transform);\n\
-   whiteness = brightness * 0.6 * (1.0 - 0.9*transform);\n\
-   \n\
-   vec3 bumpNormal = (2.5-transform)*pos + 1.0;\n\
-   \n\
-   float hemi = 0.5 + 0.5 * bumpNormal.y;\n\
-   hemi = 0.6 * smoothstep(-0.1, 0.5, hemi) - 0.1;\n\
-   float hemiSpec = clamp(1.0 * whiteness, 0.0, 0.5);\n\
-   \n\
-   return clamp(hemiSpec + hemi * (whiteness + color * vec3(0.3, .6, 1.)), -0.2, 1.5);\n\
+   color = brightness*2. * (1.0 - 0.8*transform);\n\
+   return clamp(color * vec3(0.3, .6, 1.), -0.2, 1.5);\n\
+}\n\
+\n\
+vec2 rotate(vec2 pos, float angle)\n\
+{\n\
+	return vec2(cos(angle)*pos.x - sin(angle)*pos.y,\n\
+				sin(angle)*pos.x + cos(angle)*pos.y);\n\
 }\n\
 \n\
 void main(void)\n\
 {  \n\
    float fTime0_X = parameters[0][0];\n\
    float whitecolor = parameters[1][1];\n\
-   vec3 tvNoise =  noise(objectPosition*0.05 + vec3(0.,0.,fTime0_X*0.01), 8, 0.65);\n\
-\n\
    vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));\n\
-   vec3 camPos = vec3(0.0, 0.0, -3.7 + 3.4 * parameters[0][1]);\n\
+   vec3 camPos = vec3(0.0, 0.0, -5.7 + 5.7 * parameters[0][1]);\n\
    \n\
    // rotate camera around y axis\n\
-   float alpha = parameters[0][2]*9.42;\n\
-   camPos.yz = vec2(cos(alpha)*camPos.y - sin(alpha)*camPos.z,\n\
-                    sin(alpha)*camPos.y + cos(alpha)*camPos.z);\n\
-   rayDir.yz = vec2(cos(alpha)*rayDir.y - sin(alpha)*rayDir.z,\n\
-                    sin(alpha)*rayDir.y + cos(alpha)*rayDir.z);\n\
+   float alpha;\n\
    alpha = parameters[0][3]*9.42;\n\
-   camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,\n\
-                    sin(alpha)*camPos.x + cos(alpha)*camPos.z);\n\
-   rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,\n\
-                    sin(alpha)*rayDir.x + cos(alpha)*rayDir.z);\n\
-                    \n\
+   camPos.xz = rotate(camPos.xz, alpha);\n\
+   rayDir.xz = rotate(rayDir.xz, alpha);\n\
+   alpha = parameters[0][2]*9.42;\n\
+   camPos.yz = rotate(camPos.yz, alpha);\n\
+   rayDir.yz = rotate(rayDir.yz, alpha);\n\
    \n\
    vec3 rayPos = camPos;\n\
-   float sceneSize = 12.0;\n\
+   float sceneSize = 16.0;\n\
    vec3 totalColor = vec3(0.,0.,0.);\n\
    float stepSize;\n\
    float totalDensity = 0.0;\n\
@@ -102,17 +93,18 @@ void main(void)\n\
    {\n\
       // base head\n\
       vec3 tmpPos = rayPos;\n\
-      float base1 = abs(tmpPos.y+0.1);\n\
-	  float base2 = abs(length(rayPos.xz) - 0.4);\n\
-	  float socket = length(rayPos + vec3(0., 5., 0.)) - 4.2;  \n\
-	  float base = (max(base1 - 1.1 - parameters[2][3]*11., base2 - parameters[2][2] + 0.5));\n\
-      float implicitVal = min(socket+10000., base);\n\
+      float base1 = abs(tmpPos.y);\n\
+	  float base2 = abs(length(rayPos.xz) - 1.5 + 1.5 * parameters[2][2]) * (0.5 + parameters[3][2]);\n\
+	  float socket = length(rayPos + vec3(0., 9., 0.)) - 8.2 + 20.*parameters[3][1];  \n\
+	  float base = (max(base1 - 1.1 - parameters[2][3]*20., base2 - 1.5*parameters[2][2] + 0.8));\n\
+	  float implicitVal = min(socket * (0.2 + parameters[3][3]), base);\n\
 \n\
-float noiseVal = noise(rayPos*0.15*vec3(1.0,0.05+0.95*parameters[3][3],1.0) - vec3(0.0, fTime0_X*0.1, 0.0), 6, 0.7).r * 0.4;\n\
+      vec3 noiseAdder = noise(rayPos * 0.003  - vec3(0.0, fTime0_X*0.006, 0.0), 3, 0.) * 0.1 * parameters[3][0];\n\
+      float noiseVal = noise(noiseAdder + rayPos*0.04*vec3(1.0,0.05+0.95*parameters[3][0],1.0) - vec3(0.0, fTime0_X*0.03, 0.0), 7, 0.6).r * 0.6;\n\
       implicitVal -= noiseVal;\n\
       \n\
 	  totalColor += totalColorAdder;\n\
-      totalDensity += 0.005;\n\
+      totalDensity += 0.003;\n\
       if (implicitVal < 0.05)\n\
       {\n\
          float localDensity = min(1.0, 0.05 - implicitVal);\n\
@@ -121,15 +113,15 @@ float noiseVal = noise(rayPos*0.15*vec3(1.0,0.05+0.95*parameters[3][3],1.0) - ve
          totalDensity += localDensity ;\n\
       }\n\
       \n\
-      stepSize = (implicitVal) * 0.2;\n\
-      stepSize = max(0.008, stepSize) * (tvNoise.r*0.04+0.96);\n\
+      stepSize = (implicitVal) * 0.3;\n\
+      stepSize = max(0.01, stepSize);\n\
       rayPos += rayDir * stepSize;\n\
    }\n\
    \n\
    float grad = normalize(rayPos).y;\n\
    totalColor += (1.-totalDensity) * (grad * vec3(0.0,0.0,0.1) + (1.-grad)*vec3(0.0,0.1,0.2));\n\
    \n\
-   gl_FragColor = vec4(totalColor-vec3(0.3), 1.0);\n\
+   gl_FragColor = vec4(totalColor-vec3(0.2), 1.0);\n\
 \n\
 }";
 
@@ -145,7 +137,7 @@ void main(void)\n\
    vec2 noiseVal;\n\
    noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43758.5453);\n\
    noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43753.5453);\n\
-   gl_FragColor = texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.03;\n\
+   gl_FragColor = texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.0007*noiseVal.xy) + noiseVal.x*0.02;\n\
 \n\
 }";
 
@@ -351,9 +343,9 @@ void fallingBall(float ftime)
 	parameterMatrix[10] = params.getParam(14, 0.5f);
 	parameterMatrix[11] = params.getParam(15, 0.19f);
 	parameterMatrix[12] = params.getParam(16, 0.53f);
-	parameterMatrix[13] = params.getParam(19, 1.0f);
-	parameterMatrix[14] = params.getParam(20, 0.5f);
-	parameterMatrix[15] = params.getParam(21, 0.5f);
+	parameterMatrix[13] = params.getParam(17, 1.0f);
+	parameterMatrix[14] = params.getParam(18, 0.5f);
+	parameterMatrix[15] = params.getParam(19, 0.5f);
 	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen

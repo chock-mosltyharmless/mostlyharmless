@@ -86,7 +86,7 @@ Parameter::~Parameter(void)
 	{
 		if (changed[par])
 		{
-			sprintf(tmpString, "%d:%.2f ", par, value[par]);
+			sprintf(tmpString, "%d:%.2f(%d) ", par, value[par], (int)(value[par]*127.0f + 0.49f));
 			strcat(string, tmpString);
 		}
 	}
