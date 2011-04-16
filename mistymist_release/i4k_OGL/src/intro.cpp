@@ -88,6 +88,7 @@ vec3 noise(vec3 pos, int iterations, float reduction)\n\
    return result;\n\
 }\n\
 \n\
+/*\n\
 vec3 color(vec3 pos, float sphereSize)\n\
 {\n\
    float fTime0_X = parameters[0][0];\n\
@@ -100,7 +101,31 @@ vec3 color(vec3 pos, float sphereSize)\n\
    \n\
    color = brightness*2. * (1.0 - 0.8*transform);\n\
    return clamp(color * vec3(0.3, .6, 1.), -0.2, 1.5);\n\
-}\n\
+}*/\n\
+vec3 color(vec3 pos, float sphereSize)\n\
+{\n\
+  vec3 relpos = pos * 0.5;\n\
+  float fTime0_X = parameters[0][0];\n\
+   \n\
+   relpos *= vec3(1.0,0.05+0.95*parameters[2][1],1.0);\n\
+   relpos -= vec3(0.0, fTime0_X*0.3, 0.0);\n\
+   relpos += noise(relpos * 0.1, 2, 0.6) * 0.2 + fTime0_X * 0.03;\n\
+   float brightness = -1.0, color, whiteness;\n\
+      \n\
+	  brightness = noise(relpos, 5, 0.8).r * 0.2 + (0.9*dot(pos, vec3(0., 1., 0.)) - 0.75) * (1.-1.1*parameters[1][0]);\n\
+   \n\
+   color = abs(brightness * 4.0);\n\
+   whiteness = brightness * 0.6;\n\
+   \n\
+   vec3 bumpNormal = +2.5*pos + 1.0;\n\
+   \n\
+   float hemi = 0.5 + 0.5 * 1./*bumpNormal.y*/;   \n\
+   hemi = 0.6 * smoothstep(-0.5, 0.5, hemi) - 0.1;\n\
+   //float hemiSpec = clamp(1.0 * whiteness, -0.1, 0.5);\n\
+   float hemiSpec = 0.;\n\
+\n\
+return clamp(hemiSpec + hemi * (whiteness + color * vec3(0.3, 0.6, 1.0) / (length(pos)*(1.-0.8*parameters[1][0])+parameters[1][0])), -0.2, 1.5); \n\
+   }\n\
 \n\
 vec2 rotate(vec2 pos, float angle)\n\
 {\n\
@@ -363,7 +388,7 @@ void intro_do( long itime )
 	glMatrixMode(GL_MODELVIEW);
 	parameterMatrix[0] = ftime; // time	
 	/* shader parameters */
-	int scene = 0;
+	int scene = 7;
 	while ((unsigned int)itime > sceneStart[scene+1] * SYNC_MULTIPLIER && scene < NUM_SCENES - 1)
 	{
 		scene++;
@@ -372,6 +397,7 @@ void intro_do( long itime )
 	{
 		float mu = (float)((unsigned int)itime - sceneStart[scene]*SYNC_MULTIPLIER) / (float)((sceneStart[scene+1]-sceneStart[scene])*SYNC_MULTIPLIER);
 		if (mu > 1.) mu = 1.;
+		if (mu < 0.) mu = 0.;
 		float y0 = (float)(sceneData[scene][k] * (1./128.));
 		float y1 = (float)(sceneData[scene+1][k] * (1./128.));
 		float y2 = (float)(sceneData[scene+2][k] * (1./128.));
