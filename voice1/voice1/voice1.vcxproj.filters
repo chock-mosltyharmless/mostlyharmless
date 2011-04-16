@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Quelldateien\fft">
+      <UniqueIdentifier>{5a41a3cd-f546-4cb1-b379-96e446b08f85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\fft">
+      <UniqueIdentifier>{e348b9d7-9386-4dc1-a92b-83d39c760c45}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+    <None Include="small.ico">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="voice1.ico">
+      <Filter>Ressourcendateien</Filter>
+    </None>
+    <None Include="fft\readme.txt">
+      <Filter>Headerdateien\fft</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="voice1.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\OscSinCos.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\OscSinCos.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealUseTrigo.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealUseTrigo.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealSelect.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealSelect.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealPassInverse.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealPassInverse.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealPassDirect.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealPassDirect.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealFixLenParam.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealFixLen.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTRealFixLen.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTReal.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\FFTReal.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\DynArray.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\DynArray.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\def.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\Array.hpp">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+    <ClInclude Include="fft\Array.h">
+      <Filter>Headerdateien\fft</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="voice1.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="voice1.rc">
+      <Filter>Ressourcendateien</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
