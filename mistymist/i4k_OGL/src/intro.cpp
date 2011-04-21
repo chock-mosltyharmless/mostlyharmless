@@ -22,28 +22,6 @@ int rand();
 //                          SHADER CODE:
 // -------------------------------------------------------------------
 
-// The old color stuffa
-#if 0
-"vec3 color(vec3 pos, float density, float turbulence)\n\
-{\n\
-  float fTime0_X = parameters[0][0];\n\
-  //vec3 innercolor = vec3(parameters[0][1], parameters[0][2], parameters[0][3]);\n\
-  //vec3 outercolor = vec3(parameters[1][0], parameters[1][1], parameters[1][2]);\n\
-  //vec3 innercolor = vec3(0.7, 0.2, 0.00);\n\
-  //vec3 outercolor = vec3(0.0, 0.35, 0.6);\n\
-  vec3 innercolor = vec3(0.6, 0.3, 0.1);\n\
-  vec3 outercolor = vec3(0.1, 0.45, 0.55);\n\
-  vec3 relpos = pos*vec3(1.0,0.05+0.95*parameters[3][0],1.0) - vec3(0.0, fTime0_X*0.8, 0.0);\n\
-  vec3 noiseData = noise(relpos*0.06 + 0.6*turbulence, 2, 0.8);\n\
-  float height = (pos.y + noiseData.x) / (parameters[2][3]+0.03);\n\
-  float colorpart = smoothstep(0., 0.8, length(noiseData)) * (1.-smoothstep(1., 4., length(relpos.xz)));\n\
-  float border = smoothstep(-0.8, 0.2, abs(colorpart - 0.5)) * (1.-density);\n\
-  return mix(innercolor, outercolor, colorpart) * border + smoothstep(4.,15.,height);\n\
-  //return vec3(density, 0., 0.);\n\
-}\n"
-#endif
-
-
 const GLchar *fragmentMainBackground="\
 uniform sampler3D Texture0;\n\
 varying vec3 objectPosition;\n\
@@ -71,16 +49,12 @@ vec3 noise(vec3 pos, int iterations, float reduction)\n\
 vec3 color(vec3 pos, vec3 noiseData)\n\
 {\n\
   float fTime0_X = parameters[0][0];\n\
-  //vec3 innercolor = vec3(parameters[0][1], parameters[0][2], parameters[0][3]);\n\
-  //vec3 outercolor = vec3(parameters[1][0], parameters[1][1], parameters[1][2]);\n\
   vec3 innercolor = vec3(0.4, 0.1, 0.0);\n\
   vec3 outercolor = vec3(0.1, 0.35, 0.65);\n\
-  vec3 relpos = pos*vec3(1.0,0.05+0.95*parameters[3][0],1.) - vec3(0.0, fTime0_X*0.8, 0.0);\n\
-  //vec3 noiseData = noise(relpos*0.06 + 0.6*turbulence, 2, 0.8);\n\
   float height = (pos.y + noiseData.x);\n\
-  float colorpart = smoothstep(-0.5, 0.5, -length(pos) + noiseData.x*12.*(parameters[3][1]+1.) + 2.);\n\
+  float colorpart = smoothstep(-0.5, 0.5, -length(pos) + noiseData.x*12.*(parameters[2][1]+1.) + 2.);\n\
   float border = smoothstep(-0.8, 0.8, abs(colorpart - 0.5));\n\
-  return mix(innercolor, outercolor, colorpart) * border + clamp(height - 2.*parameters[2][3] - 1.,0.0,100.0);\n\
+  return mix(innercolor, outercolor, colorpart) * border + clamp(height - 2.*parameters[1][3] - 1.,0.0,100.0);\n\
 }\n\
 \n\
 vec2 rotate(vec2 pos, float angle)\n\
@@ -91,20 +65,15 @@ vec2 rotate(vec2 pos, float angle)\n\
 void main(void)\n\
 {  \n\
    float fTime0_X = parameters[0][0];\n\
-   float whitecolor = parameters[1][1];\n\
-   //float whitecolor = 1.0;\n\
    vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));\n\
-   vec3 camPos = vec3(0.0, 0.0, -5.7 + 5.7 * parameters[0][1]);\n\
-   //vec3 camPos = vec3(0.0, 0.0, -5.7 + 5.7 * 1.0);\n\
+   vec3 camPos = vec3(0.0, 0.0, -8. + 8. * parameters[0][1]);\n\
    \n\
    // rotate camera around y axis\n\
    float alpha;\n\
    alpha = parameters[0][3]*9.42;\n\
-   //alpha = 0.38*9.42;\n\
    camPos.xz = rotate(camPos.xz, alpha);\n\
    rayDir.xz = rotate(rayDir.xz, alpha);\n\
    alpha = parameters[0][2]*9.42;\n\
-   //alpha = 0.52*9.42;\n\
    camPos.yz = rotate(camPos.yz, alpha);\n\
    rayDir.yz = rotate(rayDir.yz, alpha);\n\
    \n\
@@ -113,30 +82,28 @@ void main(void)\n\
    vec3 totalColor = vec3(0.,0.,0.);\n\
    float stepSize;\n\
    float totalDensity = 0.0;\n\
-   vec3 totalColorAdder = (vec3(0.016, 0.012, 0.009)) * (parameters[1][2]);\n\
-   //vec3 totalColorAdder = (vec3(0.016, 0.014, 0.009) + whitecolor*vec3(0.,0.004,0.008)) * (parameters[1][2]);\n\
-   //vec3 totalColorAdder = (vec3(0.02, 0.014, 0.009) + whitecolor*vec3(0.,0.004,0.008)) * (0.19);\n\
+   vec3 totalColorAdder = (vec3(0.016, 0.012, 0.009)) * (parameters[1][0]);\n\
    \n\
-   while(length(rayPos)<sceneSize && totalDensity < 0.99)\n\
+   while(length(rayPos)<sceneSize && totalDensity < 0.95)\n\
    {\n\
       // base head\n\
       vec3 tmpPos = rayPos;\n\
       float base1 = abs(tmpPos.y);\n\
-	  float base2 = abs(length(rayPos.xz) - 2.0 + 2.0 * parameters[2][2]) * (0.5 + parameters[3][2]);\n\
-	  float socket = length(rayPos + vec3(0., 9., 0.)) - 8.2 + 20.*parameters[3][1];  \n\
-	  float base = (max(base1 - 1.1 - parameters[2][3]*20., base2 - 2.0*parameters[2][2] + 1.2));\n\
+	  float base2 = abs(length(rayPos.xz) - 2.0 + 2.0 * parameters[1][2]) * (0.5 + parameters[2][0]);\n\
+	  float socket = length(rayPos + vec3(0., 9., 0.)) - 8.2 + 20.*parameters[2][1];  \n\
+	  float base = (max(base1 - 1.1 - parameters[1][3]*20., base2 - 2.0*parameters[1][2] + 1.2));\n\
 	  float implicitVal = min(socket, base);\n\
 	  //float implicitVal = base;\n\
 \n\
-      vec3 noiseAdder = noise(rayPos * 0.03  - vec3(0.0, fTime0_X*0.02, 0.0), 2, 0.8) * 0.1 * parameters[3][0];\n\
-      float noiseVal = noise(noiseAdder*0.3 + rayPos*0.04*vec3(1.0,0.05+0.95*parameters[3][0],1.0) - vec3(0.0, fTime0_X*0.03, 0.0), 7, 0.7).r * 0.6;\n\
+      vec3 noiseAdder = noise(rayPos * 0.03  - vec3(0.0, fTime0_X*0.02, 0.0), 2, 0.8) * 0.1 * parameters[1][1];\n\
+      float noiseVal = noise(noiseAdder*0.3 + rayPos*0.04*vec3(1.0,0.05+0.95*parameters[1][1],1.0) - vec3(0.0, fTime0_X*0.03, 0.0), 7, 0.7).r * 0.6;\n\
       implicitVal -= noiseVal;\n\
       \n\
 	  totalColor += totalColorAdder;\n\
       totalDensity += 0.005;\n\
       if (implicitVal < 0.0)\n\
       {\n\
-	  float localDensity = 1. - exp(implicitVal);\n\
+	     float localDensity = 1. - exp(implicitVal);\n\
 		 //float localDensity = 0.1;\n\
 		 localDensity = (1.-totalDensity) * localDensity;\n\
          totalColor += color(rayPos, noiseVal) * localDensity;\n\
@@ -381,39 +348,27 @@ void fallingBall(float ftime)
 	//2:0.52(66) 3:0.75(95) 4:0.80(101) 6:0.07(9) 8:0.64(81) 9:0.03(4) 14:1.00(127) 15:1.00(127) 16:0.91(115) 17:1.00(127) 18:1.00(127) 19:0.00(0) // Twister
 	//2:0.87(111) 3:0.83(106) 4:0.67(85) 6:0.12(15) 8:0.84(107) 14:0.78(99) 15:1.00(127) 16:0.52(66) 17:0.00(0) 18:1.00(127) // Plasma (b)
 	//2:0.00(0) 3:0.67(85) 4:0.21(27) 8:0.81(103) 9:0.08(10) 14:0.73(93) 15:1.00(127) 16:0.65(82) 17:1.00(127) 18:0.00(0) 25:0.00(0) // open stange
-#if 0 // side-by
-	parameterMatrix[1] = params.getParam(2, 0.09f);
-	parameterMatrix[2] = params.getParam(3, 0.54f);
-	parameterMatrix[3] = params.getParam(4, 0.24f);
-	parameterMatrix[4] = params.getParam(5, 0.0f);
-	parameterMatrix[5] = params.getParam(6, 0.34f);
-	parameterMatrix[6] = params.getParam(8, 0.49f);
-	parameterMatrix[7] = params.getParam(9, 1.0f);
-	parameterMatrix[8] = params.getParam(12, 1.0f);
-	parameterMatrix[9] = params.getParam(13, 1.0f);
-	parameterMatrix[10] = params.getParam(14, 1.0f);
-	parameterMatrix[11] = params.getParam(15, 1.0f);
-	parameterMatrix[12] = params.getParam(16, 0.72f);
-	parameterMatrix[13] = params.getParam(17, 1.0f);
-	parameterMatrix[14] = params.getParam(18, 0.62f);
-	parameterMatrix[15] = params.getParam(19, 0.0f);
-#else
-	parameterMatrix[1] = params.getParam(2, 0.60f);
+
+    // New version:
+	// Plasma 2:0.91(115) 3:0.50(64) 4:0.33(42) 5:0.98(125) 6:0.51(65) 8:0.69(88) 9:1.00(127) 12:0.00(0) 13:0.00(0) 
+	// Sidescroll 2:0.75(95) 3:0.83(105) 4:0.21(27) 5:0.83(106) 6:0.72(92) 8:0.79(100) 9:0.09(12) 12:0.16(20) 13:1.00(127) 
+	// Startup (8) 2:0.52(66) 3:0.54(69) 4:0.39(50) 5:0.72(91) 6:0.45(57) 8:0.43(54) 9:1.00(127) 12:0.57(72) 13:1.00(127) 
+	// Final 2:0.31(40) 3:0.70(89) 4:0.31(40) 5:0.87(110) 6:0.81(103) 8:0.74(94) 9:0.07(9) 12:0.00(0) 13:0.00(0) 
+	// Fasto (8) 2:0.69(87) 3:0.54(68) 4:0.39(49) 5:0.75(95) 6:0.00(0) 8:0.72(92) 9:1.00(127) 12:1.00(127) 13:1.00(127) 
+    // flythrough 2:0.99(126) 3:0.80(101) 4:0.69(88) 5:0.93(118) 6:0.72(92) 8:0.69(87) 9:1.00(127) 12:0.00(0) 13:1.00(127) 
+	// Bar (3) 2:0.26(33) 3:0.00(0) 4:1.00(127) 5:1.00(127) 6:0.87(110) 8:0.88(112) 9:1.00(127) 12:0.65(83) 13:1.00(127) 
+	// Cloud (5) 2:0.54(69) 3:0.20(25) 4:0.71(90) 5:0.76(97) 6:0.59(75) 8:0.90(114) 9:0.29(37) 12:0.06(7) 13:1.00(127)
+	// Tunnelb 2:1.00(127) 3:0.54(69) 4:0.35(45) 5:0.72(92) 6:0.54(69) 8:0.71(90) 9:1.00(127) 12:0.00(0) 13:1.00(127) 
+	// Baralong 2:0.72(92) 3:0.22(28) 4:0.73(93) 5:1.00(127) 6:0.78(99) 8:1.00(127) 9:1.00(127) 12:1.00(127) 13:1.00(127) 
+	parameterMatrix[1] = params.getParam(2, 0.75f);
 	parameterMatrix[2] = params.getParam(3, 0.83f);
-	parameterMatrix[3] = params.getParam(4, 0.88f);
-	parameterMatrix[4] = params.getParam(5, 0.0f);
-	parameterMatrix[5] = params.getParam(6, 0.36f);
-	parameterMatrix[6] = params.getParam(8, 0.64f);
-	parameterMatrix[7] = params.getParam(9, 0.0f);
-	parameterMatrix[8] = params.getParam(12, 0.65f);
+	parameterMatrix[3] = params.getParam(4, 0.21f);
+	parameterMatrix[4] = params.getParam(5, 0.83f);
+	parameterMatrix[5] = params.getParam(6, 0.72f);
+	parameterMatrix[6] = params.getParam(8, 0.79f);
+	parameterMatrix[7] = params.getParam(9, 0.09f);
+	parameterMatrix[8] = params.getParam(12, 0.1f);
 	parameterMatrix[9] = params.getParam(13, 1.0f);
-	parameterMatrix[10] = params.getParam(14, 0.93f);
-	parameterMatrix[11] = params.getParam(15, 0.17f);
-	parameterMatrix[12] = params.getParam(16, 0.54f);
-	parameterMatrix[13] = params.getParam(17, 0.75f);
-	parameterMatrix[14] = params.getParam(18, 0.07f);
-	parameterMatrix[15] = params.getParam(19, 0.60f);
-#endif
 	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen
