@@ -174,7 +174,7 @@ varying mat4 p;\
 void main(void)\
 {\
 vec2 n=vec2(fract(sin(dot(o.xy+p[0][0],vec2(12.9898,78.233)))*43758.5453));\
-gl_FragColor=texture2D(t,.5*o.xy+.5+.001*n)+n.x*.03;\
+gl_FragColor=texture2D(t,.5*o.xy+.5+.0007*n)+n.x*.02;\
 }";
 
 const GLchar *vertexMainObject="\

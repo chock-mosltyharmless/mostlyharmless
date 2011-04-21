@@ -18,7 +18,7 @@ PUBLIC	??_C@_0P@DFHCPFMO@glShaderSource?$AA@		; `string'
 PUBLIC	??_C@_0BA@FLKLHNKP@glCreateProgram?$AA@		; `string'
 PUBLIC	??_C@_0P@HGHBNC@glCreateShader?$AA@		; `string'
 PUBLIC	??_C@_0HF@NDFDEMFF@varying?5vec3?5o?$DLvarying?5mat4?5p?$DLvo@ ; `string'
-PUBLIC	??_C@_0MD@NABIFNKE@uniform?5sampler2D?5t?$DLvarying?5vec3@ ; `string'
+PUBLIC	??_C@_0ME@IFOMIINJ@uniform?5sampler2D?5t?$DLvarying?5vec3@ ; `string'
 PUBLIC	??_C@_0EHG@KNMKDGNO@uniform?5sampler3D?5t?$DLvarying?5vec3@ ; `string'
 PUBLIC	?viewport@@3PAHA				; viewport
 PUBLIC	?hWnd@@3PAUHWND__@@A				; hWnd
@@ -67,13 +67,13 @@ CONST	SEGMENT
 	DB	'g vec3 o;varying mat4 p;void main(void){p=gl_ModelViewMatrix;'
 	DB	'o=vec3(gl_Vertex.xy,.99);gl_Position=vec4(o,1.);}', 00H ; `string'
 CONST	ENDS
-;	COMDAT ??_C@_0MD@NABIFNKE@uniform?5sampler2D?5t?$DLvarying?5vec3@
+;	COMDAT ??_C@_0ME@IFOMIINJ@uniform?5sampler2D?5t?$DLvarying?5vec3@
 CONST	SEGMENT
-??_C@_0MD@NABIFNKE@uniform?5sampler2D?5t?$DLvarying?5vec3@ DB 'uniform sa'
+??_C@_0ME@IFOMIINJ@uniform?5sampler2D?5t?$DLvarying?5vec3@ DB 'uniform sa'
 	DB	'mpler2D t;varying vec3 o;varying mat4 p;void main(void){vec2 '
 	DB	'n=vec2(fract(sin(dot(o.xy+p[0][0],vec2(12.9898,78.233)))*4375'
-	DB	'8.5453));gl_FragColor=texture2D(t,.5*o.xy+.5+.001*n)+n.x*.03;'
-	DB	'}', 00H					; `string'
+	DB	'8.5453));gl_FragColor=texture2D(t,.5*o.xy+.5+.0007*n)+n.x*.02'
+	DB	';}', 00H					; `string'
 CONST	ENDS
 ;	COMDAT ??_C@_0EHG@KNMKDGNO@uniform?5sampler3D?5t?$DLvarying?5vec3@
 CONST	SEGMENT
@@ -350,7 +350,7 @@ _sceneDelta DB	00H
 	DB	00H
 	ORG $+3
 ?fragmentMainBackground@@3PBDB DD FLAT:??_C@_0EHG@KNMKDGNO@uniform?5sampler3D?5t?$DLvarying?5vec3@ ; fragmentMainBackground
-?fragmentOffscreenCopy@@3PBDB DD FLAT:??_C@_0MD@NABIFNKE@uniform?5sampler2D?5t?$DLvarying?5vec3@ ; fragmentOffscreenCopy
+?fragmentOffscreenCopy@@3PBDB DD FLAT:??_C@_0ME@IFOMIINJ@uniform?5sampler2D?5t?$DLvarying?5vec3@ ; fragmentOffscreenCopy
 ?vertexMainObject@@3PBDB DD FLAT:??_C@_0HF@NDFDEMFF@varying?5vec3?5o?$DLvarying?5mat4?5p?$DLvo@ ; vertexMainObject
 _glnames DD	FLAT:??_C@_0P@HGHBNC@glCreateShader?$AA@
 	DD	FLAT:??_C@_0BA@FLKLHNKP@glCreateProgram?$AA@
