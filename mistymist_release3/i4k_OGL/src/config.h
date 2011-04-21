@@ -10,8 +10,9 @@
 //#define SETRESOLUTION
 #define USEDSOUND
 //#define CLEANEXIT
-#define XRES        1600
+#define XRES        1024
 #define YRES        (1080 * XRES / 1920)
+//#define YRES        (480 * XRES / 640)
 #define OFFSCREEN_WIDTH 512
 #define OFFSCREEN_HEIGHT 256
 
