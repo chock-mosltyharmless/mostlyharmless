@@ -4,13 +4,16 @@ function writeDDS(filename, img)
 
 fid = fopen(filename, 'wb');
 
+width = size(img, 2)
+height = size(img, 3)
+
 % write header
 fwrite(fid, int32(542327876), 'int32');     % "DDS "
 fwrite(fid, int32(124), 'int32');		    % dwSize
 fwrite(fid, int32(4096+7), 'int32');	    % dwFlags
-fwrite(fid, int32(size(img,2)), 'int32');   % height
-fwrite(fid, int32(size(img,1)), 'int32');   % width
-fwrite(fid, int32(size(img,1)*4), 'int32'); % pitch
+fwrite(fid, int32(size(img,3)), 'int32');   % height
+fwrite(fid, int32(size(img,2)), 'int32');   % width
+fwrite(fid, int32(size(img,2)*4), 'int32'); % pitch
 fwrite(fid, int32(0), 'int32');		        % depth
 fwrite(fid, int32(0), 'int32');		        % mipmap
 fwrite(fid, int32(1:11), 'int32');	        % reserved[11]
@@ -31,7 +34,7 @@ fwrite(fid, int32(0), 'int32');		        % dwCaps4
 fwrite(fid, int32(0), 'int32');		        % dwReserved2
 
 % write data
-fwrite(fid, uint8(img(:)*255), 'uint8');
+fwrite(fid, uint8(img(:)), 'uint8');
 
 fclose(fid);
 
