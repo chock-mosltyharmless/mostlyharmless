@@ -1,7 +1,11 @@
 #pragma once
 
 #define CAM_WIDTH 640
-#define CAM_HEIGHT 360
+#define CAM_HEIGHT 480 // 360 for product...
+#define TEXTURE_WIDTH 1024
+#define TEXTURE_HEIGHT 512
+#define TEXTURE_U_RANGE ((float)CAM_WIDTH / (float)TEXTURE_WIDTH)
+#define TEXTURE_V_RANGE ((float)CAM_HEIGHT / (float)TEXTURE_HEIGHT)
 
 class VideoTexture
 {
@@ -13,6 +17,7 @@ public:
 	HRESULT init();
 	void deinit();
 	void captureFrame();
+	void drawScreenSpaceQuad(float startX, float startY, float endX, float endY);
 
 private:
 	HRESULT GetUnconnectedPin(IBaseFilter *pFilter, PIN_DIRECTION PinDir, IPin **ppPin);
@@ -25,8 +30,11 @@ private:
 	HRESULT ConnectFilters(IGraphBuilder *pGraph, IPin *pOut, IBaseFilter *pDest);
 	void LocalDeleteMediaType(AM_MEDIA_TYPE *pmt);
 
+public:
+	// Note: This data is only usable after a call to captureFrame()
+	unsigned char textureData[CAM_WIDTH*CAM_HEIGHT*3];
+
 private:
-	unsigned char *textureData[CAM_WIDTH*CAM_HEIGHT*3];
 	IGraphBuilder *pGraph;
 	ICaptureGraphBuilder2 *pBuild;
 	IMediaControl *pMediaControl;

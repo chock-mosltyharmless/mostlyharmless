@@ -10,7 +10,6 @@ VideoTexture::VideoTexture(void) :
 	pGrabberBase(NULL),
 	pNullRender(NULL),
 	texture(-1)
-
 {
 }
 
@@ -30,6 +29,20 @@ void VideoTexture::captureFrame()
 	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, CAM_WIDTH, CAM_HEIGHT, GL_BGR, GL_UNSIGNED_BYTE, textureData);
 }
 
+void VideoTexture::drawScreenSpaceQuad(float startX, float startY, float endX, float endY)
+{
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0, TEXTURE_V_RANGE);
+	glVertex3f(startX, endY, 0.5);
+	glTexCoord2f(TEXTURE_U_RANGE, TEXTURE_V_RANGE);
+	glVertex3f(endX, endY, 0.5);
+	glTexCoord2f(TEXTURE_U_RANGE, 0.0);
+	glVertex3f(endX, startY, 0.5);
+	glTexCoord2f(0.0, 0.0);
+	glVertex3f(startX, startY, 0.5);
+	glEnd();
+}
+
 HRESULT VideoTexture::init()
 {
 	// Texture -> This will be put into the camera module	
@@ -40,8 +53,9 @@ HRESULT VideoTexture::init()
 	//glTexImage2D(GL_TEXTURE_2D, 0, 3, 640, 480, 0, GL_RGB, GL_UNSIGNED_BYTE, ...THe data111!!!);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
-	glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, CAM_WIDTH, CAM_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, textureData);
+	// Enable Texture Mapping
+	glEnable(GL_TEXTURE_2D);
+	glTexImage2D(GL_TEXTURE_2D, 0, 3, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
 
 	// Video stuff:
 	// Create captue graph builder:
