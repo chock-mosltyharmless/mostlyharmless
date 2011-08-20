@@ -156,7 +156,6 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		exit(-1);
 	}
 
-	int timer = 0;
     do
     {
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -173,18 +172,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		videoTexture.captureFrame();
 
 		// render loop (screen aligned quad)
-		glBegin(GL_QUADS);
-		timer++;
-		glTexCoord2f(0.0, 1.0);
-		glVertex3f(-1.0, 1.0, 0.5);
-		glTexCoord2f(1.0, 1.0);
-		glVertex3f(1.0, 1.0, 0.5);
-		glTexCoord2f(1.0, 0.0);
-		glVertex3f(1.0, -1.0, 0.5);
-		glTexCoord2f(0.0, 0.0);
-		glVertex3f(-1.0, -1.0, 0.5);
-		glEnd();
-		glEnable(GL_TEXTURE_2D);
+		videoTexture.drawScreenSpaceQuad(-1.0, -1.0, 1.0, 1.0);
+
+		// swap buffers
 		HDC hDC = GetDC(hwnd);
 		wglSwapLayerBuffers(hDC, WGL_SWAP_MAIN_PLANE);
     } while (msg.message != WM_QUIT);
