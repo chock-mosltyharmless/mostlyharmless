@@ -9,28 +9,138 @@ VideoTexture::VideoTexture(void) :
 	pGrabber(NULL),
 	pGrabberBase(NULL),
 	pNullRender(NULL),
-	texture(-1)
+	numFaces(0)
 {
+	textures[0] = -1;
+	textures[1] = -1;
+	textures[2] = -1;
+	boxFaceSpecial[0] = -1;
+	boxFaceSpecial[1] = -1;
+	boxFaceSpecial[2] = -1;
 }
 
 VideoTexture::~VideoTexture(void)
 {
 }
 
-// Get frame from camera and set the texture.
-void VideoTexture::captureFrame()
+void VideoTexture::removeLastFace()
 {
-	// bind texture
-	glBindTexture(GL_TEXTURE_2D, texture);
+	if (numFaces == 0) return;
 
+	numFaces--;
+	if (boxFaceSpecial[0] == numFaces) boxFaceSpecial[0] = -1;
+	if (boxFaceSpecial[1] == numFaces) boxFaceSpecial[1] = -1;
+	if (boxFaceSpecial[2] == numFaces) boxFaceSpecial[2] = -1;
+}
+
+// range 0..1 for each!
+void VideoTexture::addFace(float xPos, float yPos, int faceSpecial)
+{
+	if (numFaces == MAX_NUM_FACES) return;
+
+	setFaceRect(numFaces, xPos, yPos);
+
+	if (faceSpecial >= 0)
+	{
+		boxFaceSpecial[faceSpecial] = numFaces;
+	}
+
+	numFaces++;
+}
+
+void VideoTexture::setFaceRect(int faceID, float xPos, float yPos)
+{
+	// convert location into camera space
+	int iPosX = (int)(CAM_WIDTH - xPos * CAM_WIDTH + 0.5f) - FACE_WIDTH/2;
+	int iPosY = (int)(yPos * CAM_HEIGHT + 0.5f) - FACE_HEIGHT/2;
+
+	iPosX = (iPosX >= CAM_WIDTH) ? CAM_WIDTH - 1 : iPosX;
+	iPosX = (iPosX < 0) ? 0 : iPosX;
+	iPosY = (iPosY >= CAM_HEIGHT) ? CAM_HEIGHT - 1 : iPosY;
+	iPosY = (iPosY < 0) ? 0 : iPosY;
+
+	faceLocation[faceID][0] = iPosX;
+	faceLocation[faceID][1] = iPosY;
+	currentFaceLocation[faceID][0] = iPosX;
+	currentFaceLocation[faceID][1] = iPosY;
+
+	// copy image data
+	for (int y = 0; y < FACE_HEIGHT; y++)
+	{
+		for (int x = 0; x < FACE_WIDTH; x++)
+		{
+			for (int c = 0; c < 3; c++)
+			{
+				int pos = ((iPosY + y) * CAM_WIDTH + iPosX + x) * 3 + c;
+				if (pos >= 0 && pos < CAM_WIDTH*CAM_HEIGHT*3)
+				{
+					faceData[faceID][y][x][c] = textureData[pos];
+				}
+			}
+		}
+	}
+}
+
+int VideoTexture::getNearestFace(float xPos, float yPos)
+{
+	if (numFaces == 0) return 0;
+	
+	// convert location into camera space
+	int iPosX = (int)(CAM_WIDTH - xPos * CAM_WIDTH + 0.5f) - FACE_WIDTH/2;
+	int iPosY = (int)(yPos * CAM_HEIGHT + 0.5f) - FACE_HEIGHT/2;
+
+	int bestFace = 0;
+	int bestDist = (1<<30);
+	for (int face = 0; face < numFaces; face++)
+	{
+		int dist = (iPosX - currentFaceLocation[face][0]) * (iPosX - currentFaceLocation[face][0]) +
+				   (iPosY - currentFaceLocation[face][1]) * (iPosY - currentFaceLocation[face][1]);
+		if (dist < bestDist)
+		{
+			bestDist = dist;
+			bestFace = face;
+		}
+	}
+
+	return bestFace;
+}
+
+// Get frame from camera and set the texture.
+void VideoTexture::captureFrame(int additionalUpdate)
+{
 	// capture from camera:
 	long pBufferSize = CAM_WIDTH*CAM_HEIGHT*3;
 	pGrabber->GetCurrentBuffer(&pBufferSize, (long *)textureData);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, CAM_WIDTH, CAM_HEIGHT, GL_BGR, GL_UNSIGNED_BYTE, textureData);
+
+	// bind textures
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, CAM_WIDTH, CAM_HEIGHT,
+					GL_BGR, GL_UNSIGNED_BYTE, textureData);
+	if (additionalUpdate)
+	{
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textures[additionalUpdate]);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, CAM_WIDTH, CAM_HEIGHT,
+						GL_BGR, GL_UNSIGNED_BYTE, textureData);
+	}
 }
 
 void VideoTexture::drawScreenSpaceQuad(float startX, float startY, float endX, float endY)
 {
+	/* bind textures */
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	//glActiveTexture(GL_TEXTURE1);
+	//glBindTexture(GL_TEXTURE_2D, textures[1]);
+	//glActiveTexture(GL_TEXTURE2);
+	//glBindTexture(GL_TEXTURE_2D, textures[2]);
+	// All three textures are set to the background texture (that's overkill, I know).
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, textures[0]);
+
 	glBegin(GL_QUADS);
 	glTexCoord2f(0.0, TEXTURE_V_RANGE);
 	glVertex3f(startX, endY, 0.5);
@@ -43,19 +153,196 @@ void VideoTexture::drawScreenSpaceQuad(float startX, float startY, float endX, f
 	glEnd();
 }
 
-HRESULT VideoTexture::init()
+void VideoTexture::drawBox(float startX, float startY, float endX, float endY)
 {
-	// Texture -> This will be put into the camera module	
-	glGenTextures(1, &texture);					// Create The Texture
-	// Typical Texture Generation Using Data From The Bitmap
-	glBindTexture(GL_TEXTURE_2D, texture);
-	// Generate The Texture (640x480... make changeable!)
-	//glTexImage2D(GL_TEXTURE_2D, 0, 3, 640, 480, 0, GL_RGB, GL_UNSIGNED_BYTE, ...THe data111!!!);
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
-	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
-	// Enable Texture Mapping
+	glBegin(GL_LINES);
+	glVertex3f(startX, startY, 0.5f);
+	glVertex3f(startX, endY, 0.5f);
+	glVertex3f(startX, endY, 0.5f);
+	glVertex3f(endX, endY, 0.5f);
+	glVertex3f(endX, endY, 0.5f);
+	glVertex3f(endX, startY, 0.5f);
+	glVertex3f(endX, startY, 0.5f);
+	glVertex3f(startX, startY, 0.5f);
+	glEnd();
+}
+
+void VideoTexture::updateFaceBoxes(bool onlyFaceThree)
+{
+	// No face three at all
+	if (onlyFaceThree) return;
+
+	for (int i = 0; i < numFaces; i++)
+	{
+		int bestXShift = 0;
+		int bestYShift = 0;
+		int bestShiftVal = 1<<30;
+
+		if (onlyFaceThree && i != boxFaceSpecial[2]) continue;
+
+		// calculate shift
+		// start with shift around center pos
+		for (int yShift = -4; yShift < 5; yShift+=2)
+		{
+			for (int xShift = -4; xShift < 5; xShift+=2)
+			{
+				int iPosX = faceLocation[i][0];
+				int iPosY = faceLocation[i][1];
+				int shiftVal = 0;
+				
+				if (xShift + iPosX >= 0 &&
+					xShift + iPosX + FACE_WIDTH < CAM_WIDTH &&
+					yShift + iPosY >= 0 &&
+					yShift + iPosY + FACE_HEIGHT < CAM_HEIGHT)
+				{
+					for (int x = 0; x < FACE_WIDTH; x++)
+					{
+						for (int y = 0; y < FACE_HEIGHT; y++)
+						{
+							for (int c = 0; c < 3; c++)
+							{
+								int pos = ((iPosY + y + yShift) * CAM_WIDTH + xShift + iPosX + x) * 3 + c;
+								shiftVal += abs((int)faceData[i][y][x][c] - (int)textureData[pos]);
+							}
+						}
+					}
+				}
+				else
+				{
+					shiftVal = 1<<30;
+				}
+
+				if (shiftVal < bestShiftVal)
+				{
+					bestShiftVal = shiftVal;
+					bestXShift = xShift;
+					bestYShift = yShift;
+				}
+			}
+		}
+		// now shift around new pos
+		for (int yShift = -9; yShift < 10; yShift++)
+		{
+			if (/*yShift == -2 || yShift == 2 ||*/ yShift == -4 || yShift == 4 || yShift == -6 || yShift == 6 || yShift == -8 || yShift == 8) continue;
+			for (int xShift = -9; xShift < 10; xShift++)
+			{
+				if (/*xShift == -2 || xShift == 2 ||*/ xShift == -4 || xShift == 4 || xShift == -6 || xShift == 6 || xShift == -8 || xShift == 8) continue;
+				int iPosX = currentFaceLocation[i][0];
+				int iPosY = currentFaceLocation[i][1];
+				int shiftVal = 0;
+				
+				if (xShift + iPosX >= 0 &&
+					xShift + iPosX + FACE_WIDTH < CAM_WIDTH &&
+					yShift + iPosY >= 0 &&
+					yShift + iPosY + FACE_HEIGHT < CAM_HEIGHT)
+				{
+					for (int x = 0; x < FACE_WIDTH; x++)
+					{
+						for (int y = 0; y < FACE_HEIGHT; y++)
+						{
+							for (int c = 0; c < 3; c++)
+							{
+								int pos = ((iPosY + y + yShift) * CAM_WIDTH + xShift + iPosX + x) * 3 + c;
+								shiftVal += abs((int)faceData[i][y][x][c] - (int)textureData[pos]);
+							}
+						}
+					}
+				}
+				else
+				{
+					shiftVal = 1<<30;
+				}
+
+				if (shiftVal < bestShiftVal)
+				{
+					bestShiftVal = shiftVal;
+					bestXShift = xShift + currentFaceLocation[i][0] - faceLocation[i][0];
+					bestYShift = yShift + currentFaceLocation[i][1] - faceLocation[i][1];
+				}
+			}
+		}
+
+		currentFaceLocation[i][0] = bestXShift + faceLocation[i][0];
+		currentFaceLocation[i][1] = bestYShift + faceLocation[i][1];
+		drawFaceBox[i] = bestShiftVal < FACE_WIDTH * FACE_HEIGHT * 3 * 10;
+		drawFaceBox[i] = true;
+	}	
+}
+
+void VideoTexture::getFaceRect(int faceID, float *dest,
+							   float startX, float startY, float endX, float endY)
+{
+	//float sX = 1.0f - (float)(currentFaceLocation[faceID][0] - FACE_WIDTH/4) / (float)CAM_WIDTH;
+	//float eX = 1.0f - (float)(currentFaceLocation[faceID][0] + 5*FACE_WIDTH/4) / (float)CAM_WIDTH;
+	float sX = 1.0f - (float)(currentFaceLocation[faceID][0]) / (float)CAM_WIDTH;
+	float eX = 1.0f - (float)(currentFaceLocation[faceID][0] + FACE_WIDTH) / (float)CAM_WIDTH;	
+	float sY = (float)(currentFaceLocation[faceID][1]) / (float)CAM_HEIGHT;
+	float eY = (float)(currentFaceLocation[faceID][1] + FACE_HEIGHT) / (float)CAM_HEIGHT;
+
+	dest[0] = startX + eX * (endX - startX);
+	dest[1] = startY + sY * (endY - startY);
+	dest[2] = startX + sX * (endX - startX);
+	dest[3] = startY + eY * (endY - startY);
+}
+
+// You need to disable textures first!!!
+void VideoTexture::drawFaceBoxes(float startX, float startY, float endX, float endY, int time,
+								 bool onlyFaceThree, int highlight)
+{
+	// No face three at all
+	if (onlyFaceThree) return;
+	
+	for (int i = 0; i < numFaces; i++)
+	{
+		if (onlyFaceThree && i != boxFaceSpecial[2]) continue;
+
+		if (i == boxFaceSpecial[0] || i == boxFaceSpecial[1] || i == boxFaceSpecial[2]) glColor3ub(196, 0, 0);
+		else glColor3ub(230, 205, 0);
+
+		if (highlight == i) glColor3ub(0, 255, 0);
+
+		float sX = 1.0f - (float)(currentFaceLocation[i][0]) / (float)CAM_WIDTH;
+		float eX = 1.0f - (float)(currentFaceLocation[i][0] + FACE_WIDTH) / (float)CAM_WIDTH;
+		float sY = (float)(currentFaceLocation[i][1]) / (float)CAM_HEIGHT;
+		float eY = (float)(currentFaceLocation[i][1] + FACE_HEIGHT) / (float)CAM_HEIGHT;
+
+		sX = startX + sX * (endX - startX);
+		eX = startX + eX * (endX - startX);
+		sY = startY + sY * (endY - startY);
+		eY = startY + eY * (endY - startY);
+
+		// check whether timing is OK:
+		int lastDisplay = 50000;
+		int referenceTime = abs(((i + 123527) * 95762783 + 74839421) * 73545751) % lastDisplay;
+
+		if (drawFaceBox[i] && referenceTime < time)
+		{
+			drawBox(sX, sY, eX, eY);
+		}
+	}
+}
+
+// use cameraID 1 for first and so on
+HRESULT VideoTexture::init(int cameraID)
+{
+	if (cameraID <= 0) return S_FALSE;
+
 	glEnable(GL_TEXTURE_2D);
-	glTexImage2D(GL_TEXTURE_2D, 0, 3, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+
+	// Texture -> This will be put into the camera module	
+	glGenTextures(3, textures);					// Create The Texture
+	// Typical Texture Generation Using Data From The Bitmap
+	for (int i = 0; i < 3; i++)
+	{
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, textures[i]);
+		// Generate The Texture (640x480... make changeable!)
+		//glTexImage2D(GL_TEXTURE_2D, 0, 3, 640, 480, 0, GL_RGB, GL_UNSIGNED_BYTE, ...THe data111!!!);
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
+		glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
+		// Enable Texture Mapping
+		glTexImage2D(GL_TEXTURE_2D, 0, 3, TEXTURE_WIDTH, TEXTURE_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	}
 
 	// Video stuff:
 	// Create captue graph builder:
@@ -66,7 +353,10 @@ HRESULT VideoTexture::init()
 	//DisplayDeviceInformation(enumerator);
 	// Take the first camera:
 	IMoniker *pMoniker = NULL;
-	enumerator->Next(1, &pMoniker, NULL);
+	for (int i = 0; i < cameraID; i++)
+	{
+		enumerator->Next(1, &pMoniker, NULL);
+	}
 	IBaseFilter *pCap = NULL;
 	hr = pMoniker->BindToObject(0, 0, IID_IBaseFilter, (void**)&pCap);
 	if (SUCCEEDED(hr))
@@ -177,7 +467,7 @@ HRESULT VideoTexture::init()
 void VideoTexture::deinit()
 {
 	// Delete texture
-	if (texture >= 0) glDeleteTextures(1, &texture); texture = -1;
+	if (textures[0] >= 0) glDeleteTextures(2, textures); textures[0] = -1; textures[1] = -1;
 
 	// Release video stuff
 	if (pMediaControl) pMediaControl->Stop();

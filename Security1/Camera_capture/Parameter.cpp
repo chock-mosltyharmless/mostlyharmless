@@ -81,6 +81,7 @@ Parameter::~Parameter(void)
 		rc = midiInClose(midiInDevice[devID]);
 	}
 
+#if 0
 	/* Save to clipboard... */
 	string[0] = 0;
 	for (int par = 0; par < NUM_PARAMETERS; par++)
@@ -93,6 +94,7 @@ Parameter::~Parameter(void)
 	}
 
 	CopyToClipboard(string);
+#endif
 }
 
 float Parameter::getParam(int index, float defaultValue)
