@@ -16,6 +16,7 @@
 // The number of "mel-" bands
 #define NUM_BANDS 12
 #define NOISE_LENGTH (1<<20)
+#define PITCH_RESOLUTION 24
 
 // Globale Variablen:
 HINSTANCE hInst;								// Aktuelle Instanz
@@ -130,7 +131,8 @@ void estimateFrame(int frameID, double fr = -1.0)
 	if (fr < 0)
 	{
 		topEnergy = 0.0;
-		for (threePitch = 9.0; threePitch < 22.5; threePitch++)
+		//for (threePitch = 9.0; threePitch < 22.5; threePitch++)
+		for (threePitch = 25.0; threePitch < 45.5; threePitch++)
 		{
 			double energy = 0.0;
 			for (int k = 1; k <= 3; k++)
@@ -154,7 +156,7 @@ void estimateFrame(int frameID, double fr = -1.0)
 	// convert to pitch saver
 	double freq = (topThreePitch / 3.0) * 44100 / WINDOW_SIZE;
 	double pitchIncr = freq / 44100.0 * 3.1415926 * 2.0;
-	pitch[frameID] = (int)(floor(log(pitchIncr)/log(2.0)*24.0 + 24.0 * 10.0 + 0.5));
+	pitch[frameID] = (int)(floor(log(pitchIncr)/log(2.0)*PITCH_RESOLUTION + PITCH_RESOLUTION * 10.0 + 0.5));
 	
 	// convert pitch to FFT index
 	// This is the player code. I can get from here on...
@@ -189,6 +191,7 @@ void estimateFrame(int frameID, double fr = -1.0)
 	}
 
 	amplitudeDefined[frameID] = true;
+	//pitch[frameID] -= 24;
 }
 
 // Makes the first (bad) estimate of the synthesis parameters
@@ -291,6 +294,82 @@ void loadFile(const char *filename)
 	fclose(fid);
 }
 
+void exportFile(const char *filename)
+{
+	FILE *fid = fopen(filename, "w");
+	if (fid == NULL)
+	{
+		return;
+	}
+
+	// write the pitch
+	fprintf(fid, "char pitch[] = {\n");
+	fprintf(fid, "    %d, ", pitch[0]);
+	for (int i = 1; i < refSpecNumFrames; i++)
+	{
+		fprintf(fid, "%d,", pitch[i] - pitch[i-1]);
+	}
+	fprintf(fid, "\n};\n\n");
+	
+	// write the skipsize
+	fprintf(fid, "char frameStep[] = {\n");
+
+	int step = 0;
+	int refSpecNumDefinedFrames = 0;
+	for (int i = 0; i < refSpecNumFrames; i++)
+	{
+		if (amplitudeDefined[i])
+		{
+			fprintf(fid, "    %d,\n", step);
+			step = 0;
+			refSpecNumDefinedFrames++;
+		}
+		else
+		{
+			step++;
+		}
+	};
+	fprintf(fid, "};\n\n");
+
+	// write the amplitudes (bands in one column)
+	fprintf (fid, "char amplitude[][%d] = {\n", NUM_BANDS);
+	fprintf (fid, "    {");
+	int oldAmplitude = 0;
+	for (int i = 0; i < NUM_BANDS; i++)
+	{
+		fprintf(fid, "%d, ", amplitude[i] - oldAmplitude);
+		oldAmplitude = amplitude[i];
+	}
+	fprintf(fid, "},\n");
+	int oldPos = 0;
+	for (int j = 1; j < refSpecNumFrames; j++)
+	{
+		if (amplitudeDefined[j])
+		{
+			fprintf(fid, "    {");
+			int oldOldAmplitude = 0;
+			oldAmplitude = 0;
+			for (int i = 0; i < NUM_BANDS; i++)
+			{
+				int pos = j*NUM_BANDS + i;
+				int oPos = oldPos*NUM_BANDS + i;
+				fprintf(fid, "%d, ", (amplitude[pos] - oldAmplitude) - (amplitude[oPos] - oldOldAmplitude));
+				oldAmplitude = amplitude[pos];
+				oldOldAmplitude = amplitude[oPos];			
+			}
+			oldPos = j;
+			fprintf(fid, "},\n");
+		}
+	}
+	fprintf(fid, "};\n\n");
+
+	fprintf(fid, "#define NUM_FRAMES %d\n", refSpecNumFrames);
+	fprintf(fid, "#define NUM_DEFINED_FRAMES %d\n", refSpecNumDefinedFrames);
+
+	// done.
+	fclose(fid);
+}
+
 void saveFile(const char *filename)
 {
 	int version = 1;
@@ -304,6 +383,18 @@ void saveFile(const char *filename)
 	fwrite(pitch, sizeof(*pitch), refSpecNumFrames, fid);
 	fwrite(amplitude, sizeof(*amplitude), refSpecNumFrames * NUM_BANDS, fid);
 	fwrite(amplitudeDefined, sizeof(*amplitudeDefined), refSpecNumFrames, fid);
+	fclose(fid);
+}
+
+void saveWavFile(const char *filename)
+{
+	FILE *fid = fopen(filename, "wb");
+	if (fid == NULL)
+	{
+		return;
+	}
+	//if (dirty) undirty();
+	fwrite(wavefile, refWaveLength*MZK_NUMCHANNELS*sizeof(short)+44, 1, fid );
 	fclose(fid);
 }
 
@@ -567,21 +658,35 @@ void undirty()
 		{
 			double startPitch = (double)pitch[frame];
 			double deltaPitch = (double)(pitch[frame+1] - startPitch) * (1.0/FRAME_STEP);
+			
+			//startPitch -= 24;
+			
 			double startAmplitude = d_amplitude[frame*NUM_BANDS+band];
 			double deltaAmplitude = (d_amplitude[(frame+1)*NUM_BANDS+band] - startAmplitude) * (1.0/FRAME_STEP);
+
+			startAmplitude -= 2.0;
+
 			for (int i = 0; i < FRAME_STEP; i++)
 			{
 				for (int bandTone = 0; bandTone < numBandTones; bandTone++)
 				{	
-					double noisyness = (double)(band) * 0.125f;
+					//double noisyness = (double)(band) * 0.125f;
+					//double noisyness = (double)(band) * (0.0625f + 0.03125f);
+					//double noisyness = (double)(overtone+bandTone) * (0.0625f);
+					//double noisyness = (double)(overtone+bandTone) * (0.0625f+0.03125f) - 0.5f;
+					//double noisyness = (double)(overtone+bandTone) * (0.125f) - 1.0;
+					double noisyness = (double)(overtone+bandTone) * (0.03125f) - 0.5;
 					if (noisyness > 1.0) noisyness = 1.0;					
-					double t = noisyness * noise[(i+FRAME_STEP*frame+16768*(overtone+bandTone))%NOISE_LENGTH] +
+					if (noisyness < 0.0) noisyness = 0.0;
+					double t = noisyness * 4. * noise[(i+FRAME_STEP*frame+16768*(overtone+bandTone))%NOISE_LENGTH] +
 						       (1.0-noisyness);
 					double output = sin(curPitch*(overtone+bandTone)) * t;
 					wave[i+FRAME_STEP*frame] += pow(2.0, startAmplitude) * output;
 				}
-				//double jitter = noise[(i+FRAME_STEP*frame)%NOISE_LENGTH] * 0.003;
-				curPitch += pow(2.0, startPitch * (1.0/24) - 10.0);// + jitter;
+				//double jitter = noise[(i+FRAME_STEP*frame)%NOISE_LENGTH] * 0.002;
+				//double jitter = sin((i+FRAME_STEP*frame)*0.005) * 0.0004;
+				double jitter = 0.0;
+				curPitch += pow(2.0, startPitch * (1.0/PITCH_RESOLUTION) - 10.0) + jitter;
 				startPitch += deltaPitch;
 				startAmplitude += deltaAmplitude;
 				while (curPitch > 2.*3.1415926) curPitch -= 2.*3.1415926;
@@ -617,7 +722,7 @@ void fillBuffer()
 	}
 
 	// recreate the spec if necessary
-	if (dirty && renderObject > 0)
+	if (dirty && renderObject == 1)
 	{
 		undirty();
 	}
@@ -639,8 +744,41 @@ void fillBuffer()
 				break;
 			case 2:
 			default:
-				buffer[outPos] = jetColor((int)((refSpec[inPos] - spec[inPos]) * 8.0) + 128);
+				//buffer[outPos] = jetColor((int)((refSpec[inPos] - spec[inPos]) * 8.0) + 128);
+				buffer[outPos] = jetColor(0);
 				break;
+			}
+		}
+	}
+
+	// Render the lines in mode 2
+	if (renderObject == 2)
+	{
+		for (int x = 0; x < min(SXRES, refSpecNumFrames); x++)
+		{
+			int overtone = 1;
+			for (int band = 0; band < NUM_BANDS; band++)
+			{
+				int shifter = band/2 - 1;
+				if (shifter < 0) shifter = 0;
+				int numBandTones = 1 << shifter;
+
+				for (int tone = 0; tone < numBandTones; tone++)
+				{
+					double refPitchIncr = exp(((double)pitch[x] - 240.0) * log(2.0) / PITCH_RESOLUTION);
+					int y = (int)(floor((overtone+tone)*refPitchIncr * WINDOW_SIZE / 3.1415926 / 2.0 + 0.5));
+					if (y >= 0 && y < SYRES)
+					{
+						int outPos = (SYRES-1-y)*SXRES + x;
+						int inPos = x * NUM_BANDS + band;
+						int val = amplitude[inPos];
+						if (y > 0) buffer[outPos-SXRES] = jetColor(val*14);
+						buffer[outPos] = jetColor(val*16+16);
+						if (y < SYRES-1) buffer[outPos+SXRES] = jetColor(val*14);
+					}
+				}
+
+				overtone += numBandTones;
 			}
 		}
 	}
@@ -684,6 +822,45 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	char filename[4096];
 	int xPos, yPos, frame;
 	double freq;
+	int band;
+
+	xPos = LOWORD(lParam); 
+	yPos = HIWORD(lParam);
+	GetClientRect(hWnd, &clientRect);
+	xPos -= clientRect.left;
+	yPos -= clientRect.top;
+	yPos = (clientRect.bottom - clientRect.top) - yPos - 1;
+	freq = yPos * (float)SYRES / (float)(clientRect.bottom - clientRect.top);
+	frame = 0;
+	band = 0;
+	if (clientRect.right - clientRect.left > 0 && refSpecNumFrames > 0)
+	{
+		frame = min(SXRES, refSpecNumFrames) * xPos / (clientRect.right - clientRect.left);
+		if (frame < 0) frame = 0;
+		if (frame >= refSpecNumFrames) frame = refSpecNumFrames - 1;
+
+		// get the overtone from the freq.. ?
+		double hzfreq = (freq) * 44100 / WINDOW_SIZE;
+		double refPitchIncr = exp(((double)pitch[frame] - 240.0) * log(2.0) / PITCH_RESOLUTION);
+		double refFreq = refPitchIncr * 44100.0 / 3.1415926 / 2.0;
+		//double pitchIncr = hzfreq / 44100.0 * 3.1415926 * 2.0;
+		//double pitchcmp = log(pitchIncr)/log(2.0)*24.0 + 24.0 * 10.0;
+		int overtone = floor(hzfreq / refFreq - 0.5);
+		int cmpOvertone = 0;
+
+		for (int b = 0; b < NUM_BANDS; b++)
+		{
+			int shifter = b/2 - 1;
+			if (shifter < 0) shifter = 0;
+			int numBandTones = 1 << shifter;
+			band = b;
+			if (cmpOvertone+numBandTones > overtone)
+			{			
+				break;
+			}
+			cmpOvertone += numBandTones;
+		}
+	}
 
 	switch (message)
 	{
@@ -723,13 +900,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, 0, false);
 			}
 			break;
+		case IDM_SAVE_WAV:
+			if (selectFile(filename, false))
+			{
+				// A file was selected, load data
+				saveWavFile(filename);
+			}
+			break;
+		case IDM_EXPORT:
+			if (selectFile(filename, false))
+			{
+				exportFile(filename);
+			}
+			break;
 		case IDM_SAVE_FILE:
 			if (selectFile(filename, false))
 			{
 				// A file was selected, load data
 				saveFile(filename);
-				dirty = true;
-				InvalidateRect(hWnd, 0, false);
 			}
 			break;
 		case IDM_LOAD_FILE:
@@ -761,37 +949,44 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	
 	case WM_LBUTTONDOWN:
-		xPos = LOWORD(lParam); 
-		yPos = HIWORD(lParam);
-		GetClientRect(hWnd, &clientRect);
-		xPos -= clientRect.left;
-		yPos -= clientRect.bottom;
-		yPos = (clientRect.top - clientRect.bottom) - yPos - 1;
-		frame = min(SXRES, refSpecNumFrames) * xPos / (clientRect.right - clientRect.left);
-		if (frame < 0) frame = 0;
-		if (frame >= refSpecNumFrames) frame = refSpecNumFrames - 1;
-		if (frame > 0 && frame < refSpecNumFrames-1)
+		if (wParam & MK_CONTROL)
 		{
-			amplitudeDefined[frame] = !amplitudeDefined[frame];
+			amplitude[frame*NUM_BANDS + band] = 0;
+		}
+		else
+		{
+			if (wParam & MK_SHIFT)
+			{
+				amplitude[frame*NUM_BANDS + band]++;
+			}
+			else
+			{
+				if (frame > 0 && frame < refSpecNumFrames-1)
+				{
+					amplitudeDefined[frame] = !amplitudeDefined[frame];
+				}
+			}
 		}
 		dirty = true;
 		InvalidateRect(hWnd, 0, false);
 		break;
 
 	case WM_RBUTTONDOWN:
-		xPos = LOWORD(lParam); 
-		yPos = HIWORD(lParam);
-		GetClientRect(hWnd, &clientRect);
-		xPos -= clientRect.left;
-		yPos -= clientRect.top;
-		yPos = (clientRect.bottom - clientRect.top) - yPos - 1;
-		freq = yPos * (float)(clientRect.bottom - clientRect.top) / (float)SYRES;
-		frame = min(SXRES, refSpecNumFrames) * xPos / (clientRect.right - clientRect.left);
-		if (frame < 0) frame = 0;
-		if (frame >= refSpecNumFrames) frame = refSpecNumFrames - 1;
-		if (frame >= 0 && frame <= refSpecNumFrames-1)
+		if (wParam & MK_SHIFT)
 		{
-			estimateFrame(frame, freq);
+			if (amplitude[frame*NUM_BANDS + band] > 0)
+			{
+				amplitude[frame*NUM_BANDS + band]--;
+			}
+		}
+		else
+		{
+			if (frame >= 0 && frame <= refSpecNumFrames-1)
+			{
+				bool oldAct = amplitudeDefined[frame];
+				estimateFrame(frame, freq);
+				amplitudeDefined[frame] = oldAct;
+			}
 		}
 		dirty = true;
 		InvalidateRect(hWnd, 0, false);

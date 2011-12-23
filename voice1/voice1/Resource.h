@@ -13,6 +13,8 @@
 #define IDM_LOAD_WAV			110
 #define IDM_LOAD_FILE			111
 #define IDM_SAVE_FILE			112
+#define IDM_SAVE_WAV			113
+#define IDM_EXPORT				114
 #define IDI_VOICE1			107
 #define IDI_SMALL				108
 #define IDC_VOICE1			109
