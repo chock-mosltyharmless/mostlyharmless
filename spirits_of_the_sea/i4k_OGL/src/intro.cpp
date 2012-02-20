@@ -19,13 +19,16 @@
 float frand();
 
 /* Number of names of the used shaders */
-#define NUM_SHADERS 4
+#define NUM_SHADERS 7
 const GLchar shaderFileName[NUM_SHADERS][128] =
 {
 	"shaders/verystart.shader",
 	"shaders/showTex.shader",
 	"shaders/cloudstuff.1.shader",
-	"shaders/gras20.shader"
+	"shaders/gras20.shader",
+	"shaders/gras10.shader",
+	"shaders/gras12.2.shader",
+	"shaders/ball8.shader",
 };
 /* Location where the loaded shader is stored */
 #define MAX_SHADER_LENGTH 200000
@@ -43,9 +46,15 @@ void main(void)\n\
    float fTime0_X = parameters[0][0];\n\
    vec3 noisePos = objectPosition + fTime0_X;\n\
    vec2 noiseVal;\n\
+   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43711.5453);\n\
+   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43717.5453);\n\
+   gl_FragColor = 0.33 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy);\n\
+   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43731.5453);\n\
+   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43737.5453);\n\
+   gl_FragColor += 0.33 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy);\n\
    noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43758.5453);\n\
    noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43753.5453);\n\
-   gl_FragColor = texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.0005*noiseVal.xy) + noiseVal.x*0.03 - 0.03;\n\
+   gl_FragColor += 0.33 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.03 - 0.03;\n\
 \n\
 }";
 #else
@@ -224,7 +233,7 @@ void intro_init( void )
 	glGenTextures(1, &noiseTexture);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 	// Missing: mip mapping
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -236,8 +245,13 @@ void intro_init( void )
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
 	//			 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
 	//			 0, GL_RGBA, GL_FLOAT, noiseData);
-	gluBuild2DMipmaps(GL_TEXTURE_2D, 4, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
-				      GL_RGBA, GL_FLOAT, noiseData);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
+	//			 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
+	//			 0, GL_RGBA, GL_UNSIGNED_BYTE, noiseIntData);
+	//gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
+	//			      GL_RGBA, GL_FLOAT, noiseData);
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
+				      GL_BGRA, GL_UNSIGNED_BYTE, noiseIntData);
 #endif
 
 	// Create a rendertarget texture
@@ -301,12 +315,6 @@ void cloudStuffScene(float ftime)
 	glMatrixMode(GL_MODELVIEW);	
 
 	parameterMatrix[0] = ftime; // time
-	parameterMatrix[1] = 1.0f;
-	if (ftime < 1.0f)
-	{
-		parameterMatrix[1] = ftime * 0.9f + 0.1f;
-	}
-	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
@@ -323,6 +331,133 @@ void cloudStuffScene(float ftime)
 	gluSphere(quad, 2.0f, 16, 16);
 }
 
+
+void ball8Scene(float ftime)
+{
+	GLUquadric* quad = gluNewQuadric();
+
+	glDisable(GL_BLEND);
+
+	// draw background:
+	glMatrixMode(GL_MODELVIEW);	
+
+	parameterMatrix[0] = ftime; // time
+	parameterMatrix[1] = 1.0f;
+	if (ftime < 19.0f)
+	{
+		parameterMatrix[1] = 1.0f + 2.0f*(0.01f * ftime) * (0.01f * ftime) * sin(1.0f * ftime * ftime);
+	}
+	else // if (ftime < 22.0f)
+	{
+		parameterMatrix[1] = fabsf(sin(ftime*18.0f)*0.3f + cos(ftime*12.0f)*1.3f) - 0.15f;
+		if (parameterMatrix[1] < 0.0f) parameterMatrix[1] = 0.0f;
+	}
+	glLoadMatrixf(parameterMatrix);
+
+	// draw offscreen
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glUseProgram(shaderPrograms[6]);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	gluSphere(quad, 2.0f, 16, 16);
+
+	// copy to front
+	glViewport(0, 0, XRES, YRES);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+	glUseProgram(shaderCopyProgram);	
+	gluSphere(quad, 2.0f, 16, 16);
+}
+
+
+
+void gras10Scene(float ftime)
+{
+	GLUquadric* quad = gluNewQuadric();
+
+	glDisable(GL_BLEND);
+
+	// draw background:
+	glMatrixMode(GL_MODELVIEW);	
+
+	parameterMatrix[0] = ftime; // time
+	parameterMatrix[1] = 1.0f;
+	if (ftime < 19.0f)
+	{
+		parameterMatrix[1] = 1.0f + 2.0f*(0.01f * ftime) * (0.01f * ftime) * sin(1.0f * ftime * ftime);
+	}
+	else // if (ftime < 22.0f)
+	{
+		parameterMatrix[1] = fabsf(sin(ftime*18.0f)*0.3f + cos(ftime*12.0f)*1.3f) - 0.15f;
+		if (parameterMatrix[1] < 0.0f) parameterMatrix[1] = 0.0f;
+	}
+	glLoadMatrixf(parameterMatrix);
+
+	// draw offscreen
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glUseProgram(shaderPrograms[4]);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	gluSphere(quad, 2.0f, 16, 16);
+
+	// copy to front
+	glViewport(0, 0, XRES, YRES);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+	glUseProgram(shaderCopyProgram);	
+	gluSphere(quad, 2.0f, 16, 16);
+}
+
+
+
+void gras122Scene(float ftime)
+{
+	GLUquadric* quad = gluNewQuadric();
+
+	glDisable(GL_BLEND);
+
+	// draw background:
+	glMatrixMode(GL_MODELVIEW);	
+
+	parameterMatrix[0] = ftime; // time
+	parameterMatrix[1] = 1.0f;
+	parameterMatrix[15] = max(0.0f, 0.65f - 0.7f * (sin(ftime)*sin(ftime)));
+	if (ftime < 19.0f)
+	{
+		parameterMatrix[1] = 1.0f + 2.0f*(0.01f * ftime) * (0.01f * ftime) * sin(1.0f * ftime * ftime);
+	}
+	else // if (ftime < 22.0f)
+	{
+		parameterMatrix[1] = fabsf(sin(ftime*18.0f)*0.3f + cos(ftime*12.0f)*1.3f) - 0.15f;
+		if (parameterMatrix[1] < 0.0f) parameterMatrix[1] = 0.0f;
+	}
+	// shape of the object
+	//2:0.36(46) 3:0.39(50) 4:0.43(54) 5:0.01(1) 
+	parameterMatrix[4] = params.getParam(2, 0.36f);
+	parameterMatrix[5] = params.getParam(3, 0.39f);
+	parameterMatrix[6] = params.getParam(4, 0.43f);
+	parameterMatrix[7] = params.getParam(5, 0.01f);
+	//parameterMatrix[0] = 5.0;
+	glLoadMatrixf(parameterMatrix);
+
+	// draw offscreen
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glUseProgram(shaderPrograms[5]);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	gluSphere(quad, 2.0f, 16, 16);
+
+	// copy to front
+	glViewport(0, 0, XRES, YRES);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+	glUseProgram(shaderCopyProgram);	
+	gluSphere(quad, 2.0f, 16, 16);
+}
+
+
+
+
 void gras20Scene(float ftime)
 {
 	GLUquadric* quad = gluNewQuadric();
@@ -334,12 +469,17 @@ void gras20Scene(float ftime)
 
 	parameterMatrix[0] = ftime; // time
 	parameterMatrix[1] = 1.0f;
+	parameterMatrix[4] = 1.0f;
+	parameterMatrix[15] = ftime * 2.0f;
+	while (parameterMatrix[15] > 3.0f) parameterMatrix[15] -= 3.0f;
 	if (ftime < 21.0f)
 	{
 		parameterMatrix[1] = 1.0f + (0.01f * ftime) * (0.01f * ftime) * sin(1.0f * ftime * ftime);
 	}
-	else // if (ftime < 22.0f)
+	else // if (ftime < 21.0f)
 	{
+		float cTime = ftime - 21.0f;
+		parameterMatrix[4] = 1.0f - cTime * cTime * 0.1f;
 		parameterMatrix[1] = fabsf(sin(ftime*18.0f)*0.3f + cos(ftime*12.0f)*1.3f) - 0.15f;
 		if (parameterMatrix[1] < 0.0f) parameterMatrix[1] = 0.0f;
 	}
@@ -417,25 +557,39 @@ void intro_do( long itime )
 		parameterMatrix[i] = 0.0f;
 	}
 	
-#if 0
+#if 1
 	if (ftime < 20.0f)
 	{
 		veryStartScene(ftime);
 	}
-	else if (ftime < 40.0f)
+	/*else if (ftime < 40.0f)
 	{
 		cloudStuffScene(ftime - 20.0f);
-	}
-	else if (ftime < 63.0f)
+	}*/
+	else if (ftime < 60.0f - 20.0f)
 	{
-		gras20Scene(ftime - 40.0f);
+		gras10Scene(ftime - 40.0f + 20.0f);
+	}
+	else if (ftime < 80.0f - 20.0f)
+	{
+		gras122Scene(ftime - 60.0f + 20.0f);
+	}
+	else if (ftime < 103.0f - 20.0f)
+	{
+		gras20Scene(ftime - 80.0f + 20.0f);
+	}
+	else if (ftime < 143.0f - 20.0f)
+	{
+		ball8Scene(ftime - 103.0f + 20.0f);
 	}
 	else
 	{
 		nothingScene(ftime);
 	}
 #else
-	gras20Scene(ftime);
+	float tt = ftime;
+	while (tt > 20.0f) tt -= 20.0f;
+	gras122Scene(tt);
 #endif
 }
 

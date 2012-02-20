@@ -21,6 +21,7 @@
 
 extern GLuint noiseTexture;
 extern float noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
+extern unsigned char noiseIntData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
 
 float frand(void);
 void generateNoiseTexture(void);

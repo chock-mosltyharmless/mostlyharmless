@@ -16,6 +16,7 @@
 #define YRES        (1080 * XRES / 1920)
 #define OFFSCREEN_WIDTH 1024
 #define OFFSCREEN_HEIGHT 512
-#define MZK_DURATION 63
+//#define MZK_DURATION 123
+#define MZK_DURATION 123
 
 #endif

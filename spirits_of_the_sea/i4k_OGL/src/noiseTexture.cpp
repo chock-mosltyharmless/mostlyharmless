@@ -3,6 +3,7 @@
 
 GLuint noiseTexture;
 float noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
+unsigned char noiseIntData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
 
 float frand()
 {
@@ -48,6 +49,25 @@ void normalizeTexture(float *texture, int textureSize)
 		{
 			texture[i*4+k] -= min[k];
 			texture[i*4+k] /= (max[k] - min[k]);
+		}
+	}
+}
+
+void makeIntTexture(void)
+{
+	for (int i = 0; i < NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4; i++)
+	{
+		if (noiseData[i] < 0.0f)
+		{
+			noiseIntData[i] = 0;
+		}
+		else if (noiseData[i] >= 1.0f)
+		{
+			noiseIntData[i] = 255;
+		}
+		else
+		{
+			noiseIntData[i] = (unsigned char)(noiseData[i] * 256.0f);
 		}
 	}
 }
@@ -223,5 +243,7 @@ void generateNoiseTexture(void)
 	delete [] largeNoiseData1;
 	delete [] largeNoiseData2;
 	delete [] filterKernel;
+
+	makeIntTexture();
 }
 

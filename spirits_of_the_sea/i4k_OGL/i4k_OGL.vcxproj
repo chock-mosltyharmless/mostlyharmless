@@ -147,6 +147,7 @@
     </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\bass.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\intro.h" />
     <ClInclude Include="src\noiseTexture.h" />
@@ -166,10 +167,15 @@
   <ItemGroup>
     <None Include="shaders\ball8.shader" />
     <None Include="shaders\cloudstuff.1.shader" />
+    <None Include="shaders\gras10.shader" />
+    <None Include="shaders\gras12.2.shader" />
     <None Include="shaders\gras20.shader" />
     <None Include="shaders\showTex.shader" />
     <None Include="shaders\test.shader" />
     <None Include="shaders\verystart.shader" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="src\_windows\bass.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
