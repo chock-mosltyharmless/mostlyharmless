@@ -10,6 +10,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include "bass.h"
 #include "../config.h"
 #include "../intro.h"
 
@@ -182,6 +183,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int         done=0;
     WININFO     *info = &wininfo;
 
+	// music data
+	HSTREAM mp3Str = 0;
+
     info->hInstance = GetModuleHandle( 0 );
 
     //if( MessageBox( 0, "fullscreen?", info->wndclass, MB_YESNO|MB_ICONQUESTION)==IDYES ) info->full++;
@@ -194,6 +198,12 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     intro_init();
+
+	// start music playback
+	BASS_Init(-1,44100,0,info->hWnd,NULL);
+	mp3Str=BASS_StreamCreateFile(FALSE,"GT_muc.mp3",0,0,0);
+	BASS_ChannelPlay(mp3Str, TRUE);
+	BASS_Start();
 
     long to=timeGetTime();
     while( !done )
@@ -219,7 +229,11 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         SwapBuffers( info->hDC );
         }
 
-    sndPlaySound( 0, 0 );
+	// music uninit
+	BASS_ChannelStop(mp3Str);
+	BASS_StreamFree(mp3Str);
+	BASS_Free();
+
     window_end( info );
 
     return( 0 );
