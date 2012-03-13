@@ -4,7 +4,7 @@
 #include <GL/glu.h>
 #include "glext.h"
 
-#define NUM_TEXTURES 33
+#define NUM_TEXTURES 54
 #define TEX_BUTTERFLY_1 0
 #define TEX_BUTTERFLY_8 7
 #define TEX_BLUEKIMO_1 8
@@ -13,6 +13,10 @@
 #define TEX_PAPER_8 23
 #define TEX_REDKIMO_1 24
 #define TEX_REDKIMO_8 31
+#define TEX_SQUARE1 33
+#define TEX_NUM_SQUARES 19
+#define TEX_BUTTERFLY_BODY 52
+#define TEX_BUTTERFLY_WING 53
 
 struct TGAHeader
 {
@@ -46,7 +50,7 @@ public:
 	int init();
 	void deInit();
 	void setTexture(int ID) {glBindTexture(GL_TEXTURE_2D, textureGLID[ID]);}
-	void drawScreenAlignedQuad(float color[3],
+	void drawScreenAlignedQuad(float color[4],
 							   float startX = -1.0f, float startY = -1.0f,
 							   float endX = 1.0f, float endY = 1.0f);
 

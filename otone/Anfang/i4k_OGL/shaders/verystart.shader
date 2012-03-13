@@ -8,5 +8,5 @@ void main(void)
 	//gl_FragColor = vec4(color);
 	vec4 tex = texture2D(Texture0, objectPosition.xy * 1.5);
 	float mixer = parameters[1][0];
-	gl_FragColor = (1.0 - mixer) * vec4(0.95, 1.0, 0.9, 1.0) + mixer * tex;
+	gl_FragColor = color * ((1.0 - mixer) * vec4(0.95, 1.0, 0.9, 1.0) + mixer * tex);
 }

@@ -42,7 +42,28 @@ static char TgaFileNames[NUM_TEXTURES][256] =
 	"textures/redkimo5.tga",
 	"textures/redkimo4.tga",
 	"textures/redkimo6.tga",
-	"textures/background.tga"
+	"textures/background.tga",
+	"squaretex/tex1.tga",
+	"squaretex/tex2.tga",
+	"squaretex/tex3.tga",
+	"squaretex/tex4.tga",
+	"squaretex/tex5.tga",
+	"squaretex/tex6.tga",
+	"squaretex/tex7.tga",
+	"squaretex/tex8.tga",
+	"squaretex/tex9.tga",
+	"squaretex/tex10.tga",
+	"squaretex/tex11.tga",
+	"squaretex/tex12.tga",
+	"squaretex/tex13.tga",
+	"squaretex/tex14.tga",
+	"squaretex/tex15.tga",
+	"squaretex/tex16.tga",
+	"squaretex/tex17.tga",
+	"squaretex/tex18.tga",
+	"squaretex/tex19.tga",
+	"textures/butterfly_body.tga",
+	"textures/butterfly_wing.tga"
 };
 
 Texture::Texture(void)
@@ -104,14 +125,14 @@ int Texture::init()
 	return 1;
 }
 
-void Texture::drawScreenAlignedQuad(float color[3], float startX, float startY,
+void Texture::drawScreenAlignedQuad(float color[4], float startX, float startY,
 									float endX, float endY)
 {
 	//float TEXTURE_U_RANGE = (float)imgWidth / (float)textureWidth;
 	//float TEXTURE_V_RANGE = (float)imgHeight / (float)textureHeight;
 
 	glBegin(GL_QUADS);
-	glColor3fv(color);
+	glColor4fv(color);
 	glTexCoord2f(0.0f, 1.0f);
 	glVertex3f(startX, endY, 0.5);
 	glTexCoord2f(1.0f, 1.0f);
