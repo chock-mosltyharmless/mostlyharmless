@@ -106,8 +106,8 @@ void main(void)
       float implicitVal = implicitVec.r;
 
 	  //totalDensity += 0.005 * implicitVec.g;
-	  totalDensity += 0.005;
-	  totalColor += implicitVec.g * parameters[0][1] * (1.0 - totalDensity) * smoothstep(0.0, 1.0, 1.0 - implicitVal) * 2.0 * vec3(0.02, 0.014, 0.005);
+	  totalDensity += 0.007;
+	  totalColor += implicitVec.g * parameters[0][1] * (1.0 - totalDensity) * smoothstep(0.0, 1.0, 1.0 - implicitVal) * 3.0 * vec3(0.013, 0.01, 0.005);
       
       // This is done on a hit. Always 100% coverage!
       if (implicitVal < 0.5 * coneSize)

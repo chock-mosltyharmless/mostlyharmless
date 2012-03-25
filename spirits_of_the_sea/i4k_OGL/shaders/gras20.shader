@@ -21,14 +21,14 @@ vec2 getImplicit(vec3 rayPos, float fTime0_X)
 {
    float sphere1 = length(rayPos - vec3(2.5, 0.0*sin(fTime0_X * 0.26), 0.0));
    //sphere1 += noise(rayPos.xzyx*0.08 + parameters[0][2] + vec4(fTime0_X * 0.022), 0., Texture0).r * 0.7;
-   sphere1 += noise(rayPos.xzyx*0.08 + parameters[0][2] + vec4(fTime0_X * 0.022), 0., Texture0).r * 0.7;
+   sphere1 += noise(rayPos.xzyx*0.09 + parameters[0][2] + vec4(fTime0_X * 0.022), 0., Texture0).r * 1.1;
    float sphere2 = 6.0 - length(rayPos+vec3(1.0, 0.0, 0.0));
    vec4 noiseAdd = 2.0 * noise(0.25 * rayPos.xzxz + 0.27 * rayPos.yxzy + vec4(0.01 * fTime0_X), 0.0, Texture0);
    float baseVal = sqrt(1.0 / (1.0 / (sphere1*sphere1+0.1) + 1.0 / (sphere2*sphere2+0.1)));// + noiseV1;
    baseVal += - 1.3 + length(noiseAdd.rgb + 0.1) * 0.02;
    
    float noise2Amount = smoothstep(0.4, 1.1, 1.0 - length(noiseAdd.rg));   
-   float noiseV2 = length(noise(noiseAdd * 0.70 + vec4(fTime0_X*0.0), 0.0, Texture0)) * 0.1;
+   float noiseV2 = length(noise(noiseAdd * 1.20 + vec4(fTime0_X*0.0), 0.0, Texture0)) * 0.1;
    //float noiseV2 = 1.1;
    
    float implicit = baseVal + noiseV2 * smoothstep(0.0, 0.2, 0.2 - baseVal) * (0.25*noise2Amount);
@@ -105,7 +105,7 @@ void main(void)
 	  totalDensity += 0.01;
       //totalColor += (1.0 - totalDensity) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 3.0 * implicitVec.g * vec3(0.02, 0.014, 0.005);
 	  //totalColor += parameters[0][1] * (1.0 - totalDensity) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 3.0 * implicitVec.g * vec3(0.02, 0.014, 0.005);
-	  totalColor += parameters[0][1] * (1.0 - totalDensity) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 2.0 * vec3(0.02, 0.014, 0.005);
+	  totalColor += parameters[0][1] * (1.0 - totalDensity) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 1.5 * vec3(0.02, 0.014, 0.005);
       
       // This is done on a hit. Always 100% coverage!
       if (implicitVal < 0.5 * coneSize)
