@@ -54,7 +54,7 @@ vec3 getLightstream(vec3 pos, float coneSize, float fTime0_X)
    // TODO: whatever...
    vec4 noiseData = noise(vec4(0.0, 0.0, 0.0, fTime0_X)*0.03 + pos.xyxz * 0.02 + 0.017 * pos.zxyz, 0.0, Texture0);
    //float noiseVal = abs(noiseData.r + noiseData.g + 0.4) + 0.4 * max(0.0, sin(fTime0_X * 0.2) + 0.1) + 0.0;
-   float noiseVal = abs(noiseData.r + noiseData.g + 0.4) + 0.0 + 0.0;
+   float noiseVal = abs(noiseData.r + noiseData.g + 0.3) + 0.0 + 0.0;
    result.x = noiseVal*1.5 + // depends on scaling of noiseVal
               max(0.0, length(pos) - radius); // nothing behind 5.0;   
    result.x = max(result.x, 0.1);
@@ -62,9 +62,9 @@ vec3 getLightstream(vec3 pos, float coneSize, float fTime0_X)
    //result.y = max(0.0, 1.0 - 2.0 * noiseVal - length(pos)/radius);
    result.z = noiseVal * 3.0;
    
-   noiseData = noise(noiseData * 3.8 + pos.xyxz * 2.5 + 2.1 * pos.zxzy + 2.2 * pos.yzzx + vec4(0.0, fTime0_X, 0.0, 0.0), coneSize*30.0 + 0.5, Texture0);
-   noiseVal = smoothstep(0.5, 0.8, length(noiseData) / max(1.0, 8.0*coneSize));
-   result.y *= (0.04 + noiseVal) * 8.0 / max(1.0, 6.0*coneSize);
+   noiseData = noise(noiseData * 4.8 + pos.xyxz * 2.5 + 2.7 * pos.zxzy + 2.9 * pos.yzzx + vec4(0.0, fTime0_X, 0.0, 0.0), coneSize*20.0 + 0.0, Texture0);
+   noiseVal = smoothstep(0.45 / max(1.0, 8.0*coneSize), 0.45 / max(1.0, 8.0*coneSize) + 0.4, length(noiseData) + 0.05);
+   result.y *= (0.0 + noiseVal) * 8.0 / max(1.0, 4.0*coneSize);
    result.z = clamp(result.z - noiseVal, 0.0, 1.0);
    
    return result;

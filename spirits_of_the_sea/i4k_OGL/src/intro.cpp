@@ -557,7 +557,7 @@ void intro_do( long itime )
 		parameterMatrix[i] = 0.0f;
 	}
 	
-#if 1
+#if 0
 	if (ftime < 20.0f)
 	{
 		veryStartScene(ftime);
@@ -588,8 +588,8 @@ void intro_do( long itime )
 	}
 #else
 	float tt = ftime;
-	while (tt > 20.0f) tt -= 20.0f;
-	gras122Scene(tt);
+	while (tt > 6.0f) tt -= 6.0f;
+	veryStartScene(tt+14.0f);
 #endif
 }
 

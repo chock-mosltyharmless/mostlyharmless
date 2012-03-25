@@ -152,9 +152,9 @@ void generateNoiseTexture(void)
 
 				int dstIdx = x * NOISE_TEXTURE_SIZE * 2 * 4 + y * 4;
 				curDst[dstIdx] = filtered[0];
-				curDst[dstIdx+1] = filtered[0];
-				curDst[dstIdx+2] = filtered[0];
-				curDst[dstIdx+3] = filtered[0];
+				curDst[dstIdx+1] = filtered[1];
+				curDst[dstIdx+2] = filtered[2];
+				curDst[dstIdx+3] = filtered[3];
 			}
 		}
 
