@@ -72,7 +72,7 @@ void main(void)
    //totalSize = -1.2;
    totalSize = noise(vec4(fTime0_X*0.05), 0., Texture0).r * 1.0 - 2.0;
    //totalSize += sin(fTime0_X*1.0) * 10.0 + 10.0;
-   totalSize += parameters[0][1];
+   totalSize -= 1.9 * parameters[0][1];
       
    for (int run = 0; run < 300 && length(rayPos)<sceneSize && totalDensity < 0.95; run++)
    {
@@ -87,8 +87,8 @@ void main(void)
       //float noiseVal = noiseData2.r * 0.5;
 
       // base head
-      float sphere = abs(length(tmpPos) - totalSize + 0.3) - firstNoise;
-      float sphere2 = abs(length(tmpPos) - totalSize - 3.*firstNoise + 1.5);
+      float sphere = abs(length(tmpPos - vec3(0.0, 2.0*parameters[0][1], 0.0)) - totalSize + 0.3) - firstNoise;
+      float sphere2 = abs(length(tmpPos - vec3(0.0, 2.0*parameters[0][1], 0.0)) - totalSize - 3.*firstNoise + 1.5);
       
       float implicitVal;
       vec3 colMult;
