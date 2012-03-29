@@ -19,7 +19,7 @@
 float frand();
 
 /* Number of names of the used shaders */
-#define NUM_SHADERS 7
+#define NUM_SHADERS 8
 const GLchar shaderFileName[NUM_SHADERS][128] =
 {
 	"shaders/verystart.shader",
@@ -29,6 +29,7 @@ const GLchar shaderFileName[NUM_SHADERS][128] =
 	"shaders/gras10.shader",
 	"shaders/gras12.2.shader",
 	"shaders/ball8.shader",
+	"shaders/Background.shader",
 };
 /* Location where the loaded shader is stored */
 #define MAX_SHADER_LENGTH 200000
@@ -55,6 +56,12 @@ void main(void)\n\
    noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43758.5453);\n\
    noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43753.5453);\n\
    gl_FragColor += 0.33 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.03 - 0.03;\n\
+\n\
+   float vignette = objectPosition.x*objectPosition.x + objectPosition.y*objectPosition.y;\n\
+   vignette = sqrt(vignette);\n\
+   gl_FragColor *= 1.2 - vignette * 0.3; // darken\n\
+   float meanColor = 0.3 * gl_FragColor.r + 0.59 * gl_FragColor.r + 0.11 * gl_FragColor.b;\n\
+   gl_FragColor = 0.4 * vignette * vec4(meanColor) + (1.0 - 0.4 * vignette) * gl_FragColor; // desaturate\n\
 \n\
 }";
 #else
@@ -283,9 +290,9 @@ void veryStartScene(float ftime)
 
 	parameterMatrix[0] = ftime; // time
 	float totalSize = 0.0f;
-	if (ftime > 19.5f)
+	if (ftime > 16.0f)
 	{
-		totalSize += (ftime - 19.5f) * 30.0f;
+		totalSize += (ftime - 16.0f) * (ftime - 16.0f) * 0.4f;
 	}
 	parameterMatrix[1] = totalSize;
 	glLoadMatrixf(parameterMatrix);
@@ -294,6 +301,37 @@ void veryStartScene(float ftime)
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
 	glUseProgram(shaderPrograms[0]);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	gluSphere(quad, 2.0f, 16, 16);
+
+	// copy to front
+	glViewport(0, 0, XRES, YRES);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+	glUseProgram(shaderCopyProgram);	
+	gluSphere(quad, 2.0f, 16, 16);
+}
+
+
+void otoneScene(float ftime)
+{
+	GLUquadric* quad = gluNewQuadric();
+
+	glDisable(GL_BLEND);
+
+	// draw background:
+	glMatrixMode(GL_MODELVIEW);	
+
+	parameterMatrix[0] = ftime; // time
+	parameterMatrix[3] = 1.0f; // time
+	parameterMatrix[1] = 0.0f;
+	parameterMatrix[6] = 0.0f;
+	glLoadMatrixf(parameterMatrix);
+
+	// draw offscreen
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glUseProgram(shaderPrograms[7]);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 	gluSphere(quad, 2.0f, 16, 16);
 
@@ -319,7 +357,7 @@ void cloudStuffScene(float ftime)
 	// draw offscreen
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
-	glUseProgram(shaderPrograms[2]);
+	glUseProgram(shaderPrograms[2]); // background.shader
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
 	gluSphere(quad, 2.0f, 16, 16);
 
@@ -330,6 +368,7 @@ void cloudStuffScene(float ftime)
 	glUseProgram(shaderCopyProgram);	
 	gluSphere(quad, 2.0f, 16, 16);
 }
+
 
 
 void ball8Scene(float ftime)
@@ -588,8 +627,8 @@ void intro_do( long itime )
 	}
 #else
 	float tt = ftime;
-	while (tt > 6.0f) tt -= 6.0f;
-	veryStartScene(tt+14.0f);
+	while (tt > 20.0f) tt -= 20.0f;
+	otoneScene(tt);
 #endif
 }
 

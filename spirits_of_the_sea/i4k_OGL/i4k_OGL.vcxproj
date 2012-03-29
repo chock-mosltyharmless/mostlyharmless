@@ -165,6 +165,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="shaders\Background.shader" />
     <None Include="shaders\ball8.shader" />
     <None Include="shaders\cloudstuff.1.shader" />
     <None Include="shaders\gras10.shader" />
