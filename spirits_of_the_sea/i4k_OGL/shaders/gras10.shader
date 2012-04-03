@@ -53,7 +53,7 @@ vec3 getLightAmount(vec3 rayPos, float coneSize, float fTime0_X)
    // I need to make this a variable!
    color += 2.8 * vec3(1.0, 0.9, 0.7) / (pow(length(rayPos-lightPos) / (coneSize+0.1) + 1.0, 1.5));
 
-   color *= 2.0 * smoothstep(-0.5, 0.5, sin(fTime0_X)) - 1.0;
+   color *= 1.5 * smoothstep(-0.5, 0.5, sin(fTime0_X*0.96)) - 1.0;
    color *= parameters[0][1];
 
    return color;
@@ -75,7 +75,7 @@ void main(void)
                     sin(alpha)*camPos.y + cos(alpha)*camPos.z);
    rayDir.yz = vec2(cos(alpha)*rayDir.y - sin(alpha)*rayDir.z,
                     sin(alpha)*rayDir.y + cos(alpha)*rayDir.z);
-   alpha = fTime0_X * 0.1;
+   alpha = fTime0_X * 0.3;
    camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,
                     sin(alpha)*camPos.x + cos(alpha)*camPos.z);
    rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,
@@ -89,17 +89,18 @@ void main(void)
    float totalDensity = 0.0;
    
    // cone properties
-   float coneSize = startCone.x * 0.001;
+   float coneSize = startCone.x * 0.003;
    float coneSizeIncrease = startCone.y * 0.001;
    
    // First ray hit calculation
-   for(int step = 0; length(rayPos) < sceneSize && totalDensity < 0.99 && step < 150; step++)
+   for(int step = 0; length(rayPos) < sceneSize && totalDensity < 0.99 && step < 100; step++)
    {
       vec2 implicitVec;
       implicitVec = getImplicit(rayPos, fTime0_X);
       float implicitVal = implicitVec.r;
 
-	  totalDensity += 0.01 * smoothstep(-0.5, 0.5, -sin(fTime0_X));
+	  //totalDensity += 0.01 * smoothstep(-0.5, 0.5, -sin(fTime0_X));
+	  totalDensity += 0.01;
 	  //totalColor += smoothstep(-0.5, 0.5, -sin(fTime0_X)) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 2.0 * vec3(0.03, 0.015, 0.005);
 	  totalColor += parameters[0][1] * smoothstep(-0.5, 0.5, -sin(fTime0_X)) * 2.0 * vec3(0.03, 0.015, 0.005);
       

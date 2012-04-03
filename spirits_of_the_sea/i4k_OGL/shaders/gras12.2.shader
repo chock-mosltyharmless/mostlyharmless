@@ -19,13 +19,13 @@ vec4 noise(vec4 pos, float lod, sampler2D sampTex)
 
 vec2 getImplicit(vec3 rayPos, float fTime0_X)
 {
-   float sphere1 = length(rayPos - vec3(2.0, 0.0, 0.0));
+   float sphere1 = length(rayPos - vec3(2.0 + 3.0 * parameters[2][0], 0.0, 0.0)) - 3.0 * parameters[2][0];
    float sphere2 = 6.0 - length(rayPos);
    vec4 noiseAdd = noise(0.04 * rayPos.xzxz + 0.043 * rayPos.yxzy + parameters[1] + vec4(fTime0_X) * 0.002, 0.0, Texture0);
    //noiseAdd += 0.15 * noise(0.13 * rayPos.xzxz + 0.12 * rayPos.yxzy, 0.0, Texture0);
    //vec4 noiseAdd2 = noise(vec4(fTime0_X) * 0.03 + noiseAdd * smoothstep(-10.0, 20.0, vec4(fTime0_X)) * 0.5 / max(1.0, sphere1 - 0.5), 0.0, Texture0);
-   vec4 noiseAdd2 = noise(0.1 + vec4(fTime0_X) * 0.03 + noiseAdd * 0.8 / max(1.0, 2.0 * sphere1 - 0.5), 0.0, Texture0);
-   float baseVal = sqrt(1.0 / (1.0 / (sphere1*sphere1+0.1) +  1.0 / (sphere2*sphere2+0.1))) - 0.8 - length(noiseAdd) * 1.0;// + noiseV1;
+   vec4 noiseAdd2 = noise(0.1 + vec4(fTime0_X) * 0.03 + noiseAdd * 1.8 / max(1.0, 2.0 * sphere1 - 0.5), 0.0, Texture0);
+   float baseVal = sqrt(1.0 / (1.0 / (sphere1*sphere1+0.1) +  1.0 / (sphere2*sphere2+0.1))) - 0.8 - length(noiseAdd) * 1.0 + parameters[2][0];// + noiseV1;
    
    //float noise2Amount = smoothstep(0.85, 1.0, 1.0 - length(noiseAdd.rg));
    //float noiseV2 = noise(noiseAdd * 1.50, 0.0, Texture0).r * 0.5;
@@ -40,7 +40,7 @@ vec2 getImplicit(vec3 rayPos, float fTime0_X)
 vec3 getNormal(vec3 rayPos, float implicitVal, float fTime0_X)
 {
    // This e may be bad? I may have problems with noise?
-   float normalEpsilon = 0.038;
+   float normalEpsilon = 0.07;
    vec2 e = vec2(normalEpsilon, 0.0);
    return normalize(vec3(getImplicit(rayPos + e.xyy, fTime0_X).r,
                          getImplicit(rayPos + e.yxy, fTime0_X).r,
@@ -57,7 +57,7 @@ vec3 getLightAmount(vec3 rayPos, float coneSize, float fTime0_X)
 
    lightPos = vec3(2.0, 0.0, 0.0);
    // I need to make this a variable!
-   color += 1.4 * vec3(1.0, 0.5, 0.3) / (pow(length(rayPos-lightPos) / (coneSize+0.3) + 1.0, 1.9));
+   color += 0.8 * vec3(1.0, 0.5, 0.3) / (pow(length(rayPos-lightPos) / (coneSize+0.3) + 1.0, 2.2));
    
    color *= parameters[0][1];
 
@@ -81,7 +81,7 @@ void main(void)
                     sin(alpha)*camPos.y + cos(alpha)*camPos.z);
    rayDir.yz = vec2(cos(alpha)*rayDir.y - sin(alpha)*rayDir.z,
                     sin(alpha)*rayDir.y + cos(alpha)*rayDir.z);
-   alpha = 0.0 - fTime0_X * 0.14;
+   alpha = 0.0 - fTime0_X * 0.4;
    camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,
                     sin(alpha)*camPos.x + cos(alpha)*camPos.z);
    rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,

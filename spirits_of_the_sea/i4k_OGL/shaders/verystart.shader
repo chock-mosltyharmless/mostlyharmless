@@ -65,16 +65,21 @@ void main(void)
    float stepSize;
    float totalDensity = 0.0;
 
+#if 0
    float totalSize = (sin(fTime0_X * 0.1) + 1.0);
    totalSize *= totalSize;
    totalSize *= totalSize; 
-   totalSize *= totalSize * 0.4;   
+   totalSize *= totalSize * 0.4;
+#else
+	float totalSize;
+#endif
    //totalSize = -1.2;
    totalSize = noise(vec4(fTime0_X*0.05), 0., Texture0).r * 1.0 - 2.0;
    //totalSize += sin(fTime0_X*1.0) * 10.0 + 10.0;
    totalSize -= 1.9 * parameters[0][1];
+   totalSize = -2.;
       
-   for (int run = 0; run < 300 && length(rayPos)<sceneSize && totalDensity < 0.95; run++)
+   for (int run = 0; run < 200 && length(rayPos)<sceneSize && totalDensity < 0.95; run++)
    {
       vec3 tmpPos = rayPos;   
    
@@ -103,11 +108,14 @@ void main(void)
 	  implicitVal = min(sphere, outer) - tmpPos.y * 0.6 / max(1.0, totalSize) +
 		tmpPos.y*tmpPos.y*0.01 +
 		totalSize * 0.2 - 0.9;
+
+	  implicitVal += 1.2 * parameters[0][1];
+	  implicitVal = min(15.0, implicitVal);
       
       //totalColor += vec3(1./50., 1./70., 1./90.) * 0.1 * (4.+1.*exp2(4.*noise(vec4(fTime0_X*0.2), 0., Texture0)).r);
 	  //totalColor += vec3(1./50., 1./70., 1./90.) * 0.3;
-	  totalColor += vec3(1./50., 1./70., 1./90.) * 0.3 / (stepSize+0.5) * 0.5;
-      totalDensity += 1./500.;
+	  totalColor += vec3(1./50., 1./65., 1./90.) * 0.3 / (stepSize+0.5) * 0.5;
+      //totalDensity += 1./1000.;
       if (implicitVal < 0.0)
       {
          float localDensity = clamp(0.0 - 0.1*implicitVal, 0.0, 1.0);

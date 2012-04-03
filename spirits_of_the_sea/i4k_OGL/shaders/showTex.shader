@@ -1,6 +1,7 @@
 uniform sampler2D Texture0;
 varying vec3 objectPosition;
 varying mat4 parameters;
+varying vec4 color;
 
 void main(void)
 {  
