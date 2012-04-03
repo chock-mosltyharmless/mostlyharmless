@@ -17,6 +17,6 @@
 #define OFFSCREEN_WIDTH 1024
 #define OFFSCREEN_HEIGHT 512
 //#define MZK_DURATION 123
-#define MZK_DURATION 123
+#define MZK_DURATION 151
 
 #endif

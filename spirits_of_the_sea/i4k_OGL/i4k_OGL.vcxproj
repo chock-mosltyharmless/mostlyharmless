@@ -172,6 +172,7 @@
     <None Include="shaders\gras12.2.shader" />
     <None Include="shaders\gras20.shader" />
     <None Include="shaders\showTex.shader" />
+    <None Include="shaders\simpleTex.shader" />
     <None Include="shaders\test.shader" />
     <None Include="shaders\verystart.shader" />
   </ItemGroup>

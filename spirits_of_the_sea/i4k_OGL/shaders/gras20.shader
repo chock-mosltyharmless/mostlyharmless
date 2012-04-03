@@ -30,7 +30,8 @@ vec2 getImplicit(vec3 rayPos, float fTime0_X)
    float noise2Amount = smoothstep(0.4, 1.1, 1.0 - length(noiseAdd.rg));   
    float noiseV2 = length(noise(noiseAdd * 1.20 + vec4(fTime0_X*0.0), 0.0, Texture0)) * 0.1;
    //float noiseV2 = 1.1;
-   
+
+   //additional lighter?
    float implicit = baseVal + noiseV2 * smoothstep(0.0, 0.2, 0.2 - baseVal) * (0.25*noise2Amount);
    implicit = min(implicit, 2.0 * abs(implicit - parameters[3][3]) + 0.02 + 0.3 * parameters[3][3]*parameters[3][3]);
 
@@ -76,7 +77,7 @@ void main(void)
                     sin(alpha)*camPos.y + cos(alpha)*camPos.z);
    rayDir.yz = vec2(cos(alpha)*rayDir.y - sin(alpha)*rayDir.z,
                     sin(alpha)*rayDir.y + cos(alpha)*rayDir.z);
-   alpha = 4.8 + parameters[0][3];
+   alpha = 4.6 + parameters[0][3];
    camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,
                     sin(alpha)*camPos.x + cos(alpha)*camPos.z);
    rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,

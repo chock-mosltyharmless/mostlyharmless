@@ -16,6 +16,9 @@
 
 //----------------------------------------------------------------------------
 
+int realXRes;
+int realYRes;
+
 typedef struct
 {
     //---------------
@@ -46,7 +49,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,0,
+static WININFO wininfo = {  0,0,0,0,1,
 							{'i','q','_',0}
                             };
 
@@ -112,7 +115,7 @@ static int window_init( WININFO *info )
 {
 	unsigned int	PixelFormat;
     DWORD			dwExStyle, dwStyle;
-    DEVMODE			dmScreenSettings;
+//    DEVMODE			dmScreenSettings;
     RECT			rec;
 
     WNDCLASS		wc;
@@ -126,36 +129,49 @@ static int window_init( WININFO *info )
     if( !RegisterClass(&wc) )
         return( 0 );
 
+	rec.left   = 0;
+	rec.top    = 0;
+	rec.right  = XRES;
+	rec.bottom = YRES;
+
     if( info->full )
     {
-        dmScreenSettings.dmSize       = sizeof(DEVMODE);
-        dmScreenSettings.dmFields     = DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
-        dmScreenSettings.dmBitsPerPel = 24;
-        dmScreenSettings.dmPelsWidth  = XRES;
-        dmScreenSettings.dmPelsHeight = YRES;
-        if( ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
-            return( 0 );
+        //dmScreenSettings.dmSize       = sizeof(DEVMODE);
+        //dmScreenSettings.dmFields     = DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
+        //dmScreenSettings.dmBitsPerPel = 24;
+        //dmScreenSettings.dmPelsWidth  = XRES;
+        //dmScreenSettings.dmPelsHeight = YRES;
+        //if( ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
+        //    return( 0 );
         dwExStyle = WS_EX_APPWINDOW;
-        dwStyle   = WS_VISIBLE | WS_POPUP;// | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+        dwStyle   = WS_VISIBLE | WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_MAXIMIZE;// | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
 		ShowCursor( 0 );
     }
     else
     {
         dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+		//dwExStyle = WS_EX_APPWINDOW;
         dwStyle   = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
-    }
+		//dwStyle   = WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_POPUP;
 
-    rec.left   = 0;
-    rec.top    = 0;
-    rec.right  = XRES;
-    rec.bottom = YRES;
-    AdjustWindowRect( &rec, dwStyle, 0 );
+		realXRes = XRES;
+		realYRes = YRES;
+		ShowCursor(0);
+		AdjustWindowRect( &rec, dwStyle, 0 );
+    }
 
     info->hWnd = CreateWindowEx( dwExStyle, wc.lpszClassName, "avada kedabra!", dwStyle,
                                (GetSystemMetrics(SM_CXSCREEN)-rec.right+rec.left)>>1,
                                (GetSystemMetrics(SM_CYSCREEN)-rec.bottom+rec.top)>>1,
                                rec.right-rec.left, rec.bottom-rec.top, 0, 0, info->hInstance, 0 );
-    if( !info->hWnd )
+	if (info->full)
+	{
+		GetWindowRect(info->hWnd, &rec);
+		realXRes = rec.right - rec.left;
+		realYRes = rec.bottom - rec.top;
+	}
+
+	if( !info->hWnd )
         return( 0 );
 	hWnd = info->hWnd;
 
@@ -201,7 +217,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	// start music playback
 	BASS_Init(-1,44100,0,info->hWnd,NULL);
-	mp3Str=BASS_StreamCreateFile(FALSE,"GT_muc.mp3",0,0,0);
+	mp3Str=BASS_StreamCreateFile(FALSE,"../ana_jo1.wav",0,0,0);
 	BASS_ChannelPlay(mp3Str, TRUE);
 	BASS_Start();
 
