@@ -21,7 +21,7 @@ vec2 getImplicit(vec3 rayPos, float fTime0_X)
 {
    float sphere1 = length(rayPos - vec3(2.5, 0.0*sin(fTime0_X * 0.26), 0.0));
    //sphere1 += noise(rayPos.xzyx*0.08 + parameters[0][2] + vec4(fTime0_X * 0.022), 0., Texture0).r * 0.7;
-   sphere1 += noise(rayPos.xzyx*0.09 + parameters[0][2] + vec4(fTime0_X * 0.022), 0., Texture0).r * 1.1;
+   sphere1 += noise(parameters[1].yyzw + rayPos.xzyx*0.07 + parameters[0][2] + vec4(fTime0_X * 0.012), 0., Texture0).r * 2.1;
    float sphere2 = 6.0 - length(rayPos+vec3(1.0, 0.0, 0.0));
    vec4 noiseAdd = 2.0 * noise(0.25 * rayPos.xzxz + 0.27 * rayPos.yxzy + vec4(0.01 * fTime0_X), 0.0, Texture0);
    float baseVal = sqrt(1.0 / (1.0 / (sphere1*sphere1+0.1) + 1.0 / (sphere2*sphere2+0.1)));// + noiseV1;
@@ -32,7 +32,7 @@ vec2 getImplicit(vec3 rayPos, float fTime0_X)
    //float noiseV2 = 1.1;
 
    //additional lighter?
-   float implicit = baseVal + noiseV2 * smoothstep(0.0, 0.2, 0.2 - baseVal) * (0.25*noise2Amount);
+   float implicit = baseVal + noiseV2 * smoothstep(0.0, 0.2, 0.2 - baseVal) * (0.5*noise2Amount);
    implicit = min(implicit, 2.0 * abs(implicit - parameters[3][3]) + 0.02 + 0.3 * parameters[3][3]*parameters[3][3]);
 
    return vec2(implicit, noise2Amount + abs(implicit - parameters[3][3]) * parameters[3][3] * 0.4);
@@ -106,7 +106,7 @@ void main(void)
 	  totalDensity += 0.01;
       //totalColor += (1.0 - totalDensity) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 3.0 * implicitVec.g * vec3(0.02, 0.014, 0.005);
 	  //totalColor += parameters[0][1] * (1.0 - totalDensity) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 3.0 * implicitVec.g * vec3(0.02, 0.014, 0.005);
-	  totalColor += parameters[0][1] * (1.0 - totalDensity) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 1.5 * vec3(0.02, 0.014, 0.005);
+	  totalColor += parameters[0][1] * (1.0 - totalDensity) * smoothstep(0.0, 1.0, 2.0 - implicitVal) * 1.3 * vec3(0.02, 0.014, 0.005);
       
       // This is done on a hit. Always 100% coverage!
       if (implicitVal < 0.5 * coneSize)
@@ -185,7 +185,7 @@ void main(void)
          //totalDensity = totalDensity + (1.-totalDensity) * localDensity;
       }
       
-      stepSize = implicitVal * 0.8;
+      stepSize = implicitVal * 0.7;
       //stepSize = min(stepSize, pow(stepSize + 0.1, 2.0));
       //stepSize = min(implicitVal * 0.5, pow(implicitVal + 0.05, 2.0));
       //stepSize = implicitVal * 0.9;

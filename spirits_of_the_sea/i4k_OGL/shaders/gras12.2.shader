@@ -24,7 +24,7 @@ vec2 getImplicit(vec3 rayPos, float fTime0_X)
    vec4 noiseAdd = noise(0.04 * rayPos.xzxz + 0.043 * rayPos.yxzy + parameters[1] + vec4(fTime0_X) * 0.002, 0.0, Texture0);
    //noiseAdd += 0.15 * noise(0.13 * rayPos.xzxz + 0.12 * rayPos.yxzy, 0.0, Texture0);
    //vec4 noiseAdd2 = noise(vec4(fTime0_X) * 0.03 + noiseAdd * smoothstep(-10.0, 20.0, vec4(fTime0_X)) * 0.5 / max(1.0, sphere1 - 0.5), 0.0, Texture0);
-   vec4 noiseAdd2 = noise(0.1 + vec4(fTime0_X) * 0.03 + noiseAdd * 1.8 / max(1.0, 2.0 * sphere1 - 0.5), 0.0, Texture0);
+   vec4 noiseAdd2 = noise(0.1 + vec4(fTime0_X) * 0.03 + noiseAdd * 0.8 / max(1.0, 2.0 * sphere1 - 0.5), 0.0, Texture0);
    float baseVal = sqrt(1.0 / (1.0 / (sphere1*sphere1+0.1) +  1.0 / (sphere2*sphere2+0.1))) - 0.8 - length(noiseAdd) * 1.0 + parameters[2][0];// + noiseV1;
    
    //float noise2Amount = smoothstep(0.85, 1.0, 1.0 - length(noiseAdd.rg));
