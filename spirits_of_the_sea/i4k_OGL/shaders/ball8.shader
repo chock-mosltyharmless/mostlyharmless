@@ -35,7 +35,7 @@ float getImplicit(vec3 rayPos, float fTime0_X)
 vec3 getNormal(vec3 rayPos, float implicitVal, float fTime0_X)
 {
    // This e may be bad? I may have problems with noise?
-   float normalEpsilon = 0.03;         // Should I get this from a parameter?
+   float normalEpsilon = 0.11;         // Should I get this from a parameter?
    vec2 e = vec2(normalEpsilon, 0.0);
    return normalize(vec3(getImplicit(rayPos + e.xyy, fTime0_X),
                          getImplicit(rayPos + e.yxy, fTime0_X),
@@ -197,7 +197,7 @@ void main(void)
          rayPos += implicitNormal * 0.1;
          
          // This is a hack so that color reflection is not so bright...
-         localDensity = 0.1;
+         localDensity = parameters[3][1];
          coneSizeIncrease *= 10.0;
          //totalDensity += (1.-totalDensity) * localDensity;
 #else

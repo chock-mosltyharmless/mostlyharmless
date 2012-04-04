@@ -21,9 +21,10 @@ vec2 getImplicit(vec3 rayPos, float fTime0_X)
 {
    float sphere1 = length(rayPos - vec3(1.7, 0.0*sin(fTime0_X * 0.26), 0.0));
    float sphere2 = 6.0 - length(rayPos);
-   vec4 noiseAdd = noise(vec4(fTime0_X*0.03) + 0.04 * rayPos.xzxz + 0.04 * rayPos.yxzy + vec4(10.0), 1.0, Texture0);
-   float noiseV1 = noise(1.3*noiseAdd, 1.0, Texture0).r * 0.05;
-   float baseVal = sqrt(1.0 / (1.0 / (sphere1*sphere1+0.1) +  1.0 / (sphere2*sphere2+0.1))) - 1.3 + noiseAdd.r * 1.5 + noiseV1;
+   vec4 noiseAdd = noise(parameters[1] + vec4(fTime0_X*0.03) + 0.04 * rayPos.xzxz + 0.04 * rayPos.yxzy + vec4(10.0), 1.0, Texture0);
+   noiseAdd += 0.3 * noise(vec4(fTime0_X*0.03) + 0.07 * rayPos.xyxz + 0.09 * rayPos.zxzy, 1.0, Texture0);
+   //float noiseV1 = noise(1.3*noiseAdd, 1.0, Texture0).r * 0.05;
+   float baseVal = sqrt(1.0 / (1.0 / (sphere1*sphere1+0.1) +  1.0 / (sphere2*sphere2+0.1))) - 1.3 + noiseAdd.r * 2.;// + noiseV1;
    
    float noise2Amount = smoothstep(0.85, 1.0, 1.0 - length(noiseAdd.rg));
    //float noiseV2 = length(noise(noiseAdd * 0.6, 0.0, Texture0)) * 0.0;
@@ -33,7 +34,7 @@ vec2 getImplicit(vec3 rayPos, float fTime0_X)
 
 vec3 getNormal(vec3 rayPos, float implicitVal, float fTime0_X)
 {
-   float normalEpsilon = 0.03;
+   float normalEpsilon = 0.2;
    // This e may be bad? I may have problems with noise?
    vec2 e = vec2(normalEpsilon, 0.0);
    return normalize(vec3(getImplicit(rayPos + e.xyy, fTime0_X).r,
@@ -51,9 +52,9 @@ vec3 getLightAmount(vec3 rayPos, float coneSize, float fTime0_X)
 
    lightPos = vec3(6.7, -0.0, 0.0);
    // I need to make this a variable!
-   color += 2.8 * vec3(1.0, 0.9, 0.7) / (pow(length(rayPos-lightPos) / (coneSize+0.1) + 1.0, 1.5));
+   color += 2.8 * vec3(1.0, 0.9, 0.7) / (pow(length(rayPos-lightPos) / (coneSize+0.1) + 1.0, 1.9));
 
-   color *= 1.5 * smoothstep(-0.5, 0.5, sin(fTime0_X*0.96)) - 1.0;
+   color *= 2. * smoothstep(-0.5, 0.5, sin(fTime0_X*0.96)) - 1.0;
    color *= parameters[0][1];
 
    return color;

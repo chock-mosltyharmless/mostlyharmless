@@ -674,6 +674,7 @@ void ball8Scene(float ftime)
 	else if (ftime < 7.0f * dTime)
 	{
 		parameterMatrix[2] = 1.2f; // y position of the ball
+		parameterMatrix[13] = 1.0f; // local density of reflection
 		parameterMatrix[14] = 1.5f; // Rotation around z
 		parameterMatrix[15] = 2.6f + (ftime-6*dTime)*0.2f; // Rotation around y
 	}
@@ -747,6 +748,10 @@ void gras10Scene(float ftime)
 		parameterMatrix[1] = 1.0f - (ftime-6.5f) * 0.25f * fabsf(sin(ftime*14.0f));
 	}
 #endif
+	parameterMatrix[4] = params.getParam(2, 0.36f);
+	parameterMatrix[5] = params.getParam(3, 0.39f);
+	parameterMatrix[6] = params.getParam(4, 0.43f);
+	parameterMatrix[7] = params.getParam(5, 0.01f);
 	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen
@@ -876,8 +881,8 @@ void gras20Scene(float ftime)
 	parameterMatrix[0] = ftime; // time
 	parameterMatrix[1] = 1.0f; // totalColor multiplier
 	parameterMatrix[4] = 1.0f;  // cameraZ
-	parameterMatrix[15] = ftime * 0.695f * 1.25f; // additional lighter?
-	while (parameterMatrix[15] > 2.5f*1.25f) parameterMatrix[15] -= 2.5f*1.25f;
+	parameterMatrix[15] = ftime * 0.695f * 1.05f; // additional lighter?
+	while (parameterMatrix[15] > 2.5f*1.05f) parameterMatrix[15] -= 2.5f*1.05f;
 #if 1
 	if (ftime < 1.0f)
 	{
@@ -889,8 +894,15 @@ void gras20Scene(float ftime)
 		parameterMatrix[4] = 1.0f - (ftime-12.3f) * (ftime-12.3f) * 0.1f;  // cameraZ
 	}
 #endif
-	parameterMatrix[2] = 2.0f / (ftime + 10.0f); // unknown noise parameter
+	parameterMatrix[2] = 4.0f / (ftime + 10.0f); // unknown noise parameter
 	parameterMatrix[3] = 1.3f - ftime * 0.15f;   // camera rotation
+	// human user stuff 2:0.00(0) 3:0.17(22) 4:0.80(101) 
+	//2:0.31(39) 3:0.28(35) 4:0.28(36) 5:0.52(66) 
+	parameterMatrix[5] = params.getParam(2, 0.31f);
+	parameterMatrix[6] = params.getParam(3, 0.28f);
+	parameterMatrix[7] = params.getParam(4, 0.28f);
+	parameterMatrix[8] = params.getParam(5, 0.0f);
+	parameterMatrix[9] = params.getParam(6, 0.0f);
 	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen
@@ -1004,8 +1016,9 @@ void intro_do( long itime )
 	float tt = ftime;
 	//float dTime = 3.75f;
 	float dTime = 7.3f;
+	//float dTime = 14.7f;
 	while (tt > dTime) tt -= dTime;
-	gras122AScene(tt);
+	gras10Scene(tt);
 #endif
 }
 
