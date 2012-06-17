@@ -1,0 +1,173 @@
+Konzept zum Theaterstück über böses Wasser
+Version 0.1
+
+---------------------
+Hintergrundgeschichte
+---------------------
+
+Die zwei deutschen Wissenschaftler Bernahrd
+Wuhl und Frank Gruber haben zusammen im Rahmen
+eines Projekts zur Erhöhung der Sicherheit im
+Schiffsverkehr Simulationen von Schiffsunglücken
+gemacht. Dabei ist ihnen Aufgefallen, dass die
+Katastrophen statistisch gesehen unerklärlich
+hohe Schäden aufwiesen. In jedem Einzelfall war
+dieser Ausgang wissenschaftlich nicht unmöglich,
+aber unwahrscheinlich. Durch die ständige
+Wiederholung bei unterschiedlichen Unfällen
+wurde das Interesse der Wissenschaftler
+geweckt.
+
+Die beiden Wissenschaftler fingen an, sowohl
+Überschwemmungskatastrophen als auch
+Erdbebenkatastrophen zu simulieren, und die
+Ergebnisse mit den realen Vorkommnissen sowie
+miteinander zu vergleichen. Entgegen aller
+Erwartungen, aber im Einklang mit vorherigen
+Ergebnissen erzeugten die Flutkatstrophen Schäden,
+die im Mittel höher waren als erwartet, wohingegen
+die Erdbeben durchschnittlich den erwarteten Schaden
+verursachten. Aus diesen Beobachtungen stellten
+die Physiker die Theorie des "bösen Wassers" auf.
+
+Die Theorie des "bösen Wassers" (der deutsche
+Fachbegriff ist "destruktive Anomalie des
+Wassers") besagt, dass Wasser die Fähigkeit
+besitzt, den Ausgang nichtdeterministischer
+Vorgänge zu beeinflussen. Die am häufigsten
+vertretene Meinung besagt, dass Teilchen, deren
+Position aufgrund der heisenbergschen
+Unschärferelation nicht genau festgelegt ist,
+vom Wasser auf eine der möglichen Moden festgelegt
+werden kann. Anschaulich gesprochen ist Wasser nach
+der Theorie dazu in der Lage, zufällige Ereignisse
+nach seinem "Willen" ausgehen zu lassen. Weiterhin
+besagt die Theorie, dass das Wasser aber nur dann
+Einfluß auf den Zufall nimmt, wenn es dadurch
+zerstörerisches Verhalten auslösen kann. 
+Eine Reihe von Witzen unter Psychpysikern zielt
+darauf ab, dass Katzen von dieser Beschaffenheit des
+Wassers wissen und nur deswegen so ungerne Baden,
+weil sie nicht durch ihre nassen Haare schrödingers
+Experiment verfälschen wollen.
+
+Um ihre Theorie zu belegen, planen Bernhard
+und Frank ein Experiment. In diesem Experiment
+wird ein Behälter mit Wasser in einen chaotisch
+hochpotentialen Zustand versetzt. Dazu wird
+kurzwelliges Licht in unregelmäßigen Formen durch das
+Wasser geschickt. Gleichzeitig wird das Wasser
+ungleichmäßig erhitzt und abgekühlt, damit sich
+bewegende Spaltformationen im Wasser bilden, die
+heisenbergsche Unschärfe der Lichtteilchen
+konkretisieren. Darufhin wird das Wasser in
+Wellenbewegungen versetzt, die das Wasser mit
+einer sehr geringen Wahrscheinlichkeit (angestrebt
+ist 1%) zum Überschwappen aus dem Gefäß bringt.
+Durch das Überschweppen des Wassers soll ein
+destruktiver Prozess ausgelöst werden. Sollte das
+Wasser tatsächlich überschwappen, so wäre die
+Theorie des bösen Wassers mit einer
+Wahrscheinlichkeit von 99% belegt.
+
+Noch offene Probleme des Experiments sind:
+1) Wie erreicht man eine Wahrscheinlichkeit des
+   Überschwappens, das es einerseits dem
+   Wasser noch möglich macht, dies eintreten
+   zu lassen aber andererseits nicht auf reinen
+   Zufall zurückgeführt werden kann. (d.h., wie
+   erreicht man die 1% Wahrscheinlichkeit)
+2) Ist durch das kurzwelliges Licht und
+   das unterschiedliche Erhitzen genügend
+   chaotisches Potential vorhanden, damit das
+   Wasser Einfluß auf den Ausgang des Experiments
+   nehmen kann, oder gibt es eine Möglichkeit noch
+   mehr Nichtdeterminismus zu erzeugen?
+3) Wie muss der destruktive Prozess aussehen,
+   damit das Wasser überhaupt Interesse daran
+   findet? Das Bewußtsein des Wassers kann sich
+   extrem vom menschlichen unterscheiden.
+   Bernhard ist dafür, dass das Wasser ein kostbares
+   Kunstwerk zerstören soll (bei ihren Simulationen
+   hatten die beiden hauptsächlich kommerzielle
+   Schäden untersucht), wohingegen Frank lieber eine
+   Katze nehmen würde. Seine Begründung ist, dass
+   Katzen vielleicht wirklich nicht ohne Grund
+   Angst vor Wasser haben. Ggf. richtet sich das
+   destruktive Verhalten von Wasser hauptsächlich
+   gegen Katzen, und diese haben dadurch evolutorisch
+   Angst entwickelt.
+   
+   
+----------------------------
+Einzelideen zum Theaterstück
+----------------------------
+
+Zu Beginn des Theaterstücks sieht man Bernhard
+und Frank Berechnungen an einer Tafel bzgl.
+irgendwelcher Wahrscheinlichkeiten anstellen.
+Dabei ist dem Publikum weder klar, welchem
+Zweck diese Berechnungen dienen, noch dass die
+beiden Männer Naturwissenschaftler sind.
+
+Nach der ersten Szene bauen die beiden
+Wissenschaftler die Maschine auf der Bühne.
+Dabei bereden sie einzelne Probleme, die
+während des Baus der Maschine auftreten.
+Dadurch wird immer mehr klar, dass beide
+Wissenschaftler sind, und man erfährt auch
+etwas über vorhergehende Experimente, wobei
+aber immer noch deren Zusammenhang, auch mit
+der Maschine, unklar bleibt.
+
+Es gibt eine weitere Person, einen Skeptiker,
+der die beiden vom Bau der Maschine während
+des Stücks abzuhalten versucht.
+Dabei spricht er sowohl von der
+Unsinnigkeit des ganzen Experiments sowie
+von den potentiellen Gefahren. Als sein
+Versuch scheitert denkt er darüber nach, die
+Maschine zu sabotieren. In einem unbeobachteten
+Moment geht er unentschlossen zur Maschine,
+untersucht skeptisch ein paar Teile, und geht
+dann wieder. Es bleibt unklar, ob er tatsächlich
+etwas sabotiert hat oder nicht.
+
+Der Skeptiker gehört der Universität an, ist aber
+ein Gegner der neuen Fakultät für Psychophysik, die
+er ausschließlich für eine Modeerscheinung hält.
+Während des Stücks teilt er Werbematerial der
+Universität an das Publikum aus.
+
+Wenn die Maschine zur Hälfte fertig ist,
+entscheiden sich die beiden Physiker für eine
+Kaffeepause. Obwohl sie während des Baus der
+Maschine ständig hitzig miteinander diskutieren
+(ausschließlich über fachliche Aspekte),
+bleiben sie während ihrer Kaffeepause komplett
+still und sagen kein Wort.
+
+Die Maschine besteht neben dem Gefäß aus
+Wasser, das mit einem Kocher erhitzt und mit
+Eiswürfeln abgekühlt wird, noch aus mehreren
+Beamern, die in das Wasser hineinstrahlen und
+deren abgelenktes Licht die Wände bestrahlt.
+Zusätzlich wird das Glas mit einem
+Subwoofer verbunden, der Geräusche/Musik
+abspielt und das Wasser zum Schwingen bringt.
+Um das Wassergefäß herum ist eine Auffangschale,
+die auf einem Schalter sitzt. Der Schalter
+betätigt einen Mechanismus, der einen Eimer
+Farbe über ein Gemälde schüttet.
+[Anmerkung: Das ist mir zu sehr Disney Comic.
+Was könnten wir da alternativ machen?]
+
+Am Ende des Stücks ist die Maschine fertig.
+Die Wissenschaftler schalten die Maschine ein,
+das Licht aus, und verlassen die Bühne.
+Danach fährt die Maschine langsam ihr
+Programm hoch. Dabei wird die Maschine immer
+lauter, schneller und strahlt mit Beamern
+immer grellere Lichter aus. Nach etwa 10
+Minuten schaltet sich die Maschine aus, und das
+Stück ist zu Ende.
