@@ -5,14 +5,17 @@ function r = errormetric(A, B)
 % A sound A is represented by
 % Its frequency in 1/60 log2-domain (integral),
 % For now I only care about the frequency
+% NEW: the values are actual frequencies in Hz
 
 % The number of overtones of each sound to
 % take into account for similarity measures
-numOvertones = 8;
+numOvertones = 6;
 
 % calculate frequencies of tone+overtones;
-freqA = tone2freq(A(1)) .* (1:numOvertones)';
-freqB = tone2freq(B(1)) .* (1:numOvertones)';
+%freqA = tone2freq(A(1)) .* (1:numOvertones)';
+%freqB = tone2freq(B(1)) .* (1:numOvertones)';
+freqA = A(1) .* (1:numOvertones)';
+freqB = B(1) .* (1:numOvertones)';
 toneA = freq2tone(freqA);
 toneB = freq2tone(freqB);
 
