@@ -14,7 +14,7 @@
 #define SYRES 400
 #define SXRES 1000 
 // The number of "mel-" bands
-#define NUM_BANDS 12
+#define NUM_BANDS 8
 #define NOISE_LENGTH (1<<20)
 #define PITCH_RESOLUTION 24
 
@@ -133,7 +133,7 @@ void estimateFrame(int frameID, double fr = -1.0)
 		topEnergy = 0.0;
 		//for (threePitch = 9.0; threePitch < 22.5; threePitch++)
 		//for (threePitch = 25.0; threePitch < 45.5; threePitch++)
-		for (threePitch = 35.0; threePitch < 55.5; threePitch++)
+		for (threePitch = 32.0; threePitch < 75.5; threePitch++)
 		{
 			double energy = 0.0;
 			for (int k = 1; k <= 3; k++)
@@ -168,7 +168,7 @@ void estimateFrame(int frameID, double fr = -1.0)
 	int overtone = 1;
 	for (int band = 0; band < NUM_BANDS; band++)
 	{
-		int shifter = band/2 - 1;
+		int shifter = band/2;
 		if (shifter < 0) shifter = 0;
 		int numBandTones = 1 << shifter;
 		
@@ -186,7 +186,10 @@ void estimateFrame(int frameID, double fr = -1.0)
 		if (energy < 1) energy = 1;
 
 		// I am not sure here. The -16 is suspicious
-		amplitude[frameID*NUM_BANDS + band] = (int)(log(energy) / log(2.0)) - 9;
+		amplitude[frameID*NUM_BANDS + band] = (int)(log(energy) / log(2.0)) - 8;
+
+		// Some heuristic. Too silent is super silent!
+		if (amplitude[frameID*NUM_BANDS + band] < 6) amplitude[frameID*NUM_BANDS + band] = 0;
 
 		overtone += numBandTones;
 	}
@@ -222,11 +225,12 @@ void init()
 
 	// Generate noise
 	seed = 1;
+	double cutoff = 0.005;
 	// set filter parameters
 	double f, p, q;
 	//q = 1.0f - 0.005; // 1. - cutoff
-	q = 1.0f - 0.01; // 1. - cutoff
-	p = 0.01 + 0.8f * 0.01 * q; //cutoffFreq + 0.8f * cutoffFreq * q;
+	q = 1.0f - cutoff; // 1. - cutoff
+	p = cutoff + 0.8f * cutoff * q; //cutoffFreq + 0.8f * cutoffFreq * q;
 	f = p + p - 1.0f;
 	q = 0.0;// / (cutoffFreq + 0.25);
 	for (int k = 0; k < 5; k++) filterY[k] = 0.0f;
@@ -650,7 +654,7 @@ void undirty()
 	int overtone = 1;
 	for (int band = 0; band < NUM_BANDS; band++)
 	{
-		int shifter = band/2 - 1;
+		int shifter = band/2;
 		if (shifter < 0) shifter = 0;
 		int numBandTones = 1 << shifter;
 		// Generate sound
@@ -671,12 +675,8 @@ void undirty()
 			{
 				for (int bandTone = 0; bandTone < numBandTones; bandTone++)
 				{	
-					//double noisyness = (double)(band) * 0.125f;
-					//double noisyness = (double)(band) * (0.0625f + 0.03125f);
-					//double noisyness = (double)(overtone+bandTone) * (0.0625f);
 					double noisyness = (double)(overtone+bandTone) * (0.0625f+0.03125f) - 0.5f;
-					//double noisyness = (double)(overtone+bandTone) * (0.125f) - 1.0;
-					//double noisyness = (double)(overtone+bandTone) * (0.03125f) - 0.5;
+					//double noisyness = (double)(overtone+bandTone) * (0.125f) - 0.75f;
 					if (noisyness > 1.0) noisyness = 1.0;					
 					if (noisyness < 0.0) noisyness = 0.0;
 					double t = noisyness * 4. * noise[(i+FRAME_STEP*frame+16768*(overtone+bandTone))%NOISE_LENGTH] +
@@ -688,7 +688,7 @@ void undirty()
 				//double jitter = sin((i+FRAME_STEP*frame)*0.005) * 0.0004;
 				double jitter = 0.0;
 				curPitch += pow(2.0, startPitch * (1.0/PITCH_RESOLUTION) - 10.0) + jitter;
-				startPitch += deltaPitch;
+				startPitch += deltaPitch + (0.0625f * jfrand() - 0.03125f) + 0.05 * sin(0.05 * (i + FRAME_STEP*frame));
 				startAmplitude += deltaAmplitude;
 				while (curPitch > 2.*3.1415926) curPitch -= 2.*3.1415926;
 			}
@@ -760,7 +760,7 @@ void fillBuffer()
 			int overtone = 1;
 			for (int band = 0; band < NUM_BANDS; band++)
 			{
-				int shifter = band/2 - 1;
+				int shifter = band/2;
 				if (shifter < 0) shifter = 0;
 				int numBandTones = 1 << shifter;
 
@@ -801,6 +801,34 @@ void fillBuffer()
 								 (col | (col << 8) | (col << 16));
 			}
 		}
+	}
+}
+
+void loadWaveDialog()
+{
+	char filename[4096];
+
+	if (selectFile(filename, true))
+	{
+		// A file was selected, load data
+		loadWave(filename);
+		if (wave) delete [] wave;
+		wave = new double[refWaveLength];
+		ZeroMemory(wave, sizeof(double) * refWaveLength);
+		refSpecNumFrames = refWaveLength / FRAME_STEP - WINDOW_SIZE/FRAME_STEP + 1;
+		if (refSpec) delete [] refSpec;
+		refSpec = new double [refSpecNumFrames * WINDOW_SIZE];
+		if (spec) delete [] spec;
+		spec = new double [refSpecNumFrames * WINDOW_SIZE];
+		if (wavefile) delete [] wavefile;
+		wavefile = new short [refWaveLength + sizeof(wavHeader)];
+		wavHeader[1] = refWaveLength*MZK_NUMCHANNELS*sizeof(short)+36;
+		wavHeader[10] = refWaveLength*MZK_NUMCHANNELS*sizeof(short);
+		memcpy(wavefile, wavHeader, sizeof(wavHeader));
+		specgram(refWave, refSpec, refSpecNumFrames);
+		initialEstimate();
+		dirty = true;
+		InvalidateRect(hWnd, 0, false);
 	}
 }
 
@@ -851,7 +879,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		for (int b = 0; b < NUM_BANDS; b++)
 		{
-			int shifter = b/2 - 1;
+			int shifter = b/2;
 			if (shifter < 0) shifter = 0;
 			int numBandTones = 1 << shifter;
 			band = b;
@@ -878,28 +906,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DestroyWindow(hWnd);
 			break;
 		case IDM_LOAD_WAV:
-			if (selectFile(filename, true))
-			{
-				// A file was selected, load data
-				loadWave(filename);
-				if (wave) delete [] wave;
-				wave = new double[refWaveLength];
-				ZeroMemory(wave, sizeof(double) * refWaveLength);
-				refSpecNumFrames = refWaveLength / FRAME_STEP - WINDOW_SIZE/FRAME_STEP + 1;
-				if (refSpec) delete [] refSpec;
-				refSpec = new double [refSpecNumFrames * WINDOW_SIZE];
-				if (spec) delete [] spec;
-				spec = new double [refSpecNumFrames * WINDOW_SIZE];
-				if (wavefile) delete [] wavefile;
-				wavefile = new short [refWaveLength + sizeof(wavHeader)];
-				wavHeader[1] = refWaveLength*MZK_NUMCHANNELS*sizeof(short)+36;
-				wavHeader[10] = refWaveLength*MZK_NUMCHANNELS*sizeof(short);
-				memcpy(wavefile, wavHeader, sizeof(wavHeader));
-				specgram(refWave, refSpec, refSpecNumFrames);
-				initialEstimate();
-				dirty = true;
-				InvalidateRect(hWnd, 0, false);
-			}
+			loadWaveDialog();
 			break;
 		case IDM_SAVE_WAV:
 			if (selectFile(filename, false))
@@ -1015,6 +1022,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		case 'P':
 			if (dirty) undirty();
 			sndPlaySound( (const char*)wavefile, SND_ASYNC|SND_MEMORY );
+			break;
+
+		case 'l':
+		case 'L':
+			loadWaveDialog();
 			break;
 
 		default:
