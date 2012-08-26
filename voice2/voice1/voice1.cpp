@@ -11,7 +11,7 @@
 #define LOG_WINDOW_SIZE 11
 #define WINDOW_SIZE (1<<LOG_WINDOW_SIZE)
 #define FRAME_STEP (WINDOW_SIZE/4)
-#define SYRES 400
+#define SYRES 600
 #define SXRES 1000 
 // The number of "mel-" bands
 #define NUM_BANDS 8
@@ -309,7 +309,7 @@ void exportFile(const char *filename)
 
 	// write the pitch
 	fprintf(fid, "char pitch[] = {\n");
-	fprintf(fid, "    %d, ", pitch[0]);
+	fprintf(fid, "    %d, ", pitch[0] - 64);
 	for (int i = 1; i < refSpecNumFrames; i++)
 	{
 		fprintf(fid, "%d,", pitch[i] - pitch[i-1]);
