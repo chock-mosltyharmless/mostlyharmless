@@ -39,12 +39,24 @@
     <ClInclude Include="bass.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="mathhelpers.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Swarm.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="chockNgt.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="mathhelpers.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Swarm.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

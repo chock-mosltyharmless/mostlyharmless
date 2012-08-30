@@ -4,8 +4,33 @@
 #include "stdafx.h"
 #include "chockNgt.h"
 #include "bass.h"
+#include "mathhelpers.h"
+#include "Swarm.h"
 
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
+
+struct TGAHeader
+{
+	unsigned char identSize;
+	unsigned char colourmapType;
+	unsigned char imageType;
+
+	// This is a stupid hack to fool the compiler.
+	// I do not know what happens if I compile it
+	// under release conditions.
+	unsigned char colourmapStart1;
+	unsigned char colourmapStart2;
+	unsigned char colourmapLength1;
+	unsigned char colourmapLength2;
+	unsigned char colourmapBits;
+
+	short xStart;
+	short yStart;
+	short width;
+	short height;
+	unsigned char bits;
+	unsigned char descriptor;
+};
 
 // -------------------------------------------------------------------
 //                          Constants:
@@ -28,19 +53,11 @@ static const PIXELFORMATDESCRIPTOR pfd =
 HDC mainDC;
 HGLRC mainRC;
 HWND mainWnd;
-
-// TODO: Get rid of this shit!
-char szAppName [] = TEXT("WebCam");
+static GLuint creditsTexture;
+static int *creditsTexData[1024*1024];
 
 // music data
 HSTREAM mp3Str;
-
-// Triangle data
-#define NUM_TRIANGLES 4000
-float triPositions[NUM_TRIANGLES][3];
-float triDirections[NUM_TRIANGLES][3];
-float triNormals[NUM_TRIANGLES][3];
-//float triDirections[NUM_TRIANGLES][4]; // on the fly?
 
 void glInit()
 {	
@@ -48,6 +65,32 @@ void glInit()
     if( !SetPixelFormat(mainDC,ChoosePixelFormat(mainDC,&pfd),&pfd) ) return;
     mainRC = wglCreateContext(mainDC);
     wglMakeCurrent(mainDC, mainRC);
+
+#if 1
+	// Load credits texture
+	glGenTextures(1, &creditsTexture);
+	glBindTexture(GL_TEXTURE_2D, creditsTexture);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	FILE *cfpid = fopen("TEX.tga", "rb");
+	if (cfpid == 0) return;
+	// load header
+	TGAHeader tgaHeader;
+	fread(&tgaHeader, 1, sizeof(tgaHeader), cfpid);		
+	// load image data
+	int textureSize = 1024 * 1024 * 4;
+	fread(creditsTexData, 1, textureSize, cfpid);	
+	// TODO: Mip Mapping!!!!
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
+	glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA8, 1024, 1024,
+					  GL_BGRA, GL_UNSIGNED_BYTE, creditsTexData);
+	glDisable(GL_TEXTURE_2D);						// Enable Texture Mapping
+	fclose(cfpid);
+#endif
 }
 
 void glUnInit()
@@ -56,169 +99,35 @@ void glUnInit()
 	ReleaseDC(mainWnd, mainDC);
 }
 
-float frand()
+
+void drawQuad(float startX, float endX, float startY, float endY, float startV, float endV, float alpha)
 {
-	return (float)rand()/(float)RAND_MAX;
+		// set up matrices
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		glEnable(GL_TEXTURE_2D);
+		glDepthMask(GL_FALSE);
+		glDisable(GL_DEPTH_TEST);
+
+	glColor4f(1.0f, 1.0f, 1.0f, alpha);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, endV);
+	glVertex3f(startX, endY, 0.99f);
+	glTexCoord2f(1.0f, endV);
+	glVertex3f(endX, endY, 0.99f);
+	glTexCoord2f(1.0f, startV);
+	glVertex3f(endX, startY, 0.99f);
+	glTexCoord2f(0.0, startV);
+	glVertex3f(startX, startY, 0.99f);
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+			glDepthMask(GL_TRUE);
+			glEnable(GL_DEPTH_TEST);
 }
 
-void normalize(float *vector, int dimension)
-{
-	float length = 0.0f;
-	for (int i = 0; i < dimension; i++)
-	{
-		length += vector[i] * vector[i];
-	}
-	length = sqrtf(length);
 
-	if (length > 0.0001f)
-	{
-		for (int i = 0; i < dimension; i++)
-		{
-			vector[i] = vector[i] / length;
-		}
-	}
-	else
-	{
-		vector[0] = 1.0f;
-		for (int i = 1; i < dimension; i++)
-		{
-			vector[i] = 0.0f;
-		}
-	}
-}
-
-// dot product
-float dot(float *a, float *b, int dimension)
-{
-	float result = 0.0f;
-	for (int i = 0; i < dimension; i++)
-	{
-		result += a[i] * b[i];
-	}
-	return result;
-}
-
-// change vector so that it is normal again.
-// Both must be normalized.
-// TODO: will fail, if they go the same way.
-void reNormal(float *vec, float *normal, int dimension)
-{
-	float normalizer = dot(vec, normal, dimension);
-
-	for (int i = 0; i < dimension; i++)
-	{
-		vec[i] -= normalizer * normal[i];
-	}
-	normalize(vec, dimension);
-}
-
-// only for unit length vectors!
-// source and result may be the same.
-void slerp(float *source, float *dest, float *result, int dimension, float t)
-{
-	// fake!
-	for (int i = 0; i < dimension; i++)
-	{
-		result[i] = (1.0f - t) * source[i] + t * dest[i];
-	}
-
-	normalize(result, dimension);
-}
-
-// get signed distance value
-float getSDSphere(float *position)
-{
-	float length = 0.0f;
-
-	length = sqrtf(position[0] * position[0] +
-			       position[1] * position[1] +
-				   position[2] * position[2]);
-	length -= 3.0;
-	return length;
-}
-
-// get Normal. I may need to use the signed distance for that?
-void getNormalSphere(float *position, float *normal)
-{
-	normal[0] = position[0];
-	normal[1] = position[1];
-	normal[2] = position[2];
-
-	normalize(normal, 3);
-}
-
-// update center positions of the metaballs
-float metaCenters[3][3];
-void updateSD(float time)
-{
-	static float randomValues[3][3][2];
-	static bool randomValuesAreMade = false;
-	if (!randomValuesAreMade)
-	{
-		randomValuesAreMade = true;
-		for (int i = 0; i < 3*3*2; i++)
-		{
-			randomValues[0][0][i] = frand() * 1.0f;
-		}
-	}
-	for (int i = 0; i < 3*3; i++)
-	{
-		metaCenters[0][i] = 2.5f * sin(randomValues[0][i][0]*time + 3.0f * randomValues[0][i][1]);
-	}
-}
-
-// three metaballs SD
-float getSD(float *position)
-{
-	float value = 0.0f;
-
-	for (int ball = 0; ball < 3; ball++)
-	{
-		position[0] -= metaCenters[ball][0];
-		position[1] -= metaCenters[ball][1];
-		position[2] -= metaCenters[ball][2];
-
-		value += 1.0f / (position[0] * position[0] +
-						 position[1] * position[1] +
-						 position[2] * position[2] + 0.01f);
-		
-		position[0] += metaCenters[ball][0];
-		position[1] += metaCenters[ball][1];
-		position[2] += metaCenters[ball][2];
-	}
-
-	value = sqrt(1.0f / value) - 2.0f;
-
-	return value;
-}
-
-void getNormal(float *position, float *normal)
-{
-	normal[0] = 0.0f;
-	normal[1] = 0.0f;
-	normal[2] = 0.0f;
-
-	for (int ball = 0; ball < 3; ball++)
-	{
-		position[0] -= metaCenters[ball][0];
-		position[1] -= metaCenters[ball][1];
-		position[2] -= metaCenters[ball][2];
-
-		float value = 1.0f / (position[0] * position[0] +
-						      position[1] * position[1] +
-						      position[2] * position[2] + 0.01f);
-		value = value * value;
-		normal[0] += value * position[0];
-		normal[1] += value * position[1];
-		normal[2] += value * position[2];
-		
-		position[0] += metaCenters[ball][0];
-		position[1] += metaCenters[ball][1];
-		position[2] += metaCenters[ball][2];
-	}
-
-	normalize(normal, 3);
-}
 
 
 //WinMain -- Main Window
@@ -238,31 +147,20 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     wc.hCursor = LoadCursor (NULL, IDC_ARROW);
     wc.hbrBackground = (HBRUSH) (COLOR_WINDOW+1);
     wc.lpszMenuName = NULL;
-    wc.lpszClassName = szAppName;
+    wc.lpszClassName = "chockngt";
 
     RegisterClass (&wc);
 
 	// Create the window
     //mainWnd = CreateWindow (szAppName,szAppName,WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,600,0,0,hInstance,0);
-	mainWnd = CreateWindow(szAppName,szAppName,WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	glInit();
 
     ShowWindow(mainWnd,SW_SHOW);
     UpdateWindow(mainWnd);
  
-	// Initialize triangle positions
-	for (int i = 0; i < NUM_TRIANGLES; i++)
-	{
-		for (int j = 0; j < 3; j++)
-		{
-			triPositions[i][j] = (frand() - 0.5f) * 10.0f;
-			triDirections[i][j] = (frand() - 0.5f);
-			triNormals[i][j] = (frand() - 0.5f);
-		}
-		normalize(triDirections[i], 3);
-		normalize(triNormals[i], 3);
-		reNormal(triNormals[i], triDirections[i], 3);
-	}
+	// Initialize Swarm positions and stuff
+	initSwarm();
 
 	long startTime = timeGetTime();
 	long lastTime = 0;
@@ -301,18 +199,37 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+
+		// draw background
+		//drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.4f, 1.0f, 1.0f);
 		glEnable(GL_DEPTH_TEST);
+
+		// Distance to the center object
+		// TODO: Hitchcock-effect by means of gluPerspective!
+		float cameraDist = 20.0f;
+		float cameraComeTime = 150.0f;
+		if (fCurTime > cameraComeTime)
+		{
+			cameraDist = 3.0f + 17.0f / (1.0f + 0.1f * ((fCurTime - cameraComeTime) * (fCurTime - cameraComeTime)));
+		}
 
 		// set up matrices
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		// TODO aspect
-		gluPerspective(25.0,  1.8, 0.1, 100.0);
+		//gluPerspective(25.0,  1.8, 0.1, 100.0);
+		gluPerspective(500.0f / cameraDist,  1.8, 0.1, 100.0);
+		//gluPerspective(25.0,  1.8, 1.1, 100.0);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		gluLookAt(0.0, 0.0, -20.0,
-				  0.0, 0.0, 0.0,
+		//gluLookAt(0.0, 0.0, -cameraDist,
+		//		  0.0, 0.0, 0.0,
+		//		  0.0, 1.0, 0.0);
+		gluLookAt(1., 0.5, -cameraDist,
+				  1., 0.5, 0.0,
 				  0.0, 1.0, 0.0);
+
 
 		// lighting:
 		float ambient[4] = {0.3f, 0.23f, 0.2f, 1.0f};
@@ -334,93 +251,75 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		//glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, allOnes);
 		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
-		/*glBegin(GL_TRIANGLES);
-		//glColor3ub(200, 100, 0);
-		glNormal3f(sin((float)0.001f * curTime), 0.0f, cos((float)0.001f * curTime));
-		glVertex3f(-1.0, 1.0, 0.0);
-		glVertex3f(1.0, 0.0, 0.0);
-		glVertex3f(0.0, -1.0, 0.0);
-		//glColor3ub(200, 0, 200);
-		glVertex3f(0.0, 1.0, 0.0);
-		glVertex3f(1.0, 0.0, 0.0);
-		glVertex3f(0.0, -1.0, 0.0);
-		glEnd();*/
+		float metaAmount = 1.0f;
+		int signedDistanceID = 1; // sphere
+		if (fCurTime > 61.0f) signedDistanceID = 2; // metaballs
+		//signedDistanceID = 0; // nothing
 
-		// update metaball positions
-		updateSD(fCurTime);
+		int pathID = 0; // 8 moveTo points
+		if (fCurTime > 80.0f)
+		{
+			pathID = 1; // 4 lines
+			signedDistanceID = 0; // Nothing
+
+			if (fCurTime > 130.0f)
+			{
+				pathID = 0; // 4 move to points
+				signedDistanceID = 2; // metaballs
+			}
+		}
+
+		// In reversed field
+		if (fCurTime > 170.0f)
+		{
+			pathID = 0;
+			signedDistanceID = 2;
+			if (fCurTime > 190.0f)
+			{
+				pathID = 1;
+				signedDistanceID = 0;
+			}
+			if (fCurTime > 210.0f)
+			{
+				pathID = 1;
+				signedDistanceID = 2;
+			}
+			if (fCurTime > 217.0f)
+			{
+				pathID = 0;
+				signedDistanceID = 1;
+			}
+		}
 
 		// generate destiations
-#define NUM_MOVE_POINTS 3
-		float moveToPoint[NUM_MOVE_POINTS][3];
-		static float randomValues[NUM_MOVE_POINTS][3][4];
-		static bool randomValuesAreMade = false;
-		float slowMotion = 1.0f;
-		if (fCurTime < 22.5f) slowMotion = fCurTime - 21.5f;
-		if (fCurTime < 22.0f) slowMotion = 0.5f;
-		float metaAmount = 0.0f;
-		if (fCurTime > 96.5f) metaAmount = (fCurTime - 96.5f) * 0.1f;
-		if (metaAmount > 1.0f) metaAmount = 1.0f;
-		metaAmount *= metaAmount;
-		float pointAmount = 1.0f;
-		if (fCurTime > 214.0f) pointAmount = 0.0f;
+		float overshoot = 0.0f;
+		if (fCurTime > 19.f)
+		{
+			float relTime = fCurTime - 19.f;
+			overshoot = 2.0f * sin(relTime*0.17f) * (-cos(relTime * 0.75f) + 1.0f);
+		}
+		if (fCurTime > 200.0f)
+		{
+			float relTime = (fCurTime - 200.0f);
+			overshoot /= relTime * relTime + 1.0f;
+		}
+		updateSwarmDestinations(pathID, fDeltaTime, overshoot);
 
-		if (!randomValuesAreMade)
-		{
-			randomValuesAreMade = true;
-			for (int i = 0; i < NUM_MOVE_POINTS * 3 * 4; i++)
-			{
-				randomValues[0][0][i] = frand() * 1.0f;
-			}
-		}
-		for (int i = 0; i < NUM_MOVE_POINTS; i++)
-		{
-			moveToPoint[i][0] = 6.0f * sin(fCurTime * randomValues[i][0][0] + randomValues[i][0][1]) +
-				5.0f * sin(fCurTime * randomValues[i][0][2] + randomValues[i][0][3]);
-			moveToPoint[i][1] = 5.5f * sin(fCurTime * randomValues[i][1][0] + randomValues[i][1][1]) +
-				6.5f * sin(fCurTime * randomValues[i][1][2] + randomValues[i][1][3]);
-			moveToPoint[i][2] = 4.5f * sin(fCurTime * randomValues[i][2][0] + randomValues[i][2][1]) +
-				5.5f * sin(fCurTime * randomValues[i][2][2] + randomValues[i][2][3]);
-		}
-		int destinationMultiplier = (curTime / 20000) + 1;
+		// update direction of the Triangles
+		updateSwarmWithSignedDistance(signedDistanceID, fDeltaTime, metaAmount);
 
 		// move all triangles
-		for (int i = 0; i < NUM_TRIANGLES; i++)
-		{
-			int mPoint = ((i * destinationMultiplier) % 113 + (i % 31)) % NUM_MOVE_POINTS;
-			
-			// update direction based on destination point
-			float destDirection[3];
-			destDirection[0] = moveToPoint[mPoint][0] - triPositions[i][0] + 40.0f * (frand() - 0.5f);
-			destDirection[1] = moveToPoint[mPoint][1] - triPositions[i][1] + 40.0f * (frand() - 0.5f);
-			destDirection[2] = moveToPoint[mPoint][2] - triPositions[i][2] + 40.0f * (frand() - 0.5f);
-			normalize(destDirection, 3);
-			slerp(triDirections[i], destDirection, triDirections[i], 3, 1.8f * fDeltaTime * slowMotion * pointAmount);
-			reNormal(triNormals[i], triDirections[i], 3);
-
-			// update normal based on signed distance
-			float signedDist = getSD(triPositions[i]);
-			getNormal(triPositions[i], destDirection);
-			float t = 1.0f - fabsf(signedDist);
-			t = t < 0.0f ? 0.0f : t;
-			slerp(triNormals[i], destDirection, triNormals[i], 3, t * metaAmount);
-			reNormal(triDirections[i], triNormals[i], 3);
-
-			for (int j = 0; j < 3; j++)
-			{
-				//triPositions[i][j] += (moveToPoint[mPoint][j] - triPositions[i][j]) * 0.1f * fDeltaTime;
-				
-				// update position based on fly direction
-				triPositions[i][j] += triDirections[i][j] * fDeltaTime * 3.0f * slowMotion;
-			}
-		}
+		moveSwarm(fDeltaTime);
 
 		// Set how many triangles to render for each path
-		int numTrisRender1 = (curTime - 11000) / 5;
-		int numTrisRender2 = (curTime-3300);
+		int numTrisRender1 = (curTime - 11300) / 8;
+		int numTrisRender2 = (curTime - 3300) / 2;
 		numTrisRender1 = numTrisRender1 > NUM_TRIANGLES ? NUM_TRIANGLES : numTrisRender1;
 		numTrisRender1 = numTrisRender1 < 0 ? 0 : numTrisRender1;
 		numTrisRender2 = numTrisRender2 > NUM_TRIANGLES ? NUM_TRIANGLES : numTrisRender2;
 		numTrisRender2 = numTrisRender2 < 0 ? 0 : numTrisRender2;
+		float triBrightness = fCurTime / 30.0f + 0.2f;
+		if (triBrightness > 1.0f) triBrightness = 1.0f;
 
 		// render tris
 		glBegin(GL_TRIANGLES);
@@ -428,13 +327,13 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			//glNormal3f(0.3f, 0.5f, 0.2f);
 			float right[3];
-			right[0] = triDirections[i][1] * triNormals[i][2] - triDirections[i][2] * triNormals[i][1];
-			right[1] = triDirections[i][2] * triNormals[i][0] - triDirections[i][0] * triNormals[i][2];
-			right[2] = triDirections[i][0] * triNormals[i][1] - triDirections[i][1] * triNormals[i][0];
-			glNormal3fv(triNormals[i]);
-			glVertex3f(triPositions[i][0] + 0.2f * triDirections[i][0], triPositions[i][1] + 0.2f * triDirections[i][1], triPositions[i][2] + 0.2f * triDirections[i][2]);
-			glVertex3f(triPositions[i][0] + 0.2f * right[0], triPositions[i][1] + 0.2f * right[1], triPositions[i][2] + 0.2f * right[2]);
-			glVertex3f(triPositions[i][0] - 0.2f * right[0], triPositions[i][1] - 0.2f * right[0], triPositions[i][2] - 0.2f * right[0]);
+			right[0] = tris.direction[i][1] * tris.normal[i][2] - tris.direction[i][2] * tris.normal[i][1];
+			right[1] = tris.direction[i][2] * tris.normal[i][0] - tris.direction[i][0] * tris.normal[i][2];
+			right[2] = tris.direction[i][0] * tris.normal[i][1] - tris.direction[i][1] * tris.normal[i][0];
+			glNormal3fv(tris.normal[i]);
+			glVertex3f(tris.position[i][0] + 0.2f * tris.direction[i][0], tris.position[i][1] + 0.2f * tris.direction[i][1], tris.position[i][2] + 0.2f * tris.direction[i][2]);
+			glVertex3f(tris.position[i][0] + 0.2f * right[0], tris.position[i][1] + 0.2f * right[1], tris.position[i][2] + 0.2f * right[2]);
+			glVertex3f(tris.position[i][0] - 0.2f * right[0], tris.position[i][1] - 0.2f * right[0], tris.position[i][2] - 0.2f * right[0]);
 		}
 		glEnd();
 
@@ -443,44 +342,83 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glBlendFunc(GL_SRC_ALPHA,GL_ONE); 
 		glDisable(GL_LIGHTING);
 		float beating = 1.0f - 0.25f * fabsf((float)sin(fCurTime*4.652f));
-		glColor4f(1.0f, 0.5f, 0.3f, beating * 0.1f);
 		glBegin(GL_TRIANGLES);
 		for (int i = 0; i < numTrisRender2; i++)
 		{
+			const float colorA[3] = {0.3f, 0.5f, 1.0f};
+			const float colorB[3] = {1.0f, 0.8f, 0.3f};
+			const float colorC[3] = {2.0f, 0.4f, 0.1f};
+			float color[3];
+			float colorT = fCurTime * 0.01f;
+			if (colorT > 1.0f) colorT = 1.0f;
+			for (int c = 0; c < 3; c++)
+			{
+				color[c] = colorA[c] * (1.0f - colorT) + colorT * colorB[c];
+			}
+			if (fCurTime > 100.0f)
+			{
+				colorT = (fCurTime - 100.0f) * 0.1f - ((i*i*17)%63) * 0.1f;
+				if (colorT < 0.0f) colorT = 0.0f;
+				if (colorT > 1.0f) colorT = 1.0f;
+				for (int c = 0; c < 3; c++)
+				{
+					color[c] = colorB[c] * (1.0f - colorT) + colorT * colorC[c];
+				}
+			}
+			// Some color noise
+			for (int c = 0; c < 3; c++)
+			{
+				float n = ((((i*i+13)*(c*c+7)+(i*(c+1))) % 100) - 50) * 0.0025f;
+				color[c] += n;
+			}
+
 			//glNormal3f(0.3f, 0.5f, 0.2f);
+			glColor4f(color[0], color[1], color[2], beating * 0.1f * triBrightness);
 			float right[3];
-			right[0] = triDirections[i][1] * triNormals[i][2] - triDirections[i][2] * triNormals[i][1];
-			right[1] = triDirections[i][2] * triNormals[i][0] - triDirections[i][0] * triNormals[i][2];
-			right[2] = triDirections[i][0] * triNormals[i][1] - triDirections[i][1] * triNormals[i][0];
-			glNormal3fv(triNormals[i]);
-			glVertex3f(triPositions[i][0] + 0.6f * triDirections[i][0],
-					   triPositions[i][1] + 0.6f * triDirections[i][1],
-					   triPositions[i][2] + 0.6f * triDirections[i][2] - 0.1f);
-			glVertex3f(triPositions[i][0] + 0.6f * right[0] - 0.2f * triDirections[i][0],
-					   triPositions[i][1] + 0.6f * right[1] - 0.2f * triDirections[i][1],
-					   triPositions[i][2] + 0.6f * right[2] - 0.2f * triDirections[i][2] - 0.001f);
-			glVertex3f(triPositions[i][0] - 0.6f * right[0] - 0.2f * triDirections[i][0],
-					   triPositions[i][1] - 0.6f * right[0] - 0.2f * triDirections[i][1],
-					   triPositions[i][2] - 0.6f * right[0] - 0.2f * triDirections[i][2] - 0.001f);
+			right[0] = tris.direction[i][1] * tris.normal[i][2] - tris.direction[i][2] * tris.normal[i][1];
+			right[1] = tris.direction[i][2] * tris.normal[i][0] - tris.direction[i][0] * tris.normal[i][2];
+			right[2] = tris.direction[i][0] * tris.normal[i][1] - tris.direction[i][1] * tris.normal[i][0];
+			glNormal3fv(tris.normal[i]);
+			glVertex3f(tris.position[i][0] + 0.6f * tris.direction[i][0],
+					   tris.position[i][1] + 0.6f * tris.direction[i][1],
+					   tris.position[i][2] + 0.6f * tris.direction[i][2] - 0.1f);
+			glVertex3f(tris.position[i][0] + 0.6f * right[0] - 0.2f * tris.direction[i][0],
+					   tris.position[i][1] + 0.6f * right[1] - 0.2f * tris.direction[i][1],
+					   tris.position[i][2] + 0.6f * right[2] - 0.2f * tris.direction[i][2] - 0.001f);
+			glVertex3f(tris.position[i][0] - 0.6f * right[0] - 0.2f * tris.direction[i][0],
+					   tris.position[i][1] - 0.6f * right[0] - 0.2f * tris.direction[i][1],
+					   tris.position[i][2] - 0.6f * right[0] - 0.2f * tris.direction[i][2] - 0.001f);
 		}
 		glEnd();
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glDisable(GL_DEPTH_TEST);
 		glBegin(GL_TRIANGLES);
-		if (fCurTime > 225.0f)
+		if (fCurTime > 219.0f)
 		{
-			float alpha = (fCurTime - 225.0f) * 0.3f;
+			float alpha = (fCurTime - 219.0f) * 0.5f;
 			alpha = alpha > 1.0f ? 1.0f : alpha;
 			glColor4f(0.0f, 0.0f, 0.0f, alpha);
 			glMatrixMode(GL_MODELVIEW);
 			glLoadIdentity();
-			glVertex3f(-20.0f, 20.0f, 1.0f);
-			glVertex3f(20.0f, 0.0f, 1.0f);
-			glVertex3f(-20.0f, -20.0f, 1.0f);
+			glVertex3f(-180.0f, 180.0f, 1.0f);
+			glVertex3f(180.0f, 0.0f, 1.0f);
+			glVertex3f(-180.0f, -180.0f, 1.0f);
 		}
 		glEnd();
-		glDisable(GL_BLEND);
 		glDepthMask(TRUE);
+
+		// draw credits
+		if (fCurTime > 221.0f)
+		{
+			float alpha = (fCurTime - 221.0f) * 1.0f;
+			alpha = alpha > 1.0f ? 1.0f : alpha;
+			drawQuad(-1.3f, 0.7f, -0.1f, 0.4f, 0.0f, 0.175f, alpha);
+			drawQuad(-0.7f, 1.3f, -0.5f, 0.0f, 0.175f, 0.35f, alpha);
+		}
+
+		glEnable(GL_DEPTH_TEST);
+		glDisable(GL_BLEND);
+
 
 		//glColor3ub(200, 100, 50);
 		//glEnable(GL_BLEND);
