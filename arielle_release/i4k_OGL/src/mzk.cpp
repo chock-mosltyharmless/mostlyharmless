@@ -221,7 +221,9 @@ void mzk_init( short *buffer )
 	}
 #endif
 
+#if 0
 	FILE *fid = fopen("waveout.raw", "wb");
 	fwrite(buffer, sizeof(short), MZK_NUMSAMPLESC, fid);
 	fclose(fid);
+#endif
 }
