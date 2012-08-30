@@ -4,7 +4,7 @@
 #include <GL/glu.h>
 #include "glext.h"
 
-#define NUM_TEXTURES 54
+#define NUM_TEXTURES 58
 #define TEX_BUTTERFLY_1 0
 #define TEX_BUTTERFLY_8 7
 #define TEX_BLUEKIMO_1 8
@@ -14,9 +14,9 @@
 #define TEX_REDKIMO_1 24
 #define TEX_REDKIMO_8 31
 #define TEX_SQUARE1 33
-#define TEX_NUM_SQUARES 19
-#define TEX_BUTTERFLY_BODY 52
-#define TEX_BUTTERFLY_WING 53
+#define TEX_NUM_SQUARES 23
+#define TEX_BUTTERFLY_BODY 56
+#define TEX_BUTTERFLY_WING 57
 
 struct TGAHeader
 {

@@ -15,7 +15,8 @@
 #define XRES        800
 //#define YRES        (1080 * XRES / 1920)
 //#define YRES        1024
-#define YRES		((1080*XRES)/1920)
+//#define YRES		((1080*XRES)/1920)
+#define YRES		600
 #define OFFSCREEN_WIDTH 1024
 #define OFFSCREEN_HEIGHT 1024
 //#define MZK_DURATION 123

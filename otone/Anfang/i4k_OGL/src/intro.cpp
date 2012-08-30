@@ -62,6 +62,7 @@ void main(void)\n\
    gl_FragColor += 0.25 * texture2D(Texture0, 0.5*objectPosition.xy + vec2(0.4999, 0.50005));\n\
    gl_FragColor += 0.25 * texture2D(Texture0, 0.5*objectPosition.xy + vec2(0.50005, 0.4999));\n\
    float vignette = objectPosition.x*objectPosition.x + objectPosition.y*objectPosition.y;\n\
+   vignette = sqrt(vignette);\n\
    gl_FragColor *= 1.0 - vignette * 0.6; // darken\n\
    float meanColor = 0.3 * gl_FragColor.r + 0.59 * gl_FragColor.r + 0.11 * gl_FragColor.b;\n\
    gl_FragColor = 0.4 * vignette * vec4(meanColor) + (1.0 - 0.4 * vignette) * gl_FragColor; // desaturate\n\
@@ -313,12 +314,12 @@ void intro_init( HWND mainWnd )
 	// start music playback
 	int bassinit = BASS_Init(1,44100,0,mainWnd,NULL);
 	mp3Str=BASS_StreamCreateFile(FALSE,"../../soumu_ruten.mp3",0,0,0);
-	int bassplay = BASS_ChannelPlay(mp3Str, TRUE);
+	//int bassplay = BASS_ChannelPlay(mp3Str, TRUE);
 	// stream forward...
 	//BASS_ChannelSetPosition(mp3Str, 6760000, BASS_POS_BYTE); // short before boom
 	//BASS_ChannelSetPosition(mp3Str, 94560000, BASS_POS_BYTE); // 250
 	//BASS_ChannelSetPosition(mp3Str, 115250000, BASS_POS_BYTE); // 300
-	BASS_Start();
+	//BASS_Start();
 }
 
 void veryStartScene(float ftime)
@@ -330,7 +331,7 @@ void veryStartScene(float ftime)
 		lastTime[i] = lastTime[i-1];
 	}
 	lastTime[0] = ftime;
-	static float fCurTime = 00.0f;
+	static float fCurTime = 0.0f;
 	fCurTime += deltaTime;
 
 	float cameraCenterPoint[2] = {0.0f, 0.0f};
@@ -373,15 +374,15 @@ void veryStartScene(float ftime)
 	parameterMatrix[1] = 1.0f - shatter1amount * 2.0f;
 	parameterMatrix[1] = parameterMatrix[1] < 0.0f ? 0.0f : parameterMatrix[1];
 	parameterMatrix[1] = sqrtf(parameterMatrix[1]);
-	parameterMatrix[1] *= 0.5f*musicSpeed*musicSpeed + 0.1f;
+	parameterMatrix[1] *= 0.3f*musicSpeed*musicSpeed + 0.4f;
 
 	// set matrices
 	float rotation = 0.3f * updateCenterDirection + 3.1415926f;
 	float inverseTime = (260.0f - fCurTime);
 	if (inverseTime > 0.0f)
 	{
-		if (inverseTime < 50.0f) rotation -= inverseTime * inverseTime / 50.0f * 0.5f * 0.12f;
-		else rotation -= (inverseTime - 25.0f) * 0.12f;
+		if (inverseTime < 50.0f) rotation -= inverseTime * inverseTime / 50.0f * 0.5f * 0.1f;
+		else rotation -= (inverseTime - 25.0f) * 0.1f;
 	}
 
 	// rotation is increased on shatter
@@ -435,11 +436,13 @@ void veryStartScene(float ftime)
 	}
 
 	// Beginning blackness of the red overlay
+#if 0
 	parameterMatrix[5] = 1.0f;
 	if (fCurTime > 57.0f) parameterMatrix[5] = 1.0f - (fCurTime - 57.0f) * 0.02f;
 	if (parameterMatrix[5] < 0.0f) parameterMatrix[5] = 0.0f;
 	// What does this do?
 	parameterMatrix[5] = 0.0f;
+#endif
 
 	// kimono strength
 	parameterMatrix[4] = (fCurTime - firstMDur) * 0.02f;
@@ -512,7 +515,7 @@ void veryStartScene(float ftime)
 	textures.drawScreenAlignedQuad(color, cameraCenterPoint[0] - 2.0f, cameraCenterPoint[1] - 2.0f, cameraCenterPoint[0] + 2.0f, cameraCenterPoint[1] + 2.0f);
 
 	// Draw the red overlay
-#if 0
+#if 1
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glUseProgram(shaderPrograms[3]);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
@@ -542,6 +545,9 @@ void veryStartScene(float ftime)
 			float xPos = (((i * (i + 37)) % 59) + (i * i * i) % 41) * 0.4f - 20.0f;
 			float yPos = (((i * (i + 27)) % 49) + (i * i * (i+10)) % 51) * 0.4f - 20.0f;
 
+			xPos *= 1.75f;
+			yPos *= 1.75f;
+
 			textures.drawScreenAlignedQuad(color, (xPos-2.5f) / z, (yPos-2.5f) / z, (xPos+2.5f) / z, (yPos+2.5f) / z);
 			//glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
 		}
@@ -560,9 +566,9 @@ void veryStartScene(float ftime)
 	// Draw the final butterfly
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glUseProgram(shaderPrograms[4]); // simpleTex.shader
-	float buttRotation = 0.5f + 0.05f * sin(fCurTime * 2.0f) + 0.05f * sin(fCurTime * 3.1f);
-	float buttX = (fCurTime-186.0f-firstMDur) * 0.2f + sin(fCurTime * 3.7f) * 0.05f + 0.3f;
-	float buttY = (fCurTime-186.0f-firstMDur) * 0.2f + sin(fCurTime * 4.3f) * 0.02f;
+	float buttRotation = 0.5f + 0.08f * sin(fCurTime * 2.0f) + 0.05f * sin(fCurTime * 3.1f);
+	float buttX = (fCurTime-186.0f-firstMDur) * 0.4f + sin(fCurTime * 3.7f) * 0.05f + 0.3f;
+	float buttY = (fCurTime-186.0f-firstMDur) * 0.4f + sin(fCurTime * 4.3f) * 0.02f;
 	float wingPos = 0.5f + 0.5f * sin(fCurTime * 13.0f);
 	glColor4f(0.75f, 0.8f, 0.5f, 1.0f);
 	textures.setTexture(TEX_BUTTERFLY_WING);
@@ -596,13 +602,13 @@ void veryStartScene(float ftime)
 	glColor4f(0.85f, 0.95f, 0.6f, 1.0f);
 	//textures.drawScreenAlignedQuad(color, -0.05f, -0.08f, 0.06f, 0.05f);
 	glBegin(GL_QUADS);
-	float xpb[4] = {-0.05f, 0.06f, 0.06f, -0.05f};
+	float xpb[4] = {-0.05f, 0.12f, 0.12f, -0.05f};
 	float ypb[4] = {0.05f, 0.05f, -0.08f, -0.08f};
 	for (int i = 0; i < 4; i++)
 	{
 		ypb[i] += wingPos * 0.04f;
-		float x = xpb[i]*cos(buttRotation) - ypb[i]*sin(buttRotation);
-		float y = ypb[i]*cos(buttRotation) + xpb[i]*sin(buttRotation);
+		float x = xpb[i]*cos(buttRotation-0.2f) - ypb[i]*sin(buttRotation-0.2f);
+		float y = ypb[i]*cos(buttRotation-0.2f) + xpb[i]*sin(buttRotation-0.2f);
 		x+=buttX;
 		y+=buttY;
 		xpb[i] = x;
@@ -654,7 +660,8 @@ void veryStartScene(float ftime)
 	projectionMatrix[0] = 1.0f;
 	projectionMatrix[1] = 0.0f;
 	projectionMatrix[4] = 0.0f;
-	projectionMatrix[5] = (float)realXRes / (float)realYRes;
+	//projectionMatrix[5] = (float)realXRes / (float)realYRes;
+	projectionMatrix[5] = 1.0f;
 	projectionMatrix[3] = 0.0f;
 	projectionMatrix[7] = 0.0f;
 	glLoadMatrixf(projectionMatrix);
@@ -667,11 +674,183 @@ void veryStartScene(float ftime)
 
 	// copy to front
 	glViewport(0, 0, realXRes, realYRes);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// copy to front
+	glViewport((realXRes-realYRes)/2, 0, realXRes - (realXRes-realYRes), realYRes);	
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
 	//glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
 	glUseProgram(shaderCopyProgram);	
 	gluSphere(quad, 2.0f, 16, 16);
+	//textures.drawScreenAlignedQuad(color, -(float)realYRes/(float)realXRes, -1.0f, (float)realYRes/(float)realXRes, 1.0f);
 }
+
+void veryEndScene(float ftime)
+{
+	static float lastTime[20] = {0.0f};
+	float deltaTime = (ftime - lastTime[19]) / 20.0f;
+	for (int i = 19; i > 0; i--)
+	{
+		lastTime[i] = lastTime[i-1];
+	}
+	lastTime[0] = ftime;
+	static float fCurTime = 0.0f;
+	fCurTime += deltaTime;
+
+	float cameraCenterPoint[2] = {0.0f, 0.0f};
+	static float updateCenterPoint[2] = {0.0f, 0.0f};
+	float updateCenterDirection;
+	float updateCenterSpeed;
+	static float cameraRotationPhase = 0.0f;
+	
+	GLUquadric* quad = gluNewQuadric();
+
+	// calculate update center position	
+	float firstMDur = 0.0f;
+	float musicSpeed = sin((fCurTime-35.0f-firstMDur) * 0.016f) * 0.5f;
+	if (fCurTime < 35.0f+firstMDur) musicSpeed = 0.0f;
+	if (fCurTime > 183.0f+firstMDur) musicSpeed /= (fCurTime - 183.0f - firstMDur + 1.0f);
+	cameraRotationPhase += deltaTime * musicSpeed;
+	updateCenterDirection = 1.23f * sin(cameraRotationPhase * 0.073f + 2.51f) +
+							0.82f * sin(cameraRotationPhase * 0.143f + 1.52f) +
+							0.34f * sin(cameraRotationPhase * 0.311f + 4.55f) +
+							0.31f * sin(cameraRotationPhase * 0.331f + 5.55f);
+	updateCenterSpeed = 0.2f*musicSpeed;
+	updateCenterPoint[0] += updateCenterSpeed * deltaTime * sin(0.2f * updateCenterDirection);
+	updateCenterPoint[1] += updateCenterSpeed * deltaTime * cos(0.2f * updateCenterDirection);
+
+	parameterMatrix[1] = 0.0f;
+
+	// set matrices
+	float rotation = 0.3f * updateCenterDirection + 3.1415926f;
+	float inverseTime = (210.0f - fCurTime);
+	if (inverseTime > 0.0f)
+	{
+		if (inverseTime < 50.0f) rotation -= inverseTime * inverseTime / 50.0f * 0.5f * 0.06f;
+		else rotation -= (inverseTime - 25.0f) * 0.06f;
+	}
+
+	cameraCenterPoint[0] = updateCenterPoint[0];
+	cameraCenterPoint[1] = updateCenterPoint[1] - 0.3f;
+
+	parameterMatrix[8] = cameraCenterPoint[0];
+	parameterMatrix[9] = cameraCenterPoint[1];
+
+
+	glMatrixMode(GL_MODELVIEW);
+
+	if (fCurTime < 80.0f) parameterMatrix[0] = fCurTime * fCurTime / 160.0f + 40.0f;
+	else parameterMatrix[0] = fCurTime; // time
+	if (fCurTime > 175.0f+firstMDur) parameterMatrix[0] = sqrtf(fCurTime-175.0f-firstMDur) + 175.0f + firstMDur;
+	parameterMatrix[0] *= 0.4f; // slow down...
+	
+	// fog amount
+	//else if (fCurTime < 30.0f) parameterMatrix[3] = (fCurTime - 11.0f) / 19.0f;
+	//else parameterMatrix[3] = 1.0f;
+	parameterMatrix[3] = 0.0f;
+	if (fCurTime > 2.0f) parameterMatrix[3] = (fCurTime - 2.0f) / 30.0f;
+	if (parameterMatrix[3] > 1.0f) parameterMatrix[3] = 1.0f;
+
+	// Fade to black
+	if (fCurTime < 2.0f) parameterMatrix[2] = 0.0f;
+	else if (fCurTime < 12.0f) parameterMatrix[2] = (fCurTime-2.0f) / 10.0f;
+	else parameterMatrix[2] = 1.0f;
+	if (fCurTime > 200.0f+firstMDur) parameterMatrix[2] = 1.0f - (fCurTime - 200.0f - firstMDur) / 10.0f;
+	if (parameterMatrix[2] < 0.0f) parameterMatrix[2] = 0.0f;
+
+	// kimono strength
+	parameterMatrix[4] = 0.0f;
+
+	// Fog overdrive
+	parameterMatrix[6] = 0.0f;
+	if (fCurTime > 20.0f)
+	{
+		parameterMatrix[6] = (fCurTime - 20.0f) / 50.0f;
+		if (parameterMatrix[6] > 0.45f) parameterMatrix[6] = 0.45f;
+	}
+	// I do not need it?
+
+	glLoadMatrixf(parameterMatrix);
+	glMatrixMode(GL_PROJECTION);
+	projectionMatrix[0] = cos(rotation);
+	projectionMatrix[1] = -sin(rotation);
+	projectionMatrix[4] = sin(rotation);
+	projectionMatrix[5] = cos(rotation);
+	projectionMatrix[3] = -(cameraCenterPoint[0] * cos(rotation) - cameraCenterPoint[1] * sin(rotation));
+	projectionMatrix[7] = -(cameraCenterPoint[1] * cos(rotation) + cameraCenterPoint[0] * sin(rotation));
+	glLoadMatrixf(projectionMatrix);
+
+	// Bind the framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+
+	// draw background offscreen
+	// TODO: less y-range!
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glUseProgram(shaderPrograms[0]);
+	textures.setTexture(32); // background texture
+	// draw a quad...
+	//float color[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	float color[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+	textures.drawScreenAlignedQuad(color, cameraCenterPoint[0] - 2.0f, cameraCenterPoint[1] - 2.0f, cameraCenterPoint[0] + 2.0f, cameraCenterPoint[1] + 2.0f);
+
+	// draw the particle engine
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	// Draw the noise
+	glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
+	//glBlendFunc(GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
+	glUseProgram(shaderPrograms[2]);
+	glBindTexture(GL_TEXTURE_2D, noiseTexture);
+	// draw a quad...
+	color[0] = 0.7f;
+	color[1] = 0.8f;
+	color[2] = 1.0f;
+	color[3] = 1.0f;
+	textures.drawScreenAlignedQuad(color, cameraCenterPoint[0] - 2.0f, cameraCenterPoint[1] - 2.0f, cameraCenterPoint[0] + 2.0f, cameraCenterPoint[1] + 2.0f);
+
+	// projection based on whatever.
+	glMatrixMode(GL_PROJECTION);
+	projectionMatrix[0] = 1.0f;
+	projectionMatrix[1] = 0.0f;
+	projectionMatrix[4] = 0.0f;
+	projectionMatrix[5] = 1.0f;
+	projectionMatrix[3] = 0.0f;
+	projectionMatrix[7] = 0.0f;
+	glLoadMatrixf(projectionMatrix);
+
+
+	// reset the projection stuff.
+	glMatrixMode(GL_PROJECTION);
+	projectionMatrix[0] = 1.0f;
+	projectionMatrix[1] = 0.0f;
+	projectionMatrix[4] = 0.0f;
+	//projectionMatrix[5] = (float)realXRes / (float)realYRes;
+	projectionMatrix[5] = 1.0f;
+	projectionMatrix[3] = 0.0f;
+	projectionMatrix[7] = 0.0f;
+	glLoadMatrixf(projectionMatrix);
+
+	// Go back to regular drawing
+	glDisable(GL_BLEND);
+
+	// unbind the framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// copy to front
+	glViewport(0, 0, realXRes, realYRes);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	// copy to front
+	glViewport((realXRes-realYRes)/2, 0, realXRes - (realXRes-realYRes), realYRes);	
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	//glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+	glUseProgram(shaderCopyProgram);	
+	gluSphere(quad, 2.0f, 16, 16);
+	//textures.drawScreenAlignedQuad(color, -(float)realYRes/(float)realXRes, -1.0f, (float)realYRes/(float)realXRes, 1.0f);
+}
+
 
 void intro_do( long itime )
 {
@@ -702,7 +881,8 @@ void intro_do( long itime )
 	}
 	
 	float tt = ftime;
-	veryStartScene(tt);
+	//veryStartScene(tt);
+	veryEndScene(tt);
 }
 
 void intro_end()
