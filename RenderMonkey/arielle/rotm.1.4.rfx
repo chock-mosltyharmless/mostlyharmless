@@ -917,10 +917,10 @@
      <RmRegistryBranch NAME="RmPreviewGLWindow" API="" XML_VERSION="RenderMonkey 1.71">
       <RmRegistryBranch NAME="EffectPlacementRepository" API="" XML_VERSION="RenderMonkey 1.71">
        <RmRegistryBranch NAME="Effect Workspace.Effect Group 1.Effect1" API="" XML_VERSION="RenderMonkey 1.71">
-        <RmIntegerVariable NAME="X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="20" MIN="-10" MAX="10" CLAMP="FALSE"/>
-        <RmIntegerVariable NAME="Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="199" MIN="-10" MAX="10" CLAMP="FALSE"/>
-        <RmIntegerVariable NAME="Width" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="785" MIN="-10" MAX="10" CLAMP="FALSE"/>
-        <RmIntegerVariable NAME="Height" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="537" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="62" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="205" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="Width" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="718" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="Height" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="534" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="ShowStatus" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Visible" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Minimized X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="-1" MIN="-10" MAX="10" CLAMP="FALSE"/>
@@ -1021,7 +1021,7 @@ Pass 1]]></RmTextDataBlock></RmStringVariable>
     </RmRegistryBranch>
     <RmRegistryBranch NAME="WORKSPACE" API="" XML_VERSION="RenderMonkey 1.71">
      <RmStringVariable NAME="LAST_SAVE" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
-27/8/2012 20:58:15]]></RmTextDataBlock></RmStringVariable>
+30/8/2012 9:30:43]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 RenderMonkey Version 1.82 (build 322)]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="XML_VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
@@ -1054,7 +1054,7 @@ uniform vec4 coreSeed;
 vec4 randomIteration(vec4 seed)
 {
    vec4 adder = vec4(0.735, 0.369, 0.438, 0.921);
-   vec4 mult = vec4(94.34, 72.15, 59.372, 49.56);
+   vec4 mult = vec4(9437.4, 7213.5, 5935.72, 4951.6);
    return fract((seed.zxwy + adder) * mult);
 }
 
@@ -1069,9 +1069,28 @@ vec4 quatMult( vec4 q1, vec4 q2 ) {
 
 mat3 quaternionToMatrix(vec4 q)
 {
-   mat3 result = mat3(vec3(1.-2.*q.y*q.y-2.*q.z*q.z, 2.*q.x*q.y-2.*q.z*q.w,    2.*q.x*q.z+2.*q.y*q.w),
-                      vec3(2.*q.x*q.y+2.*q.z*q.w,    1.-2.*q.x*q.x-2.*q.z*q.z, 2.*q.y*q.z-2.*q.x*q.w),
-                      vec3(2.*q.x*q.z-2.*q.y*q.w,    2.*q.y*q.z+2.*q.x*q.w,    1.-2.*q.x*q.x-2.*q.y*q.y));
+   #if 0
+   //mat3 result = mat3(vec3(1.-2.*q.y*q.y-2.*q.z*q.z, 2.*q.x*q.y-2.*q.z*q.w,    2.*q.x*q.z+2.*q.y*q.w),
+   //                   vec3(2.*q.x*q.y+2.*q.z*q.w,    1.-2.*q.x*q.x-2.*q.z*q.z, 2.*q.y*q.z-2.*q.x*q.w),
+   //                   vec3(2.*q.x*q.z-2.*q.y*q.w,    2.*q.y*q.z+2.*q.x*q.w,    1.-2.*q.x*q.x-2.*q.y*q.y));
+   mat3 products = mat3(vec3(q.y*q.y+q.z*q.z, q.z*q.w-q.x*q.y, -q.x*q.z-q.y*q.w),
+                        vec3(-q.x*q.y-q.z*q.w, q.x*q.x+q.z*q.z, q.x*q.w-q.y*q.z),
+                        vec3(q.y*q.w-q.x*q.z, -q.y*q.z-q.x*q.w, q.x*q.x+q.y*q.y));
+   mat3 result = mat3(1.0) - 2.*products;
+   #else                      
+   vec4 qx = q.x * q;
+   vec4 qy = q.y * q;
+   vec4 qz = q.z * q;
+   mat3 products = mat3(vec3(qy.y+qz.z,  qz.w-qx.y,  -qx.z-qy.w),
+                        vec3(-qx.y-qz.w, qx.x+qz.z,  qx.w-qy.z),
+                        vec3(qy.w-qx.z,  -qy.z-qx.w, qx.x+qy.y));
+   mat3 result = mat3(1.0) - 2. * products;
+   //mat3 result = mat3(
+   //   vec3(1.-2.*(qy.y+qz.z), 2.*(qx.y-qz.w), 2.*(qx.z+qy.w)),
+   //   vec3(2.*(qx.y+qz.w), 1.-2.*(qx.x+qz.z), 2.*(qy.z-qx.w)),
+   //   vec3(2.*(qx.z-qy.w), 2.*(qy.z+qx.w), 1.-2.*(qx.x+qy.y)));
+   #endif
+   
    return result;
 }
 
@@ -1087,18 +1106,18 @@ float getDistance(mat3 rotation, vec3 lengthes, vec3 mover, vec3 position)
    //vec3 mover = transformation[3].xyz;
    vec3 relPos = position - mover;
    
-   vec3 dister = vec3(abs(dot(rotation[0], relPos)) - lengthes.x,
-                      abs(dot(rotation[1], relPos)) - lengthes.y,
-                      abs(dot(rotation[2], relPos)) - lengthes.z);
+   vec3 dister = abs(relPos * rotation) - lengthes;
    vec3 mdister = max(dister, 0.0);
    float lendister = length(mdister);
    //if (lendister < 0.01) lendister = max(dister.x, max(dister.y, dister.z));
    
-   return lendister - length(lengthes) * 0.1;
+   return lendister - length(lengthes) * 0.3;
 }
 
 void main(void)
 {  
+   //float fTime0_X = 8.0;
+
    vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));
    //vec3 rayDir = normalize(objectPosition);
    vec3 camPos = vec3(0.0, 0.0, -1.0 + 0.59 * sin(fTime0_X*0.5));
@@ -1124,7 +1143,7 @@ void main(void)
    float totalDensity = 0.0;
    float stepDepth = 0.0; // how far I went already.
    
-   for(int step = 0; length(rayPos)<sceneSize && totalDensity < 0.99 && step < 50; step++)
+   for(int step = 0; length(rayPos)<sceneSize && totalDensity < 0.97 && step < 50; step++)
    {      
       float implicitVal;
       
@@ -1138,7 +1157,7 @@ void main(void)
       // Multiple boxes
       implicitVal = 1.0e10;
       
-      for (int loop = 0; loop < 8; loop++)
+      for (int loop = 0; loop < 6; loop++)
       {
          vec4 newQuaternion;
          float newLength;
@@ -1151,49 +1170,37 @@ void main(void)
          vec4 seed = coreSeed;
          for (int k = 0; k < 4; k++)
          {
-            vec4 v1 = randomIteration(seed);
-            vec4 v2 = randomIteration(v1);
-            vec4 v3 = randomIteration(v2);
-            vec4 quaternion = normalize(v3 - vec4(0.5));
-            //mat3 rotationMatrix = quaternionToMatrix(quaternion);
-            //rotationMatrix = prevRotationMatrix * rotationMatrix;
+            seed = randomIteration(seed);
+            vec4 quaternion = normalize(seed - vec4(0.5));
             mat3 rotationMatrix = quaternionToMatrix(quatMult(quaternion, prevQuaternion));
-            vec3 lengthes = v1.xyz * v1.xyz * v1.xyz * v1.xyz * vec3(0.5) + vec3(0.01);
+            vec3 lengthes = seed.xyz * seed.xyz * seed.xyz * seed.xyz * vec3(0.2) + vec3(0.05);
             lengthes *= prevLength;
-            vec3 mover = 0.5*v2.xyz - vec3(0.25);
+            vec3 mover = 0.5*seed.wzx - vec3(0.25);
             mover = (mover * prevRotationMatrix * prevLength) + prevMover;
             float curImplicitVal = getDistance(rotationMatrix, lengthes, mover, rayPos);
             implicitVal = min(implicitVal, curImplicitVal);
-            
-            seed = v3;
          }
          
          // Non-solid:
          float nonSolidDist = 1.0e10;
          for (int k = 0; k < 2; k++)
          {
-            vec4 v1 = randomIteration(seed);
-            vec4 v2 = randomIteration(v1);
-            vec4 v3 = randomIteration(v2);
-            vec4 quaternion = normalize(v3 - vec4(0.5));
+            seed = randomIteration(seed);
+            vec4 quaternion = normalize(seed - vec4(0.5));
             quaternion = quatMult(quaternion, prevQuaternion);
-            vec3 lengthes = v1.xyz * vec3(0.2) + vec3(0.35);
+            vec3 lengthes = seed.xyz * vec3(0.3) + vec3(0.25);
             lengthes *= prevLength;
-            vec3 mover = v2.xyz - vec3(0.5);
+            vec3 mover = 0.5*seed.wzx - vec3(0.25);
             mover = (mover * prevRotationMatrix * prevLength) + prevMover;
             float curImplicitVal = getSphereDistance(lengthes.x, mover, rayPos);
             if (curImplicitVal < nonSolidDist)
             {
                nonSolidDist = curImplicitVal;
-               mat3 rotationMatrix = quaternionToMatrix(quaternion);
-               rotationMatrix = prevRotationMatrix * rotationMatrix;         
                newQuaternion = quaternion;
                newLength = lengthes.x;
                newMover = mover;
-               newColor = v3.xyz;
+               newColor = seed.xyz;
             }
-            
-            seed = v3;
          }
          
          if (nonSolidDist > implicitVal)
@@ -1218,24 +1225,24 @@ void main(void)
       totalDensity += 1./ 20. / exp(abs(implicitVal*10.0) + 0.8);
 #else
       totalColor += vec3(1./50., 1./70., 1./90.) *
-                    1.4 / exp(abs(implicitVal*5.) + 0.0) * 1.8;
-      totalDensity += 1./ 20. / exp(abs(implicitVal*10.0) + 0.5);
+                    1.7 / exp(abs(implicitVal*5.) + 0.0) * 1.8;
+      totalDensity += 1./ 15. / exp(abs(implicitVal*10.0) + 0.5);
 #endif      
                       // *(1.0 - cos(fTime0_X*3.)*0.5);
       //if (implicitVal < 0.0)
       stepDepth += abs(implicitVal) * 0.95;      
       {
          // TODO: I could make this distance-related, with offset to get the size right?
-         //float localDensity = implicitVal < 0.0 ? 1.0 : 0.0;
-         float localDensity = implicitVal < 0.0 ? (-implicitVal*100./stepDepth) : 0.0;
-         localDensity = min(localDensity, 1.0);
-         vec3 color = prevColor;
-         totalColor = totalColor + (1.-totalDensity) * color * localDensity;
+         float localDensity = implicitVal < 0.0 ? 1.0 : 0.0;
+         //float localDensity = implicitVal < 0.0 ? (-implicitVal*100./stepDepth) : 0.0;
+         //localDensity = min(localDensity, 1.0);
+         totalColor = totalColor + (1.-totalDensity) * prevColor * localDensity;
          totalDensity = totalDensity + (1.05-totalDensity) * localDensity;
       }
       
-      stepSize = abs(implicitVal + 0.001 * stepDepth) * 0.95;
-      stepSize = max(0.001 * stepDepth, stepSize);
+      //stepSize = abs(implicitVal + 0.001 * stepDepth) * 0.95;
+      stepSize = abs(implicitVal) * 0.99;
+      stepSize = max(0.005 * stepDepth, stepSize);
       rayPos += rayDir * stepSize;
    }
    
@@ -1266,7 +1273,7 @@ void main(void)
     </RmGLPass>
    </RmOpenGLEffect>
   </RmEffectGroup>
-  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="27.083366" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
-  <RmVectorVariable NAME="coreSeed" API="" ARTIST_EDITABLE="TRUE" VARIABLE_SEMANTIC="" VALUE_0="0.690000" VALUE_1="0.340000" VALUE_2="0.570000" VALUE_3="0.180000" MIN="0.000000" MAX="1.000000" CLAMP="TRUE" NORMALIZE="FALSE"/>
+  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="40.444950" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
+  <RmVectorVariable NAME="coreSeed" API="" ARTIST_EDITABLE="TRUE" VARIABLE_SEMANTIC="" VALUE_0="0.280000" VALUE_1="0.580000" VALUE_2="0.940000" VALUE_3="0.780000" MIN="0.000000" MAX="1.000000" CLAMP="TRUE" NORMALIZE="FALSE"/>
  </RmEffectWorkspace>
 </RENDER_MONKEY>
