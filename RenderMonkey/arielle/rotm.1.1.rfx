@@ -909,7 +909,7 @@
   <RmRegistryBranch NAME="RM_REGISTRY" API="" XML_VERSION="RenderMonkey 1.71">
    <RmRegistryBranch NAME="RM_LOCAL" API="" XML_VERSION="RenderMonkey 1.71">
     <RmRegistryBranch NAME="RM_PLUGIN" API="" XML_VERSION="RenderMonkey 1.71"><RmTextDataBlock TYPE="TEXT"><![CDATA[
-<DockingPaneLayouts><Application_Layout><Pane-1><Type>0</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Title>shape</Title><ID>1100</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>8</DockingHolder><FloatingHolder>19</FloatingHolder><LastHolder>19</LastHolder></Pane-1><Pane-2><Type>2</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><Horiz>1</Horiz><Pane-1>3</Pane-1><Pane-2>4</Pane-2><Pane-3>5</Pane-3><Pane-4>6</Pane-4><Pane-5>7</Pane-5><Pane-6>8</Pane-6><Pane-7>9</Pane-7><Panes>7</Panes></Pane-2><Pane-3><Type>1</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-3><Pane-4><Type>1</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-4><Pane-5><Type>1</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-5><Pane-6><Type>1</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-6><Pane-7><Type>1</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-7><Pane-8><Type>1</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-8><Pane-9><Type>2</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><Horiz>0</Horiz><Pane-1>10</Pane-1><Pane-2>15</Pane-2><Panes>2</Panes></Pane-9><Pane-10><Type>2</Type><DockingCX>0</DockingCX><DockingCY>794</DockingCY><Horiz>1</Horiz><Pane-1>11</Pane-1><Pane-2>13</Pane-2><Pane-3>14</Pane-3><Panes>3</Panes></Pane-10><Pane-11><Type>1</Type><DockingCX>150</DockingCX><DockingCY>250</DockingCY><Selected>12</Selected><Panes>1</Panes><Pane-1>12</Pane-1></Pane-11><Pane-12><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Workspace</Title><ID>1000</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>11</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>11</LastHolder></Pane-12><Pane-13><Type>4</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY></Pane-13><Pane-14><Type>1</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-14><Pane-15><Type>1</Type><DockingCX>250</DockingCX><DockingCY>135</DockingCY><Selected>16</Selected><Panes>1</Panes><Pane-1>16</Pane-1></Pane-15><Pane-16><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Output</Title><ID>1002</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>15</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>15</LastHolder></Pane-16><Pane-17><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>18</TopContaner><WindowRectTopPos>22</WindowRectTopPos><WindowRectBottomPos>214</WindowRectBottomPos><WindowRectLeftPos>0</WindowRectLeftPos><WindowRectRightPos>382</WindowRectRightPos></Pane-17><Pane-18><Type>2</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Horiz>1</Horiz><Pane-1>19</Pane-1><Panes>1</Panes></Pane-18><Pane-19><Type>1</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-19><Pane-20><Type>0</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Title>shape</Title><ID>1101</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>7</DockingHolder><FloatingHolder>23</FloatingHolder><LastHolder>23</LastHolder></Pane-20><Pane-21><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>22</TopContaner><WindowRectTopPos>22</WindowRectTopPos><WindowRectBottomPos>200</WindowRectBottomPos><WindowRectLeftPos>0</WindowRectLeftPos><WindowRectRightPos>339</WindowRectRightPos></Pane-21><Pane-22><Type>2</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Horiz>1</Horiz><Pane-1>23</Pane-1><Panes>1</Panes></Pane-22><Pane-23><Type>1</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-23><Pane-24><Type>0</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Title>form</Title><ID>1102</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>6</DockingHolder><FloatingHolder>27</FloatingHolder><LastHolder>27</LastHolder></Pane-24><Pane-25><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>26</TopContaner><WindowRectTopPos>22</WindowRectTopPos><WindowRectBottomPos>200</WindowRectBottomPos><WindowRectLeftPos>0</WindowRectLeftPos><WindowRectRightPos>339</WindowRectRightPos></Pane-25><Pane-26><Type>2</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Horiz>1</Horiz><Pane-1>27</Pane-1><Panes>1</Panes></Pane-26><Pane-27><Type>1</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-27><Pane-28><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>29</TopContaner><WindowRectTopPos>156</WindowRectTopPos><WindowRectBottomPos>950</WindowRectBottomPos><WindowRectLeftPos>1235</WindowRectLeftPos><WindowRectRightPos>1485</WindowRectRightPos></Pane-28><Pane-29><Type>2</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Horiz>1</Horiz><Pane-1>30</Pane-1><Panes>1</Panes></Pane-29><Pane-30><Type>1</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-30><Pane-31><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Artist Editor</Title><ID>1001</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>14</DockingHolder><FloatingHolder>30</FloatingHolder><LastHolder>30</LastHolder></Pane-31><Pane-32><Type>0</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Title>baseColor</Title><ID>1103</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>5</DockingHolder><FloatingHolder>35</FloatingHolder><LastHolder>35</LastHolder></Pane-32><Pane-33><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>34</TopContaner><WindowRectTopPos>30</WindowRectTopPos><WindowRectBottomPos>340</WindowRectBottomPos><WindowRectLeftPos>8</WindowRectLeftPos><WindowRectRightPos>209</WindowRectRightPos></Pane-33><Pane-34><Type>2</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Horiz>1</Horiz><Pane-1>35</Pane-1><Panes>1</Panes></Pane-34><Pane-35><Type>1</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-35><Pane-36><Type>0</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Title>highlight</Title><ID>1104</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>4</DockingHolder><FloatingHolder>39</FloatingHolder><LastHolder>39</LastHolder></Pane-36><Pane-37><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>38</TopContaner><WindowRectTopPos>30</WindowRectTopPos><WindowRectBottomPos>340</WindowRectBottomPos><WindowRectLeftPos>8</WindowRectLeftPos><WindowRectRightPos>209</WindowRectRightPos></Pane-37><Pane-38><Type>2</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Horiz>1</Horiz><Pane-1>39</Pane-1><Panes>1</Panes></Pane-38><Pane-39><Type>1</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-39><Pane-40><Type>0</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Title>coreSeed</Title><ID>1105</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>3</DockingHolder><FloatingHolder>43</FloatingHolder><LastHolder>43</LastHolder></Pane-40><Pane-41><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>42</TopContaner><WindowRectTopPos>190</WindowRectTopPos><WindowRectBottomPos>382</WindowRectBottomPos><WindowRectLeftPos>374</WindowRectLeftPos><WindowRectRightPos>756</WindowRectRightPos></Pane-41><Pane-42><Type>2</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Horiz>1</Horiz><Pane-1>43</Pane-1><Panes>1</Panes></Pane-42><Pane-43><Type>1</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-43><Summary><TopContainer>2</TopContainer><Client>13</Client><Panes>43</Panes></Summary></Application_Layout></DockingPaneLayouts>
+<DockingPaneLayouts><Application_Layout><Pane-1><Type>0</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Title>shape</Title><ID>1100</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>8</DockingHolder><FloatingHolder>19</FloatingHolder><LastHolder>19</LastHolder></Pane-1><Pane-2><Type>2</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><Horiz>1</Horiz><Pane-1>3</Pane-1><Pane-2>4</Pane-2><Pane-3>5</Pane-3><Pane-4>6</Pane-4><Pane-5>7</Pane-5><Pane-6>8</Pane-6><Pane-7>9</Pane-7><Panes>7</Panes></Pane-2><Pane-3><Type>1</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-3><Pane-4><Type>1</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-4><Pane-5><Type>1</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-5><Pane-6><Type>1</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-6><Pane-7><Type>1</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-7><Pane-8><Type>1</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-8><Pane-9><Type>2</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><Horiz>0</Horiz><Pane-1>10</Pane-1><Pane-2>15</Pane-2><Panes>2</Panes></Pane-9><Pane-10><Type>2</Type><DockingCX>0</DockingCX><DockingCY>778</DockingCY><Horiz>1</Horiz><Pane-1>11</Pane-1><Pane-2>13</Pane-2><Pane-3>14</Pane-3><Panes>3</Panes></Pane-10><Pane-11><Type>1</Type><DockingCX>150</DockingCX><DockingCY>250</DockingCY><Selected>12</Selected><Panes>1</Panes><Pane-1>12</Pane-1></Pane-11><Pane-12><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Workspace</Title><ID>1000</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>11</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>11</LastHolder></Pane-12><Pane-13><Type>4</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY></Pane-13><Pane-14><Type>1</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-14><Pane-15><Type>1</Type><DockingCX>250</DockingCX><DockingCY>135</DockingCY><Selected>16</Selected><Panes>1</Panes><Pane-1>16</Pane-1></Pane-15><Pane-16><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Output</Title><ID>1002</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>15</DockingHolder><FloatingHolder>0</FloatingHolder><LastHolder>15</LastHolder></Pane-16><Pane-17><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>18</TopContaner><WindowRectTopPos>22</WindowRectTopPos><WindowRectBottomPos>214</WindowRectBottomPos><WindowRectLeftPos>0</WindowRectLeftPos><WindowRectRightPos>382</WindowRectRightPos></Pane-17><Pane-18><Type>2</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Horiz>1</Horiz><Pane-1>19</Pane-1><Panes>1</Panes></Pane-18><Pane-19><Type>1</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-19><Pane-20><Type>0</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Title>shape</Title><ID>1101</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>7</DockingHolder><FloatingHolder>23</FloatingHolder><LastHolder>23</LastHolder></Pane-20><Pane-21><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>22</TopContaner><WindowRectTopPos>22</WindowRectTopPos><WindowRectBottomPos>200</WindowRectBottomPos><WindowRectLeftPos>0</WindowRectLeftPos><WindowRectRightPos>339</WindowRectRightPos></Pane-21><Pane-22><Type>2</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Horiz>1</Horiz><Pane-1>23</Pane-1><Panes>1</Panes></Pane-22><Pane-23><Type>1</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-23><Pane-24><Type>0</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Title>form</Title><ID>1102</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>6</DockingHolder><FloatingHolder>27</FloatingHolder><LastHolder>27</LastHolder></Pane-24><Pane-25><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>26</TopContaner><WindowRectTopPos>22</WindowRectTopPos><WindowRectBottomPos>200</WindowRectBottomPos><WindowRectLeftPos>0</WindowRectLeftPos><WindowRectRightPos>339</WindowRectRightPos></Pane-25><Pane-26><Type>2</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Horiz>1</Horiz><Pane-1>27</Pane-1><Panes>1</Panes></Pane-26><Pane-27><Type>1</Type><DockingCX>339</DockingCX><DockingCY>178</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-27><Pane-28><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>29</TopContaner><WindowRectTopPos>156</WindowRectTopPos><WindowRectBottomPos>950</WindowRectBottomPos><WindowRectLeftPos>1235</WindowRectLeftPos><WindowRectRightPos>1485</WindowRectRightPos></Pane-28><Pane-29><Type>2</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Horiz>1</Horiz><Pane-1>30</Pane-1><Panes>1</Panes></Pane-29><Pane-30><Type>1</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-30><Pane-31><Type>0</Type><DockingCX>250</DockingCX><DockingCY>250</DockingCY><Title>Artist Editor</Title><ID>1001</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>14</DockingHolder><FloatingHolder>30</FloatingHolder><LastHolder>30</LastHolder></Pane-31><Pane-32><Type>0</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Title>baseColor</Title><ID>1103</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>5</DockingHolder><FloatingHolder>35</FloatingHolder><LastHolder>35</LastHolder></Pane-32><Pane-33><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>34</TopContaner><WindowRectTopPos>30</WindowRectTopPos><WindowRectBottomPos>340</WindowRectBottomPos><WindowRectLeftPos>8</WindowRectLeftPos><WindowRectRightPos>209</WindowRectRightPos></Pane-33><Pane-34><Type>2</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Horiz>1</Horiz><Pane-1>35</Pane-1><Panes>1</Panes></Pane-34><Pane-35><Type>1</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-35><Pane-36><Type>0</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Title>highlight</Title><ID>1104</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>4</DockingHolder><FloatingHolder>39</FloatingHolder><LastHolder>39</LastHolder></Pane-36><Pane-37><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>38</TopContaner><WindowRectTopPos>30</WindowRectTopPos><WindowRectBottomPos>340</WindowRectBottomPos><WindowRectLeftPos>8</WindowRectLeftPos><WindowRectRightPos>209</WindowRectRightPos></Pane-37><Pane-38><Type>2</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Horiz>1</Horiz><Pane-1>39</Pane-1><Panes>1</Panes></Pane-38><Pane-39><Type>1</Type><DockingCX>201</DockingCX><DockingCY>310</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-39><Pane-40><Type>0</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Title>coreSeed</Title><ID>1105</ID><IconID>-1</IconID><Options>0</Options><DockingHolder>3</DockingHolder><FloatingHolder>43</FloatingHolder><LastHolder>43</LastHolder></Pane-40><Pane-41><Type>3</Type><DockingCX>0</DockingCX><DockingCY>0</DockingCY><TopContaner>42</TopContaner><WindowRectTopPos>190</WindowRectTopPos><WindowRectBottomPos>382</WindowRectBottomPos><WindowRectLeftPos>374</WindowRectLeftPos><WindowRectRightPos>756</WindowRectRightPos></Pane-41><Pane-42><Type>2</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Horiz>1</Horiz><Pane-1>43</Pane-1><Panes>1</Panes></Pane-42><Pane-43><Type>1</Type><DockingCX>382</DockingCX><DockingCY>192</DockingCY><Selected>0</Selected><Panes>0</Panes></Pane-43><Summary><TopContainer>2</TopContainer><Client>13</Client><Panes>43</Panes></Summary></Application_Layout></DockingPaneLayouts>
 ]]></RmTextDataBlock>
      <RmRegistryBranch NAME="RmPreviewDx9Window" API="" XML_VERSION="RenderMonkey 1.71"/>
      <RmRegistryBranch NAME="RmPreviewGLESWindow" API="" XML_VERSION="RenderMonkey 1.71"/>
@@ -917,10 +917,10 @@
      <RmRegistryBranch NAME="RmPreviewGLWindow" API="" XML_VERSION="RenderMonkey 1.71">
       <RmRegistryBranch NAME="EffectPlacementRepository" API="" XML_VERSION="RenderMonkey 1.71">
        <RmRegistryBranch NAME="Effect Workspace.Effect Group 1.Effect1" API="" XML_VERSION="RenderMonkey 1.71">
-        <RmIntegerVariable NAME="X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="548" MIN="-10" MAX="10" CLAMP="FALSE"/>
-        <RmIntegerVariable NAME="Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="18" MIN="-10" MAX="10" CLAMP="FALSE"/>
-        <RmIntegerVariable NAME="Width" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1068" MIN="-10" MAX="10" CLAMP="FALSE"/>
-        <RmIntegerVariable NAME="Height" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="678" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="193" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="Y" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="280" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="Width" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="564" MIN="-10" MAX="10" CLAMP="FALSE"/>
+        <RmIntegerVariable NAME="Height" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="439" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="ShowStatus" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Visible" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="1" MIN="-10" MAX="10" CLAMP="FALSE"/>
         <RmIntegerVariable NAME="Minimized X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" VALUE="-1" MIN="-10" MAX="10" CLAMP="FALSE"/>
@@ -1021,7 +1021,7 @@ Pass 1]]></RmTextDataBlock></RmStringVariable>
     </RmRegistryBranch>
     <RmRegistryBranch NAME="WORKSPACE" API="" XML_VERSION="RenderMonkey 1.71">
      <RmStringVariable NAME="LAST_SAVE" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
-22/8/2012 23:47:25]]></RmTextDataBlock></RmStringVariable>
+27/8/2012 20:22:38]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 RenderMonkey Version 1.82 (build 322)]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="XML_VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
@@ -1066,15 +1066,17 @@ mat3 quaternionToMatrix(vec4 q)
    return result;
 }
 
+float getSphereDistance(float len, vec3 mover, vec3 position)
+{
+   vec3 relPos = position - mover;
+
+   return length(relPos) - len;   
+}
+
 float getDistance(mat3 rotation, vec3 lengthes, vec3 mover, vec3 position)
 {
    //vec3 mover = transformation[3].xyz;
    vec3 relPos = position - mover;
-   
-   //float dist1 = abs(dot(rotation[0], relPos)) - lengthes.x;
-   //float dist2 = abs(dot(rotation[1], relPos)) - lengthes.y;
-   //float dist3 = abs(dot(rotation[2], relPos)) - lengthes.z;
-   //return max(dist1, max(dist2, dist3));
    
    vec3 dister = vec3(abs(dot(rotation[0], relPos)) - lengthes.x,
                       abs(dot(rotation[1], relPos)) - lengthes.y,
@@ -1090,7 +1092,7 @@ void main(void)
 {  
    vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));
    //vec3 rayDir = normalize(objectPosition);
-   vec3 camPos = vec3(0.0, 0.0, -1.2 + 0.59 * sin(fTime0_X*0.5));
+   vec3 camPos = vec3(0.0, 0.0, -1.0 + 0.59 * sin(fTime0_X*0.5));
    
    // rotate camera around y axis
    #if 1
@@ -1119,7 +1121,8 @@ void main(void)
       
       // This stuff is the transformation information from previous stuff
       mat3 prevRotationMatrix = mat3(1.0);
-      vec3 prevLengthes = vec3(1.0);
+      vec4 prevQuaternion;
+      float prevLength = 1.0;
       vec3 prevMover = vec3(0.0);
       vec3 prevColor = vec3(1.0, 0.4, 0.2);
       
@@ -1129,13 +1132,13 @@ void main(void)
       for (int loop = 0; loop < 6; loop++)
       {
          mat3 newRotationMatrix;
-         vec3 newLengthes;
+         float newLength;
          vec3 newMover;
          vec3 newColor;
 
          // Loop for solid stuff
          vec4 seed = coreSeed;
-         for (int k = 0; k < 5; k++)
+         for (int k = 0; k < 6; k++)
          {
             vec4 v1 = randomIteration(seed);
             vec4 v2 = randomIteration(v1);
@@ -1143,10 +1146,10 @@ void main(void)
             vec4 quaternion = normalize(v3 - vec4(0.5));
             mat3 rotationMatrix = quaternionToMatrix(quaternion);
             rotationMatrix = prevRotationMatrix * rotationMatrix;
-            vec3 lengthes = v1.xyz * v1.xyz * v1.xyz * vec3(0.6) + vec3(0.01);
-            lengthes *= prevLengthes;
-            vec3 mover = v2.xyz - vec3(0.5);
-            mover = (mover * prevRotationMatrix * prevLengthes) + prevMover;
+            vec3 lengthes = v1.xyz * v1.xyz * v1.xyz * v1.xyz * vec3(0.5) + vec3(0.01);
+            lengthes *= prevLength;
+            vec3 mover = 0.5*v2.xyz - vec3(0.25);
+            mover = (mover * prevRotationMatrix * prevLength) + prevMover;
             float curImplicitVal = getDistance(rotationMatrix, lengthes, mover, rayPos);
             implicitVal = min(implicitVal, curImplicitVal);
             
@@ -1161,19 +1164,18 @@ void main(void)
             vec4 v2 = randomIteration(v1);
             vec4 v3 = randomIteration(v2);
             vec4 quaternion = normalize(v3 - vec4(0.5));
-            mat3 rotationMatrix = quaternionToMatrix(quaternion);
-            rotationMatrix = prevRotationMatrix * rotationMatrix;
             vec3 lengthes = v1.xyz * vec3(0.1) + vec3(0.3);
-            //lengthes = vec3(lengthes.x); // Symmetric please!
-            lengthes *= prevLengthes;
-            vec3 mover = 1.5 * v2.xyz - vec3(0.75);
-            mover = (mover * prevRotationMatrix * prevLengthes) + prevMover;
-            float curImplicitVal = getDistance(rotationMatrix, lengthes, mover, rayPos);
+            lengthes *= prevLength;
+            vec3 mover = v2.xyz - vec3(0.5);
+            mover = (mover * prevRotationMatrix * prevLength) + prevMover;
+            float curImplicitVal = getSphereDistance(lengthes.x, mover, rayPos);
             if (curImplicitVal < nonSolidDist)
             {
                nonSolidDist = curImplicitVal;
+               mat3 rotationMatrix = quaternionToMatrix(quaternion);
+               rotationMatrix = prevRotationMatrix * rotationMatrix;         
                newRotationMatrix = rotationMatrix;
-               newLengthes = lengthes;
+               newLength = lengthes.x;
                newMover = mover;
                newColor = v3.xyz;
             }
@@ -1189,7 +1191,7 @@ void main(void)
          else
          {
             prevRotationMatrix = newRotationMatrix;
-            prevLengthes = newLengthes;
+            prevLength = newLength;
             prevMover = newMover;
             prevColor = 0.5 * prevColor + 0.5 * newColor;      
          }
@@ -1251,7 +1253,7 @@ void main(void)
     </RmGLPass>
    </RmOpenGLEffect>
   </RmEffectGroup>
-  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="107.072586" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
-  <RmVectorVariable NAME="coreSeed" API="" ARTIST_EDITABLE="TRUE" VARIABLE_SEMANTIC="" VALUE_0="0.400000" VALUE_1="0.300000" VALUE_2="0.740000" VALUE_3="0.300000" MIN="0.000000" MAX="1.000000" CLAMP="TRUE" NORMALIZE="FALSE"/>
+  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="69.719894" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
+  <RmVectorVariable NAME="coreSeed" API="" ARTIST_EDITABLE="TRUE" VARIABLE_SEMANTIC="" VALUE_0="0.000000" VALUE_1="0.420000" VALUE_2="0.380000" VALUE_3="0.850000" MIN="0.000000" MAX="1.000000" CLAMP="TRUE" NORMALIZE="FALSE"/>
  </RmEffectWorkspace>
 </RENDER_MONKEY>
