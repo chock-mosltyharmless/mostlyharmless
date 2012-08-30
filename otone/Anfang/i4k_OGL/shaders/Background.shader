@@ -89,8 +89,8 @@ void main(void)
 	//vec3 parameter6Adder = parameters[1][2] * vec3(-0.3, 0.4, -0.3) * fog.b*fog.a;
 	
 	// fog overdrive
-	blackFogAdder *= vec4(1.0 + parameters[1][2]);
-	redFogAdder *= vec4(1.0 + parameters[1][2]);
+	blackFogAdder *= vec3(1.0 + parameters[1][2]);
+	redFogAdder *= vec3(1.0 + parameters[1][2]);
 
 	//gl_FragColor = vec4(redFogAdder + blackFogAdder, (1.0 - blackness) * (1.0 - redfog));
 	gl_FragColor = vec4(redFogAdder + blackFogAdder, 1.0);
@@ -98,12 +98,12 @@ void main(void)
 	//gl_FragColor = color;
 
 	// go down on lightning
-	gl_FragColor -= parameters[0][1] * vec4(0.0, 0.6, 0.9, 0.0);
+	//gl_FragColor -= parameters[0][1] * vec4(0.0, 0.6, 0.9, 0.0);
 
 	// add lightning
 	if (parameters[0][1] > 0.0)
 	{
-		float lightningAmount = pow(max(0.0, (1.0 - implicitVal * 2.0)), 8.0);
-		gl_FragColor += lightningAmount * vec4(1.0, 0.6, 0.3, 0.0);
+		//float lightningAmount = pow(max(0.0, (1.0 - implicitVal * 2.0)), 8.0);
+		//gl_FragColor += lightningAmount * vec4(1.0, 0.6, 0.3, 0.0);
 	}
 }

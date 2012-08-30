@@ -62,6 +62,10 @@ static char TgaFileNames[NUM_TEXTURES][256] =
 	"squaretex/tex17.tga",
 	"squaretex/tex18.tga",
 	"squaretex/tex19.tga",
+	"squaretex/tex20.tga",
+	"squaretex/tex21.tga",
+	"squaretex/tex20.tga",
+	"squaretex/tex21.tga",
 	"textures/butterfly_body.tga",
 	"textures/butterfly_wing.tga"
 };
