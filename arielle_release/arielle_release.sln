@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mistymist", "i4k_OGL\i4k_OGL.vcxproj", "{9A34639E-ABEC-46D9-89E4-5D8D873FDA66}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "arielle_release", "i4k_OGL\i4k_OGL.vcxproj", "{9A34639E-ABEC-46D9-89E4-5D8D873FDA66}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

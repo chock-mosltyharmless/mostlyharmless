@@ -14,7 +14,7 @@
 #include "intro.h"
 #include "mzk.h"
 
-// #define SHADER_DEBUG
+//#define SHADER_DEBUG
 
 extern double outwave[][2];
 
@@ -24,167 +24,333 @@ int rand();
 // -------------------------------------------------------------------
 //                          INTRO SCRIPT:
 // -------------------------------------------------------------------
-#define NUM_SCENES 13
-#define NUM_PARAMETERS 9
-#define SYNC_MULTIPLIER 361
+#define NUM_SCENES 10
+#define NUM_PARAMETERS 7
+//#define SYNC_MULTIPLIER 361
+#define SYNC_MULTIPLIER 95
 #define SYNC_ADJUSTER 80
 
 // I need to come up with a good timerimer here...
 static unsigned char sceneLength[NUM_SCENES] =
 {
 	///*
-	20, // light ray
-	4, // startup.2
-	16, // Baralong
-	20, // Sidescroll
-	20, // Final
-	40, // Fasto (8)
-	20, // flythrough.a
-	20, // flythrough
-	40, // Tunnelb
-	40, // Cloud (5)
-	20, // Plasma
-	//*/
-	/*1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,//*/
-	35, // Bar (3)
-	60 // Bar.b (3)
+	72, // simple-1
+	72, // simple-2
+	76, // simple-3
+	72, // simple-4
+	72, // simple-5
+	76, // foerever first part
+	72, // simple-4
+	72, // simple-5
+	80, // foerever first part
+	80, // safety
 };
-static unsigned char sceneData[NUM_SCENES][NUM_PARAMETERS] =
+
+	// 2:0.46(59) 3:0.73(93) 4:0.18(23) 14:0.61(78) 15:0.17(22) 16:0.23(30) 17:0.31(40)
+	// 2:0.61(78) 3:0.54(69) 4:0.00(0) 14:0.27(34) 15:0.01(1) 16:0.37(47) 17:0.76(97) fully morphable
+	// 2:0.72(92) 3:0.59(75) 4:0.80(102) 14:0.47(60) 15:0.04(5) 16:0.31(40) 17:0.74(95) only rotate
+	// 2:0.59(75) 3:0.69(88) 4:0.04(5) 14:0.59(76) 15:0.06(8) 16:0.20(26) 17:0.74(95) slow morpher
+	// 2:0.70(90) 3:0.44(56) 4:0.98(126) 14:0.52(66) 15:0.41(53) 16:0.14(18) 17:0.80(103) cool yellow
+	// 2:0.71(91) 3:0.41(53) 4:0.27(35) 14:0.52(66) 15:0.41(53) 16:0.14(18) 17:0.00(0) decent pointing finger 
+	// 2:0.63(80) 3:0.64(82) 4:0.65(83) 14:0.52(66) 15:0.41(53) 16:0.18(23) 17:0.04(5) complex morpher 
+
+static char sceneData[NUM_SCENES][NUM_PARAMETERS] =
 {
-	// Startup (8)
-	{66, 69, 50, 91, 57, 54, 127, 72, 127},
-	// Startup.2 (8)
-	{66, 69, 50, 31, 97, 64, 127, 22, 127},
-	// Baralong
-	{92, 28, 93, 127, 99, 127, 127, 127, 127},
-	// Sidescroll
-	{95, 105, 27, 106, 92, 100, 12, 20, 127}, 
-	// Final
-	{40, 89, 10, 110, 103, 94, 9, 0, 0}, 
-	// Fasto (8)
-	{87, 68, 49, 75, 0, 92, 127, 127, 127},
-    // flythrough.a
-	{126, 101, 88, 124, 102, 94, 127, 0, 127},
-	// flythrough
-	{126, 101, 88, 124, 102, 94, 127, 0, 127},
-	// Tunnelb
-	{127, 69, 45, 92, 69, 90, 127, 0, 127},
-	// Cloud (5)
-	{69, 25, 90, 57, 75, 114, 37, 7, 127},
-	// Plasma
-	{115, 64, 42, 125, 65, 88, 127, 0, 0},
-	// Bar (3)
-	{50, 40, 127, 127, 110, 112, 127, 83, 127},
+	// cam distance, cam rotation, morph, seed[4]
+	{80,    69-50, 0,    34,   1,  47,  97}, // simple-1
+	{80,    69-50, 102,  60,   5,  40,  95}, // simple-2
+	{58+50, 7-33, 23,   78,  22,  30,  40}, // foerever
+	{90,    69-50, 5,    76,   8,  26,  95}, // simple-3
+	{80,    69-50, 126,  66,  53,  18, 103}, // simple-4
+	{90,    69-50, 35,   66,  53,  18,   0}, // simple-5
+	{80,    82-50, 83,   66,  53,  23,   5}, // simple-5
+	{80,    69, 0,    34,   1,  47,  97}, // simple-1
+	//{80,    69, 102,  60,   5,  40,  95}, // simple-2
+	{58+50, 7-33, 23,   78,  22,  110,  40}, // foerever
 	// Safety
-	{0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0},
 };
 static char sceneDelta[NUM_SCENES][NUM_PARAMETERS] =
 {
-	// Startup (8)
-	{0, 0, 0, -60, 40, 10, 0, -50, 0},
-	// Startup.2 (8)
-	{26, -41, 43, 96, 2, 63, 0, 105, 0},
-	// Baralong
-	{0, 0, 0, 0, 0, 0, 0, 0, 0},
-	// Sidescroll
-	{0, -5, 0, 0, 0, 0, 0, 0, 0},
-	// Final
-	{30, 0, 30, 60, 0, 0, 0, 0, 0},
-	// Fasto (8)
-	{0, 0, 0, 0, 0, 0, 0, -120, 0},
-	// flythrough.a
-	{0, 0, 0, 0, 0, 0, 0, 0, 0},
-    // flythrough
-	//{1, 0, 0, -26, -23, 3, 0, 0, 0},
-	{1, -32, -43, -32, -33, -4, 0, 0, 0},
-	// Tunnelb
-	//{-12, -5, -3, 33, -4, -2, 0, 0, -127},
-	{0, 0, 0, 0, 0, 0, 0, 0, 0},
-	// Cloud (5)
-	{10, 4, -5, 0, 0, 0, 0, 0, 0},
-	// Plasma
-	{0, 0, 0, 0, 0, 0, 0, 0, 0},
-	// Bar (3)
-	{40, -20, -85, 0, 0, 0, 0, 0, 0},
+	{0, 33, 0, 0, 0, 0, 0}, // simple-1
+	{0, 33, 0, 0, 0, 0, 0}, // simple-2
+	{-50, 33, 0, 0, 0, 0, 0}, // forever
+	{0, 33, 40, 0, 0, 0, 0}, // simple-3
+	{0, 33, 40, 0, 0, 0, 0}, // simple-4
+	{0, 33, 40, 0, 0, 0, 0}, // simple-5
+	{0, 33, 120, 0, 0, 0, 0}, // simple-3
+	{0, 33, 120, 0, 0, 0, 0}, // simple-4
+	//{0, 33, 120, 0, 0, 0, 0}, // simple-5
+	{-50, 33, 0, 0, 0, 0, 0}, // forever
 	// Safety
-	{0, 0, 0, 0, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 0, 0},
 };
 
 // -------------------------------------------------------------------
 //                          SHADER CODE:
 // -------------------------------------------------------------------
 
+#if 0
 const GLchar *fragmentMainBackground="\
-uniform sampler3D t;\
-varying vec3 o;\
-varying mat4 p;\
-vec3 e(vec3 s, int i)\
-{\
-float n=1.;\
-s*=2.;\
-vec3 r=vec3(0.);\
-for(;i>0;i--)\
-{\
-r+=texture3D(t,s).xyz*n;\
-n*=0.7;\
-s*=1.93;\
-}\
-return r;\
-}\
-void main(void)\
-{\
-vec3 d=normalize(o*vec3(1.,.6,1.));\
-vec3 r=vec3(0.,0.,8.*p[0][1]-8.);\
-float s=sin(p[0][3]*9.42);\
-float c=cos(p[0][3]*9.42);\
-r.xz=r.xz*mat2(c,-s,s,c);\
-d.xz=d.xz*mat2(c,-s,s,c);\
-s=sin(p[0][2]*9.42);\
-c=cos(p[0][2]*9.42);\
-r.yz=r.yz*mat2(c,-s,s,c);\
-d.yz=d.yz*mat2(c,-s,s,c);\
-vec3 l=vec3(0.,0.,0.);\
-float m=0.;\
-vec3 w=vec3(.016,.012,.009)*p[1][0];\
-while(length(r)<15.&&m<0.95)\
-{\
-float i=min(length(r+vec3(0.,9.,0.))-8.2+20.*p[2][1],max(abs(r.y)-1.1-p[1][3]*20.,abs(length(r.xz)-2.+2.*p[1][2])*(.5+p[2][0])-2.*p[1][2]+1.2));\
-vec3 n=r;\
-n.y-=p[0][0]*.66;\
-vec3 c=e(n*0.03,2)*.04*p[1][1];\
-n.y=n.y*(.05+p[1][1])-.5*p[0][0];\
-float v=e(c+n*.08,6).r;\
-i-=.5*v;\
-l+=w;\
-m+=.003;\
-float t=(1.-m)*clamp(1.-exp(i),0.,1.);\
-float f=smoothstep(-2.5,-1.5,-length(r)+v*6.*(p[2][1]+1.));\
-l+=(mix(vec3(.7,.2,.0),vec3(.1,.45,.85),f)*clamp(abs(f-.5),-0.5,1.)+clamp(r.y+v.x-2.*p[1][3]-1.,.0,100.))*t;\
-m+=t;\
-r+=d*max(.02,(i)*.5);\
-}\
-l+=(1.-m)*mix(vec3(.0,.1,.2),vec3(.0,.0,.1),normalize(r).y);\
-gl_FragColor=vec4(l-.3,1.);\
+varying vec3 v;\n\
+varying mat4 m;\n\
+\n\
+vec4 randomIteration(vec4 seed)\n\
+{\n\
+   return fract((seed.zxwy + vec4(0.735, 0.369, 0.438, 0.921)) * vec4(9437.4, 7213.5, 5935.72, 4951.6));\n\
+}\n\
+\n\
+vec4 quatMult( vec4 q1, vec4 q2 ) {\n\
+   return vec4(q1.x * q2.x - dot( q1.yzw, q2.yzw ), q1.x * q2.yzw + q2.x * q1.yzw + cross( q1.yzw, q2.yzw ));\n\
+}\n\
+\n\
+mat3 quaternionToMatrix(vec4 q)\n\
+{\n\
+   vec4 qx = q.x * q;\n\
+   vec4 qy = q.y * q;\n\
+   vec4 qz = q.z * q;\n\
+   return mat3(1.0) - 2. * mat3(qy.y+qz.z,  qz.w-qx.y,  -qx.z-qy.w,\n\
+								-qx.y-qz.w, qx.x+qz.z,  qx.w-qy.z,\n\
+								qy.w-qx.z,  -qy.z-qx.w, qx.x+qy.y);\n\
+}\n\
+\n\
+float heart(vec3 z)\n\
+{\n\
+	z = z.xzy*5.0;\n\
+	vec3 z2=z*z;\n\
+	float lp = z2.x + 2.25*z2.y + z2.z - 1.0;\n\
+	float rp = z2.x*z2.z*z.z + 0.08888*z2.y*z2.z*z.z;\n\
+	return lp*lp*lp-rp;\n\
+}\n\
+\n\
+void main(void)\n\
+{  \n\
+   vec4 coreSeed = m[1];\n\
+\n\
+   vec3 rayDir = normalize(v * vec3(1.0, 0.6, 1.0));\n\
+   vec3 camPos = vec3(0.0, 0.0, -m[0][1]);\n\
+   \n\
+   // rotate camera around y axis\n\
+   float alpha = m[0][2] * 4.5;\n\
+   camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,\n\
+                    sin(alpha)*camPos.x + cos(alpha)*camPos.z);\n\
+   rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,\n\
+                    sin(alpha)*rayDir.x + cos(alpha)*rayDir.z);\n\
+   \n\
+   vec3 rayPos = camPos;\n\
+   float sceneSize = 8.0;\n\
+   vec3 totalColor = vec3(0.);\n\
+   float stepSize;\n\
+   float totalDensity = 0.0;\n\
+   float stepDepth = 0.0; // how far I went already.\n\
+   \n\
+   for(int step = 0; length(rayPos)<sceneSize && totalDensity < 0.9 && step < 50; step++)\n\
+   {      \n\
+      float implicitVal;\n\
+      // This stuff is the transformation information from previous stuff\n\
+	  vec4 prevQuaternion = normalize(vec4(cos(m[0][3]), sin(m[0][3]), sin(m[0][3] * 1.3), sin(m[0][3] * 2.7)));\n\
+      float prevLength = 1.0;\n\
+      vec3 prevMover = vec3(0.0);\n\
+      vec3 prevColor = vec3(1.0, 0.4, 0.2);\n\
+	  \n\
+	  if (m[1][2] < 0.5) {\n\
+		  \n\
+		  // Multiple boxes\n\
+		  implicitVal = 1.0e10;\n\
+		  \n\
+		  for (int loop = 0; loop < 12; loop++)\n\
+		  {\n\
+			 vec4 newQuaternion;\n\
+			 float newLength;\n\
+			 vec3 newMover;\n\
+			 vec3 newColor;\n\
+			 \n\
+			 mat3 prevRotationMatrix = quaternionToMatrix(prevQuaternion);\n\
+	\n\
+			 // Loop for solid stuff\n\
+			 vec4 seed = coreSeed;\n\
+			 for (int k = 0; k < 4; k++)\n\
+			 {\n\
+				seed = randomIteration(seed);\n\
+				vec3 lengthes = prevLength * (seed.xyz * seed.xyz * seed.xyz * seed.xyz * vec3(0.2) + vec3(0.05));\n\
+				implicitVal = min(implicitVal, length(max(abs((rayPos - ((0.5*seed.wzx - vec3(0.25)) * prevRotationMatrix * prevLength) - prevMover) * quaternionToMatrix(quatMult(normalize(seed - vec4(0.5)), prevQuaternion))) - lengthes, 0.0)) - length(lengthes) * 0.3);\n\
+			 }\n\
+			 \n\
+			 // Non-solid:\n\
+			 float nonSolidDist = 1.0e10;\n\
+			 for (int k = 0; k < 2; k++)\n\
+			 {\n\
+				seed = randomIteration(seed);\n\
+				vec4 quaternion = quatMult(normalize(seed - vec4(0.5)), prevQuaternion);\n\
+				float lengthes = prevLength * (seed.x * 0.3 + 0.25);\n\
+				vec3 mover = ((0.5*seed.wzx - vec3(0.25)) * prevRotationMatrix * prevLength) + prevMover;\n\
+				float curImplicitVal = length(rayPos - mover) - lengthes;\n\
+				if (curImplicitVal < nonSolidDist)\n\
+				{\n\
+				   nonSolidDist = curImplicitVal;\n\
+				   newQuaternion = quaternion;\n\
+				   newLength = lengthes;\n\
+				   newMover = mover;\n\
+				   newColor = seed.xyz;\n\
+				}\n\
+			 }\n\
+			 \n\
+			 if (nonSolidDist > implicitVal)\n\
+			 {\n\
+				// I will not get closer than where I am now.\n\
+				break;\n\
+			 }\n\
+			 else\n\
+			 {\n\
+				prevQuaternion = newQuaternion;\n\
+				prevLength = newLength;\n\
+				prevMover = newMover;\n\
+				prevColor = 0.5 * prevColor + 0.5 * newColor;      \n\
+			 }\n\
+		  }\n\
+		  \n\
+	  }else{\n\
+		float Eps = 0.01;\n\
+		float vs=heart(rayPos);\n\
+		vec3 v=1./Eps*(vec3(heart(rayPos+vec3(Eps,0.,0.)),heart(rayPos+vec3(0.,Eps,0.)),heart(rayPos+vec3(0. ,0.,Eps)) )-vec3(vs));\n\
+		implicitVal = vs/(length(v)+Eps);\n\
+		prevColor = vec3(1.0, 0.2, 0.2);\n\
+	  }\n\
+      // I need to do this distance related to for the DOF!      \n\
+      totalColor += vec3(1./50., 1./70., 1./90.) *\n\
+				3.06 / exp(abs(implicitVal*5.)) * m[3][3];\n\
+      totalDensity += 1./ 15. / exp(abs(implicitVal*10.0) + 0.5);\n\
+      //if (implicitVal < 0.0)\n\
+      stepDepth += abs(implicitVal) * 0.99;      \n\
+	  if (implicitVal < 0.0) {\n\
+         totalColor = totalColor + (1.-totalDensity) * prevColor;\n\
+         totalDensity = 1.0f;\n\
+      }\n\
+      \n\
+      stepSize = max(0.005 * stepDepth, abs(implicitVal) * 0.99);\n\
+      rayPos += rayDir * stepSize;\n\
+   }\n\
+   \n\
+   float grad = normalize(rayDir).y;\n\
+   totalColor += (1.-totalDensity) * (grad * vec3(0.0,-0.4,-0.3) + (1.-grad)*vec3(0.0,0.4,0.6));\n\
+   \n\
+   gl_FragColor = vec4(totalColor-vec3(0.0), 1.0);\n\
 }";
+#else
+const GLchar *fragmentMainBackground = ""
+ "varying vec3 z;"
+ "varying mat4 v;"
+ "vec4 n(vec4 v)"
+ "{"
+   "return fract((v.zxwy+vec4(.735,.369,.438,.921))*vec4(9437.4,7213.5,5935.72,4951.6));"
+ "}"
+ "vec4 n(vec4 v,vec4 s)"
+ "{"
+   "return vec4(v.x*s.x-dot(v.yzw,s.yzw),v.x*s.yzw+s.x*v.yzw+cross(v.yzw,s.yzw));"
+ "}"
+ "mat3 s(vec4 v)"
+ "{"
+   "vec4 s=v.x*v,c=v.y*v,z=v.z*v;"
+   "return mat3(1.)-2.*mat3(c.y+z.z,z.w-s.y,-s.z-c.w,-s.y-z.w,s.x+z.z,s.w-c.z,c.w-s.z,-c.z-s.w,s.x+c.y);"
+ "}"
+ "float m(vec3 v)"
+ "{"
+   "v=v.xzy*5.;"
+   "vec3 s=v*v;"
+   "float z=s.x+2.25*s.y+s.z-1.,c=s.x*s.z*v.z+.08888*s.y*s.z*v.z;"
+   "return z*z*z-c;"
+ "}"
+ "void main()"
+ "{"
+   "vec4 c=v[1];"
+   "vec3 f=normalize(z*vec3(1.,.6,1.)),l=vec3(0.,0.,-v[0][1]);"
+   "float i=v[0][2]*4.5;"
+   "l.xz=vec2(cos(i)*l.x-sin(i)*l.z,sin(i)*l.x+cos(i)*l.z);"
+   "f.xz=vec2(cos(i)*f.x-sin(i)*f.z,sin(i)*f.x+cos(i)*f.z);"
+   "vec3 x=l;"
+   "float r=8.;"
+   "vec3 w=vec3(0.);"
+   "float y,e=0.,a=0.;"
+   "for(int g=0;length(x)<r&&e<.9&&g<50;g++)"
+     "{"
+       "float b;"
+       "vec4 t=normalize(vec4(cos(v[0][3]),sin(v[0][3]),sin(v[0][3]*1.3),sin(v[0][3]*2.7)));"
+       "float o=1.;"
+       "vec3 d=vec3(0.),h=vec3(1.,.4,.2);"
+       "if(v[1][2]<.5)"
+         "{"
+           "b=1e+10;"
+           "for(int u=0;u<12;u++)"
+             "{"
+               "vec4 k;"
+               "float p;"
+               "vec3 F,C;"
+               "mat3 Z=s(t);"
+               "vec4 Y=c;"
+               "for(int X=0;X<4;X++)"
+                 "{"
+                   "Y=n(Y);"
+                   "vec3 W=o*(Y.xyz*Y.xyz*Y.xyz*Y.xyz*vec3(.2)+vec3(.05));"
+                   "b=min(b,length(max(abs((x-(.5*Y.wzx-vec3(.25))*Z*o-d)*s(n(normalize(Y-vec4(.5)),t)))-W,0.))-length(W)*.3);"
+                 "}"
+               "float W=1e+10;"
+               "for(int X=0;X<2;X++)"
+                 "{"
+                   "Y=n(Y);"
+                   "vec4 V=n(normalize(Y-vec4(.5)),t);"
+                   "float U=o*(Y.x*.3+.25);"
+                   "vec3 T=(.5*Y.wzx-vec3(.25))*Z*o+d;"
+                   "float S=length(x-T)-U;"
+                   "if(S<W)"
+                     "W=S,k=V,p=U,F=T,C=Y.xyz;"
+                 "}"
+               "if(W>b)"
+                 "{"
+                   "break;"
+                 "}"
+               "else"
+                 " t=k,o=p,d=F,h=.5*h+.5*C;"
+             "}"
+         "}"
+       "else"
+         "{"
+           "float Y=.01,W=m(x);"
+           "vec3 X=1./Y*(vec3(m(x+vec3(Y,0.,0.)),m(x+vec3(0.,Y,0.)),m(x+vec3(0.,0.,Y)))-vec3(W));"
+           "b=W/(length(X)+Y);"
+           "h=vec3(1.,.2,.2);"
+         "}"
+       "w+=vec3(.02,1./70.,1./90.)*3.06/exp(abs(b*5.))*v[3][3];"
+       "e+=1./15./exp(abs(b*10.)+.5);"
+       "a+=abs(b)*.99;"
+       "if(b<0.)"
+         "w=w+(1.-e)*h,e=1.f;"
+       "y=max(.005*a,abs(b)*.99);"
+       "x+=f*y;"
+     "}"
+   "float Y=normalize(f).y;"
+   "w+=(1.-e)*(Y*vec3(0.,-.4,-.3)+(1.-Y)*vec3(0.,.4,.6));"
+   "gl_FragColor=vec4(w-vec3(0.),1.);"
+ "}";
+#endif
 
 const GLchar *fragmentOffscreenCopy="\
 uniform sampler2D t;\
-varying vec3 o;\
-varying mat4 p;\
+varying vec3 z;\
+varying mat4 v;\
 void main(void)\
 {\
-vec2 n=vec2(fract(sin(dot(o.xy+p[0][0],vec2(12.9898,78.233)))*43758.5453));\
-gl_FragColor=texture2D(t,.5*o.xy+.5+.0007*n)+n.x*.02;\
+vec2 n=vec2(fract(sin(dot(z.xy+v[0][0],vec2(12.9898,78.233)))*43758.5453));\
+gl_FragColor=texture2D(t,.5*z.xy+.5+.0007*n)+n.x*.02;\
 }";
 
 const GLchar *vertexMainObject="\
-varying vec3 o;\
-varying mat4 p;\
+varying vec3 z;\
+varying mat4 v;\
 void main(void)\
 {\
-p=gl_ModelViewMatrix;\
-o=vec3(gl_Vertex.xy,.99);\
-gl_Position=vec4(o,1.);\
+v=gl_ModelViewMatrix;\
+z=vec3(gl_Vertex.xy,.99);\
+gl_Position=vec4(z,1.);\
 }";
 
 // -------------------------------------------------------------------
@@ -226,15 +392,6 @@ const static char* glnames[NUM_GL_NAMES]={
 static float parameterMatrix[16];
 
 static GLuint offscreenTexture;
-// Name of the 32x32x32 noise texture
-#define FLOAT_TEXTURE
-#define NOISE_TEXTURE_SIZE 16 // try smaller?
-static GLuint noiseTexture;
-#ifdef FLOAT_TEXTURE
-static float noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
-#else
-static unsigned char noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
-#endif
 
 typedef void (*GenFP)(void); // pointer to openGL functions
 static GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
@@ -254,24 +411,11 @@ void intro_init( void )
 	// create openGL functions
 	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
 
-	// create noise Texture
-#ifdef FLOAT_TEXTURE
-	for (int i = 0; i < NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4; i++)
-	{
-		noiseData[i] = frand() - 0.5f;
-	}
-#else
-	for (int i = 0; i < NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4; i++)
-	{
-		noiseData[i] = (unsigned char)rand();
-	}
-#endif
-
 	// Create and link shader and stuff:
 	// I will have to separate these to be able to use more than one shader...
 	// TODO: I should make some sort of compiling and linking loop...
 	
-	// init objects:	
+	// init objects:
 	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fMainBackground = glCreateShader(GL_FRAGMENT_SHADER);	
 	GLuint fOffscreenCopy = glCreateShader(GL_FRAGMENT_SHADER);
@@ -322,25 +466,6 @@ void intro_init( void )
 	glAttachShader(shaderPrograms[1], fOffscreenCopy);
 	glLinkProgram(shaderPrograms[1]);
 
-	// Set texture.
-	glEnable(GL_TEXTURE_3D); // automatic?
-	glGenTextures(1, &noiseTexture);
-	glBindTexture(GL_TEXTURE_3D, noiseTexture);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
-#ifdef FLOAT_TEXTURE
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F,
-				 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
-				 0, GL_RGBA, GL_FLOAT, noiseData);
-#else
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8,
-				 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
-				 0, GL_RGBA, GL_UNSIGNED_BYTE, noiseData);
-#endif
-
 	// Create a rendertarget texture
 	glGenTextures(1, &offscreenTexture);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
@@ -355,8 +480,6 @@ void intro_init( void )
 
 void intro_do( long itime )
 {
-	//GLUquadric* quad = gluNewQuadric();
-
 	itime += SYNC_ADJUSTER;
 	float ftime = 0.001f*(float)itime;
 
@@ -384,15 +507,14 @@ void intro_do( long itime )
 	}
 
 	// get music information
+#ifdef USEDSOUND
 	double loudness = 1.0;
 	int musicPos = (((itime-SYNC_ADJUSTER)*441)/10);
 	for (int k = 0; k < 4096; k++)
 	{
 		loudness += outwave[musicPos][k]*outwave[musicPos][k];
 	}
-#ifdef USEDSOUND
-	parameterMatrix[4] += (float)log(loudness) * (1.f/32.f) - .75f; // This makes it silent?
-	//parameterMatrix[4] = (float)log(loudness) * 0.1f - 0.5f;
+	parameterMatrix[15] = (float)log(loudness) * (1.f/24.f); // This makes it silent?
 #endif
 
 	glLoadMatrixf(parameterMatrix);
@@ -402,16 +524,12 @@ void intro_do( long itime )
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	glBindTexture(GL_TEXTURE_3D, offscreenTexture);
 	glUseProgram(shaderPrograms[0]);
-	glBindTexture(GL_TEXTURE_3D, noiseTexture);
-	//gluSphere(quad, 2.0f, 8, 8);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
-	// copy to front
+	//// copy to front
 	glViewport(0, 0, viewport[2], viewport[3]);
 	glBindTexture(GL_TEXTURE_3D, offscreenTexture);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
 	glUseProgram(shaderPrograms[1]);	
-	//gluSphere(quad, 2.0f, 8, 8);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 }
-
