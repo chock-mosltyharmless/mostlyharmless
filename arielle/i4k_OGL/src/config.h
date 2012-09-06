@@ -14,7 +14,7 @@
 //#define YRES        (1080 * 1280 / 1920)
 #define XRES        1000
 #define YRES        (1080 * XRES / 1920)
-#define OFFSCREEN_WIDTH 800
-#define OFFSCREEN_HEIGHT 400
+#define OFFSCREEN_WIDTH 400
+#define OFFSCREEN_HEIGHT 200
 
 #endif

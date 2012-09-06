@@ -5,7 +5,7 @@
 #ifndef _MZK_H_
 #define _MZK_H_
 
-#define MZK_DURATION    110
+#define MZK_DURATION    63
 #define MZK_RATE        44100
 #define MZK_NUMCHANNELS 2
 
