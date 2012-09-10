@@ -1,98 +1,139 @@
-uniform sampler3D Texture0; 
-varying vec3 objectPosition; 
-varying mat4 parameters; 
- 
-vec3 noise(vec3 pos, int iterations, float reduction) 
-{ 
-   pos *= 2.; /*adjust texture size*/ 
-   float intensity = 1.; 
-   float size = 1.; 
-   vec3 result = vec3(0.); 
- 
-   for (int k = 0; k < iterations; k++) 
-   { 
-      vec3 pos2 = floor(pos*size*16.) + smoothstep(0.,1., (pos*size*16.) - floor(pos*size*16.)) - 0.5; 
-      vec4 inp = texture3D(Texture0, pos2/16.); 
-      result += inp.xyz * intensity; 
-      intensity = intensity * reduction; 
-      size = size * 1.93; 
-   } 
+uniform sampler2D Texture0;
+varying vec3 objectPosition;
+varying mat4 parameters;
+
+vec4 randomIteration(vec4 seed)
+{
+   vec4 adder = vec4(0.735, 0.369, 0.438, 0.921);
+   vec4 mult = vec4(94.34, 72.15, 59.372, 49.56);
+   return fract((seed.zxwy + adder) * mult);
+}
+
+/* period 1, minimum at 0, output 0..1, probably does not work for neagtive values */
+vec3 sawtooth(vec3 x)
+{
+    return 2.0 * min(fract(x), 1.0 - fract(x));
+}
+
+float brightness(vec3 color)
+{
+    return dot(color, vec3(0.3, 0.55, 0.15));
+}
+
+/* brightness is the only thing that may have values > 1.0 */
+vec3 HSB2RGB(vec3 hsb)
+{
+    vec3 rgb;
+    vec3 gray;
+
+    /* Calculation for hue (vectorize!) */
+    rgb = max(vec3(1.0) - 3.0/2.0 * sawtooth(vec3(hsb.r) + vec3(0.0, 1.0/3.0, 2.0/3.0)), vec3(0.0));
     
-   return result; 
-} 
- 
-vec3 color(vec3 pos, vec3 noiseData) 
-{ 
-  float fTime0_X = parameters[0][0]; 
-  vec3 innercolor = vec3(0.4, 0.1, 0.0); 
-  vec3 outercolor = vec3(0.1, 0.35, 0.65); 
-  float height = (pos.y + noiseData.x); 
-  float colorpart = smoothstep(-0.5, 0.5, -length(pos) + noiseData.x*12.*(parameters[2][1]+1.) + 2.); 
-  float border = smoothstep(-0.8, 0.8, abs(colorpart - 0.5)); 
-  return mix(innercolor, outercolor, colorpart) * border + clamp(height - 2.*parameters[1][3] - 1.,0.0,100.0); 
-} 
- 
-vec2 rotate(vec2 pos, float angle) 
-{ 
-	return pos * mat2(cos(angle),-sin(angle),sin(angle),cos(angle)); 
-} 
- 
-void main(void) 
-{   
-   float fTime0_X = parameters[0][0]; 
-   vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0)); 
-   vec3 camPos = vec3(0.0, 0.0, -8. + 8. * parameters[0][1]); 
+    /* normalize brightness */
+    gray = vec3(1.0);
+    gray /= brightness(gray);
+    rgb /= brightness(rgb);
     
-   // rotate camera around y axis 
-   float alpha; 
-   alpha = parameters[0][3]*9.42; 
-   camPos.xz = rotate(camPos.xz, alpha); 
-   rayDir.xz = rotate(rayDir.xz, alpha); 
-   alpha = parameters[0][2]*9.42; 
-   camPos.yz = rotate(camPos.yz, alpha); 
-   rayDir.yz = rotate(rayDir.yz, alpha); 
+    /* saturation */
+    rgb = mix(gray, rgb, hsb.g);
     
-   vec3 rayPos = camPos; 
-   float sceneSize = 16.0; 
-   vec3 totalColor = vec3(0.,0.,0.); 
-   float stepSize; 
-   float totalDensity = 0.0; 
-   vec3 totalColorAdder = (vec3(0.016, 0.012, 0.009)) * (parameters[1][0]); 
+    /* brightness */
+    rgb *= hsb.b;
     
-   while(length(rayPos)<sceneSize && totalDensity < 0.95) 
-   { 
-      // base head 
-      vec3 tmpPos = rayPos; 
-      float base1 = abs(tmpPos.y); 
-	  float base2 = abs(length(rayPos.xz) - 2.0 + 2.0 * parameters[1][2]) * (0.5 + parameters[2][0]); 
-	  float socket = length(rayPos + vec3(0., 9., 0.)) - 8.2 + 20.*parameters[2][1];   
-	  float base = (max(base1 - 1.1 - parameters[1][3]*20., base2 - 2.0*parameters[1][2] + 1.2)); 
-	  float implicitVal = min(socket, base); 
-	  //float implicitVal = base; 
- 
-      vec3 noiseAdder = noise(rayPos * 0.03  - vec3(0.0, fTime0_X*0.02, 0.0), 2, 0.8) * 0.1 * parameters[1][1]; 
-      float noiseVal = noise(noiseAdder*0.3 + rayPos*0.04*vec3(1.0,0.05+0.95*parameters[1][1],1.0) - vec3(0.0, fTime0_X*0.03, 0.0), 7, 0.7).r * 0.6; 
-      implicitVal -= noiseVal; 
-       
-	  totalColor += totalColorAdder; 
-      totalDensity += 0.005; 
-      if (implicitVal < 0.0) 
-      { 
-	     float localDensity = 1. - exp(implicitVal); 
-		 //float localDensity = 0.1; 
-		 localDensity = (1.-totalDensity) * localDensity; 
-         totalColor += color(rayPos, noiseVal) * localDensity; 
-         totalDensity += localDensity ; 
-      } 
-       
-	  stepSize = (implicitVal) * 0.5; 
-      stepSize = max(0.03, stepSize); 
-      rayPos += rayDir * stepSize; 
-   } 
+    return rgb;
+}
+
+void main(void)
+{
+    float fTime0_X = parameters[0][0];
+	float bauchigkeit = parameters[0][1];
+	float lineStrength = parameters[0][2];
+	float colorVariation = parameters[0][3];
+	vec2 size = parameters[1].xy;
+	vec2 spread = parameters[1].zw;
+	vec3 mainColorHSB = parameters[2].xyz;
+	float highlightAmount = parameters[2][3];
+
+    vec2 position = objectPosition.xy * 3.;
+    vec4 n;
+    const int numCenters = 8;
+    const int numOvertones = 3;
     
-   float grad = normalize(rayPos).y; 
-   totalColor += (1.-totalDensity) * (grad * vec3(0.0,0.0,0.1) + (1.-grad)*vec3(0.0,0.1,0.2)); 
+    /* distance of best and second best center */
+    float nearestDist = 1.0e20;
+    float secondDist = 1.0e20;
+    vec2 bestCenter = vec2(0.0); /* Position of the best center */
+    vec2 bestMover = vec2(0.0);  /* move based on center */
+
+    /* Calculate distances to randomly movind centers */
+    vec4 seed = vec4(0.3, 0.2, 0.1, 0.9);
+    vec3 baseColor = vec3(0.0);
+    for (int i = 0; i < numCenters; i++)
+    {
+        /* Calculate position of the center */
+        vec2 center = vec2(0.0);
+        for (int j = 0; j < numOvertones; j++)
+        {
+            seed  = randomIteration(seed);
+            center += vec2(size.x * sin(fTime0_X * seed.x) + 2.0 * (seed.y - 0.5) * spread.x,
+                           size.y * sin(fTime0_X * seed.z) + 2.0 * (seed.w - 0.5) * spread.y);
+        }
+        seed = randomIteration(seed);
+        
+        /* Get the distance to the center */
+        float curDist = length(position - center);
+        if (curDist < secondDist)
+        {
+            if (curDist < nearestDist)
+            {
+                secondDist = nearestDist;
+                nearestDist = curDist;
+                bestCenter = center;
+                bestMover = seed.yz;
+                vec3 internalHSB = mainColorHSB + colorVariation *
+                    (seed.rgb - 0.5) * vec3(1.0, 0.0, 0.0);
+                internalHSB.r = fract(internalHSB.r + fTime0_X * 0.01);
+                internalHSB.g = clamp(internalHSB.g, 0.0, 1.0);
+                baseColor = HSB2RGB(internalHSB);
+            }
+            else
+            {
+                secondDist = curDist;
+            }
+        }
+    }
     
-   gl_FragColor = vec4(sqrt(smoothstep(0.3, 1.4, totalColor)), 1.0); 
- 
+    /* Calculate the relative distance to the nearest point */
+    /* What we get here is a float between 0.0 and 1.0 */
+    float relDist = 2.0 * nearestDist / (nearestDist + secondDist + 0.0);
+    //relDist = mix(smoothstep(0., 1., relDist), relDist, 0.5);
+    
+    /* non-linear things */
+    //relDist = smoothstep(0.1, 1.1, relDist);
+    relDist = pow(relDist, bauchigkeit);
+    
+    /* Here I need the base color instead */
+    vec3 bgColor = mix(HSB2RGB(mainColorHSB), vec3(0.0), lineStrength);
+        
+    gl_FragColor = vec4(mix(baseColor, bgColor, relDist), 1.0);
+    
+    /* scanlining */
+    /*float scanlines = 0.25*sawtooth(vec3(position.y*39.)).r+0.75;
+    gl_FragColor.xyz *= scanlines;*/
+        
+    /* background picture */
+    vec4 tex = texture2D(Texture0, 0.3*position + 0.5 + bestMover * (1.0 - relDist));
+    gl_FragColor.xyz *= 0.25 + 0.75*tex.rgb;
+    
+    /* Some highlights due to lighting */
+    vec2 normal2D = normalize(position - bestCenter);
+    float jumpDist = floor(relDist*10.)/8.0;
+    vec3 normal3D = vec3(normal2D * sqrt(jumpDist), sqrt(1.0 - jumpDist));
+    vec3 lightsource = normalize(vec3(0.4, 0.6, 0.3));
+    float lighting = highlightAmount * (pow(max(0., dot(normal3D, lightsource) - 0.2), 3.0));
+    gl_FragColor += vec4(vec3(lighting), 0.0);
+
+    /* vignette */
+    float vignette = length(position * vec2(0.7, 1.0));
+    gl_FragColor /= pow(0.5*vignette, 5.0) + 1.0;    
 }

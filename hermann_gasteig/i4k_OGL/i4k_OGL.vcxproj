@@ -152,17 +152,25 @@
     <ClInclude Include="src\music.h" />
     <ClInclude Include="src\mzk.h" />
     <ClInclude Include="src\Parameter.h" />
+    <ClInclude Include="src\PictureWriter.h" />
+    <ClInclude Include="src\Texture.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp" />
     <ClCompile Include="src\mzk.cpp" />
     <ClCompile Include="src\Parameter.cpp" />
+    <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\_windows\main_deb.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="src\_windows\main_rel.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="background.glsl" />
+    <None Include="copy.glsl" />
+    <None Include="object.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

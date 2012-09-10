@@ -8,6 +8,9 @@
     <Filter Include="Source Files\_windows">
       <UniqueIdentifier>{caee972f-5510-4acb-ba84-19482d19e150}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\shader">
+      <UniqueIdentifier>{ee6a0a44-d7a9-4dbf-a33b-bb075c1957c3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\config.h">
@@ -23,6 +26,12 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Parameter.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Texture.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\PictureWriter.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -42,5 +51,19 @@
     <ClCompile Include="src\_windows\main_rel.cpp">
       <Filter>Source Files\_windows</Filter>
     </ClCompile>
+    <ClCompile Include="src\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="background.glsl">
+      <Filter>Source Files\shader</Filter>
+    </None>
+    <None Include="copy.glsl">
+      <Filter>Source Files\shader</Filter>
+    </None>
+    <None Include="object.glsl">
+      <Filter>Source Files\shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

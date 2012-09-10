@@ -84,13 +84,24 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
 
     if( uMsg==WM_CHAR )
-        {
-        if( wParam==VK_ESCAPE )
-            {
-            PostQuitMessage(0);
-            return( 0 );
-            }
-        }
+    {
+		switch (wParam)
+		{
+		case VK_ESCAPE:
+			PostQuitMessage(0);
+			return 0;
+
+		case 'y':
+		case 'Y':
+		case VK_F1:
+			loadShaders();
+			break;
+
+		default:
+			break;
+		}
+    }
+
 
     return( DefWindowProc(hWnd,uMsg,wParam,lParam) );
 }
