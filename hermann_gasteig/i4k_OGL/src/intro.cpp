@@ -15,6 +15,7 @@
 #include "intro.h"
 #include "mzk.h"
 #include "Parameter.h"
+#include "Texture.h"
 
 float frand();
 int rand();
@@ -35,40 +36,15 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glMultiTexCoord2f"
 };
 
-#define glCreateShader ((PFNGLCREATESHADERPROC)glFP[0])
-#define glCreateProgram ((PFNGLCREATEPROGRAMPROC)glFP[1])
-#define glShaderSource ((PFNGLSHADERSOURCEPROC)glFP[2])
-#define glCompileShader ((PFNGLCOMPILESHADERPROC)glFP[3])
-#define glAttachShader ((PFNGLATTACHSHADERPROC)glFP[4])
-#define glLinkProgram ((PFNGLLINKPROGRAMPROC)glFP[5])
-#define glUseProgram ((PFNGLUSEPROGRAMPROC)glFP[6])
-#define glTexImage3D ((PFNGLTEXIMAGE3DPROC)glFP[7])
-#define glGetShaderiv ((PFNGLGETSHADERIVPROC)glFP[8])
-#define glGetShaderInfoLog ((PFNGLGETSHADERINFOLOGPROC)glFP[9])
-#define glDeleteProgram ((PFNGLDELETEPROGRAMPROC)glFP[10])
-#define glDeleteShader ((PFNGLDELETESHADERPROC)glFP[11])
-#define glActiveTexture ((PFNGLACTIVETEXTUREPROC)glFP[12])
-#define glGetUniformLocation ((PFNGLGETUNIFORMLOCATIONPROC)glFP[13])
-#define glUniform1i ((PFNGLUNIFORM1IPROC)glFP[14])
-#define glMultiTexCoord2f ((PFNGLMULTITEXCOORD2FPROC)glFP[15])
-
 // The model matrix is used to send the parameters to the hardware...
 static float parameterMatrix[16];
 
-static GLuint offscreenTexture;
-// Name of the 32x32x32 noise texture
-#define FLOAT_TEXTURE
-#define NOISE_TEXTURE_SIZE 16 // try smaller?
-static GLuint noiseTexture;
-#ifdef FLOAT_TEXTURE
-static float noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
-#else
-static unsigned char noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
-#endif
-static int noiseTmp[4];
+// Two offsceen textures, one for normal rendering, one for highlights
+const int NUM_OFFSCREEN_TEXTURES = 2;
+static GLuint offscreenTexture[NUM_OFFSCREEN_TEXTURES];
+static Texture backgroundTexture;
 
-typedef void (*GenFP)(void); // pointer to openGL functions
-static GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
+GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 static GLuint shaderPrograms[2] = {0, 0};
 
 // -------------------------------------------------------------------
@@ -161,6 +137,7 @@ void loadShaders(void)
 	glDeleteShader(vMainObject);
 	glDeleteShader(fOffscreenCopy);
 
+#if 0
 	// Set texture locations
 	glUseProgram(shaderPrograms[0]);
 	int my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[0], "Texture0");
@@ -170,6 +147,7 @@ void loadShaders(void)
 	glActiveTexture(GL_TEXTURE1);
 	glUniform1i(my_sampler_uniform_location, 1);
 	glActiveTexture(GL_TEXTURE0);
+#endif
 }
 
 void intro_init( void )
@@ -177,58 +155,27 @@ void intro_init( void )
 	// create openGL functions
 	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
 
-	// create noise Texture
-#ifdef FLOAT_TEXTURE
-	for (int i = 0; i < NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4; i++)
-	{
-		noiseData[i] = frand() - 0.5f;
-	}
-#else
-	for (int i = 0; i < NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4; i++)
-	{
-		noiseData[i] = (unsigned char)rand();
-	}
-#endif
-
 	// Create and link shader and stuff:
 	// I will have to separate these to be able to use more than one shader...
 	// TODO: I should make some sort of compiling and linking loop...
 	loadShaders();
 
 	// Set texture.
-	glEnable(GL_TEXTURE_3D); // automatic?
-	glGenTextures(1, &noiseTexture);
-	glBindTexture(GL_TEXTURE_3D, noiseTexture);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
-	//glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, 0, GL_RGBA, 
-	//	         GL_UNSIGNED_BYTE, noiseData);
-#ifdef FLOAT_TEXTURE
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F,
-				 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
-				 0, GL_RGBA, GL_FLOAT, noiseData);
-#else
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8,
-				 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
-				 0, GL_RGBA, GL_UNSIGNED_BYTE, noiseData);
-#endif
+	backgroundTexture.init("background.tga");
+	backgroundTexture.setTexture();
 
 	// Create a rendertarget texture
-	/*glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-			     OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT,
-				 0, GL_RGBA, GL_UNSIGNED_BYTE, &offscreenTexture);*/
-	glGenTextures(1, &offscreenTexture);
-	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT, 0,
-		         GL_RGBA, GL_UNSIGNED_BYTE, 0);
-	//glBindTexture(GL_TEXTURE_2D, 0);
+	glGenTextures(NUM_OFFSCREEN_TEXTURES, offscreenTexture);
+	for (int i = 0; i < NUM_OFFSCREEN_TEXTURES; i++)
+	{
+		glBindTexture(GL_TEXTURE_2D, offscreenTexture[i]);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT, 0,
+					 GL_RGBA, GL_UNSIGNED_BYTE, 0);
+	}
 
 	// RLY?
 	//glEnable(GL_CULL_FACE);
@@ -251,31 +198,48 @@ void fallingBall(float ftime)
 #endif
 	glMatrixMode(GL_MODELVIEW);	
 
-
 	parameterMatrix[0] = ftime; // time	
 	/* shader parameters */
-	parameterMatrix[1] = params.getParam(2, 0.75f);
-	parameterMatrix[2] = params.getParam(3, 0.83f);
-	parameterMatrix[3] = params.getParam(4, 0.21f);
-	parameterMatrix[4] = params.getParam(5, 0.83f);
-	parameterMatrix[5] = params.getParam(6, 0.72f);
-	parameterMatrix[6] = params.getParam(8, 0.79f);
-	parameterMatrix[7] = params.getParam(9, 0.09f);
-	parameterMatrix[8] = params.getParam(12, 0.1f);
-	parameterMatrix[9] = params.getParam(13, 1.0f);
+	parameterMatrix[1] = 10.0f * params.getParam(2, 1.0f);	// bauchigkeit
+	parameterMatrix[2] = params.getParam(3, 1.0f);			// line strength
+	parameterMatrix[3] = params.getParam(4, 0.8f);			// color variation
+	parameterMatrix[4] = params.getParam(5, 0.4f);			// size.x			
+	parameterMatrix[5] = params.getParam(6, 0.4f);			// size.y
+	parameterMatrix[6] = params.getParam(8, 0.5f);			// spread.x	
+	parameterMatrix[7] = params.getParam(9, 0.5f);			// spread.y
+	parameterMatrix[8] = params.getParam(12, 0.4f);			// mainColor.h
+	parameterMatrix[9] = params.getParam(13, 0.15f);			// mainColor.s
+	parameterMatrix[10] = params.getParam(14, 0.7f);		// mainColor.b
+	parameterMatrix[11] = 5.0f * params.getParam(15, 0.8f); // highlightAmount
 	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	glBindTexture(GL_TEXTURE_3D, offscreenTexture);
 	glUseProgram(shaderPrograms[0]);
-	glBindTexture(GL_TEXTURE_3D, noiseTexture);
+	backgroundTexture.setTexture();
 	gluSphere(quad, 2.0f, 16, 16);
 
-	// copy to front
+	// horizontal blur
+	parameterMatrix[1] = 0.2f;
+	parameterMatrix[2] = 2.0f / OFFSCREEN_WIDTH;
+	parameterMatrix[3] = 1.0f / OFFSCREEN_HEIGHT;
+	glLoadMatrixf(parameterMatrix);
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]);
+	// Copy backbuffer to texture
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	glUseProgram(shaderPrograms[1]);	
+	gluSphere(quad, 2.0f, 16, 16);
+
+	// vertical blur
+	parameterMatrix[1] = 0.4f;
+	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
+	parameterMatrix[3] = 2.0f / OFFSCREEN_HEIGHT;
+	glLoadMatrixf(parameterMatrix);
 	glViewport(0, 0, XRES, YRES);
-	glBindTexture(GL_TEXTURE_3D, offscreenTexture);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
+	// Copy backbuffer to texture
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	glUseProgram(shaderPrograms[1]);	
 	gluSphere(quad, 2.0f, 16, 16);
 }
