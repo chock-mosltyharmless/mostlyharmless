@@ -54,6 +54,9 @@ void main(void)
 	vec3 mainColorHSB = parameters[2].xyz;
 	float highlightAmount = parameters[2][3];
 
+	/* Color changes over time */
+	mainColorHSB.r = fract(mainColorHSB.r + fTime0_X * 0.05);
+
     vec2 position = objectPosition.xy * 3.;
     vec4 n;
     const int numCenters = 8;
@@ -75,8 +78,8 @@ void main(void)
         for (int j = 0; j < numOvertones; j++)
         {
             seed  = randomIteration(seed);
-            center += vec2(size.x * sin(fTime0_X * seed.x) + 2.0 * (seed.y - 0.5) * spread.x,
-                           size.y * sin(fTime0_X * seed.z) + 2.0 * (seed.w - 0.5) * spread.y);
+            center += vec2(size.x * sin(fTime0_X * seed.x + seed.z) + 2.0 * (seed.y - 0.5) * spread.x,
+                           size.y * sin(fTime0_X * seed.z + seed.w) + 2.0 * (seed.w - 0.5) * spread.y);
         }
         seed = randomIteration(seed);
         
@@ -92,7 +95,7 @@ void main(void)
                 bestMover = seed.yz;
                 vec3 internalHSB = mainColorHSB + colorVariation *
                     (seed.rgb - 0.5) * vec3(1.0, 0.0, 0.0);
-                internalHSB.r = fract(internalHSB.r + fTime0_X * 0.01);
+                internalHSB.r = fract(internalHSB.r + 0.5); /* + 0.5 so that I get inverted colors with the border) */
                 internalHSB.g = clamp(internalHSB.g, 0.0, 1.0);
                 baseColor = HSB2RGB(internalHSB);
             }
@@ -122,7 +125,7 @@ void main(void)
     gl_FragColor.xyz *= scanlines;*/
         
     /* background picture */
-    vec4 tex = texture2D(Texture0, 0.3*position + 0.5 + bestMover * (1.0 - relDist));
+    vec4 tex = texture2D(Texture0, 0.3333 * 0.5*position + 0.5 + bestMover * (1.0 - relDist));
     gl_FragColor.xyz *= 0.25 + 0.75*tex.rgb;
     
     /* Some highlights due to lighting */

@@ -73,12 +73,15 @@ void loadShaders(void)
 
 	// load from file
 	FILE *fid = fopen("background.glsl", "rb");
+	ZeroMemory(backgroundText, sizeof(backgroundText));
 	fread(backgroundText, 1, MAX_SHADER_SIZE, fid);
 	fclose(fid);
 	fid = fopen("object.glsl", "rb");
+	ZeroMemory(objectText, sizeof(objectText));
 	fread(objectText, 1, MAX_SHADER_SIZE, fid);
 	fclose(fid);
 	fid = fopen("copy.glsl", "rb");
+	ZeroMemory(copyText, sizeof(copyText));
 	fread(copyText, 1, MAX_SHADER_SIZE, fid);
 	fclose(fid);
 
@@ -172,9 +175,17 @@ void intro_init( void )
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);	
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT, 0,
-					 GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		if (i == 0)
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT, 0,
+						 GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		}
+		else
+		{
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT, 0,
+						 GL_RGBA, GL_UNSIGNED_BYTE, 0);
+		}
 	}
 
 	// RLY?
@@ -183,8 +194,6 @@ void intro_init( void )
 
 void fallingBall(float ftime)
 {
-	GLUquadric* quad = gluNewQuadric();
-
 	glDisable(GL_BLEND);
 
 	// draw background:
@@ -198,50 +207,128 @@ void fallingBall(float ftime)
 #endif
 	glMatrixMode(GL_MODELVIEW);	
 
+	// I want to interpolate the new values from the old ones.
+	const int maxNumParameters = 20;
+	const static float defaultParameters[maxNumParameters] = 
+	{
+		0.0f, 0.0f,
+		1.0f,				// 2: Bauchigkeit
+		0.0f,				// 3: line strength
+		0.4f,				// 4: color variation
+		0.4f, 0.2f,			// 5-6: size
+		0.0f,
+		0.3f, 0.3f,			// 8-9: spread	
+		0.0f, 0.0f,
+		0.4f, 0.15f, 0.3f,	// 12-14: mainColor.h
+		0.5f,				// 15: highlightAmount
+		1.0f,				// 16: spiking spread
+		0.5f,               // 17: spiking brightness
+		0.8f,				// 18: spiking highlightAmount
+	};
+	static float interpolatedParameters[maxNumParameters];
+	for (int i = 0; i < maxNumParameters; i++)
+	{
+		interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
+									0.05f * params.getParam(i, defaultParameters[i]);
+	}
+
+	// Beat-dependent variables:
+	float jumpTime = (ftime * 1.0f);
+	jumpTime -= floor(jumpTime);
+	jumpTime = jumpTime * jumpTime;
+	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 2.0f) + 0.5f;
+	parameterMatrix[6] = 2.0f * spike * interpolatedParameters[16] * interpolatedParameters[5]; // spiked spread.x
+	parameterMatrix[7] = 2.0f * spike * interpolatedParameters[16] * interpolatedParameters[6]; // spiked spread.y
+	parameterMatrix[10] = spike * interpolatedParameters[17]; // spiked mainColor.brightness
+	parameterMatrix[11] = 5.0f * spike * interpolatedParameters[18]; // spiked highlightAmount
+
 	parameterMatrix[0] = ftime; // time	
 	/* shader parameters */
-	parameterMatrix[1] = 10.0f * params.getParam(2, 1.0f);	// bauchigkeit
-	parameterMatrix[2] = params.getParam(3, 1.0f);			// line strength
-	parameterMatrix[3] = params.getParam(4, 0.8f);			// color variation
-	parameterMatrix[4] = params.getParam(5, 0.4f);			// size.x			
-	parameterMatrix[5] = params.getParam(6, 0.4f);			// size.y
-	parameterMatrix[6] = params.getParam(8, 0.5f);			// spread.x	
-	parameterMatrix[7] = params.getParam(9, 0.5f);			// spread.y
-	parameterMatrix[8] = params.getParam(12, 0.4f);			// mainColor.h
-	parameterMatrix[9] = params.getParam(13, 0.15f);			// mainColor.s
-	parameterMatrix[10] = params.getParam(14, 0.7f);		// mainColor.b
-	parameterMatrix[11] = 5.0f * params.getParam(15, 0.8f); // highlightAmount
+	parameterMatrix[1] = 10.0f * interpolatedParameters[2] * interpolatedParameters[2];  // bauchigkeit
+	parameterMatrix[2] = interpolatedParameters[3];			// line strength
+	parameterMatrix[3] = interpolatedParameters[4];			// color variation
+	parameterMatrix[4] = interpolatedParameters[5];			// size.x			
+	parameterMatrix[5] = interpolatedParameters[6];			// size.y
+	parameterMatrix[6] += interpolatedParameters[8];			// spread.x	
+	parameterMatrix[7] += interpolatedParameters[9];			// spread.y
+	parameterMatrix[8] = interpolatedParameters[12];			// mainColor.h
+	parameterMatrix[9] = interpolatedParameters[13];		// mainColor.s
+	parameterMatrix[10] += interpolatedParameters[14];		// mainColor.b
+	parameterMatrix[11] += 5.0f * interpolatedParameters[15]; // highlightAmount
+
 	glLoadMatrixf(parameterMatrix);
 
-	// draw offscreen
+	// draw offscreen (full offscreen resolution)
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	glUseProgram(shaderPrograms[0]);
 	backgroundTexture.setTexture();
-	gluSphere(quad, 2.0f, 16, 16);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
 
-	// horizontal blur
-	parameterMatrix[1] = 0.2f;
-	parameterMatrix[2] = 2.0f / OFFSCREEN_WIDTH;
+	// downsample to highlight resolution
+	parameterMatrix[1] = 0.0f;
+	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
 	parameterMatrix[3] = 1.0f / OFFSCREEN_HEIGHT;
+	parameterMatrix[4] = 0.0f; // scanline amount
 	glLoadMatrixf(parameterMatrix);
-	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]);
 	// Copy backbuffer to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	glUseProgram(shaderPrograms[1]);	
-	gluSphere(quad, 2.0f, 16, 16);
+	glUseProgram(shaderPrograms[1]);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
+
+	// horizontal blur
+	parameterMatrix[1] = 0.2f;
+	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
+	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
+	parameterMatrix[4] = 0.4f; // subtractor
+	parameterMatrix[5] = 0.007f; // gain
+	glLoadMatrixf(parameterMatrix);
+	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
+	// Copy backbuffer (small) to texture
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glUseProgram(shaderPrograms[1]);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// vertical blur
-	parameterMatrix[1] = 0.4f;
-	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
-	parameterMatrix[3] = 2.0f / OFFSCREEN_HEIGHT;
+	parameterMatrix[1] = 0.2f;
+	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
+	parameterMatrix[3] = -1.0f / HIGHLIGHT_HEIGHT;
+	parameterMatrix[4] = 0.0f; // subtractor
+	glLoadMatrixf(parameterMatrix);
+	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
+	// Copy backbuffer to texture
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glUseProgram(shaderPrograms[1]);	
+	glRectf(-1.0, -1.0, 1.0, 1.0);
+
+	// copy highlight to front
+	parameterMatrix[1] = 0.0f;
+	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
+	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
+	parameterMatrix[4] = 0.0f; // scanline amount
 	glLoadMatrixf(parameterMatrix);
 	glViewport(0, 0, XRES, YRES);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
 	// Copy backbuffer to texture
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	glUseProgram(shaderPrograms[1]);	
-	gluSphere(quad, 2.0f, 16, 16);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glUseProgram(shaderPrograms[1]);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
+
+	// add normal image
+	parameterMatrix[1] = 0.0f;
+	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
+	parameterMatrix[3] = 1.0f / OFFSCREEN_HEIGHT;
+	parameterMatrix[4] = 0.25f; // scanline amount
+	glLoadMatrixf(parameterMatrix);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+	glViewport(0, 0, XRES, YRES);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]); // was already copied!
+	glUseProgram(shaderPrograms[1]);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
 }
 
 void intro_do( long itime )

@@ -12,9 +12,11 @@
 //#define CLEANEXIT
 //#define XRES        (1280)
 //#define YRES        (1080 * 1280 / 1920)
-#define XRES        1000
+#define XRES        1600
 #define YRES        (1080 * XRES / 1920)
-#define OFFSCREEN_WIDTH 512
-#define OFFSCREEN_HEIGHT 256
+#define OFFSCREEN_WIDTH 1024
+#define OFFSCREEN_HEIGHT 512
+#define HIGHLIGHT_WIDTH 400
+#define HIGHLIGHT_HEIGHT 200
 
 #endif
