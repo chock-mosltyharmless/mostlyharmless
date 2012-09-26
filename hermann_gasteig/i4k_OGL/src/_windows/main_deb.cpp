@@ -247,12 +247,16 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         intro_do( t );
 
+// Intro is never done
+#if 0
         if( t>(MZK_DURATION*1000) )
 		{
 			done = 1;
 		}
-        SwapBuffers( info->hDC );
-        }
+#endif
+      
+		SwapBuffers( info->hDC );
+	}
 
     sndPlaySound( 0, 0 );
     window_end( info );

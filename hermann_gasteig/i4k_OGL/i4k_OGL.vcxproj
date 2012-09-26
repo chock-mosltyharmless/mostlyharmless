@@ -169,6 +169,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="background.glsl" />
+    <None Include="background_light.glsl" />
     <None Include="copy.glsl" />
     <None Include="object.glsl" />
   </ItemGroup>
