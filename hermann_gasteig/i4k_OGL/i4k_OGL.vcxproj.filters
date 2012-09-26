@@ -65,5 +65,8 @@
     <None Include="object.glsl">
       <Filter>Source Files\shader</Filter>
     </None>
+    <None Include="background_light.glsl">
+      <Filter>Source Files\shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

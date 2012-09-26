@@ -45,7 +45,11 @@ static GLuint offscreenTexture[NUM_OFFSCREEN_TEXTURES];
 static Texture backgroundTexture;
 
 GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
-static GLuint shaderPrograms[2] = {0, 0};
+const int NUM_SHADER_PROGRAMS = 3;
+const int SHADER_BACKGROUND = 0;
+const int SHADER_COPY = 1;
+const int SHADER_BACKGROUND_LIGHT = 2;
+static GLuint shaderPrograms[NUM_SHADER_PROGRAMS] = {0, 0, 0};
 
 // -------------------------------------------------------------------
 //                          Code:
@@ -59,12 +63,14 @@ void loadShaders(void)
 	static GLchar objectText[MAX_SHADER_SIZE];
 	const GLchar *ptObject = objectText;
 	static GLchar copyText[MAX_SHADER_SIZE];
-	const GLchar *ptCopy = copyText;	
+	const GLchar *ptCopy = copyText;
+	static GLchar lightText[MAX_SHADER_SIZE];
+	const GLchar *ptLight = lightText;
 	
 	// delete objects
 	if (shaderPrograms[0])
 	{
-		for (int i = 0; i < 2; i++)
+		for (int i = 0; i < NUM_SHADER_PROGRAMS; i++)
 		{
 			glDeleteProgram(shaderPrograms[i]);
 			shaderPrograms[i] = 0;
@@ -84,13 +90,19 @@ void loadShaders(void)
 	ZeroMemory(copyText, sizeof(copyText));
 	fread(copyText, 1, MAX_SHADER_SIZE, fid);
 	fclose(fid);
+	fid = fopen("background_light.glsl", "rb");
+	ZeroMemory(lightText, sizeof(lightText));
+	fread(lightText, 1, MAX_SHADER_SIZE, fid);
+	fclose(fid);
 
 	// init objects:
 	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fMainBackground = glCreateShader(GL_FRAGMENT_SHADER);	
 	GLuint fOffscreenCopy = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint fMainLight = glCreateShader(GL_FRAGMENT_SHADER);
 	shaderPrograms[0] = glCreateProgram();
 	shaderPrograms[1] = glCreateProgram();
+	shaderPrograms[2] = glCreateProgram();
 	// compile sources:
 	glShaderSource(vMainObject, 1, &ptObject, NULL);
 	glCompileShader(vMainObject);
@@ -98,6 +110,8 @@ void loadShaders(void)
 	glCompileShader(fMainBackground);
 	glShaderSource(fOffscreenCopy, 1, &ptCopy, NULL);
 	glCompileShader(fOffscreenCopy);
+	glShaderSource(fMainLight, 1, &ptLight, NULL);
+	glCompileShader(fMainLight);
 	
 	// Check programs
 	int tmp, tmp2;
@@ -126,19 +140,31 @@ void loadShaders(void)
 		MessageBox(hWnd, err, "fOffscreeCopy shader error", MB_OK);
 		return;
 	}
+	glGetShaderiv(fMainLight, GL_COMPILE_STATUS, &tmp);
+	if (!tmp)
+	{
+		glGetShaderInfoLog(fMainLight, 4096, &tmp2, err);
+		err[tmp2]=0;
+		MessageBox(hWnd, err, "fMainLight shader error", MB_OK);
+		return;
+	}
 
 	// link shaders:
-	glAttachShader(shaderPrograms[0], vMainObject);
-	glAttachShader(shaderPrograms[0], fMainBackground);
-	glLinkProgram(shaderPrograms[0]);
-	glAttachShader(shaderPrograms[1], vMainObject);
-	glAttachShader(shaderPrograms[1], fOffscreenCopy);
-	glLinkProgram(shaderPrograms[1]);
+	glAttachShader(shaderPrograms[SHADER_BACKGROUND], vMainObject);
+	glAttachShader(shaderPrograms[SHADER_BACKGROUND], fMainBackground);
+	glLinkProgram(shaderPrograms[SHADER_BACKGROUND]);
+	glAttachShader(shaderPrograms[SHADER_COPY], vMainObject);
+	glAttachShader(shaderPrograms[SHADER_COPY], fOffscreenCopy);
+	glLinkProgram(shaderPrograms[SHADER_COPY]);
+	glAttachShader(shaderPrograms[SHADER_BACKGROUND_LIGHT], vMainObject);
+	glAttachShader(shaderPrograms[SHADER_BACKGROUND_LIGHT], fMainLight);
+	glLinkProgram(shaderPrograms[SHADER_BACKGROUND_LIGHT]);
 
 	// delete unneeded shaders
 	glDeleteShader(fMainBackground);
 	glDeleteShader(vMainObject);
 	glDeleteShader(fOffscreenCopy);
+	glDeleteShader(fMainLight);
 
 #if 0
 	// Set texture locations
@@ -208,22 +234,26 @@ void fallingBall(float ftime)
 	glMatrixMode(GL_MODELVIEW);	
 
 	// I want to interpolate the new values from the old ones.
-	const int maxNumParameters = 20;
+	const int maxNumParameters = 25;
 	const static float defaultParameters[maxNumParameters] = 
 	{
-		0.0f, 0.0f,
-		1.0f,				// 2: Bauchigkeit
-		0.0f,				// 3: line strength
-		0.4f,				// 4: color variation
-		0.4f, 0.2f,			// 5-6: size
-		0.0f,
-		0.3f, 0.3f,			// 8-9: spread	
-		0.0f, 0.0f,
-		0.4f, 0.15f, 0.3f,	// 12-14: mainColor.h
-		0.5f,				// 15: highlightAmount
-		1.0f,				// 16: spiking spread
-		0.5f,               // 17: spiking brightness
-		0.8f,				// 18: spiking highlightAmount
+		-1.0f, -1.0f,
+		0.4f, 0.3f,			// 2-3: size,spread X				1-2
+		0.2f, 0.3f,			// 4-5: size,spread Y				3-4
+		0.8f,				// 6: speed							5
+		-1.0f,
+		0.6f,				// 8: spiking spread				6
+		0.3f,               // 9: spiking brightness			7
+		-1.0f, -1.0f,
+		0.4f,				// 12: spiking highlightAmount		8
+		0.0f,				// 13: unused						9
+		0.4f,				// 14: color variation				1b
+		0.4f, 0.15f, 0.3f,	// 15-17: mainColor					2-4b
+		0.5f,				// 18: highlightAmount				5b
+		0.34f,				// 19: hypnoglow					6b
+		1.0f,				// 20: Bauchigkeit					7b
+		0.0f,				// 21: line strength				8b
+		0.0f,				// 22: beat phase					9b
 	};
 	static float interpolatedParameters[maxNumParameters];
 	for (int i = 0; i < maxNumParameters; i++)
@@ -233,34 +263,76 @@ void fallingBall(float ftime)
 	}
 
 	// Beat-dependent variables:
-	float jumpTime = (ftime * 1.0f);
+	const int NUM_BPMS = 6;
+	const float BPMArray[NUM_BPMS] = {124.0f, 96.0f, 106.0f, 128.0f, 136.0f, 136.0f};
+	const int BPMParameterIndex[NUM_BPMS] = {30, 32, 34, 36, 38, 40};
+	int BPMIndex = 0; // I should have error here... but for the sake of stability I will assume first music.
+	// Get the status fields (I need the numbers....)
+	for (int i = 0; i < NUM_BPMS; i++)
+	{
+		if (params.getParam(BPMParameterIndex[i], 0.0f) > 0.5f) BPMIndex = i;
+	}
+	float BPM = BPMArray[BPMIndex];
+	float BPS = BPM / 60.0f;
+	// Here I should make something more sophisticated. I am thinking about an array... that has
+	// Lengthes until the next jump in order to make a beat like ||..||..||..|.|.
+	float jumpsPerSecond = BPS / 1.0f; // Jump on every fourth beat.
+	float jumpTime = (ftime * jumpsPerSecond) + interpolatedParameters[22]; // JumpTime goes from 0 to 1 between two beats
 	jumpTime -= floor(jumpTime);
 	jumpTime = jumpTime * jumpTime;
+	// spike is between 0.0 and 1.0 depending on the position within whatever.
 	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 2.0f) + 0.5f;
-	parameterMatrix[6] = 2.0f * spike * interpolatedParameters[16] * interpolatedParameters[5]; // spiked spread.x
-	parameterMatrix[7] = 2.0f * spike * interpolatedParameters[16] * interpolatedParameters[6]; // spiked spread.y
-	parameterMatrix[10] = spike * interpolatedParameters[17]; // spiked mainColor.brightness
-	parameterMatrix[11] = 5.0f * spike * interpolatedParameters[18]; // spiked highlightAmount
+#if 0
+	// I do not want to do this. This is the heart beating idea for movement, but it didn't
+	// turn out that well. I might onlz put this back to life if I see fit for some music.
+	parameterMatrix[6] = 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[2]; // spiked spread.x * size.X
+	parameterMatrix[7] = 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[4]; // spiked spread.y * size.Y
+	parameterMatrix[10] = 0.0f;
+	parameterMatrix[11] = 0.0f;
+#else
+	parameterMatrix[6] = 0.0f;
+	parameterMatrix[7] = 0.0f;
+	parameterMatrix[10] = spike * interpolatedParameters[9]; // spiked mainColor.brightness
+	parameterMatrix[11] = 5.0f * spike * interpolatedParameters[12]; // spiked highlightAmount
+#endif
 
-	parameterMatrix[0] = ftime; // time	
+	//parameterMatrix[0] = ftime; // time	
+	// Steuerbare time
+	static float shaderTime = 0.0f;
+	static float oldTime = 0.0f;
+	float deltaTime = ftime - oldTime;
+	oldTime = ftime;
+	// here I need a time update based on beat time.
+	// The problem is that I have the same timing on the
+	// Hermann. I might not want that?
+	// THe 1.6 is 1 divided by the integral of spike.
+	deltaTime *= 1.6f * interpolatedParameters[8] * spike + (1.0f - interpolatedParameters[8]);
+	shaderTime += deltaTime * interpolatedParameters[6] * 3.0f;
+	parameterMatrix[0] = shaderTime;
 	/* shader parameters */
-	parameterMatrix[1] = 10.0f * interpolatedParameters[2] * interpolatedParameters[2];  // bauchigkeit
-	parameterMatrix[2] = interpolatedParameters[3];			// line strength
-	parameterMatrix[3] = interpolatedParameters[4];			// color variation
-	parameterMatrix[4] = interpolatedParameters[5];			// size.x			
-	parameterMatrix[5] = interpolatedParameters[6];			// size.y
-	parameterMatrix[6] += interpolatedParameters[8];			// spread.x	
-	parameterMatrix[7] += interpolatedParameters[9];			// spread.y
-	parameterMatrix[8] = interpolatedParameters[12];			// mainColor.h
-	parameterMatrix[9] = interpolatedParameters[13];		// mainColor.s
-	parameterMatrix[10] += interpolatedParameters[14];		// mainColor.b
-	parameterMatrix[11] += 5.0f * interpolatedParameters[15]; // highlightAmount
+	parameterMatrix[1] = 10.0f * interpolatedParameters[20] * interpolatedParameters[20];  // bauchigkeit
+	parameterMatrix[2] = interpolatedParameters[21];			// line strength
+	parameterMatrix[3] = interpolatedParameters[14];			// color variation
+	parameterMatrix[4] = interpolatedParameters[2];			// size.x			
+	parameterMatrix[5] = interpolatedParameters[4];			// size.y
+	parameterMatrix[6] += interpolatedParameters[3];			// spread.x	
+	parameterMatrix[7] += interpolatedParameters[5];			// spread.y
+	parameterMatrix[8] = interpolatedParameters[15];			// mainColor.h
+	parameterMatrix[9] = interpolatedParameters[16];		// mainColor.s
+	parameterMatrix[10] += interpolatedParameters[17];		// mainColor.b
+	parameterMatrix[11] += 5.0f * interpolatedParameters[18]; // highlightAmount
 
 	glLoadMatrixf(parameterMatrix);
 
+	// DRAW the right hand view (lighting on hermann): I need to remove the bumping colors here
+	glViewport(XRES/2, 0, XRES / 2, YRES);
+	glUseProgram(shaderPrograms[SHADER_BACKGROUND_LIGHT]);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
+
+	// DRAW the left hand view (background on projection)
 	// draw offscreen (full offscreen resolution)
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	glUseProgram(shaderPrograms[0]);
+	glUseProgram(shaderPrograms[SHADER_BACKGROUND]);
 	backgroundTexture.setTexture();
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
@@ -274,35 +346,35 @@ void fallingBall(float ftime)
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]);
 	// Copy backbuffer to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	glUseProgram(shaderPrograms[1]);
+	glUseProgram(shaderPrograms[SHADER_COPY]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// horizontal blur
 	parameterMatrix[1] = 0.2f;
 	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
 	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
-	parameterMatrix[4] = 0.4f; // subtractor
-	parameterMatrix[5] = 0.007f; // gain
+	parameterMatrix[4] = 2.0f; // reduction
+	parameterMatrix[5] = 0.01f * interpolatedParameters[19]; // gain
 	glLoadMatrixf(parameterMatrix);
 	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
 	// Copy backbuffer (small) to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
-	glUseProgram(shaderPrograms[1]);
-	glRectf(-1.0, -1.0, 1.0, 1.0);
+	glUseProgram(shaderPrograms[SHADER_COPY]);
+	glRectf(-1.0, -1.0, 1.0, 1.0); // TODO: I think I can optimize this???
 
 	// vertical blur
 	parameterMatrix[1] = 0.2f;
 	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
 	parameterMatrix[3] = -1.0f / HIGHLIGHT_HEIGHT;
-	parameterMatrix[4] = 0.0f; // subtractor
+	parameterMatrix[4] = 1.0f; // reduction
 	glLoadMatrixf(parameterMatrix);
 	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
 	// Copy backbuffer to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
-	glUseProgram(shaderPrograms[1]);	
-	glRectf(-1.0, -1.0, 1.0, 1.0);
+	glUseProgram(shaderPrograms[SHADER_COPY]);	
+	glRectf(-1.0, -1.0, 1.0, 1.0); // TODO: I think I can optimze this???
 
 	// copy highlight to front
 	parameterMatrix[1] = 0.0f;
@@ -310,11 +382,11 @@ void fallingBall(float ftime)
 	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
 	parameterMatrix[4] = 0.0f; // scanline amount
 	glLoadMatrixf(parameterMatrix);
-	glViewport(0, 0, XRES, YRES);
+	glViewport(0, 0, XRES / 2, YRES);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
 	// Copy backbuffer to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
-	glUseProgram(shaderPrograms[1]);
+	glUseProgram(shaderPrograms[SHADER_COPY]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// add normal image
@@ -325,9 +397,9 @@ void fallingBall(float ftime)
 	glLoadMatrixf(parameterMatrix);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
-	glViewport(0, 0, XRES, YRES);
+	glViewport(0, 0, XRES / 2, YRES);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]); // was already copied!
-	glUseProgram(shaderPrograms[1]);
+	glUseProgram(shaderPrograms[SHADER_COPY]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 }
 
