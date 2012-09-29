@@ -242,7 +242,7 @@ void fallingBall(float ftime)
 		0.2f, 0.3f,			// 4-5: size,spread Y				3-4
 		0.8f,				// 6: speed							5
 		-1.0f,
-		0.6f,				// 8: spiking spread				6
+		0.5f,				// 8: spiking spread				6
 		0.3f,               // 9: spiking brightness			7
 		-1.0f, -1.0f,
 		0.4f,				// 12: spiking highlightAmount		8
@@ -282,45 +282,39 @@ void fallingBall(float ftime)
 	jumpTime = jumpTime * jumpTime;
 	// spike is between 0.0 and 1.0 depending on the position within whatever.
 	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 2.0f) + 0.5f;
-#if 0
-	// I do not want to do this. This is the heart beating idea for movement, but it didn't
-	// turn out that well. I might onlz put this back to life if I see fit for some music.
-	parameterMatrix[6] = 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[2]; // spiked spread.x * size.X
-	parameterMatrix[7] = 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[4]; // spiked spread.y * size.Y
-	parameterMatrix[10] = 0.0f;
-	parameterMatrix[11] = 0.0f;
-#else
-	parameterMatrix[6] = 0.0f;
-	parameterMatrix[7] = 0.0f;
-	parameterMatrix[10] = spike * interpolatedParameters[9]; // spiked mainColor.brightness
-	parameterMatrix[11] = 5.0f * spike * interpolatedParameters[12]; // spiked highlightAmount
-#endif
 
 	//parameterMatrix[0] = ftime; // time	
 	// Steuerbare time
 	static float shaderTime = 0.0f;
+	static float lightShaderTime = 0.0f; // Time of the light background shader that paints on Hermann
 	static float oldTime = 0.0f;
 	float deltaTime = ftime - oldTime;
 	oldTime = ftime;
+	lightShaderTime += deltaTime * interpolatedParameters[6] * 3.0f;
 	// here I need a time update based on beat time.
 	// The problem is that I have the same timing on the
 	// Hermann. I might not want that?
 	// THe 1.6 is 1 divided by the integral of spike.
+#if 0
 	deltaTime *= 1.6f * interpolatedParameters[8] * spike + (1.0f - interpolatedParameters[8]);
 	shaderTime += deltaTime * interpolatedParameters[6] * 3.0f;
-	parameterMatrix[0] = shaderTime;
+#else
+	// shaderTime and light shader Time shall be synchroneous, for the MainCOlorHSB.r!
+	shaderTime = lightShaderTime + interpolatedParameters[6] * (interpolatedParameters[8] * spike - 0.5f);
+#endif
+	parameterMatrix[0] = lightShaderTime;
 	/* shader parameters */
 	parameterMatrix[1] = 10.0f * interpolatedParameters[20] * interpolatedParameters[20];  // bauchigkeit
 	parameterMatrix[2] = interpolatedParameters[21];			// line strength
 	parameterMatrix[3] = interpolatedParameters[14];			// color variation
 	parameterMatrix[4] = interpolatedParameters[2];			// size.x			
 	parameterMatrix[5] = interpolatedParameters[4];			// size.y
-	parameterMatrix[6] += interpolatedParameters[3];			// spread.x	
-	parameterMatrix[7] += interpolatedParameters[5];			// spread.y
+	parameterMatrix[6] = interpolatedParameters[3];			// spread.x	
+	parameterMatrix[7] = interpolatedParameters[5];			// spread.y
 	parameterMatrix[8] = interpolatedParameters[15];			// mainColor.h
 	parameterMatrix[9] = interpolatedParameters[16];		// mainColor.s
-	parameterMatrix[10] += interpolatedParameters[17];		// mainColor.b
-	parameterMatrix[11] += 5.0f * interpolatedParameters[18]; // highlightAmount
+	parameterMatrix[10] = interpolatedParameters[17];		// mainColor.b
+	parameterMatrix[11] = 5.0f * interpolatedParameters[18]; // highlightAmount
 
 	glLoadMatrixf(parameterMatrix);
 
@@ -328,6 +322,18 @@ void fallingBall(float ftime)
 	glViewport(XRES/2, 0, XRES / 2, YRES);
 	glUseProgram(shaderPrograms[SHADER_BACKGROUND_LIGHT]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
+
+	// After left hand view drawing, apply the squiggly stuff
+#if 0
+	// I do not want to do this. This is the heart beating idea for movement, but it didn't
+	// turn out that well. I might onlz put this back to life if I see fit for some music.
+	parameterMatrix[6] += 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[2]; // spiked spread.x * size.X
+	parameterMatrix[7] += 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[4]; // spiked spread.y * size.Y
+#endif
+	parameterMatrix[10] += spike * interpolatedParameters[9]; // spiked mainColor.brightness
+	parameterMatrix[11] += 5.0f * spike * interpolatedParameters[12]; // spiked highlightAmount
+	parameterMatrix[0] = shaderTime;
+	glLoadMatrixf(parameterMatrix);
 
 	// DRAW the left hand view (background on projection)
 	// draw offscreen (full offscreen resolution)

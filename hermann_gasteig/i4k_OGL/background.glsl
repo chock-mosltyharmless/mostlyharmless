@@ -54,7 +54,7 @@ void main(void)
 	vec3 mainColorHSB = parameters[2].xyz;
 	float highlightAmount = parameters[2][3];
 
-	/* Color changes over time */
+	/* Color changes over time, the speed depends on the speed of the fTime0_X update */
 	mainColorHSB.r = fract(mainColorHSB.r + fTime0_X * 0.05);
 
     vec2 position = objectPosition.xy * 3.;
