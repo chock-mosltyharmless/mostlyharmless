@@ -13,6 +13,7 @@
 #include "../config.h"
 #include "../intro.h"
 #include "../mzk.h"
+#include "../VideoTexture.h"
 
 //----------------------------------------------------------------------------
 
@@ -67,6 +68,12 @@ static const int wavHeader[11] = {
     MZK_NUMSAMPLESC*sizeof(short)
     };
 
+// The size of the window that we render to...
+RECT windowRect;
+
+// The video frame grabber
+VideoTexture videoTexture;
+
 //==============================================================================================
 
 
@@ -95,6 +102,15 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case 'Y':
 		case VK_F1:
 			loadShaders();
+			break;
+
+		case 'm':
+		case 'M':
+			SetWindowLong(hWnd, GWL_STYLE, WS_POPUP|WS_VISIBLE);
+			ShowWindow(hWnd, SW_MAXIMIZE);
+			GetClientRect(hWnd, &windowRect);
+			glViewport(0, 0, windowRect.right-windowRect.left, abs(windowRect.bottom - windowRect.top)); //NEW
+			ShowCursor(false);
 			break;
 
 		default:
@@ -131,7 +147,7 @@ static int window_init( WININFO *info )
 	unsigned int	PixelFormat;
     DWORD			dwExStyle, dwStyle;
     DEVMODE			dmScreenSettings;
-    RECT			rec;
+	RECT			rec;
 
     WNDCLASS		wc;
 
@@ -168,6 +184,10 @@ static int window_init( WININFO *info )
     rec.right  = XRES;
     rec.bottom = YRES;
     AdjustWindowRect( &rec, dwStyle, 0 );
+	windowRect.left = 0;
+	windowRect.top = 0;
+	windowRect.right = XRES;
+	windowRect.bottom = YRES;
 
     info->hWnd = CreateWindowEx( dwExStyle, wc.lpszClassName, "avada kedabra!", dwStyle,
                                (GetSystemMetrics(SM_CXSCREEN)-rec.right+rec.left)>>1,
@@ -221,6 +241,12 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     intro_init();
 
+	// Initialize COM
+	HRESULT hr = CoInitialize(NULL);
+	if (FAILED(hr)) exit(-1);
+	// initialize video grabber
+	HRESULT videoInitResult = videoTexture.init(1);
+
 #ifdef USEDSOUND
     mzk_init( myMuzik+22 );
 
@@ -260,6 +286,11 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     sndPlaySound( 0, 0 );
     window_end( info );
+
+	// Remove the grap on the video grabber
+	videoTexture.deinit();
+	// Un-initialize COM
+	CoUninitialize();
 
     return( 0 );
 }

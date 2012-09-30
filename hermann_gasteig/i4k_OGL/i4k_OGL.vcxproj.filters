@@ -34,6 +34,12 @@
     <ClInclude Include="src\PictureWriter.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\VideoTexture.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\qedit.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp">
@@ -52,6 +58,9 @@
       <Filter>Source Files\_windows</Filter>
     </ClCompile>
     <ClCompile Include="src\Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\VideoTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
