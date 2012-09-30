@@ -69,7 +69,7 @@ Parameter::Parameter(void)
 Parameter::~Parameter(void)
 {
 	char string[NUM_PARAMETERS*12];
-	char tmpString[12];
+	char tmpString[1024];
 
 	/* Stop midi */
 	for (unsigned int devID = 0; devID < numDevices; devID++)
@@ -100,7 +100,6 @@ float Parameter::getParam(int index, float defaultValue)
 	{
 		value[index] = defaultValue;
 	}
-
 	return value[index];
 }
 
@@ -108,6 +107,7 @@ void CALLBACK Parameter::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInst
 {
 	if (wMsg == MIM_DATA)
 	{
+		// Korg Nano Control
 		int first = (dwParam1 >> 8) & 255;
 		int second = (dwParam1 >> 16) & 255;
 		params.changed[first] = true;

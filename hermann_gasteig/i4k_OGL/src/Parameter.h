@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <Mmsystem.h>
 
-#define NUM_PARAMETERS 128
+#define NUM_PARAMETERS 256
 #define MAX_NUM_DEVICES 32
 #define MIDI_DATA_SIZE 1024
 

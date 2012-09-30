@@ -250,27 +250,46 @@ void fallingBall(float ftime)
 		0.4f,				// 14: color variation				1b
 		0.4f, 0.15f, 0.3f,	// 15-17: mainColor					2-4b
 		0.5f,				// 18: highlightAmount				5b
-		0.34f,				// 19: hypnoglow					6b
+		0.14f,				// 19: hypnoglow					6b
 		1.0f,				// 20: Bauchigkeit					7b
 		0.0f,				// 21: line strength				8b
 		0.0f,				// 22: beat phase					9b
 	};
 	static float interpolatedParameters[maxNumParameters];
+	// Those are key-Press indicators. I only act on 0-to-1.
 	for (int i = 0; i < maxNumParameters; i++)
 	{
 		interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
 									0.05f * params.getParam(i, defaultParameters[i]);
 	}
+	const int NUM_KEYS = 127;
+	static int keyPressed[NUM_KEYS] = {0};
+	// Update key press events.
+	for (int i = 0; i < NUM_KEYS; i++)
+	{
+		if (params.getParam(i, 0.0) > 0.5f)
+		{
+			keyPressed[i]++;
+		}
+		else
+		{
+			keyPressed[i] = 0;
+		}
+	}
 
 	// Beat-dependent variables:
 	const int NUM_BPMS = 6;
 	const float BPMArray[NUM_BPMS] = {124.0f, 96.0f, 106.0f, 128.0f, 136.0f, 136.0f};
-	const int BPMParameterIndex[NUM_BPMS] = {30, 32, 34, 36, 38, 40};
-	int BPMIndex = 0; // I should have error here... but for the sake of stability I will assume first music.
+	const int BPMParameterIndex[NUM_BPMS] = {23, 24, 25, 26, 27, 28};
+	static int BPMIndex = 0; // This is static because it changes when I press a key...
 	// Get the status fields (I need the numbers....)
 	for (int i = 0; i < NUM_BPMS; i++)
 	{
-		if (params.getParam(BPMParameterIndex[i], 0.0f) > 0.5f) BPMIndex = i;
+		// If a key press changed to pressed:
+		if (keyPressed[BPMParameterIndex[i]] == 1)
+		{
+			BPMIndex = i;
+		}
 	}
 	float BPM = BPMArray[BPMIndex];
 	float BPS = BPM / 60.0f;
@@ -282,6 +301,11 @@ void fallingBall(float ftime)
 	jumpTime = jumpTime * jumpTime;
 	// spike is between 0.0 and 1.0 depending on the position within whatever.
 	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 2.0f) + 0.5f;
+
+	// Which background texture to use:
+	static int bgTexture = 0;
+	if (keyPressed[33] == 1) bgTexture = 0;
+	if (keyPressed[34] == 1) bgTexture = 1;
 
 	//parameterMatrix[0] = ftime; // time	
 	// Steuerbare time
@@ -313,13 +337,15 @@ void fallingBall(float ftime)
 	parameterMatrix[7] = interpolatedParameters[5];			// spread.y
 	parameterMatrix[8] = interpolatedParameters[15];			// mainColor.h
 	parameterMatrix[9] = interpolatedParameters[16];		// mainColor.s
-	parameterMatrix[10] = interpolatedParameters[17];		// mainColor.b
+	parameterMatrix[10] = interpolatedParameters[17] * 2.0f;		// mainColor.b
 	parameterMatrix[11] = 5.0f * interpolatedParameters[18]; // highlightAmount
 
 	glLoadMatrixf(parameterMatrix);
 
 	// DRAW the right hand view (lighting on hermann): I need to remove the bumping colors here
-	glViewport(XRES/2, 0, XRES / 2, YRES);
+	int xres = windowRect.right - windowRect.left;
+	int yres = windowRect.bottom - windowRect.top;
+	glViewport(xres/2, 0, xres / 2, yres);
 	glUseProgram(shaderPrograms[SHADER_BACKGROUND_LIGHT]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
@@ -339,7 +365,15 @@ void fallingBall(float ftime)
 	// draw offscreen (full offscreen resolution)
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	glUseProgram(shaderPrograms[SHADER_BACKGROUND]);
-	backgroundTexture.setTexture();
+	if (bgTexture == 1)
+	{
+		backgroundTexture.setTexture();
+	}
+	else
+	{
+		// Use the video texture instead:
+		videoTexture.captureFrame();
+	}
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// downsample to highlight resolution
@@ -388,7 +422,7 @@ void fallingBall(float ftime)
 	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
 	parameterMatrix[4] = 0.0f; // scanline amount
 	glLoadMatrixf(parameterMatrix);
-	glViewport(0, 0, XRES / 2, YRES);
+	glViewport(0, 0, xres / 2, yres);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
 	// Copy backbuffer to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
@@ -403,7 +437,7 @@ void fallingBall(float ftime)
 	glLoadMatrixf(parameterMatrix);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
-	glViewport(0, 0, XRES / 2, YRES);
+	glViewport(0, 0, xres / 2, yres);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]); // was already copied!
 	glUseProgram(shaderPrograms[SHADER_COPY]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);

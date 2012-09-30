@@ -74,7 +74,7 @@
       <Culture>0x0409</Culture>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>opengl32.lib;glu32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Strmiids.lib;opengl32.lib;glu32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ProgramDatabaseFile>$(OutDir)4verts_deb.pdb</ProgramDatabaseFile>
@@ -153,13 +153,16 @@
     <ClInclude Include="src\mzk.h" />
     <ClInclude Include="src\Parameter.h" />
     <ClInclude Include="src\PictureWriter.h" />
+    <ClInclude Include="src\qedit.h" />
     <ClInclude Include="src\Texture.h" />
+    <ClInclude Include="src\VideoTexture.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp" />
     <ClCompile Include="src\mzk.cpp" />
     <ClCompile Include="src\Parameter.cpp" />
     <ClCompile Include="src\Texture.cpp" />
+    <ClCompile Include="src\VideoTexture.cpp" />
     <ClCompile Include="src\_windows\main_deb.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>

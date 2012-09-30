@@ -55,7 +55,7 @@ void main(void)
 	float highlightAmount = parameters[2][3];
 
 	/* Color changes over time, the speed depends on the speed of the fTime0_X update */
-	mainColorHSB.r = fract(mainColorHSB.r + fTime0_X * 0.05);
+	mainColorHSB.r = fract(mainColorHSB.r + fTime0_X * 0.01);
 
     vec2 position = objectPosition.xy * 3.;
     vec4 n;
@@ -126,7 +126,8 @@ void main(void)
         
     /* background picture */
     vec4 tex = texture2D(Texture0, 0.3333 * 0.5*position + 0.5 + bestMover * (1.0 - relDist));
-    gl_FragColor.xyz *= 0.25 + 0.75*tex.rgb;
+    /*gl_FragColor.xyz *= 0.25 + 0.75*tex.rgb;*/
+	gl_FragColor.xyz *= tex.rgb;
     
     /* Some highlights due to lighting */
     vec2 normal2D = normalize(position - bestCenter);

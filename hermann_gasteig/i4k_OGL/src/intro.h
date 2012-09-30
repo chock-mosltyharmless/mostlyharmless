@@ -5,6 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
 #include <windows.h>
+#include "VideoTexture.h"
 
 #ifndef _INTRO_H_
 #define _INTRO_H_
@@ -15,6 +16,8 @@ void intro_do( long time );
 void intro_end( void );
 
 extern HWND hWnd;
+extern RECT windowRect;
+extern VideoTexture videoTexture;
 
 #define NUM_GL_NAMES 16
 #define glCreateShader ((PFNGLCREATESHADERPROC)glFP[0])

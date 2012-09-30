@@ -71,8 +71,8 @@ void Texture::drawScreenAlignedQuad(float startX, float startY, float endX, floa
 {
 	int imgWidth = imageWidth;
 	int imgHeight = imageHeight;
-	float TEXTURE_U_RANGE = (float)imgWidth / (float)textureWidth;
-	float TEXTURE_V_RANGE = (float)imgHeight / (float)textureHeight;
+	float textureURange = (float)imgWidth / (float)textureWidth;
+	float textureVRange = (float)imgHeight / (float)textureHeight;
 
 	float sX = startX;
 	float sY = 0.5f * startY - 0.57f; // but why???
@@ -92,13 +92,13 @@ void Texture::drawScreenAlignedQuad(float startX, float startY, float endX, floa
 
 	setTexture();
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, TEXTURE_V_RANGE);
+	glTexCoord2f(0.0f, textureVRange);
 	glMultiTexCoord2f(GL_TEXTURE1, sX, eY);
 	glVertex3f(startX, endY, 0.5);
-	glTexCoord2f(TEXTURE_U_RANGE, TEXTURE_V_RANGE);
+	glTexCoord2f(textureURange, textureVRange);
 	glMultiTexCoord2f(GL_TEXTURE1, eX, eY);
 	glVertex3f(endX, endY, 0.5);
-	glTexCoord2f(TEXTURE_U_RANGE, 0.0f);
+	glTexCoord2f(textureURange, 0.0f);
 	glMultiTexCoord2f(GL_TEXTURE1, eX, sY);
 	glVertex3f(endX, startY, 0.5);
 	glTexCoord2f(0.0, 0.0f);

@@ -45,11 +45,11 @@ void main(void)
 		float gain = parameters[1][1];
 
 		// horizontal blur (including color reduction)
-		vec2 startPos = 0.5 * objectPosition.xy + 0.5 - 19.5 * stepSize;
+		vec2 startPos = 0.5 * objectPosition.xy + 0.5 - 29.5 * stepSize;
 		gl_FragColor = vec4(0.0);
-		for (int i = 0; i < 39; i++)
+		for (int i = 0; i < 59; i++)
 		{
-			float localGain = 19.5 - abs(float(i)-19.5);
+			float localGain = 29.5 - abs(float(i)-29.5);
 			gl_FragColor += localGain * gain * max(pow(texture2D(Texture0, startPos), vec4(reduction)), vec4(0.0));
 			startPos += stepSize;
 		}
