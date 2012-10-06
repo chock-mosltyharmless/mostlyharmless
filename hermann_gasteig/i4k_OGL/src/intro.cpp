@@ -376,6 +376,64 @@ void fallingBall(float ftime)
 	}
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
+
+	// Draw the light shattering
+	static float shatterTime = 1.0f;
+	if (keyPressed[41] == 1) shatterTime = 0.0f;
+	if (shatterTime < 1.0f)
+	{
+		glUseProgram(0);
+		GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 0.0 };
+		GLfloat mat_shininess[] = { 50.0 };
+		GLfloat light_position[] = { 1.0, 1.0, 0.0, 0.0 };
+		glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+		glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+		light_position[0] = -light_position[0];
+		light_position[1] = -light_position[1];
+		light_position[2] = -light_position[2];
+		glLightfv(GL_LIGHT1, GL_POSITION, light_position);
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+		glEnable(GL_LIGHT1);
+		glEnable(GL_COLOR_MATERIAL);
+
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_COLOR, GL_ONE);
+		glDisable(GL_TEXTURE_2D);
+		const int numShrads = 1000;
+		for (int i = 1; i <= numShrads; i++)
+		{
+			glLoadIdentity();
+			float xPos = sin(i * i * 0.12342f + 0.01254f*ftime);			
+			float yPos = cos(i * i * 0.0234624f + 0.01356987f*ftime);
+			float dist = sqrtf(xPos * xPos + yPos * yPos);
+			xPos *= dist;
+			yPos *= dist;
+			glTranslatef(1.1f * xPos, 1.6f * yPos + 0.3f + shatterTime * 0.4f - shatterTime * shatterTime * 1.4f, 0.5f);
+			glRotatef((float)powf(shatterTime, 1.2f) * 500.0f * (2.0f + sin(i * i * 3.13234f)),
+					  sin(i * i * i * 4123.1835f), cos(i * i * 1123.3234f), sin(i*53213.2136f));
+			glBegin(GL_TRIANGLES);
+			//float alpha = 0.5f + 0.5f * sin(i * i * 2342.23423f + ftime * 30.0f);
+			//glColor4f(1.0f, 1.0f, 1.0f, alpha * (1.0f - shatterTime * shatterTime));
+			float alpha = (1.0f - shatterTime);
+			glColor3f(alpha + 0.03f * sin(i * i * 0.123423f), alpha + 0.03f * sin(i * i * i * 0.413423f), alpha + 0.03f * sin(i * i * 0.2234234f));
+			glNormal3f(0.0f, 0.0f, 1.0f);
+			glVertex2f(0.04f, 0.0f);
+			glVertex2f(-0.03f, 0.03f);
+			glVertex2f(-0.03f, -0.03f);
+			glEnd();
+		}
+		glEnable(GL_TEXTURE_2D);
+		glDisable(GL_BLEND);
+
+		shatterTime += 0.5f * deltaTime;
+	}
+	else
+	{
+		shatterTime = 1.0f;
+	}
+
 	// downsample to highlight resolution
 	parameterMatrix[1] = 0.0f;
 	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
@@ -450,7 +508,7 @@ void intro_do( long itime )
     // render
 	//glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_BLEND);
-    glEnable( GL_CULL_FACE );
+    //glEnable( GL_CULL_FACE );
 	//glCullFace( GL_FRONT );
 	//glDisable( GL_BLEND );
     //glEnable( GL_LIGHTING );
