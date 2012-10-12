@@ -45,11 +45,12 @@ static GLuint offscreenTexture[NUM_OFFSCREEN_TEXTURES];
 static Texture backgroundTexture;
 
 GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
-const int NUM_SHADER_PROGRAMS = 3;
+const int NUM_SHADER_PROGRAMS = 4;
 const int SHADER_BACKGROUND = 0;
 const int SHADER_COPY = 1;
 const int SHADER_BACKGROUND_LIGHT = 2;
-static GLuint shaderPrograms[NUM_SHADER_PROGRAMS] = {0, 0, 0};
+const int SHADER_BLUR = 3;
+static GLuint shaderPrograms[NUM_SHADER_PROGRAMS] = {0, 0, 0, 0};
 
 // -------------------------------------------------------------------
 //                          Code:
@@ -64,6 +65,8 @@ void loadShaders(void)
 	const GLchar *ptObject = objectText;
 	static GLchar copyText[MAX_SHADER_SIZE];
 	const GLchar *ptCopy = copyText;
+	static GLchar blurText[MAX_SHADER_SIZE];
+	const GLchar *ptBlur = blurText;
 	static GLchar lightText[MAX_SHADER_SIZE];
 	const GLchar *ptLight = lightText;
 	
@@ -90,6 +93,10 @@ void loadShaders(void)
 	ZeroMemory(copyText, sizeof(copyText));
 	fread(copyText, 1, MAX_SHADER_SIZE, fid);
 	fclose(fid);
+	fid = fopen("blur.glsl", "rb");
+	ZeroMemory(blurText, sizeof(blurText));
+	fread(blurText, 1, MAX_SHADER_SIZE, fid);
+	fclose(fid);
 	fid = fopen("background_light.glsl", "rb");
 	ZeroMemory(lightText, sizeof(lightText));
 	fread(lightText, 1, MAX_SHADER_SIZE, fid);
@@ -99,10 +106,12 @@ void loadShaders(void)
 	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fMainBackground = glCreateShader(GL_FRAGMENT_SHADER);	
 	GLuint fOffscreenCopy = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint fOffscreenBlur = glCreateShader(GL_FRAGMENT_SHADER);
 	GLuint fMainLight = glCreateShader(GL_FRAGMENT_SHADER);
-	shaderPrograms[0] = glCreateProgram();
-	shaderPrograms[1] = glCreateProgram();
-	shaderPrograms[2] = glCreateProgram();
+	for (int i = 0; i < NUM_SHADER_PROGRAMS; i++)
+	{
+		shaderPrograms[i] = glCreateProgram();
+	}
 	// compile sources:
 	glShaderSource(vMainObject, 1, &ptObject, NULL);
 	glCompileShader(vMainObject);
@@ -110,6 +119,8 @@ void loadShaders(void)
 	glCompileShader(fMainBackground);
 	glShaderSource(fOffscreenCopy, 1, &ptCopy, NULL);
 	glCompileShader(fOffscreenCopy);
+	glShaderSource(fOffscreenBlur, 1, &ptBlur, NULL);
+	glCompileShader(fOffscreenBlur);
 	glShaderSource(fMainLight, 1, &ptLight, NULL);
 	glCompileShader(fMainLight);
 	
@@ -140,6 +151,14 @@ void loadShaders(void)
 		MessageBox(hWnd, err, "fOffscreeCopy shader error", MB_OK);
 		return;
 	}
+	glGetShaderiv(fOffscreenBlur, GL_COMPILE_STATUS, &tmp);
+	if (!tmp)
+	{
+		glGetShaderInfoLog(fOffscreenBlur, 4096, &tmp2, err);
+		err[tmp2]=0;
+		MessageBox(hWnd, err, "fOffscreeBlur shader error", MB_OK);
+		return;
+	}
 	glGetShaderiv(fMainLight, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
 	{
@@ -156,6 +175,9 @@ void loadShaders(void)
 	glAttachShader(shaderPrograms[SHADER_COPY], vMainObject);
 	glAttachShader(shaderPrograms[SHADER_COPY], fOffscreenCopy);
 	glLinkProgram(shaderPrograms[SHADER_COPY]);
+	glAttachShader(shaderPrograms[SHADER_BLUR], vMainObject);
+	glAttachShader(shaderPrograms[SHADER_BLUR], fOffscreenBlur);
+	glLinkProgram(shaderPrograms[SHADER_BLUR]);
 	glAttachShader(shaderPrograms[SHADER_BACKGROUND_LIGHT], vMainObject);
 	glAttachShader(shaderPrograms[SHADER_BACKGROUND_LIGHT], fMainLight);
 	glLinkProgram(shaderPrograms[SHADER_BACKGROUND_LIGHT]);
@@ -164,6 +186,7 @@ void loadShaders(void)
 	glDeleteShader(fMainBackground);
 	glDeleteShader(vMainObject);
 	glDeleteShader(fOffscreenCopy);
+	glDeleteShader(fOffscreenBlur);
 	glDeleteShader(fMainLight);
 
 #if 0
@@ -243,9 +266,9 @@ void fallingBall(float ftime)
 		0.8f,				// 6: speed							5
 		-1.0f,
 		0.5f,				// 8: spiking spread				6
-		0.3f,               // 9: spiking brightness			7
+		0.8f,               // 9: spiking brightness			7
 		-1.0f, -1.0f,
-		0.4f,				// 12: spiking highlightAmount		8
+		0.0f,				// 12: unused:spiking highlight     8
 		0.0f,				// 13: unused						9
 		0.4f,				// 14: color variation				1b
 		0.4f, 0.15f, 0.3f,	// 15-17: mainColor					2-4b
@@ -303,7 +326,7 @@ void fallingBall(float ftime)
 	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 2.0f) + 0.5f;
 
 	// Which background texture to use:
-	static int bgTexture = 0;
+	static int bgTexture = 1;
 	if (keyPressed[33] == 1) bgTexture = 0;
 	if (keyPressed[34] == 1) bgTexture = 1;
 
@@ -342,12 +365,14 @@ void fallingBall(float ftime)
 
 	glLoadMatrixf(parameterMatrix);
 
-	// DRAW the right hand view (lighting on hermann): I need to remove the bumping colors here
 	int xres = windowRect.right - windowRect.left;
 	int yres = windowRect.bottom - windowRect.top;
-	glViewport(xres/2, 0, xres / 2, yres);
+#ifndef NO_HERMANN_LIGHTING
+	// DRAW the right hand view (lighting on hermann): I need to remove the bumping colors here
+	glViewport(xres/2 + 10, 0, xres / 2 - 10, yres);
 	glUseProgram(shaderPrograms[SHADER_BACKGROUND_LIGHT]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
+#endif
 
 	// After left hand view drawing, apply the squiggly stuff
 #if 0
@@ -357,7 +382,10 @@ void fallingBall(float ftime)
 	parameterMatrix[7] += 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[4]; // spiked spread.y * size.Y
 #endif
 	parameterMatrix[10] += spike * interpolatedParameters[9]; // spiked mainColor.brightness
+#if 0
+	// brightness spiking of the highlights
 	parameterMatrix[11] += 5.0f * spike * interpolatedParameters[12]; // spiked highlightAmount
+#endif
 	parameterMatrix[0] = shaderTime;
 	glLoadMatrixf(parameterMatrix);
 
@@ -376,6 +404,19 @@ void fallingBall(float ftime)
 	}
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
+
+	// downsample to highlight resolution
+	parameterMatrix[1] = 1.0f;
+	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
+	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
+	parameterMatrix[4] = 0.0f; // scanline amount
+	glLoadMatrixf(parameterMatrix);
+	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]);
+	// Copy backbuffer to texture
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	glUseProgram(shaderPrograms[SHADER_COPY]);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// Draw the light shattering
 	static float shatterTime = 1.0f;
@@ -401,7 +442,7 @@ void fallingBall(float ftime)
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_COLOR, GL_ONE);
 		glDisable(GL_TEXTURE_2D);
-		const int numShrads = 1000;
+		const int numShrads = 100;
 		for (int i = 1; i <= numShrads; i++)
 		{
 			glLoadIdentity();
@@ -417,11 +458,11 @@ void fallingBall(float ftime)
 			//float alpha = 0.5f + 0.5f * sin(i * i * 2342.23423f + ftime * 30.0f);
 			//glColor4f(1.0f, 1.0f, 1.0f, alpha * (1.0f - shatterTime * shatterTime));
 			float alpha = (1.0f - shatterTime);
-			glColor3f(alpha + 0.03f * sin(i * i * 0.123423f), alpha + 0.03f * sin(i * i * i * 0.413423f), alpha + 0.03f * sin(i * i * 0.2234234f));
+			glColor3f(alpha + 0.23f * sin(i * i * 0.123423f), alpha + 0.03f * sin(i * i * i * 0.413423f), alpha + 0.03f * sin(i * i * 0.2234234f));
 			glNormal3f(0.0f, 0.0f, 1.0f);
-			glVertex2f(0.04f, 0.0f);
-			glVertex2f(-0.03f, 0.03f);
-			glVertex2f(-0.03f, -0.03f);
+			glVertex2f(0.18f, 0.0f);
+			glVertex2f(-0.16f, 0.16f);
+			glVertex2f(-0.16f, -0.16f);
 			glEnd();
 		}
 		glEnable(GL_TEXTURE_2D);
@@ -434,21 +475,7 @@ void fallingBall(float ftime)
 		shatterTime = 1.0f;
 	}
 
-	// downsample to highlight resolution
-	parameterMatrix[1] = 0.0f;
-	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
-	parameterMatrix[3] = 1.0f / OFFSCREEN_HEIGHT;
-	parameterMatrix[4] = 0.0f; // scanline amount
-	glLoadMatrixf(parameterMatrix);
-	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
-	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]);
-	// Copy backbuffer to texture
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	glUseProgram(shaderPrograms[SHADER_COPY]);
-	glRectf(-1.0, -1.0, 1.0, 1.0);
-
 	// horizontal blur
-	parameterMatrix[1] = 0.2f;
 	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
 	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
 	parameterMatrix[4] = 2.0f; // reduction
@@ -458,11 +485,10 @@ void fallingBall(float ftime)
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
 	// Copy backbuffer (small) to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
-	glUseProgram(shaderPrograms[SHADER_COPY]);
+	glUseProgram(shaderPrograms[SHADER_BLUR]);
 	glRectf(-1.0, -1.0, 1.0, 1.0); // TODO: I think I can optimize this???
 
 	// vertical blur
-	parameterMatrix[1] = 0.2f;
 	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
 	parameterMatrix[3] = -1.0f / HIGHLIGHT_HEIGHT;
 	parameterMatrix[4] = 1.0f; // reduction
@@ -471,7 +497,7 @@ void fallingBall(float ftime)
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
 	// Copy backbuffer to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
-	glUseProgram(shaderPrograms[SHADER_COPY]);	
+	glUseProgram(shaderPrograms[SHADER_BLUR]);	
 	glRectf(-1.0, -1.0, 1.0, 1.0); // TODO: I think I can optimze this???
 
 	// copy highlight to front
@@ -480,7 +506,11 @@ void fallingBall(float ftime)
 	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
 	parameterMatrix[4] = 0.0f; // scanline amount
 	glLoadMatrixf(parameterMatrix);
+#ifndef NO_HERMANN_LIGHTING
 	glViewport(0, 0, xres / 2, yres);
+#else
+	glViewport(0, 0, xres, yres);
+#endif
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
 	// Copy backbuffer to texture
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
@@ -488,14 +518,18 @@ void fallingBall(float ftime)
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// add normal image
-	parameterMatrix[1] = 0.0f;
+	parameterMatrix[1] = 1.0f;
 	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
 	parameterMatrix[3] = 1.0f / OFFSCREEN_HEIGHT;
 	parameterMatrix[4] = 0.25f; // scanline amount
 	glLoadMatrixf(parameterMatrix);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
+#ifndef NO_HERMANN_LIGHTING
 	glViewport(0, 0, xres / 2, yres);
+#else
+	glViewport(0, 0, xres, yres);
+#endif
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]); // was already copied!
 	glUseProgram(shaderPrograms[SHADER_COPY]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
