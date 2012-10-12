@@ -1,3 +1,6 @@
+const int numCenters = 8;
+const int numOvertones = 3;
+varying vec2 centers[numCenters];
 uniform sampler2D Texture0;
 varying vec3 objectPosition;
 varying mat4 parameters;
@@ -56,6 +59,7 @@ void main(void)
 	mainColorHSB.b = 1.0; // Always draw at full brightness, no matter what
 	//float highlightAmount = parameters[2][3];
 	float highlightAmount = 0.0f;
+	float hermannBrightness = parameters[3][1];
 
 	/* Color changes over time, the speed depends on the speed of the fTime0_X update */
 	mainColorHSB.r = fract(mainColorHSB.r + fTime0_X * 0.01);
@@ -77,13 +81,7 @@ void main(void)
     for (int i = 0; i < numCenters; i++)
     {
         /* Calculate position of the center */
-        vec2 center = vec2(0.0);
-        for (int j = 0; j < numOvertones; j++)
-        {
-            seed  = randomIteration(seed);
-            center += vec2(size.x * sin(fTime0_X * seed.x + seed.z) + 2.0 * (seed.y - 0.5) * spread.x,
-                           size.y * sin(fTime0_X * seed.z + seed.w) + 2.0 * (seed.w - 0.5) * spread.y);
-        }
+		vec2 center = centers[i];
         seed = randomIteration(seed);
         
         /* Get the distance to the center */
@@ -130,6 +128,8 @@ void main(void)
     vec3 lightsource = normalize(vec3(0.4, 0.6, 0.3));
     float lighting = highlightAmount * (pow(max(0., dot(normal3D, lightsource) - 0.2), 3.0));
     gl_FragColor += vec4(vec3(lighting), 0.0);
+
+	gl_FragColor *= hermannBrightness;
 
     /* vignette */
     float vignette = length(position * vec2(0.7, 1.0));

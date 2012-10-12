@@ -80,5 +80,8 @@
     <None Include="blur.glsl">
       <Filter>Source Files\shader</Filter>
     </None>
+    <None Include="object_noCenters.glsl">
+      <Filter>Source Files\shader</Filter>
+    </None>
   </ItemGroup>
 </Project>

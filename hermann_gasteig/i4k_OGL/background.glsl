@@ -1,6 +1,9 @@
+const int numCenters = 8;
+const int numOvertones = 3;
 uniform sampler2D Texture0;
 varying vec3 objectPosition;
 varying mat4 parameters;
+varying vec2 centers[numCenters];
 
 vec4 randomIteration(vec4 seed)
 {
@@ -53,14 +56,13 @@ void main(void)
 	vec2 spread = parameters[1].zw;
 	vec3 mainColorHSB = parameters[2].xyz;
 	float highlightAmount = parameters[2][3];
+	float colorSubtract = parameters[3][0];
 
 	/* Color changes over time, the speed depends on the speed of the fTime0_X update */
 	mainColorHSB.r = fract(mainColorHSB.r + fTime0_X * 0.01);
 
     vec2 position = objectPosition.xy * 3.;
     vec4 n;
-    const int numCenters = 8;
-    const int numOvertones = 3;
     
     /* distance of best and second best center */
     float nearestDist = 1.0e20;
@@ -73,15 +75,8 @@ void main(void)
     vec3 baseColor = vec3(0.0);
     for (int i = 0; i < numCenters; i++)
     {
-        /* Calculate position of the center */
-        vec2 center = vec2(0.0);
-        for (int j = 0; j < numOvertones; j++)
-        {
-            seed  = randomIteration(seed);
-            center += vec2(size.x * sin(fTime0_X * seed.x + seed.z) + 2.0 * (seed.y - 0.5) * spread.x,
-                           size.y * sin(fTime0_X * seed.z + seed.w) + 2.0 * (seed.w - 0.5) * spread.y);
-        }
-        seed = randomIteration(seed);
+		vec2 center = centers[i];
+		seed  = randomIteration(seed);
         
         /* Get the distance to the center */
         float curDist = length(position - center);
@@ -128,6 +123,10 @@ void main(void)
     vec4 tex = texture2D(Texture0, 0.3333 * 0.5*position + 0.5 + bestMover * (1.0 - relDist));
     /*gl_FragColor.xyz *= 0.25 + 0.75*tex.rgb;*/
 	gl_FragColor.xyz *= tex.rgb;
+
+	/* Color subtract */
+	gl_FragColor.xyz -= vec3(colorSubtract);
+	gl_FragColor.xyz = max(vec3(0.0), gl_FragColor.xyz);
     
     /* Some highlights due to lighting */
     vec2 normal2D = normalize(position - bestCenter);

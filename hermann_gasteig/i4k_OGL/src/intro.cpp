@@ -63,6 +63,8 @@ void loadShaders(void)
 	const GLchar *ptBackground = backgroundText;
 	static GLchar objectText[MAX_SHADER_SIZE];
 	const GLchar *ptObject = objectText;
+	static GLchar objectNCText[MAX_SHADER_SIZE];
+	const GLchar *ptObjectNC = objectNCText;
 	static GLchar copyText[MAX_SHADER_SIZE];
 	const GLchar *ptCopy = copyText;
 	static GLchar blurText[MAX_SHADER_SIZE];
@@ -89,6 +91,10 @@ void loadShaders(void)
 	ZeroMemory(objectText, sizeof(objectText));
 	fread(objectText, 1, MAX_SHADER_SIZE, fid);
 	fclose(fid);
+	fid = fopen("object_noCenters.glsl", "rb");
+	ZeroMemory(objectNCText, sizeof(objectNCText));
+	fread(objectNCText, 1, MAX_SHADER_SIZE, fid);
+	fclose(fid);
 	fid = fopen("copy.glsl", "rb");
 	ZeroMemory(copyText, sizeof(copyText));
 	fread(copyText, 1, MAX_SHADER_SIZE, fid);
@@ -104,6 +110,7 @@ void loadShaders(void)
 
 	// init objects:
 	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
+	GLuint vMainObjectNC = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fMainBackground = glCreateShader(GL_FRAGMENT_SHADER);	
 	GLuint fOffscreenCopy = glCreateShader(GL_FRAGMENT_SHADER);
 	GLuint fOffscreenBlur = glCreateShader(GL_FRAGMENT_SHADER);
@@ -115,6 +122,8 @@ void loadShaders(void)
 	// compile sources:
 	glShaderSource(vMainObject, 1, &ptObject, NULL);
 	glCompileShader(vMainObject);
+	glShaderSource(vMainObjectNC, 1, &ptObjectNC, NULL);
+	glCompileShader(vMainObjectNC);
 	glShaderSource(fMainBackground, 1, &ptBackground, NULL);
 	glCompileShader(fMainBackground);
 	glShaderSource(fOffscreenCopy, 1, &ptCopy, NULL);
@@ -133,6 +142,14 @@ void loadShaders(void)
 		glGetShaderInfoLog(vMainObject, 4096, &tmp2, err);
 		err[tmp2]=0;
 		MessageBox(hWnd, err, "vMainObject shader error", MB_OK);
+		return;
+	}
+	glGetShaderiv(vMainObjectNC, GL_COMPILE_STATUS, &tmp);
+	if (!tmp)
+	{
+		glGetShaderInfoLog(vMainObjectNC, 4096, &tmp2, err);
+		err[tmp2]=0;
+		MessageBox(hWnd, err, "vMainObject no centers shader error", MB_OK);
 		return;
 	}
 	glGetShaderiv(fMainBackground, GL_COMPILE_STATUS, &tmp);
@@ -172,10 +189,10 @@ void loadShaders(void)
 	glAttachShader(shaderPrograms[SHADER_BACKGROUND], vMainObject);
 	glAttachShader(shaderPrograms[SHADER_BACKGROUND], fMainBackground);
 	glLinkProgram(shaderPrograms[SHADER_BACKGROUND]);
-	glAttachShader(shaderPrograms[SHADER_COPY], vMainObject);
+	glAttachShader(shaderPrograms[SHADER_COPY], vMainObjectNC);
 	glAttachShader(shaderPrograms[SHADER_COPY], fOffscreenCopy);
 	glLinkProgram(shaderPrograms[SHADER_COPY]);
-	glAttachShader(shaderPrograms[SHADER_BLUR], vMainObject);
+	glAttachShader(shaderPrograms[SHADER_BLUR], vMainObjectNC);
 	glAttachShader(shaderPrograms[SHADER_BLUR], fOffscreenBlur);
 	glLinkProgram(shaderPrograms[SHADER_BLUR]);
 	glAttachShader(shaderPrograms[SHADER_BACKGROUND_LIGHT], vMainObject);
@@ -268,8 +285,8 @@ void fallingBall(float ftime)
 		0.5f,				// 8: spiking spread				6
 		0.8f,               // 9: spiking brightness			7
 		-1.0f, -1.0f,
-		0.0f,				// 12: unused:spiking highlight     8
-		0.0f,				// 13: unused						9
+		0.0f,				// 12: color reduction		        8
+		0.5f,				// 13: brightness hermann			9
 		0.4f,				// 14: color variation				1b
 		0.4f, 0.15f, 0.3f,	// 15-17: mainColor					2-4b
 		0.5f,				// 18: highlightAmount				5b
@@ -362,6 +379,8 @@ void fallingBall(float ftime)
 	parameterMatrix[9] = interpolatedParameters[16];		// mainColor.s
 	parameterMatrix[10] = interpolatedParameters[17] * 2.0f;		// mainColor.b
 	parameterMatrix[11] = 5.0f * interpolatedParameters[18]; // highlightAmount
+	parameterMatrix[12] = 0.9f * interpolatedParameters[12]; // color reduction
+	parameterMatrix[13] = 2.0f * interpolatedParameters[13]; // hermann brightness
 
 	glLoadMatrixf(parameterMatrix);
 
@@ -404,7 +423,6 @@ void fallingBall(float ftime)
 	}
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
-
 	// downsample to highlight resolution
 	parameterMatrix[1] = 1.0f;
 	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
@@ -418,6 +436,7 @@ void fallingBall(float ftime)
 	glUseProgram(shaderPrograms[SHADER_COPY]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
+#if 0
 	// Draw the light shattering
 	static float shatterTime = 1.0f;
 	if (keyPressed[41] == 1) shatterTime = 0.0f;
@@ -474,6 +493,7 @@ void fallingBall(float ftime)
 	{
 		shatterTime = 1.0f;
 	}
+#endif
 
 	// horizontal blur
 	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
