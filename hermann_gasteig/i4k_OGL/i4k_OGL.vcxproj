@@ -176,6 +176,7 @@
     <None Include="blur.glsl" />
     <None Include="copy.glsl" />
     <None Include="object.glsl" />
+    <None Include="object_noCenters.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
