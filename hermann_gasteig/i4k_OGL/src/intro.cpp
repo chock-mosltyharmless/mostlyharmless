@@ -544,7 +544,7 @@ void fallingBall(float ftime)
 	parameterMatrix[1] = 1.0f;
 	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
 	parameterMatrix[3] = 1.0f / OFFSCREEN_HEIGHT;
-	parameterMatrix[4] = 0.25f; // scanline amount
+	parameterMatrix[4] = 0.1f; // scanline amount
 	glLoadMatrixf(parameterMatrix);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
