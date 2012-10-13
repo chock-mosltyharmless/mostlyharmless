@@ -42,7 +42,7 @@ static float parameterMatrix[16];
 // Two offsceen textures, one for normal rendering, one for highlights
 const int NUM_OFFSCREEN_TEXTURES = 2;
 static GLuint offscreenTexture[NUM_OFFSCREEN_TEXTURES];
-static Texture backgroundTexture;
+static Texture backgroundTexture[2];
 
 GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 const int NUM_SHADER_PROGRAMS = 4;
@@ -230,8 +230,10 @@ void intro_init( void )
 	loadShaders();
 
 	// Set texture.
-	backgroundTexture.init("background.tga");
-	backgroundTexture.setTexture();
+	backgroundTexture[0].init("background.tga");
+	backgroundTexture[0].setTexture();
+	backgroundTexture[1].init("background2.tga");
+	backgroundTexture[1].setTexture();
 
 	// Create a rendertarget texture
 	glGenTextures(NUM_OFFSCREEN_TEXTURES, offscreenTexture);
@@ -346,6 +348,7 @@ void fallingBall(float ftime)
 	static int bgTexture = 1;
 	if (keyPressed[33] == 1) bgTexture = 0;
 	if (keyPressed[34] == 1) bgTexture = 1;
+	if (keyPressed[35] == 1) bgTexture = 2;
 
 	//parameterMatrix[0] = ftime; // time	
 	// Steuerbare time
@@ -412,9 +415,9 @@ void fallingBall(float ftime)
 	// draw offscreen (full offscreen resolution)
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	glUseProgram(shaderPrograms[SHADER_BACKGROUND]);
-	if (bgTexture == 1)
+	if (bgTexture > 0)
 	{
-		backgroundTexture.setTexture();
+		backgroundTexture[bgTexture-1].setTexture();
 	}
 	else
 	{
