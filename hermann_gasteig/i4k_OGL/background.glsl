@@ -58,6 +58,7 @@ void main(void)
 	vec3 mainColorHSB = parameters[2].xyz;
 	float highlightAmount = parameters[2][3];
 	float colorSubtract = parameters[3][0];
+	float lightray = parameters[3][1];
 	float useTexture = parameters[3][2];
 	float textureVignette = parameters[3][3];
 
@@ -146,5 +147,12 @@ void main(void)
 
     /* vignette */
     float vignette = length(position * vec2(0.7, 1.0));
-    gl_FragColor /= pow(0.6*vignette, 5.0) + 1.0;    
+    gl_FragColor /= pow(0.6*vignette, 2.0) + 1.0;
+	
+	/* Top right lighting */
+	if (objectPosition.y > 0.86 && objectPosition.x > 0.49 && objectPosition.x < 0.98)
+	{
+		float lightDist = objectPosition.x - 0.25 * objectPosition.y - lightray;
+		gl_FragColor += vec4(1.0) / pow(50.0 * abs(lightDist), 20.0);
+	}
 }

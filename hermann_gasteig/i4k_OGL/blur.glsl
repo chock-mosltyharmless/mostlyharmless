@@ -28,7 +28,8 @@ void main(void)
 	gl_FragColor = vec4(0.0);
 	for (int i = 0; i < 59; i++)
 	{
-		float localGain = 29.5 - abs(float(i)-29.5);
+		//float localGain = 29.5 - abs(float(i)-29.5);
+		float localGain = 10.0;
 		gl_FragColor += localGain * gain * max(pow(texture2D(Texture0, startPos), vec4(reduction)), vec4(0.0));
 		startPos += stepSize;
 	}

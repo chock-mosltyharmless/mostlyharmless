@@ -724,6 +724,34 @@ void intro_do( long itime )
 	// Copy backbuffer to texture (for highlight)
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
 
+	// stranger blur
+	// horizontal blur
+	parameterMatrix[2] = 0.5f / HIGHLIGHT_WIDTH;
+	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
+	parameterMatrix[4] = 2.0f; // reduction
+	parameterMatrix[5] = 0.01f * interpolatedParameters[19]; // gain
+	glLoadMatrixf(parameterMatrix);
+	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
+	// Copy backbuffer (small) to texture
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glUseProgram(shaderPrograms[SHADER_BLUR]);
+	glRectf(-1.0, -1.0, 1.0, 1.0); // TODO: I think I can optimize this???
+
+	// vertical blur
+	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
+	parameterMatrix[3] = -0.5f / HIGHLIGHT_HEIGHT;
+	parameterMatrix[4] = 1.0f; // reduction
+	glLoadMatrixf(parameterMatrix);
+	glViewport(0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
+	// Copy backbuffer to texture
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+	glUseProgram(shaderPrograms[SHADER_BLUR]);	
+	glRectf(-1.0, -1.0, 1.0, 1.0); // TODO: I think I can optimze this???
+	// Copy backbuffer to texture (for highlight)
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
+
 	// draw normal image
 	parameterMatrix[1] = 1.0f;
 	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
