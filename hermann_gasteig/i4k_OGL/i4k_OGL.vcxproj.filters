@@ -40,6 +40,12 @@
     <ClInclude Include="src\qedit.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\mathhelpers.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Swarm.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp">
@@ -61,6 +67,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\VideoTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mathhelpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Swarm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

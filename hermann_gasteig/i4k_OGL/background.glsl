@@ -1,6 +1,7 @@
 const int numCenters = 8;
 const int numOvertones = 3;
 uniform sampler2D Texture0;
+uniform sampler2D Texture1;
 varying vec3 objectPosition;
 varying mat4 parameters;
 varying vec2 centers[numCenters];
@@ -57,6 +58,8 @@ void main(void)
 	vec3 mainColorHSB = parameters[2].xyz;
 	float highlightAmount = parameters[2][3];
 	float colorSubtract = parameters[3][0];
+	float useTexture = parameters[3][2];
+	float textureVignette = parameters[3][3];
 
 	/* Color changes over time, the speed depends on the speed of the fTime0_X update */
 	mainColorHSB.r = fract(mainColorHSB.r + fTime0_X * 0.01);
@@ -120,7 +123,12 @@ void main(void)
     gl_FragColor.xyz *= scanlines;*/
         
     /* background picture */
-    vec4 tex = texture2D(Texture0, 0.3333 * 0.5*position + 0.5 + bestMover * (1.0 - relDist));
+	vec2 texPos = 0.3333 * 0.5*position + 0.5 + bestMover * (1.0 - relDist);
+    vec4 tex0 = texture2D(Texture0, texPos);
+	vec4 tex1 = texture2D(Texture1, texPos);
+	vec4 tex = mix(tex0, tex1, useTexture);
+	float texDist = length(texPos - vec2(0.5));
+	tex /= pow(textureVignette*texDist*3.0, 25.0) + 1.0; 
     /*gl_FragColor.xyz *= 0.25 + 0.75*tex.rgb;*/
 	gl_FragColor.xyz *= tex.rgb;
 
@@ -138,5 +146,5 @@ void main(void)
 
     /* vignette */
     float vignette = length(position * vec2(0.7, 1.0));
-    gl_FragColor /= pow(0.5*vignette, 5.0) + 1.0;    
+    gl_FragColor /= pow(0.6*vignette, 5.0) + 1.0;    
 }

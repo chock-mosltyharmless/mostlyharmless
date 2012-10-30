@@ -56,7 +56,7 @@
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;WINDOWS;DEBUG;SIMD;A32BITS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeaderOutputFile>.\bin/Debug/i4k_OGL.pch</PrecompiledHeaderOutputFile>
       <AssemblerListingLocation>$(OutDir)</AssemblerListingLocation>
@@ -149,22 +149,27 @@
   <ItemGroup>
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\intro.h" />
+    <ClInclude Include="src\mathhelpers.h" />
     <ClInclude Include="src\music.h" />
     <ClInclude Include="src\mzk.h" />
     <ClInclude Include="src\Parameter.h" />
     <ClInclude Include="src\PictureWriter.h" />
     <ClInclude Include="src\qedit.h" />
+    <ClInclude Include="src\Swarm.h" />
     <ClInclude Include="src\Texture.h" />
     <ClInclude Include="src\VideoTexture.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp" />
+    <ClCompile Include="src\mathhelpers.cpp" />
     <ClCompile Include="src\mzk.cpp" />
     <ClCompile Include="src\Parameter.cpp" />
+    <ClCompile Include="src\Swarm.cpp" />
     <ClCompile Include="src\Texture.cpp" />
     <ClCompile Include="src\VideoTexture.cpp" />
     <ClCompile Include="src\_windows\main_deb.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">MaxSpeed</Optimization>
     </ClCompile>
     <ClCompile Include="src\_windows\main_rel.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

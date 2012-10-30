@@ -32,7 +32,22 @@ typedef struct
 }WININFO;
 
 
+static const PIXELFORMATDESCRIPTOR pfd =
+    {
+    sizeof(PIXELFORMATDESCRIPTOR),
+    1,
+    PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER,
+    PFD_TYPE_RGBA,
+    32,
+    0, 0, 0, 0, 0, 0, 8, 0,
+    0, 0, 0, 0, 0,
+    32, 0, 0,
+    PFD_MAIN_PLANE,
+    0, 0, 0, 0
+    };
 
+
+#if 0
 static const PIXELFORMATDESCRIPTOR pfd =
     {
     sizeof(PIXELFORMATDESCRIPTOR),
@@ -48,6 +63,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     PFD_MAIN_PLANE,
     0, 0, 0, 0
     };
+#endif
 
 static WININFO wininfo = {  0,0,0,0,0,
 							{'i','q','_',0}
@@ -74,6 +90,8 @@ RECT windowRect;
 // The video frame grabber
 VideoTexture videoTexture;
 
+int whatToDo = 1; // Hermaniak
+
 //==============================================================================================
 
 
@@ -98,9 +116,19 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			PostQuitMessage(0);
 			return 0;
 
+		case 'o':
+		case 'O':
+			whatToDo = 0;
+			break;
+
+		case 'p': // To Rhytm police
+		case 'P':
+			whatToDo = 1;
+			break;
+
 		case 'y':
 		case 'Y':
-		case VK_F1:
+		//case VK_F1:
 			loadShaders();
 			break;
 

@@ -18,10 +18,10 @@
 #define YRES        (480 * XRES / (640 * 2))
 #else
 #define XRES        1024
-#define YRES        (480 * XRES / 640)
+#define YRES        (1080 * XRES / 1920)
 #endif
 #define OFFSCREEN_WIDTH 1024
-#define OFFSCREEN_HEIGHT (480 * OFFSCREEN_WIDTH / 640)
+#define OFFSCREEN_HEIGHT (1080 * OFFSCREEN_WIDTH / 1920)
 #define HIGHLIGHT_WIDTH 400
 #define HIGHLIGHT_HEIGHT (480 * HIGHLIGHT_WIDTH / 640)
 
