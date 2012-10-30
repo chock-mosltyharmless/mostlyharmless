@@ -33,5 +33,6 @@ void main(void)
 		gl_FragColor = texture2D(Texture0, 0.5*objectPosition.xy + 0.5);
 	}
 
-	gl_FragColor.xyz *= (0.5 * sin(objectPosition.y * 500.0) + 0.5) * scanLineAmount + (1.0 - scanLineAmount);
+	// scanlineing not done!
+	//gl_FragColor.xyz *= (0.5 * sin(objectPosition.y * 500.0) + 0.5) * scanLineAmount + (1.0 - scanLineAmount);
 }

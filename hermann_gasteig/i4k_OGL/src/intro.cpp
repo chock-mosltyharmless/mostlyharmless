@@ -16,9 +16,42 @@
 #include "mzk.h"
 #include "Parameter.h"
 #include "Texture.h"
+#include "mathhelpers.h"
+#include "Swarm.h"
 
 float frand();
 int rand();
+extern int whatToDo;
+
+// ---------------------------------------------------------------
+//					Parameter interpolation stuff
+// ------------------------------------------------------------
+// I want to interpolate the new values from the old ones.
+const int maxNumParameters = 25;
+const static float defaultParameters[maxNumParameters] = 
+{
+	-1.0f, -1.0f,
+	0.4f, 0.3f,			// 2-3: size,spread X				1-2
+	0.2f, 0.3f,			// 4-5: size,spread Y				3-4
+	0.8f,				// 6: speed							5
+	-1.0f,
+	0.5f,				// 8: spiking spread				6
+	0.8f,               // 9: spiking brightness			7
+	-1.0f, -1.0f,
+	0.0f,				// 12: color reduction		        8
+	0.5f,				// 13: brightness hermann			9
+	0.4f,				// 14: color variation				1b
+	0.4f, 0.15f, 0.3f,	// 15-17: mainColor					2-4b
+	0.5f,				// 18: highlightAmount				5b
+	0.14f,				// 19: hypnoglow					6b
+	1.0f,				// 20: Bauchigkeit					7b
+	0.0f,				// 21: line strength				8b
+	0.0f,				// 22: texture vignette				9b
+};
+static float interpolatedParameters[maxNumParameters];
+const int NUM_KEYS = 127;
+static int keyPressed[NUM_KEYS] = {0};
+
 
 // -------------------------------------------------------------------
 //                          Constants:
@@ -42,7 +75,8 @@ static float parameterMatrix[16];
 // Two offsceen textures, one for normal rendering, one for highlights
 const int NUM_OFFSCREEN_TEXTURES = 2;
 static GLuint offscreenTexture[NUM_OFFSCREEN_TEXTURES];
-static Texture backgroundTexture[2];
+static Texture backgroundTexture[3];
+static Texture hLogoTexture;
 
 GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 const int NUM_SHADER_PROGRAMS = 4;
@@ -206,9 +240,8 @@ void loadShaders(void)
 	glDeleteShader(fOffscreenBlur);
 	glDeleteShader(fMainLight);
 
-#if 0
 	// Set texture locations
-	glUseProgram(shaderPrograms[0]);
+	glUseProgram(shaderPrograms[SHADER_BACKGROUND]);
 	int my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[0], "Texture0");
 	glActiveTexture(GL_TEXTURE0);
 	glUniform1i(my_sampler_uniform_location, 0);
@@ -216,7 +249,6 @@ void loadShaders(void)
 	glActiveTexture(GL_TEXTURE1);
 	glUniform1i(my_sampler_uniform_location, 1);
 	glActiveTexture(GL_TEXTURE0);
-#endif
 }
 
 void intro_init( void )
@@ -234,6 +266,10 @@ void intro_init( void )
 	backgroundTexture[0].setTexture();
 	backgroundTexture[1].init("background2.tga");
 	backgroundTexture[1].setTexture();
+	backgroundTexture[2].init("background3.tga");
+	backgroundTexture[2].setTexture();
+	hLogoTexture.init("../her_16x9_1920.tga");
+	hLogoTexture.setTexture();
 
 	// Create a rendertarget texture
 	glGenTextures(NUM_OFFSCREEN_TEXTURES, offscreenTexture);
@@ -258,66 +294,207 @@ void intro_init( void )
 
 	// RLY?
 	//glEnable(GL_CULL_FACE);
+
+	// Initialize Swarm positions and stuff
+	initSwarm();
 }
 
-void fallingBall(float ftime)
+void rhytmPolice(float ftime)
 {
-	glDisable(GL_BLEND);
+	ftime += 0.0f;
+	static float oldtime = 0.0f;
+	float fDeltaTime = ftime - oldtime;
+	if (fDeltaTime > 0.1f) fDeltaTime = 0.1f;
+	oldtime = ftime;
 
-	// draw background:
-#if 0
-    glMatrixMode(GL_PROJECTION);	
-	glLoadMatrixf(projectionMatrix);
-	glTranslatef(params.getParam(20, 0.41f) * 6.0f - 3.0f, params.getParam(21, 0.56f) * 6.0f - 3.0f, -params.getParam(22, 0.36f) * 20.0f);
-	glRotatef(params.getParam(9, 0.15f) * 360.0f, 1.0f, 0.0f, 0.0f);
-	glRotatef(params.getParam(12, 0.31f) * 360.0f, 0.0f, 1.0f, 0.0f); 
-	glRotatef(params.getParam(13, 0.35f) * 360.0f, 0.0f, 0.0f, 1.0f);
-#endif
-	glMatrixMode(GL_MODELVIEW);	
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 
-	// I want to interpolate the new values from the old ones.
-	const int maxNumParameters = 25;
-	const static float defaultParameters[maxNumParameters] = 
+	/* Rhythmic stuff */
+	static float camDist = 0.0f;
+	camDist *= exp(-2.0f * fDeltaTime);
+	if (keyPressed[41] == 1) camDist = 0.3f;
+	static float brightAdder = 0.0f;
+	brightAdder *= exp(-2.0f * fDeltaTime);
+	if (keyPressed[40] == 1) brightAdder = 1.0f;
+	static float moveAdder = 0.0f;
+	moveAdder *= exp(-5.0f * fDeltaTime);
+	if (keyPressed[39] == 1) moveAdder = 10.0f;
+
+	/* init */
+	glUseProgram(0);
+	glDisable(GL_TEXTURE_2D);
+	glDisable(GL_CULL_FACE);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+
+	// Distance to the center object
+	// TODO: Hitchcock-effect by means of gluPerspective!
+	float cameraDist = 20.0f;
+	float cameraComeTime = 150.0f;
+	cameraDist = 2.5f + 17.0f * interpolatedParameters[2] * interpolatedParameters[2];
+
+	// set up matrices
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	// TODO aspect
+	gluPerspective(300.0f / cameraDist,  1.8, 0.1, 100.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(sin(0.5f*ftime)*cameraDist * (1.0f - camDist), 0.5, -cos(0.5f * ftime) * cameraDist * (1.0f - camDist),
+			  2.0f * interpolatedParameters[3], 2.0f * interpolatedParameters[4], 0.0,
+			  0.0, 1.0, 0.0);
+
+	// lighting:
+	float b = interpolatedParameters[18];
+	float ambient[4] = {0.1f*b, 0.1f*b, 0.1f*b, 1.0f};
+	float diffuse[4] = {0.9f*b, 0.85f*b, 0.4f*b, 1.0f};
+	float diffuse2[4] = {0.45f*b, 0.475f*b, 0.2f*b, 1.0f};
+	float specular[4] = {0.5f*b, 0.4f*b, 0.2f*b, 1.0f};
+	float lightDir[4] = {0.7f, 0.0f, 0.7f, 0.0f};
+	float allOnes[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+	glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
+	static int signedDistanceID = 1;
+	static int pathID = 0;
+	float metaAmount = interpolatedParameters[5];
+
+	// Get the status fields (I need the numbers....)
+	const int BPMParameterIndex[4] = {23, 24, 25, 26,};
+	const int pathParameterIndex[2] = {33, 34};
+	for (int i = 0; i < 4; i++)
 	{
-		-1.0f, -1.0f,
-		0.4f, 0.3f,			// 2-3: size,spread X				1-2
-		0.2f, 0.3f,			// 4-5: size,spread Y				3-4
-		0.8f,				// 6: speed							5
-		-1.0f,
-		0.5f,				// 8: spiking spread				6
-		0.8f,               // 9: spiking brightness			7
-		-1.0f, -1.0f,
-		0.0f,				// 12: color reduction		        8
-		0.5f,				// 13: brightness hermann			9
-		0.4f,				// 14: color variation				1b
-		0.4f, 0.15f, 0.3f,	// 15-17: mainColor					2-4b
-		0.5f,				// 18: highlightAmount				5b
-		0.14f,				// 19: hypnoglow					6b
-		1.0f,				// 20: Bauchigkeit					7b
-		0.0f,				// 21: line strength				8b
-		0.0f,				// 22: beat phase					9b
-	};
-	static float interpolatedParameters[maxNumParameters];
-	// Those are key-Press indicators. I only act on 0-to-1.
-	for (int i = 0; i < maxNumParameters; i++)
-	{
-		interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
-									0.05f * params.getParam(i, defaultParameters[i]);
-	}
-	const int NUM_KEYS = 127;
-	static int keyPressed[NUM_KEYS] = {0};
-	// Update key press events.
-	for (int i = 0; i < NUM_KEYS; i++)
-	{
-		if (params.getParam(i, 0.0) > 0.5f)
+		// If a key press changed to pressed:
+		if (keyPressed[BPMParameterIndex[i]] == 1)
 		{
-			keyPressed[i]++;
+			signedDistanceID = i;
+		}
+	}
+	for (int i = 0; i < 2; i++)
+	{
+		if (keyPressed[pathParameterIndex[i]])
+		{
+			pathID = i;
+		}
+	}
+
+	// generate destiations
+	float overshoot = 4.0f * (interpolatedParameters[6] - 0.5f);
+	updateSwarmDestinations(pathID, fDeltaTime, overshoot);
+
+	// update direction of the Triangles
+	updateSwarmWithSignedDistance(signedDistanceID, fDeltaTime * (1.0f + moveAdder), metaAmount);
+
+	// move all triangles
+	moveSwarm(fDeltaTime);
+
+	// Set how many triangles to render for each path
+	int numTrisRender1 = NUM_TRIANGLES;
+	int numTrisRender2 = NUM_TRIANGLES;
+	//float triBrightness = ftime / 30.0f + 0.2f;
+	float triBrightness = interpolatedParameters[17];
+	if (triBrightness > 1.0f) triBrightness = 1.0f;
+
+	// render tris
+	glBegin(GL_TRIANGLES);
+	glDisable(GL_BLEND);
+	for (int i = 0; i < numTrisRender1; i++)
+	{
+		//glNormal3f(0.3f, 0.5f, 0.2f);
+		float right[3];
+		right[0] = tris.direction[i][1] * tris.normal[i][2] - tris.direction[i][2] * tris.normal[i][1];
+		right[1] = tris.direction[i][2] * tris.normal[i][0] - tris.direction[i][0] * tris.normal[i][2];
+		right[2] = tris.direction[i][0] * tris.normal[i][1] - tris.direction[i][1] * tris.normal[i][0];
+		glNormal3fv(tris.normal[i]);
+		glVertex3f(tris.position[i][0] + 0.15f * tris.direction[i][0], tris.position[i][1] + 0.2f * tris.direction[i][1], tris.position[i][2] + 0.15f * tris.direction[i][2]);
+		glVertex3f(tris.position[i][0] + 0.15f * right[0], tris.position[i][1] + 0.2f * right[1], tris.position[i][2] + 0.15f * right[2]);
+		glVertex3f(tris.position[i][0] - 0.15f * right[0], tris.position[i][1] - 0.2f * right[0], tris.position[i][2] - 0.15f * right[0]);
+	}
+	glEnd();
+
+	glDepthMask(FALSE);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE); 
+	glDisable(GL_LIGHTING);
+	//float beating = 1.0f - 0.25f * fabsf((float)sin(ftime*4.652f));
+	glBegin(GL_TRIANGLES);
+	for (int i = 0; i < numTrisRender2; i++)
+	{
+		float color[3];
+		float colorT = interpolatedParameters[15];
+		float randNum = ((i * i)%17) * 3.2132342f + (i%21) * 46.2246231f + ((i * i * i)%31) * 7.23421f;
+		if (randNum < 0.0f) randNum = -randNum;
+		randNum = randNum - (int)randNum - 0.5f;
+		colorT += randNum * interpolatedParameters[14];
+		if (colorT < 0.0f) colorT += 1.0f;
+		if (colorT > 1.0f) colorT -= 1.0f;
+		float sat = interpolatedParameters[16];
+		if (colorT < 0.33f)
+		{
+			color[0] = 1.0f - 3.0f * colorT * sat;
+			color[1] = colorT * 3.0f * sat + 1.0f - sat;
+			color[2] = 1.0f - sat;
 		}
 		else
 		{
-			keyPressed[i] = 0;
+			if (colorT < 0.67f)
+			{
+				colorT -= 0.33f;
+				color[0] = 1.0f - sat;
+				color[1] = 1.0f - 3.0f * colorT * sat;
+				color[2] = 3.0f * colorT * sat + 1.0f - sat;
+			}
+			else
+			{
+				colorT -= 0.67f;
+				color[0] = 3.0f * colorT * sat + 1.0f - sat;
+				color[1] = 1.0f - sat;
+				color[2] = 1.0f - 3.0f * colorT * sat;
+			}
 		}
+
+		//glNormal3f(0.3f, 0.5f, 0.2f);
+		glColor4f(color[0], color[1], color[2], (0.1f+0.1f*randNum) * triBrightness * (1.0f + brightAdder) + 0.01f * randNum - 0.005f);
+		float right[3];
+		right[0] = tris.direction[i][1] * tris.normal[i][2] - tris.direction[i][2] * tris.normal[i][1];
+		right[1] = tris.direction[i][2] * tris.normal[i][0] - tris.direction[i][0] * tris.normal[i][2];
+		right[2] = tris.direction[i][0] * tris.normal[i][1] - tris.direction[i][1] * tris.normal[i][0];
+		glNormal3fv(tris.normal[i]);
+		glVertex3f(tris.position[i][0] + 0.3f * tris.direction[i][0],
+					tris.position[i][1] + 0.3f * tris.direction[i][1],
+					tris.position[i][2] + 0.3f * tris.direction[i][2] - 0.05f);
+		glVertex3f(tris.position[i][0] + 0.3f * right[0] - 0.15f * tris.direction[i][0],
+					tris.position[i][1] + 0.3f * right[1] - 0.15f * tris.direction[i][1],
+					tris.position[i][2] + 0.3f * right[2] - 0.15f * tris.direction[i][2] - 0.001f);
+		glVertex3f(tris.position[i][0] - 0.3f * right[0] - 0.15f * tris.direction[i][0],
+					tris.position[i][1] - 0.3f * right[0] - 0.15f * tris.direction[i][1],
+					tris.position[i][2] - 0.3f * right[0] - 0.15f * tris.direction[i][2] - 0.001f);
 	}
+	glEnd();
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(TRUE);
+
+	//glEnable(GL_DEPTH_TEST);
+	glDisable(GL_BLEND);
+}
+
+void hermaniak(float ftime)
+{
+	glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+
+	// draw background:
+	glMatrixMode(GL_MODELVIEW);	
 
 	// Beat-dependent variables:
 	const int NUM_BPMS = 6;
@@ -338,17 +515,19 @@ void fallingBall(float ftime)
 	// Here I should make something more sophisticated. I am thinking about an array... that has
 	// Lengthes until the next jump in order to make a beat like ||..||..||..|.|.
 	float jumpsPerSecond = BPS / 1.0f; // Jump on every fourth beat.
-	float jumpTime = (ftime * jumpsPerSecond) + interpolatedParameters[22]; // JumpTime goes from 0 to 1 between two beats
+	static float phase = 0.0f;
+	float jumpTime = (ftime * jumpsPerSecond) + phase;
+	//float jumpTime = (ftime * jumpsPerSecond) + interpolatedParameters[22]; // JumpTime goes from 0 to 1 between two beats
 	jumpTime -= floor(jumpTime);
+	if (keyPressed[41] == 1)
+	{
+		phase -= jumpTime;
+		jumpTime = 0.0f;
+		if (phase < 0.0f) phase += 1.0;
+	}
 	jumpTime = jumpTime * jumpTime;
 	// spike is between 0.0 and 1.0 depending on the position within whatever.
 	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 2.0f) + 0.5f;
-
-	// Which background texture to use:
-	static int bgTexture = 1;
-	if (keyPressed[33] == 1) bgTexture = 0;
-	if (keyPressed[34] == 1) bgTexture = 1;
-	if (keyPressed[35] == 1) bgTexture = 2;
 
 	//parameterMatrix[0] = ftime; // time	
 	// Steuerbare time
@@ -362,13 +541,35 @@ void fallingBall(float ftime)
 	// The problem is that I have the same timing on the
 	// Hermann. I might not want that?
 	// THe 1.6 is 1 divided by the integral of spike.
-#if 0
-	deltaTime *= 1.6f * interpolatedParameters[8] * spike + (1.0f - interpolatedParameters[8]);
-	shaderTime += deltaTime * interpolatedParameters[6] * 3.0f;
-#else
 	// shaderTime and light shader Time shall be synchroneous, for the MainCOlorHSB.r!
 	shaderTime = lightShaderTime + interpolatedParameters[6] * (interpolatedParameters[8] * spike - 0.5f);
-#endif
+
+	// Which background texture to use:
+	static int bgTexture = 2;
+	static float bgTextureXFade = 0.0f;
+	// Go to texture change mode if necessary:
+	if ((keyPressed[33] == 1) || (keyPressed[34] == 1) ||
+		(keyPressed[35] == 1) || (keyPressed[36] == 1) ||
+		(keyPressed[37] == 1))
+	{
+		glActiveTexture(GL_TEXTURE1);
+		if (bgTexture > 1) backgroundTexture[bgTexture-2].setTexture();
+		else
+		{
+			if (bgTexture == 0) videoTexture.captureFrame();
+			else glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]);
+		}
+		glActiveTexture(GL_TEXTURE0);
+		bgTextureXFade = 1.0f;
+	}
+	bgTextureXFade -= deltaTime * 0.5f;
+	bgTextureXFade = bgTextureXFade < 0.0f ? 0.0f : bgTextureXFade;
+	if (keyPressed[33] == 1) bgTexture = 0;
+	if (keyPressed[34] == 1) bgTexture = 1;
+	if (keyPressed[35] == 1) bgTexture = 2;
+	if (keyPressed[36] == 1) bgTexture = 3;
+	if (keyPressed[37] == 1) bgTexture = 4;
+
 	parameterMatrix[0] = lightShaderTime;
 	/* shader parameters */
 	parameterMatrix[1] = 10.0f * interpolatedParameters[20] * interpolatedParameters[20];  // bauchigkeit
@@ -384,8 +585,39 @@ void fallingBall(float ftime)
 	parameterMatrix[11] = 5.0f * interpolatedParameters[18]; // highlightAmount
 	parameterMatrix[12] = 0.9f * interpolatedParameters[12]; // color reduction
 	parameterMatrix[13] = 2.0f * interpolatedParameters[13]; // hermann brightness
-
+	parameterMatrix[14] = bgTextureXFade; // used texture.
+	parameterMatrix[15] = interpolatedParameters[22]; // texture vignette
 	glLoadMatrixf(parameterMatrix);
+
+#ifndef NO_HERMANN_LIGHTING
+	// DRAW the right hand view (lighting on hermann): I need to remove the bumping colors here
+	glViewport(xres/2 + 10, 0, xres / 2 - 10, yres);
+	glUseProgram(shaderPrograms[SHADER_BACKGROUND_LIGHT]);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
+#endif
+
+	// After left hand view drawing, apply the squiggly stuff
+	parameterMatrix[10] += spike * interpolatedParameters[9]; // spiked mainColor.brightness
+	parameterMatrix[0] = shaderTime;
+	glLoadMatrixf(parameterMatrix);
+
+	// DRAW the left hand view (background on projection)
+	// draw offscreen (full offscreen resolution)
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	glUseProgram(shaderPrograms[SHADER_BACKGROUND]);
+	// Use the video or normal texture:
+	if (bgTexture > 1) backgroundTexture[bgTexture-2].setTexture();
+	else
+	{
+		if (bgTexture == 0) videoTexture.captureFrame();
+		else glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]);
+	}
+	glRectf(-1.0, -1.0, 1.0, 1.0);
+}
+
+void intro_do( long itime )
+{
+	float ftime = 0.001f*(float)itime;
 
 	int xres = windowRect.right - windowRect.left;
 	int yres = windowRect.bottom - windowRect.top;
@@ -396,36 +628,62 @@ void fallingBall(float ftime)
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 #endif
 
-	// After left hand view drawing, apply the squiggly stuff
-#if 0
-	// I do not want to do this. This is the heart beating idea for movement, but it didn't
-	// turn out that well. I might onlz put this back to life if I see fit for some music.
-	parameterMatrix[6] += 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[2]; // spiked spread.x * size.X
-	parameterMatrix[7] += 2.0f * spike * interpolatedParameters[8] * interpolatedParameters[4]; // spiked spread.y * size.Y
-#endif
-	parameterMatrix[10] += spike * interpolatedParameters[9]; // spiked mainColor.brightness
-#if 0
-	// brightness spiking of the highlights
-	parameterMatrix[11] += 5.0f * spike * interpolatedParameters[12]; // spiked highlightAmount
-#endif
-	parameterMatrix[0] = shaderTime;
-	glLoadMatrixf(parameterMatrix);
-
-	// DRAW the left hand view (background on projection)
-	// draw offscreen (full offscreen resolution)
-	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	glUseProgram(shaderPrograms[SHADER_BACKGROUND]);
-	if (bgTexture > 0)
+	// Those are key-Press indicators. I only act on 0-to-1.
+	for (int i = 0; i < maxNumParameters; i++)
 	{
-		backgroundTexture[bgTexture-1].setTexture();
+		interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
+									0.05f * params.getParam(i, defaultParameters[i]);
+	}
+	// Update key press events.
+	for (int i = 0; i < NUM_KEYS; i++)
+	{
+		if (params.getParam(i, 0.0) > 0.5f)
+		{
+			keyPressed[i]++;
+		}
+		else
+		{
+			keyPressed[i] = 0;
+		}
+	}
+
+    // render
+	//glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_BLEND);
+    //glEnable( GL_CULL_FACE );
+	//glCullFace( GL_FRONT );
+	//glDisable( GL_BLEND );
+    //glEnable( GL_LIGHTING );
+    //glEnable( GL_LIGHT0 );
+    //glEnable( GL_NORMALIZE );
+	//glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);	
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+
+	// clear screan:
+	//glClear(GL_COLOR_BUFFER_BIT);
+
+	//glBindTexture(GL_TEXTURE_3D, noiseTexture); // 3D noise?	
+
+	/* Set everything to beginning */
+	for (int i = 0; i < 16; i++)
+	{
+		parameterMatrix[i] = 0.0f;
+	}
+
+
+	if (whatToDo == 0)
+	{
+		hermaniak(ftime);
 	}
 	else
 	{
-		// Use the video texture instead:
-		videoTexture.captureFrame();
+		rhytmPolice(ftime);
 	}
-	glRectf(-1.0, -1.0, 1.0, 1.0);
 
+
+	/*
+	 * GLOW
+	 */
 	// downsample to highlight resolution
 	parameterMatrix[1] = 1.0f;
 	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
@@ -438,65 +696,6 @@ void fallingBall(float ftime)
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	glUseProgram(shaderPrograms[SHADER_COPY]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
-
-#if 0
-	// Draw the light shattering
-	static float shatterTime = 1.0f;
-	if (keyPressed[41] == 1) shatterTime = 0.0f;
-	if (shatterTime < 1.0f)
-	{
-		glUseProgram(0);
-		GLfloat mat_specular[] = { 0.0, 0.0, 0.0, 0.0 };
-		GLfloat mat_shininess[] = { 50.0 };
-		GLfloat light_position[] = { 1.0, 1.0, 0.0, 0.0 };
-		glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-		glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-		glLightfv(GL_LIGHT0, GL_POSITION, light_position);
-		light_position[0] = -light_position[0];
-		light_position[1] = -light_position[1];
-		light_position[2] = -light_position[2];
-		glLightfv(GL_LIGHT1, GL_POSITION, light_position);
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		glEnable(GL_LIGHT1);
-		glEnable(GL_COLOR_MATERIAL);
-
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_COLOR, GL_ONE);
-		glDisable(GL_TEXTURE_2D);
-		const int numShrads = 100;
-		for (int i = 1; i <= numShrads; i++)
-		{
-			glLoadIdentity();
-			float xPos = sin(i * i * 0.12342f + 0.01254f*ftime);			
-			float yPos = cos(i * i * 0.0234624f + 0.01356987f*ftime);
-			float dist = sqrtf(xPos * xPos + yPos * yPos);
-			xPos *= dist;
-			yPos *= dist;
-			glTranslatef(1.1f * xPos, 1.6f * yPos + 0.3f + shatterTime * 0.4f - shatterTime * shatterTime * 1.4f, 0.5f);
-			glRotatef((float)powf(shatterTime, 1.2f) * 500.0f * (2.0f + sin(i * i * 3.13234f)),
-					  sin(i * i * i * 4123.1835f), cos(i * i * 1123.3234f), sin(i*53213.2136f));
-			glBegin(GL_TRIANGLES);
-			//float alpha = 0.5f + 0.5f * sin(i * i * 2342.23423f + ftime * 30.0f);
-			//glColor4f(1.0f, 1.0f, 1.0f, alpha * (1.0f - shatterTime * shatterTime));
-			float alpha = (1.0f - shatterTime);
-			glColor3f(alpha + 0.23f * sin(i * i * 0.123423f), alpha + 0.03f * sin(i * i * i * 0.413423f), alpha + 0.03f * sin(i * i * 0.2234234f));
-			glNormal3f(0.0f, 0.0f, 1.0f);
-			glVertex2f(0.18f, 0.0f);
-			glVertex2f(-0.16f, 0.16f);
-			glVertex2f(-0.16f, -0.16f);
-			glEnd();
-		}
-		glEnable(GL_TEXTURE_2D);
-		glDisable(GL_BLEND);
-
-		shatterTime += 0.5f * deltaTime;
-	}
-	else
-	{
-		shatterTime = 1.0f;
-	}
-#endif
 
 	// horizontal blur
 	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
@@ -522,31 +721,16 @@ void fallingBall(float ftime)
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
 	glUseProgram(shaderPrograms[SHADER_BLUR]);	
 	glRectf(-1.0, -1.0, 1.0, 1.0); // TODO: I think I can optimze this???
-
-	// copy highlight to front
-	parameterMatrix[1] = 0.0f;
-	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
-	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
-	parameterMatrix[4] = 0.0f; // scanline amount
-	glLoadMatrixf(parameterMatrix);
-#ifndef NO_HERMANN_LIGHTING
-	glViewport(0, 0, xres / 2, yres);
-#else
-	glViewport(0, 0, xres, yres);
-#endif
-	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
-	// Copy backbuffer to texture
+	// Copy backbuffer to texture (for highlight)
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, HIGHLIGHT_WIDTH, HIGHLIGHT_HEIGHT);
-	glUseProgram(shaderPrograms[SHADER_COPY]);
-	glRectf(-1.0, -1.0, 1.0, 1.0);
 
-	// add normal image
+	// draw normal image
 	parameterMatrix[1] = 1.0f;
 	parameterMatrix[2] = 1.0f / OFFSCREEN_WIDTH;
 	parameterMatrix[3] = 1.0f / OFFSCREEN_HEIGHT;
-	parameterMatrix[4] = 0.1f; // scanline amount
+	parameterMatrix[4] = 0.0f; // 0.1fscanline amount
 	glLoadMatrixf(parameterMatrix);
-	glEnable(GL_BLEND);
+	glDisable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ONE);
 #ifndef NO_HERMANN_LIGHTING
 	glViewport(0, 0, xres / 2, yres);
@@ -556,35 +740,40 @@ void fallingBall(float ftime)
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture[0]); // was already copied!
 	glUseProgram(shaderPrograms[SHADER_COPY]);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
-}
 
-void intro_do( long itime )
-{
-	float ftime = 0.001f*(float)itime;
-
-    // render
-	//glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_BLEND);
-    //glEnable( GL_CULL_FACE );
-	//glCullFace( GL_FRONT );
-	//glDisable( GL_BLEND );
-    //glEnable( GL_LIGHTING );
-    //glEnable( GL_LIGHT0 );
-    //glEnable( GL_NORMALIZE );
-	//glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, 1);	
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-
-	// clear screan:
-	//glClear(GL_COLOR_BUFFER_BIT);
-
-	//glBindTexture(GL_TEXTURE_3D, noiseTexture); // 3D noise?	
-
-	/* Set everything to beginning */
-	for (int i = 0; i < 16; i++)
+	if (whatToDo == 0)
 	{
-		parameterMatrix[i] = 0.0f;
+		// Here I add the logo:
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+		hLogoTexture.setTexture();
+		parameterMatrix[1] = -2.0f;
+		parameterMatrix[2] = 0.0f;
+		parameterMatrix[3] = 0.0f;
+		parameterMatrix[4] = 0.0f; // scanline amount
+		glLoadMatrixf(parameterMatrix);
+		//glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+		// Copy backbuffer to texture
+		glUseProgram(shaderPrograms[SHADER_COPY]);
+		glRectf(-1.0, -1.0, 1.0, 1.0);
+		glDisable(GL_BLEND);
 	}
 
-	fallingBall(ftime);
+	// add highlight to front
+	parameterMatrix[1] = 0.0f;
+	parameterMatrix[2] = 1.0f / HIGHLIGHT_WIDTH;
+	parameterMatrix[3] = 1.0f / HIGHLIGHT_HEIGHT;
+	parameterMatrix[4] = 0.0f; // scanline amount
+	glLoadMatrixf(parameterMatrix);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE, GL_ONE);
+#ifndef NO_HERMANN_LIGHTING
+	glViewport(0, 0, xres / 2, yres);
+#else
+	glViewport(0, 0, xres, yres);
+#endif
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture[1]);
+	glUseProgram(shaderPrograms[SHADER_COPY]);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
 }
 
