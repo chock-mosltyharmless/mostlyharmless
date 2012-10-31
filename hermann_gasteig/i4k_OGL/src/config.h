@@ -7,7 +7,7 @@
 #ifndef _CONFIG_H_
 #define _CONFIG_H_
 
-#define NO_HERMANN_LIGHTING
+//#define NO_HERMANN_LIGHTING
 //#define SETRESOLUTION
 //#define USEDSOUND
 //#define CLEANEXIT
