@@ -415,9 +415,9 @@ void rhytmPolice(float ftime)
 		right[1] = tris.direction[i][2] * tris.normal[i][0] - tris.direction[i][0] * tris.normal[i][2];
 		right[2] = tris.direction[i][0] * tris.normal[i][1] - tris.direction[i][1] * tris.normal[i][0];
 		glNormal3fv(tris.normal[i]);
-		glVertex3f(tris.position[i][0] + 0.15f * tris.direction[i][0], tris.position[i][1] + 0.2f * tris.direction[i][1], tris.position[i][2] + 0.15f * tris.direction[i][2]);
-		glVertex3f(tris.position[i][0] + 0.15f * right[0], tris.position[i][1] + 0.2f * right[1], tris.position[i][2] + 0.15f * right[2]);
-		glVertex3f(tris.position[i][0] - 0.15f * right[0], tris.position[i][1] - 0.2f * right[0], tris.position[i][2] - 0.15f * right[0]);
+		glVertex3f(tris.position[i][0] + 0.20f * tris.direction[i][0], tris.position[i][1] + 0.2f * tris.direction[i][1], tris.position[i][2] + 0.15f * tris.direction[i][2]);
+		glVertex3f(tris.position[i][0] + 0.20f * right[0], tris.position[i][1] + 0.2f * right[1], tris.position[i][2] + 0.15f * right[2]);
+		glVertex3f(tris.position[i][0] - 0.20f * right[0], tris.position[i][1] - 0.2f * right[0], tris.position[i][2] - 0.15f * right[0]);
 	}
 	glEnd();
 
@@ -469,15 +469,15 @@ void rhytmPolice(float ftime)
 		right[1] = tris.direction[i][2] * tris.normal[i][0] - tris.direction[i][0] * tris.normal[i][2];
 		right[2] = tris.direction[i][0] * tris.normal[i][1] - tris.direction[i][1] * tris.normal[i][0];
 		glNormal3fv(tris.normal[i]);
-		glVertex3f(tris.position[i][0] + 0.3f * tris.direction[i][0],
-					tris.position[i][1] + 0.3f * tris.direction[i][1],
-					tris.position[i][2] + 0.3f * tris.direction[i][2] - 0.05f);
-		glVertex3f(tris.position[i][0] + 0.3f * right[0] - 0.15f * tris.direction[i][0],
-					tris.position[i][1] + 0.3f * right[1] - 0.15f * tris.direction[i][1],
-					tris.position[i][2] + 0.3f * right[2] - 0.15f * tris.direction[i][2] - 0.001f);
-		glVertex3f(tris.position[i][0] - 0.3f * right[0] - 0.15f * tris.direction[i][0],
-					tris.position[i][1] - 0.3f * right[0] - 0.15f * tris.direction[i][1],
-					tris.position[i][2] - 0.3f * right[0] - 0.15f * tris.direction[i][2] - 0.001f);
+		glVertex3f(tris.position[i][0] + 0.6f * tris.direction[i][0],
+					tris.position[i][1] + 0.6f * tris.direction[i][1],
+					tris.position[i][2] + 0.6f * tris.direction[i][2] - 0.05f);
+		glVertex3f(tris.position[i][0] + 0.6f * right[0] - 0.20f * tris.direction[i][0],
+					tris.position[i][1] + 0.6f * right[1] - 0.20f * tris.direction[i][1],
+					tris.position[i][2] + 0.6f * right[2] - 0.20f * tris.direction[i][2] - 0.001f);
+		glVertex3f(tris.position[i][0] - 0.6f * right[0] - 0.20f * tris.direction[i][0],
+					tris.position[i][1] - 0.6f * right[0] - 0.20f * tris.direction[i][1],
+					tris.position[i][2] - 0.6f * right[0] - 0.20f * tris.direction[i][2] - 0.001f);
 	}
 	glEnd();
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -589,6 +589,8 @@ void hermaniak(float ftime)
 	parameterMatrix[15] = interpolatedParameters[22]; // texture vignette
 	glLoadMatrixf(parameterMatrix);
 
+	int xres = windowRect.right - windowRect.left;
+	int yres = windowRect.bottom - windowRect.top;
 #ifndef NO_HERMANN_LIGHTING
 	// DRAW the right hand view (lighting on hermann): I need to remove the bumping colors here
 	glViewport(xres/2 + 10, 0, xres / 2 - 10, yres);
