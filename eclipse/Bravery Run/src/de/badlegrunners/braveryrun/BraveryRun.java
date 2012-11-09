@@ -3,6 +3,10 @@
  */
 package de.badlegrunners.braveryrun;
 
+import de.badlegrunners.braveryrun.gamelogic.Party;
+import de.badlegrunners.braveryrun.util.DataScanner;
+import java.util.Scanner;
+
 import de.badlegrunners.braveryrun.graphics.RenderMachine;
 
 import android.opengl.GLSurfaceView;
@@ -50,6 +54,22 @@ public class BraveryRun extends Activity {
         // current activity context
         glSurfaceView.setRenderer(new RenderMachine(this));
         setContentView(glSurfaceView);
+        
+        // Testing: load dataset
+        String dataSet = getResources().getString(R.string.example_dataset);
+        Scanner scan = new Scanner(dataSet);
+        DataScanner datScan = new DataScanner(scan);
+        try
+        {
+        	datScan.checkToken("Party", "Main");
+        	datScan.checkToken("{", "Main");
+        	Party party = new Party(scan, 1);
+        	datScan.checkToken("}", "Main");
+        }
+        catch (Exception e)
+        {
+        	System.out.println(e.getMessage());
+        }
     }
     
     /**
