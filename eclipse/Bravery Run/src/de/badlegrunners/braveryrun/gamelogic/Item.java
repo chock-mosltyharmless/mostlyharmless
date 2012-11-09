@@ -1,6 +1,9 @@
 package de.badlegrunners.braveryrun.gamelogic;
 
 import de.badlegrunners.braveryrun.gamelogic.ActiveSkill;
+import de.badlegrunners.braveryrun.util.DataScanner;
+
+import java.util.Scanner;
 
 /**
  * This is the class for any icon, no matter whether it is
@@ -75,23 +78,24 @@ public class Item {
 	/**
 	 * TODO: Implement the non-cheating idea.
 	 */
-	final int generatorSeedValue;
+	final protected int generatorSeedValue;
 	
 	/**
-	 * The first skill of the item. This may be null for anything but
-	 * for PRIMARY_TOOL and TWOHANDED_TOOL skills. This logic is not
-	 * stored in the game engine, but somehow in the scripts.
+	 * Size of the item.
 	 */
-	protected ActiveSkill firstSkill;
+	final protected int itemSize;
+		
+	/**
+	 * The number of active skills that are present in this item.
+	 */
+	final protected int numActiveSkills;
 	
 	/**
-	 * The optional secondary skill. This skill must be null if the
-	 * firstSkill is null. If the first skill is not null, this skill
-	 * may or may not be null. This is somehow encoded into the
-	 * scripts.
+	 * The list of skills. No element may be null. If there
+	 * is no active skill, the whole array is null.
 	 */
-	protected ActiveSkill secondSkill;
-	
+	final protected ActiveSkill activeSkill[];
+		
 	/**
 	 * Randomly generate an item of the given type.
 	 * TODO: I need some hints how to do this. Like quality of the
@@ -99,13 +103,59 @@ public class Item {
 	 * I pass the character properties, and then go from there?
 	 * 
 	 * @param type Type of the object to generate.
+	 * @param itemSize Size of the item.
 	 */
-	public Item(ItemType type) {
+	public Item(ItemType type, int itemSize) {
 		this.itemType = type;
 		this.generatorSeedValue = 0; // TODO: Implement non-cheater
 		
 		// Item skills
-		firstSkill = null;
-		secondSkill = null;
+		this.numActiveSkills = 0;
+		this.itemSize = itemSize;
+		this.activeSkill = null;
+	}
+	
+	/**
+	 * Loads an Item from a text data file using a scanner object.
+	 * The scanner must point to the start of the item after the
+	 * opening brace. The scanner is put right before the closing brace
+	 * after loading is completed.
+	 * 
+	 * @param scanner The scanner object that holds the data set
+	 * @param version The version of the data set
+	 * @throws Exception If dataset is corrupt
+	 */
+	public Item(Scanner scanner, int version) throws Exception {
+		if (version != 1) {
+			throw new Exception("Item: Unknown data set version:" +
+							    version);
+		}
+		
+		DataScanner datScan = new DataScanner(scanner);
+		datScan.checkToken("itemType", "Item");
+		String type = scanner.next();
+		if (type.equals("PRIMARY_TOOL")) {itemType = ItemType.PRIMARY_TOOL;}
+		else if (type.equals("TWOHANDED_TOOL")) {itemType = ItemType.TWOHANDED_TOOL;}
+		else if (type.equals("SECONDARY_TOOL")) {itemType = ItemType.SECONDARY_TOOL;}
+		else if (type.equals("ARMOR")) {itemType = ItemType.ARMOR;}
+		else if (type.equals("HELMET")) {itemType = ItemType.HELMET;}
+		else {
+			throw new Exception("Item: Unknown type: " + type);
+		}
+
+		generatorSeedValue = datScan.getNextInt("generatorSeedValue",
+											    "Item");
+		itemSize = datScan.getNextInt("itemSize", "Item");
+		numActiveSkills = datScan.getNextInt("numActiveSkills",
+											 "Item");
+		
+		// Load the skills
+		activeSkill = new ActiveSkill[numActiveSkills];
+		for (int i = 0; i < numActiveSkills; i++) {
+			datScan.checkToken("ActiveSkill", "Item");
+			datScan.checkToken("{", "Item");
+			activeSkill[i] = new ActiveSkill(scanner, version);
+			datScan.checkToken("}", "Item");
+		}
 	}
 }

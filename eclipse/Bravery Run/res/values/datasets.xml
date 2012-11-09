@@ -1,0 +1,139 @@
+<resources>
+
+<string name="example_dataset">
+	Party {
+	    Character {
+	    	siz 9
+	    	stat { 4 2 5 7 }
+		    Item {
+		    	itemType PRIMARY_TOOL
+				generatorSeedValue 234234
+				itemSize 3
+				numActiveSkills 2    	
+		
+			    ActiveSkill {
+		    		generatorSeedValue 5
+		    		skillTypeID 7
+		    		quality 19
+		    		itemSize 3
+		    		effect MAGICAL_DAMAGE
+		       		SkillModifiers { modifiers 2 2 1 1 -1 0 }
+		       	}
+		
+			    ActiveSkill {
+		    		generatorSeedValue 123456789
+		    		skillTypeID 1
+		    		quality 0
+		    		itemSize 3
+		    		effect PHYSICAL_DAMAGE
+		       		SkillModifiers { modifiers 2 4 1 2 0 1 }
+		       	}       	
+		    }
+		    
+		    Item {
+		    	itemType SECONDARY_TOOL
+		    	generatorSeedValue 1
+		    	itemSize 5
+		    	numActiveSkills 0
+		    }
+		    
+		    Item {
+		    	itemType ARMOR
+		    	generatorSeedValue 2
+		    	itemSize 7
+		    	numActiveSkills 0
+		    }
+		    
+		    Item {
+		    	itemType HELMET
+		    	generatorSeedValue 3
+		    	itemSize 5
+		    	numActiveSkills 0
+		    }
+		}
+		
+	    Character {
+	    	siz 5
+	    	stat { 1 2 3 4 }
+		    Item {
+		    	itemType PRIMARY_TOOL
+				generatorSeedValue 234234
+				itemSize 1
+				numActiveSkills 1    	
+		
+			    ActiveSkill {
+		    		generatorSeedValue 5
+		    		skillTypeID 7
+		    		quality 19
+		    		itemSize 1
+		    		effect MAGICAL_DAMAGE
+		       		SkillModifiers { modifiers 2 2 1 1 -1 0 }
+		       	}		
+		    }
+		    
+		    Item {
+		    	itemType SECONDARY_TOOL
+		    	generatorSeedValue 1
+		    	itemSize 2
+		    	numActiveSkills 1
+		    	
+			    ActiveSkill {
+		    		generatorSeedValue 123456789
+		    		skillTypeID 1
+		    		quality 0
+		    		itemSize 2
+		    		effect PHYSICAL_DAMAGE
+		       		SkillModifiers { modifiers 2 4 1 2 0 1 }
+		       	}
+		    }
+		    
+		    Item {
+		    	itemType ARMOR
+		    	generatorSeedValue 2
+		    	itemSize 1
+		    	numActiveSkills 0
+		    }
+		    
+		    Item {
+		    	itemType HELMET
+		    	generatorSeedValue 3
+		    	itemSize 1
+		    	numActiveSkills 0
+		    }
+		}
+		
+	    Character {
+	    	siz 2
+	    	stat { 9 8 7 6 }
+		    Item {
+		    	itemType PRIMARY_TOOL
+				generatorSeedValue 234234
+				itemSize 1
+				numActiveSkills 0    	
+		    }
+		    
+		    Item {
+		    	itemType SECONDARY_TOOL
+		    	generatorSeedValue 1
+		    	itemSize 1
+		    	numActiveSkills 0
+		    }
+		    
+		    Item {
+		    	itemType ARMOR
+		    	generatorSeedValue 2
+		    	itemSize 1
+		    	numActiveSkills 0
+		    }
+		    
+		    Item {
+		    	itemType HELMET
+		    	generatorSeedValue 3
+		    	itemSize 1
+		    	numActiveSkills 0
+		    }
+		}
+	}
+</string>
+
+</resources>
