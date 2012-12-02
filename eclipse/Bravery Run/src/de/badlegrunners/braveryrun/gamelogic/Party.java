@@ -23,6 +23,23 @@ public class Party {
 	protected final Character member[];
 	
 	/**
+	 * @return number of members in the party.
+	 */
+	public int getNumMembers() {
+		return numMembers;
+	}
+	
+	/**
+	 * Retrieve the character with the given index. The index
+	 * must be in the range 0..(getNumMembers()-1)
+	 * @param index Index of the member to retreive
+	 * @return The Character with the given member index
+	 */
+	public Character getMember(int index) {
+		return member[index];
+	}
+	
+	/**
 	 * Raw constructor (generates a random party?
 	 */
 	public Party() {

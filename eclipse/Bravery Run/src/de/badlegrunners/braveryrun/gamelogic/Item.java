@@ -95,7 +95,64 @@ public class Item {
 	 * is no active skill, the whole array is null.
 	 */
 	final protected ActiveSkill activeSkill[];
-		
+	
+	/**
+	 * Passive skill encumberance. This skill has a negative effect
+	 * on the evasiveness of the character.
+	 */
+	final protected int encumberance;
+	
+	/**
+	 * Passive skill defense. This skill is used for blocking
+	 * physical damage.
+	 */
+	final protected int defense;
+
+	/**
+	 * Passive skill profanity. This skill has a negative effect on
+	 * the resistance and the magical abilities of the character.
+	 */
+	final protected int profanity;
+	
+	/**
+	 * @return encumberance
+	 */
+	public int getEncumberance() {
+		return encumberance;
+	}
+	
+	/**
+	 * @return Defense value of the item
+	 */
+	public int getDefense() {
+		return defense;
+	}
+	
+	/**
+	 * @return Profanity value of the item
+	 */
+	public int getProfanity() {
+		return profanity;
+	}
+	
+	/**
+	 * @return Number of active skills on this item.
+	 */
+	public int getNumActiveSkills() {
+		return numActiveSkills;
+	}
+	
+	/**
+	 * Get an active skill. The index of the skill must be in
+	 * the range 0..(getNumActiveSkills()-1).
+	 * 
+	 * @param index Index of the active skill to retrieve
+	 * @return The active skill with the given index
+	 */
+	public ActiveSkill getActiveSkill(int index) {
+		return activeSkill[index];
+	}
+	
 	/**
 	 * Randomly generate an item of the given type.
 	 * TODO: I need some hints how to do this. Like quality of the
@@ -113,6 +170,9 @@ public class Item {
 		this.numActiveSkills = 0;
 		this.itemSize = itemSize;
 		this.activeSkill = null;
+		this.encumberance = 0;
+		this.defense = 0;
+		this.profanity = 0;
 	}
 	
 	/**
@@ -149,7 +209,7 @@ public class Item {
 		numActiveSkills = datScan.getNextInt("numActiveSkills",
 											 "Item");
 		
-		// Load the skills
+		// Load the active skills
 		activeSkill = new ActiveSkill[numActiveSkills];
 		for (int i = 0; i < numActiveSkills; i++) {
 			datScan.checkToken("ActiveSkill", "Item");
@@ -157,5 +217,10 @@ public class Item {
 			activeSkill[i] = new ActiveSkill(scanner, version);
 			datScan.checkToken("}", "Item");
 		}
+		
+		// Load the passive skills
+		encumberance = datScan.getNextInt("encumberance", "Item");
+		defense = datScan.getNextInt("defense", "Item");
+		profanity = datScan.getNextInt("profanity", "Item");
 	}
 }
