@@ -3,11 +3,9 @@
  */
 package de.badlegrunners.braveryrun;
 
-import de.badlegrunners.braveryrun.gamelogic.Party;
-import de.badlegrunners.braveryrun.util.DataScanner;
-import java.util.Scanner;
-
+import de.badlegrunners.braveryrun.userinterface.Game;
 import de.badlegrunners.braveryrun.graphics.RenderMachine;
+import de.badlegrunners.braveryrun.graphics.MySurfaceView;
 
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -22,13 +20,22 @@ import android.view.WindowManager;
  * @author chock
  */
 public class BraveryRun extends Activity {
-
 	/**
 	 * The OpenGL view.
 	 * TODO extend this class and move it into braveryrun.graphics so
 	 * that I can respond to touch events.
 	 */
-	private GLSurfaceView glSurfaceView;
+	private MySurfaceView mySurfaceView;
+	
+	/**
+	 * The machine that is the wrapper for all the rendering
+	 */
+	private RenderMachine renderMachine;
+		
+	/**
+	 * The main game user interface and state machine.
+	 */
+	protected Game game;
 	
 	/**
 	 * Called when the activity is created.
@@ -48,28 +55,20 @@ public class BraveryRun extends Activity {
         
         // Initiate OpenGL view and create an instance with
         // this activity
-        glSurfaceView = new GLSurfaceView(this);
+        mySurfaceView = new MySurfaceView(this);
         
         // set our renderer to be the main renderer with the
         // current activity context
-        glSurfaceView.setRenderer(new RenderMachine(this));
-        setContentView(glSurfaceView);
+        mySurfaceView.setEGLConfigChooser(false);
+        renderMachine = new RenderMachine();
+        game = new Game(this, renderMachine);
+        mySurfaceView.setRenderer(renderMachine);
+        setContentView(mySurfaceView);
         
-        // Testing: load dataset
-        String dataSet = getResources().getString(R.string.example_dataset);
-        Scanner scan = new Scanner(dataSet);
-        DataScanner datScan = new DataScanner(scan);
-        try
-        {
-        	datScan.checkToken("Party", "Main");
-        	datScan.checkToken("{", "Main");
-        	Party party = new Party(scan, 1);
-        	datScan.checkToken("}", "Main");
-        }
-        catch (Exception e)
-        {
-        	System.out.println(e.getMessage());
-        }
+        // Render the view only when there is a change in
+        // the drawing area. This is signalled by a requestRender()
+        // call to the glSurfaceView.
+        //mySurfaceView.setRenderMode(GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     }
     
     /**
@@ -78,7 +77,7 @@ public class BraveryRun extends Activity {
     @Override
     protected void onResume() {
     	super.onResume();
-    	glSurfaceView.onResume();
+    	mySurfaceView.onResume();
     }
     
     /**
@@ -87,7 +86,7 @@ public class BraveryRun extends Activity {
     @Override
     protected void onPause() {
     	super.onPause();
-    	glSurfaceView.onPause();
+    	mySurfaceView.onPause();
     }
 
     /**

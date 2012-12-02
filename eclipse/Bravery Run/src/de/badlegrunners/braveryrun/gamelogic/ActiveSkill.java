@@ -90,11 +90,6 @@ public class ActiveSkill {
 	protected final SkillModifiers skillModifiers;
 	
 	/**
-	 * Get the effect of this skill
-	 */
-	public EffectType getEffect() {return effect;}
-	
-	/**
 	 * Core constructor of an active skill.
 	 * @param seed Random number generator for the seed value
 	 * @param skillID The type of base skill to use for generation
@@ -150,5 +145,42 @@ public class ActiveSkill {
 		datScan.checkToken("{", "ActiveSkill");
 		skillModifiers = new SkillModifiers(scanner, version);
 		datScan.checkToken("}", "ActiveSkill");
+	}
+
+	/**
+	 * Applies the effects of an active skill. The target character
+	 * suffers the effects of the skill that the active character
+	 * applies. It is not ascertained that the active character
+	 * actually posseses the skill.
+	 * 
+	 * @param activeCharacter The character that uses the skill
+	 * @param targetCharacter The character that is the target of the skill
+	 */
+	public void apply(Character activeCharacter,
+					  Character targetCharacter) {
+		// Get the amount of the effectiveness (if applicable).
+		int amount = skillModifiers.getSkillValue(activeCharacter);
+		// Check for evade (if applicable)
+		boolean evade = targetCharacter.getEvade();
+		
+		switch (effect) {
+		case PHYSICAL_DAMAGE:
+			if (!evade) {
+				targetCharacter.physicalDamage(amount);
+			}
+			break;
+			
+		case MAGICAL_DAMAGE:
+			if (!evade) {
+				amount = activeCharacter.applyMagicMultiplier(amount);
+				targetCharacter.magicalDamage(amount);
+			}
+			break;
+			
+		case HEAL:
+			amount = activeCharacter.applyMagicMultiplier(amount);
+			targetCharacter.heal(amount);
+			break;
+		}
 	}
 }
