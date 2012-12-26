@@ -996,7 +996,7 @@ Pass 1]]></RmTextDataBlock></RmStringVariable>
     </RmRegistryBranch>
     <RmRegistryBranch NAME="WORKSPACE" API="" XML_VERSION="RenderMonkey 1.71">
      <RmStringVariable NAME="LAST_SAVE" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
-25/12/2012 10:42:13]]></RmTextDataBlock></RmStringVariable>
+26/12/2012 11:15:30]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
 RenderMonkey Version 1.82 (build 322)]]></RmTextDataBlock></RmStringVariable>
      <RmStringVariable NAME="XML_VERSION" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC=""><RmTextDataBlock TYPE="TEXT"><![CDATA[
@@ -1035,6 +1035,7 @@ void main(void)
    gl_Position = vec4(gl_Vertex.x*0.02, gl_Vertex.y*0.02, 0.5, 1.0);
 }]]></RmShaderCode></RmGLShader>
      <RmGLShader NAME="Fragment Program" API="OpenGL" PIXEL_SHADER="TRUE"><RmShaderCode TYPE="TEXT"><![CDATA[
+
 uniform sampler3D Texture0;
 
 varying vec3 objectPosition;
@@ -1198,7 +1199,7 @@ void main(void)
     </RmGLPass>
    </RmOpenGLEffect>
   </RmEffectGroup>
-  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="79.092979" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
+  <RmFloatVariable NAME="fTime0_X" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="Time0_X" VALUE="18.544233" MIN="-1.000000" MAX="1.000000" CLAMP="FALSE"/>
   <Rm3DTextureVariable NAME="RandomRGB3D-new" API="" ARTIST_EDITABLE="FALSE" VARIABLE_SEMANTIC="" FILE_NAME="..\noise\RandomRGB3D-new.dds" ORIGIN="0"/>
  </RmEffectWorkspace>
 </RENDER_MONKEY>
