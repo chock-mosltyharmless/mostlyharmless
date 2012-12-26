@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 #include "chockNgt.h"
-#include "bass.h"
+#include "bassmod.h"
 #include "font.h"
 
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
@@ -34,10 +34,11 @@ unsigned char fontCompressed[4][fontHeight][fontWidth];
 unsigned char font[fontHeight][fontWidth][4];
 int fontX[256];
 int fontY[256];
-unsigned char scroller[] = "asjdhgajhsdg ajhsgd jahsg djahsgd jhasg djahsg djhasgdjhasg djhag djhagjh dag jhsdga sjhdg ajhsg djahsg djhagsj dhag hsjdg ajshdg ajshgd ajhsg djhasg djhag djhajs dhga jsdhg asd";
+const char scroller[] = \
+"        oooh, not another of those epic realtime demos you might say. i say, bring them on, good things are still to come! if it isn\'t for the circus that\'s driving you mad, maybe we\'re more successful with this nice little feature presentation. the key to success in getting insane is to stare on the cube and let the demo run for at least 10 minutes. or you could try to read all this babbling and get the infamous everything-moves-to-the-right-after-reading-a-scroller-for-too-long-syndrome. whatever suits your needs... let\'s shout out some greetings to our allies from nuance, cosine, genesis project, mostly harmless, squoquo, squopoo, jumalauta, toxie. finally we managed to put it all together. thanks guys! so hopefully you\'re able to read this text, because, in the end, the world might already have ended to turn... to fill up space here are some credits, music by dalezy / local conversions by others, code by widdy - wii and gba, nitro - vectrex, chock - pc 4k, chokes on dick - pc demo, hopper - atari xl, yoda - wild. scolltext by hopper        we finally reached the 1kb mark, so let\'s bring it all to a good end and as the mayans said - it will all repeat itself, so here you go...  *        ";
 
-#define OFFSCREEN_WIDTH 1024
-#define OFFSCREEN_HEIGHT 512
+#define OFFSCREEN_WIDTH 512
+#define OFFSCREEN_HEIGHT 256
 
 #define glCreateShader ((PFNGLCREATESHADERPROC)glFP[0])
 #define glCreateProgram ((PFNGLCREATEPROGRAMPROC)glFP[1])
@@ -57,6 +58,18 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glTexImage3D", "glGetShaderiv","glGetShaderInfoLog",
 };
 
+// TODO: Check implementation from somewhere else. Esp. %65535? Numeric recipies.
+static unsigned long seed;
+float frand()
+{
+	unsigned long a = 214013;
+	unsigned long c = 2531011;
+	unsigned long m = 4294967296-1;
+	seed = (seed * a + c) % m;
+	//return (seed >> 8) % 65535;
+	return (float)((seed>>8)%65535) * (1.0f/65536.0f);
+}
+
 // The model matrix is used to send the parameters to the hardware...
 static float parameterMatrix[16];
 
@@ -69,101 +82,133 @@ GLint viewport[4];
 
 char err[4097];
 
+// Name of the 32x32x32 noise texture
+#define FLOAT_TEXTURE
+#define NOISE_TEXTURE_SIZE 16 // try smaller?
+static GLuint noiseTexture;
+#ifdef FLOAT_TEXTURE
+static float noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
+#else
+static unsigned char noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];
+#endif
+
 const GLchar *fragmentMainBackground = ""
- "varying vec2 vTexCoord;"
- "varying vec3 z;"
- "varying mat4 v;"
- "vec4 n(vec4 v)"
- "{"
-   "return fract((v.zxwy+vec4(.735,.369,.438,.921))*vec4(9437.4,7213.5,5935.72,4951.6));"
- "}"
- "vec4 n(vec4 v,vec4 s)"
- "{"
-   "return vec4(v.x*s.x-dot(v.yzw,s.yzw),v.x*s.yzw+s.x*v.yzw+cross(v.yzw,s.yzw));"
- "}"
- "mat3 s(vec4 v)"
- "{"
-   "vec4 s=v.x*v,c=v.y*v,z=v.z*v;"
-   "return mat3(1.)-2.*mat3(c.y+z.z,z.w-s.y,-s.z-c.w,-s.y-z.w,s.x+z.z,s.w-c.z,c.w-s.z,-c.z-s.w,s.x+c.y);"
- "}"
- "float m(vec3 v)"
- "{"
-   "v=v.xzy*5.;"
-   "vec3 s=v*v;"
-   "float z=s.x+2.25*s.y+s.z-1.,c=s.x*s.z*v.z+.08888*s.y*s.z*v.z;"
-   "return z*z*z-c;"
- "}"
- "void main()"
- "{"
-   "vec4 c=v[1];"
-   "vec3 f=normalize(z*vec3(1.,.6,1.)),l=vec3(0.,0.,-v[0][1]);"
-   "float i=v[0][2]*4.5;"
-   "l.xz=vec2(cos(i)*l.x-sin(i)*l.z,sin(i)*l.x+cos(i)*l.z);"
-   "f.xz=vec2(cos(i)*f.x-sin(i)*f.z,sin(i)*f.x+cos(i)*f.z);"
-   "vec3 x=l;"
-   "float r=8.;"
-   "vec3 w=vec3(0.);"
-   "float y,e=0.,a=0.;"
-   "for(int g=0;length(x)<r&&e<.9&&g<50;g++)"
-     "{"
-       "float b;"
-       "vec4 t=normalize(vec4(cos(v[0][3]),sin(v[0][3]),sin(v[0][3]*1.3),sin(v[0][3]*2.7)));"
-       "float o=1.;"
-       "vec3 d=vec3(0.),h=vec3(1.,.4,.2);"
-       "if(v[1][2]<.5)"
+"uniform sampler3D Texture0;"
+"varying vec3 z;"
+"varying mat4 v;"
+"varying vec2 vTexCoord;"
+"vec3 noise(vec3 pos, int iterations, float reduction)"
+"{"
+"float n=1.;"
+"pos*=2.;"
+"vec3 result=vec3(0.);"
+"for(;iterations>0;iterations--)"
+"{"
+"result += texture3D(Texture0,pos).xyz*n;"
+"n*=reduction;"
+"pos*=1.93;"
+"}"
+"return result;"
+"}"
+"vec3 color(vec3 pos, vec3 noiseStuff, vec3 colMult)"
+"{"
+   "float dist = length(pos);"
+   "float color = smoothstep(0.3, 1.2, dist);"
+   "float brightness = smoothstep(-1.2, 0.0, -color);"
+   "float stuffi = noiseStuff.g * noiseStuff.b;"
+   "colMult -= stuffi * (8.1, 18.5, 13.2);"
+   "return abs(stuffi) * vec3(0.7, 0.4, 0.2) + mix(vec3(1.0)-colMult, colMult, color) * brightness + 0.2 * (1.0-brightness);"
+"}"
+"void main(void)"
+"{  "
+   "float fTime0_X = v[0][0];"
+   "vec3 tvNoise =  noise(z*0.05 + vec3(0.,0.,fTime0_X*0.01), 8, 0.65);"
+   "vec3 rayDir = normalize(z * vec3(1.0, 0.6, 1.0));"
+   "vec3 fRayDir = rayDir;"
+   "float sw1 = floor(fTime0_X);"
+   "float sw2 = fTime0_X - sw1;"
+   "float swoosher = sw1 + pow(sw2, 0.6);"
+   "vec3 camPos = vec3(1.5*sin(swoosher * 0.7), -0.5+cos(swoosher * 1.3), -7.0 + 3.0 * sin(swoosher*0.5));"
+   "float alpha = swoosher * 2.37;"
+   "camPos.yz = vec2(cos(alpha)*camPos.y - sin(alpha)*camPos.z,"
+                    "sin(alpha)*camPos.y + cos(alpha)*camPos.z);"
+   "rayDir.yz = vec2(cos(alpha)*rayDir.y - sin(alpha)*rayDir.z,"
+                    "sin(alpha)*rayDir.y + cos(alpha)*rayDir.z);"
+   "alpha = swoosher * 2.17;"
+   "camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,"
+                    "sin(alpha)*camPos.x + cos(alpha)*camPos.z);"
+   "rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,"
+                    "sin(alpha)*rayDir.x + cos(alpha)*rayDir.z);"
+   "vec3 rayPos = camPos;"
+   "vec3 fRayPos = vec3(sin(fTime0_X * 0.9), 2., cos(fTime0_X * 0.7));"
+   "float sceneSize = 20.0;"
+   "vec3 totalColor = vec3(0.);"
+   "float stepSize;"
+   "float totalDensity = 0.0;"
+   "float coneSize = 0.003;   "
+   "while(length(rayPos)<sceneSize && totalDensity < 0.95)"
+   "{"
+      "vec3 tmpPos = rayPos;   "
+      "vec3 noiseData = noise(tmpPos*0.015+ vec3(0.0, fTime0_X*0.003, 0.0), 5, 0.5);"
+      "float firstNoise = noiseData.r;"
+      "firstNoise = clamp(0.4 - abs(firstNoise), 0.0, 0.4);"
+      "firstNoise *= firstNoise * 2.;"
+      "vec3 noiseData2 = noise(noiseData*0.2 + rayPos*0.1 - vec3(0.0, fTime0_X*0.017, 0.0), 5, 0.8);"
+      "float noiseVal = noiseData2.r * 0.2;"
+      "vec3 absPos = abs(tmpPos);"
+      "float sphere = max(absPos.x, max(absPos.y, absPos.z)) - 1. - firstNoise;"
+      "float sphere2 = abs(length(tmpPos) - 1.0 - 1.*firstNoise) + 0.1;"
+      "float implicitVal;"
+      "vec3 colMult;"
+      "colMult = vec3(0.8, 0.3, 0.1);"
+      "float outer = sphere2-1.8*firstNoise;"
+      "outer = max(outer, min(outer, 0.) + 1.*noiseVal);      "
+      "implicitVal = min(sphere, outer);"
+      "float floorDist = fRayPos.y - 0.4f * fRayPos.z + 1.5f;"
+      "totalColor += vec3(1./50., 1./70., 1./90.) * 0.75;"
+      "totalDensity += 2./(300. * exp(2.0*max(implicitVal, 0.0)));"
+      "if (implicitVal < 0.0)"
+      "{"
+         "float localDensity = clamp(0.0 - max(120.*noiseVal,0.1)*implicitVal, 0.0, 1.0);"
+         "totalColor = totalColor + (1.-totalDensity) * color(rayPos*0.4, noiseData2, colMult) * localDensity;"
+         "totalDensity = totalDensity + (1.-totalDensity) * localDensity;"
+      "}"
+      "if (floorDist < 0.)"
+      "{"
+         "float localDensity = 1.0;"
+#if 0
+         "vec3 col = vec3(0.0, 0.0, 0.0);"
+		 "vec3 baseRayPos = 0.5*fRayPos - floor(0.5*fRayPos) - 0.5;"
+         "if (baseRayPos.x * baseRayPos.z < 0.0)"
          "{"
-           "b=1e+10;"
-           "for(int u=0;u<12;u++)"
-             "{"
-               "vec4 k;"
-               "float p;"
-               "vec3 F,C;"
-               "mat3 Z=s(t);"
-               "vec4 Y=c;"
-               "for(int X=0;X<4;X++)"
-                 "{"
-                   "Y=n(Y);"
-                   "vec3 W=o*(Y.xyz*Y.xyz*Y.xyz*Y.xyz*vec3(.2)+vec3(.05));"
-                   "b=min(b,length(max(abs((x-(.5*Y.wzx-vec3(.25))*Z*o-d)*s(n(normalize(Y-vec4(.5)),t)))-W,0.))-length(W)*.3);"
-                 "}"
-               "float W=1e+10;"
-               "for(int X=0;X<2;X++)"
-                 "{"
-                   "Y=n(Y);"
-                   "vec4 V=n(normalize(Y-vec4(.5)),t);"
-                   "float U=o*(Y.x*.3+.25);"
-                   "vec3 T=(.5*Y.wzx-vec3(.25))*Z*o+d;"
-                   "float S=length(x-T)-U;"
-                   "if(S<W)"
-                     "W=S,k=V,p=U,F=T,C=Y.xyz;"
-                 "}"
-               "if(W>b)"
-                 "{"
-                   "break;"
-                 "}"
-               "else"
-                 " t=k,o=p,d=F,h=.5*h+.5*C;"
-             "}"
+             "col = vec3(0.3, 0.5, 0.7);"
          "}"
-       "else"
+#else
+         "float amount = 0.0;"
+		 "vec3 baseRayPos = 0.5*fRayPos - floor(0.5*fRayPos) - 0.5 + 0.1 * noise(0.4 * fRayPos, 5, 0.5).xyz;"
+		 "float dist = 2.0 * max(abs(abs(baseRayPos.x) - 0.25), abs(abs(baseRayPos.z) - 0.25));"
+		 "amount = dist;"
+         "if (baseRayPos.x * baseRayPos.z < 0.0)"
          "{"
-           "float Y=.01,W=m(x);"
-           "vec3 X=1./Y*(vec3(m(x+vec3(Y,0.,0.)),m(x+vec3(0.,Y,0.)),m(x+vec3(0.,0.,Y)))-vec3(W));"
-           "b=W/(length(X)+Y);"
-           "h=vec3(1.,.2,.2);"
+             "amount = 1.-amount;"
          "}"
-       "w+=vec3(.02,1./70.,1./90.)*3.06/exp(abs(b*5.))*v[3][3];"
-       "e+=1./15./exp(abs(b*10.)+.5);"
-       "a+=abs(b)*.99;"
-       "if(b<0.)"
-         "w=w+(1.-e)*h,e=1.f;"
-       "y=max(.005*a,abs(b)*.99);"
-       "x+=f*y;"
-     "}"
-   "float Y=normalize(f).y;"
-   "w+=(1.-e)*(Y*vec3(0.,-.4,-.3)+(1.-Y)*vec3(0.,.4,.6));"
-   "gl_FragColor=vec4(w-vec3(0.),1.);"
- "}";
+		 "amount = smoothstep(0.45, 0.55, amount);"
+		 "vec3 col = lerp(vec3(0.0, 0.0, 0.0), vec3(0.3, 0.5, 0.7), amount);"
+#endif
+         "totalColor = totalColor + (1.-totalDensity) * col * localDensity;"
+         "totalDensity = totalDensity + (1.-totalDensity) * localDensity;          "
+      "}"
+      "stepSize = min(implicitVal, floorDist) * 0.8;"
+      "stepSize = 0.01 + smoothstep(0.0, 2.0, stepSize) * 2.;"
+      "stepSize = max(coneSize, stepSize);"
+      "coneSize += stepSize * 0.003;"
+      "rayPos += rayDir * stepSize;"
+      "fRayPos += fRayDir * stepSize;"
+   "}   "
+   "float grad = normalize(rayPos).y;"
+   "totalColor += (1.-totalDensity) * (grad * vec3(0.0,0.1,0.2) + (1.-grad)*vec3(0.0,0.2,0.3));"
+   "gl_FragColor = vec4(totalColor-vec3(0.1), 1.0);"
+"}";
 
 const GLchar *fragmentOffscreenCopy="\
 uniform sampler2D t;\
@@ -176,11 +221,11 @@ void main(void)\
     vec2 n=vec2(fract(sin(dot(z.xy+v[0][0],vec2(12.9898,78.233)))*43758.5453));\
 	gl_FragColor=texture2D(t,.5*z.xy+.5+.0007*n)+n.x*.02;\
   } else {\
-	vec2 pos = vTexCoord + vec2(-0.003, 0.0);\
+	vec2 pos = vTexCoord + vec2(-0.000, 0.0);\
 	gl_FragColor = vec4(0.0);\
-	for (int i = -5; i <= 5; i++) {\
-		gl_FragColor += texture2D(t, pos)/11.0;\
-		pos += vec2(0.003/5.0, 0.0);\
+	for (int i = -0; i <= 0; i++) {\
+		gl_FragColor += texture2D(t, pos)/1.0;\
+		pos += vec2(0.000/1.0, 0.0);\
 	}\
   }\
 }";
@@ -262,7 +307,20 @@ void glInit()
 	// Create and link shader and stuff:
 	// I will have to separate these to be able to use more than one shader...
 	// TODO: I should make some sort of compiling and linking loop...
-	
+
+	// create noise Texture
+#ifdef FLOAT_TEXTURE
+	for (int i = 0; i < NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4; i++)
+	{
+		noiseData[i] = frand() - 0.5f;
+	}
+#else
+	for (int i = 0; i < NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4; i++)
+	{
+		noiseData[i] = (unsigned char)rand();
+	}
+#endif
+
 	// init objects:
 	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
 	GLuint fMainBackground = glCreateShader(GL_FRAGMENT_SHADER);	
@@ -347,6 +405,26 @@ void glInit()
 			}
 		}
 	}
+
+	// Set texture.
+	glEnable(GL_TEXTURE_3D); // automatic?
+	glGenTextures(1, &noiseTexture);
+	glBindTexture(GL_TEXTURE_3D, noiseTexture);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+#ifdef FLOAT_TEXTURE
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F,
+				 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
+				 0, GL_RGBA, GL_FLOAT, noiseData);
+#else
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8,
+				 NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE,
+				 0, GL_RGBA, GL_UNSIGNED_BYTE, noiseData);
+#endif
+
 	// Load font texture
 	glGenTextures(1, &fontTexture);
 	glBindTexture(GL_TEXTURE_2D, fontTexture);
@@ -407,16 +485,16 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	long lastTime = 0;
 
 	// start music playback
-	BASS_Init(-1,44100,0,hWnd,NULL);
-	//mp3Str=BASS_StreamCreateFile(FALSE,"GT_muc.mp3",0,0,0);
-	//BASS_ChannelPlay(mp3Str, TRUE);
-	//BASS_Start();
+	/* setup output - default device, 44100hz, stereo, 16 bits */
+	BASSMOD_Init(-1,44100,BASS_DEVICE_NOSYNC);
+	BASSMOD_MusicLoad(FALSE,"dalezy - trollmannen_s krypt..mod",0,0,BASS_MUSIC_LOOP);
+	BASSMOD_MusicPlay();
+
 	float fCurTime;
 	GetAsyncKeyState(VK_ESCAPE);
 
 	do
     {
-		SetCursor(FALSE);
 
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 		{
@@ -427,6 +505,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			}
 		}
 		if (msg.message == WM_QUIT) break; // early exit on quit
+
+		SetCursor(FALSE);
 
 		// update timer
 		long curTime = timeGetTime() - startTime;
@@ -447,10 +527,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glLoadMatrixf(parameterMatrix);
 
 		// draw offscreen
+		glBindTexture(GL_TEXTURE_3D, noiseTexture);
 		glGetIntegerv(GL_VIEWPORT, viewport);
 		glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 		glUseProgram(shaderPrograms[0]);
-		glRectf(-0.1, -0.1, 0.0, 0.0);
+		glRectf(-1.0, -1.0, 1.0, 1.0);
 
 		//// copy to front
 		glViewport(0, 0, viewport[2], viewport[3]);
@@ -470,20 +551,22 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glBegin(GL_QUADS);
 		for (int i = 0; i < sizeof(scroller)-1; i++)
 		{
-			float pos = 1.0f - fCurTime * 1.0f;
+			float pos = 15.0f - fCurTime * 10.0f;
 			int ch = scroller[i];
-			float xp = (fontX[ch] * 48.0f + 0.5f) / fontWidth;
-			float yp = (fontY[ch] * 48.0f + 0.5f) / fontHeight;
-			float w = 46.5f / fontWidth;
-			float h = 46.5f / fontHeight;
+			float xp = (fontX[ch] * 48.0f + 1.0f) / fontWidth;
+			float yp = (fontY[ch] * 48.0f + 1.0f) / fontHeight;
+			float w = 45.5f / fontWidth;
+			float h = 45.5f / fontHeight;
+			// repeat scroller
+			while (pos < -1.0f * sizeof(scroller)) pos += 1.0f * sizeof(scroller);
 			glTexCoord2f(xp, yp + h);
-			glVertex3f(pos + (i*1.0f)*0.2f/1920.0f*1080.0f, 0.7f, 0.5f);
+			glVertex3f((pos + i*1.0f)*0.2f/1920.0f*1080.0f, 0.7f, 0.5f);
 			glTexCoord2f(xp, yp);
-			glVertex3f(pos + (i*1.0f)*0.2f/1920.0f*1080.0f, 0.9f, 0.5f);
+			glVertex3f((pos + i*1.0f)*0.2f/1920.0f*1080.0f, 0.9f, 0.5f);
 			glTexCoord2f(xp+w, yp);
-			glVertex3f(pos + (i*1.0f+1.0f)*0.2f/1920.0f*1080.0f, 0.9f, 0.5f);
+			glVertex3f((pos + i*1.0f+1.0f)*0.2f/1920.0f*1080.0f, 0.9f, 0.5f);
 			glTexCoord2f(xp+w, yp + h);
-			glVertex3f(pos + (i*1.0f+1.0f)*0.2f/1920.0f*1080.0f, 0.7f, 0.5f);
+			glVertex3f((pos + i*1.0f+1.0f)*0.2f/1920.0f*1080.0f, 0.7f, 0.5f);
 		}
 		glEnd();
 		glDisable(GL_BLEND);
@@ -495,9 +578,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     } while (msg.message != WM_QUIT && fCurTime < 230.0f && !GetAsyncKeyState(VK_ESCAPE));
 
 	// music uninit
-	//BASS_ChannelStop(mp3Str);
-	//BASS_StreamFree(mp3Str);
-	BASS_Free();
+	BASSMOD_MusicFree(); // free the current mod
 
 	wglDeleteContext(hRC);
 	ReleaseDC(hWnd, hDC);
