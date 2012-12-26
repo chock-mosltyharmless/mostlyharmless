@@ -8,6 +8,8 @@
 
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
+HWND hWnd;
+
 // -------------------------------------------------------------------
 //                          Constants:
 // -------------------------------------------------------------------
@@ -193,7 +195,7 @@ const GLchar *fragmentMainBackground = ""
              "amount = 1.-amount;"
          "}"
 		 "amount = smoothstep(0.45, 0.55, amount);"
-		 "vec3 col = lerp(vec3(0.0, 0.0, 0.0), vec3(0.3, 0.5, 0.7), amount);"
+		 "vec3 col = mix(vec3(0.0, 0.0, 0.0), vec3(0.3, 0.5, 0.7), amount);"
 #endif
          "totalColor = totalColor + (1.-totalDensity) * col * localDensity;"
          "totalDensity = totalDensity + (1.-totalDensity) * localDensity;          "
@@ -335,7 +337,6 @@ void glInit()
 	glShaderSource(fOffscreenCopy, 1, &fragmentOffscreenCopy, NULL);
 	glCompileShader(fOffscreenCopy);
 
-#ifdef SHADER_DEBUG
 	// Check programs
 	int tmp, tmp2;
 	glGetShaderiv(vMainObject, GL_COMPILE_STATUS, &tmp);
@@ -362,7 +363,6 @@ void glInit()
 		MessageBox(hWnd, err, "fOffscreeCopy shader error", MB_OK);
 		return;
 	}
-#endif
 
 	// link shaders:
 	glAttachShader(shaderPrograms[0], vMainObject);
@@ -470,7 +470,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// Create the window
     //mainWnd = CreateWindow (szAppName,szAppName,WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,600,0,0,hInstance,0);
 	//mainWnd = CreateWindow("epic","epic",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
-    HWND hWnd = CreateWindow( "static",0,WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,0,0);
+    hWnd = CreateWindow( "static",0,WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,0,0);
     HDC hDC = GetDC(hWnd);
     // initalize opengl
     if( !SetPixelFormat(hDC,ChoosePixelFormat(hDC,&pfd),&pfd) ) return -1;
