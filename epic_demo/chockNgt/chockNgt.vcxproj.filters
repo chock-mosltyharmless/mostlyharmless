@@ -36,10 +36,10 @@
     <ClInclude Include="chockNgt.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="bass.h">
+    <ClInclude Include="font.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="font.h">
+    <ClInclude Include="bassmod.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>
@@ -52,7 +52,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="bass.lib">
+    <Library Include="BASSMOD.lib">
       <Filter>Ressourcendateien</Filter>
     </Library>
   </ItemGroup>

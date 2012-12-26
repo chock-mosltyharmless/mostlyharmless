@@ -83,7 +83,7 @@
     <None Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bass.h" />
+    <ClInclude Include="bassmod.h" />
     <ClInclude Include="chockNgt.h" />
     <ClInclude Include="font.h" />
     <ClInclude Include="glext.h" />
@@ -98,7 +98,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="bass.lib" />
+    <Library Include="BASSMOD.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
