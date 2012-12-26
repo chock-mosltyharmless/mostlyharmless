@@ -18,7 +18,7 @@ frames = A(ind);
 %win = hann(FFTLength);
 
 % My new window adds to 1...
-win = hann(FFTLength);
+win = hanning(FFTLength);
 win(FFTLength/2+1:end) = 1 - win(1:FFTLength/2);
 win = sqrt(win);
 

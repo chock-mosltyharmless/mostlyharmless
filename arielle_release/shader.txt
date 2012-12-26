@@ -1,0 +1,144 @@
+varying vec3 v;
+varying mat4 m;
+
+vec4 randomIteration(vec4 seed)
+{
+   return fract((seed.zxwy + vec4(0.735, 0.369, 0.438, 0.921)) * vec4(9437.4, 7213.5, 5935.72, 4951.6));
+}
+
+vec4 quatMult( vec4 q1, vec4 q2 ) {
+   return vec4(q1.x * q2.x - dot( q1.yzw, q2.yzw ), q1.x * q2.yzw + q2.x * q1.yzw + cross( q1.yzw, q2.yzw ));
+}
+
+mat3 quaternionToMatrix(vec4 q)
+{
+   vec4 qx = q.x * q;
+   vec4 qy = q.y * q;
+   vec4 qz = q.z * q;
+   return mat3(1.0) - 2. * mat3(qy.y+qz.z,  qz.w-qx.y,  -qx.z-qy.w,
+								-qx.y-qz.w, qx.x+qz.z,  qx.w-qy.z,
+								qy.w-qx.z,  -qy.z-qx.w, qx.x+qy.y);
+}
+
+float heart(vec3 z)
+{
+	z = z.xzy*5.0;
+	vec3 z2=z*z;
+	float lp = z2.x + 2.25*z2.y + z2.z - 1.0;
+	float rp = z2.x*z2.z*z.z + 0.08888*z2.y*z2.z*z.z;
+	return lp*lp*lp-rp;
+}
+
+void main(void)
+{  
+   vec4 coreSeed = m[1];
+
+   vec3 rayDir = normalize(v * vec3(1.0, 0.6, 1.0));
+   vec3 camPos = vec3(0.0, 0.0, -m[0][1]);
+   
+   // rotate camera around y axis
+   float alpha = m[0][2] * 4.5;
+   camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,
+                    sin(alpha)*camPos.x + cos(alpha)*camPos.z);
+   rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,
+                    sin(alpha)*rayDir.x + cos(alpha)*rayDir.z);
+   
+   vec3 rayPos = camPos;
+   float sceneSize = 8.0;
+   vec3 totalColor = vec3(0.);
+   float stepSize;
+   float totalDensity = 0.0;
+   float stepDepth = 0.0; // how far I went already.
+   
+   for(int step = 0; length(rayPos)<sceneSize && totalDensity < 0.9 && step < 50; step++)
+   {      
+      float implicitVal;
+      // This stuff is the transformation information from previous stuff
+	  vec4 prevQuaternion = normalize(vec4(cos(m[0][3]), sin(m[0][3]), sin(m[0][3] * 1.3), sin(m[0][3] * 2.7)));
+      float prevLength = 1.0;
+      vec3 prevMover = vec3(0.0);
+      vec3 prevColor = vec3(1.0, 0.4, 0.2);
+	  
+	  if (m[1][2] < 0.5) {
+		  
+		  // Multiple boxes
+		  implicitVal = 1.0e10;
+		  
+		  for (int loop = 0; loop < 12; loop++)
+		  {
+			 vec4 newQuaternion;
+			 float newLength;
+			 vec3 newMover;
+			 vec3 newColor;
+			 
+			 mat3 prevRotationMatrix = quaternionToMatrix(prevQuaternion);
+	
+			 // Loop for solid stuff
+			 vec4 seed = coreSeed;
+			 for (int k = 0; k < 4; k++)
+			 {
+				seed = randomIteration(seed);
+				vec3 lengthes = prevLength * (seed.xyz * seed.xyz * seed.xyz * seed.xyz * vec3(0.2) + vec3(0.05));
+				implicitVal = min(implicitVal, length(max(abs((rayPos - ((0.5*seed.wzx - vec3(0.25)) * prevRotationMatrix * prevLength) - prevMover) * quaternionToMatrix(quatMult(normalize(seed - vec4(0.5)), prevQuaternion))) - lengthes, 0.0)) - length(lengthes) * 0.3);
+			 }
+			 
+			 // Non-solid:
+			 float nonSolidDist = 1.0e10;
+			 for (int k = 0; k < 2; k++)
+			 {
+				seed = randomIteration(seed);
+				vec4 quaternion = quatMult(normalize(seed - vec4(0.5)), prevQuaternion);
+				float lengthes = prevLength * (seed.x * 0.3 + 0.25);
+				vec3 mover = ((0.5*seed.wzx - vec3(0.25)) * prevRotationMatrix * prevLength) + prevMover;
+				float curImplicitVal = length(rayPos - mover) - lengthes;
+				if (curImplicitVal < nonSolidDist)
+				{
+				   nonSolidDist = curImplicitVal;
+				   newQuaternion = quaternion;
+				   newLength = lengthes;
+				   newMover = mover;
+				   newColor = seed.xyz;
+				}
+			 }
+			 
+			 if (nonSolidDist > implicitVal)
+			 {
+				// I will not get closer than where I am now.
+				break;
+			 }
+			 else
+			 {
+				prevQuaternion = newQuaternion;
+				prevLength = newLength;
+				prevMover = newMover;
+				prevColor = 0.5 * prevColor + 0.5 * newColor;      
+			 }
+		  }
+		  
+	  }else{
+		float Eps = 0.01;
+		float vs=heart(rayPos);
+		vec3 v=1./Eps*(vec3(heart(rayPos+vec3(Eps,0.,0.)),heart(rayPos+vec3(0.,Eps,0.)),heart(rayPos+vec3(0. ,0.,Eps)) )-vec3(vs));
+		implicitVal = vs/(length(v)+Eps);
+		prevColor = vec3(1.0, 0.2, 0.2);
+	  }
+      // I need to do this distance related to for the DOF!      
+      totalColor += vec3(1./50., 1./70., 1./90.) *
+				3.06 / exp(abs(implicitVal*5.)) * m[3][3];
+      totalDensity += 1./ 15. / exp(abs(implicitVal*10.0) + 0.5);
+      //if (implicitVal < 0.0)
+      stepDepth += abs(implicitVal) * 0.99;      
+	  if (implicitVal < 0.0) {
+         totalColor = totalColor + (1.-totalDensity) * prevColor;
+         totalDensity = 1.0f;
+      }
+      
+      stepSize = max(0.005 * stepDepth, abs(implicitVal) * 0.99);
+      rayPos += rayDir * stepSize;
+   }
+   
+   float grad = normalize(rayDir).y;
+   totalColor += (1.-totalDensity) * (grad * vec3(0.0,-0.4,-0.3) + (1.-grad)*vec3(0.0,0.4,0.6));
+   
+   gl_FragColor = vec4(totalColor-vec3(0.0), 1.0);
+}
