@@ -578,6 +578,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     } while (msg.message != WM_QUIT && fCurTime < 230.0f && !GetAsyncKeyState(VK_ESCAPE));
 
 	// music uninit
+	BASSMOD_MusicStop();
 	BASSMOD_MusicFree(); // free the current mod
 
 	wglDeleteContext(hRC);
