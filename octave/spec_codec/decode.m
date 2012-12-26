@@ -30,7 +30,7 @@ recSpec = [recHalfSpec; zeros(1, numFrames); conj(flipud(recHalfSpec(2:end,:)))]
 recFrames = real(ifft(recSpec));
 
 % apply window a second time
-win = hann(FFTLength);
+win = hanning(FFTLength);
 win(FFTLength/2+1:end) = 1 - win(1:FFTLength/2);
 win = sqrt(win);
 recFrames = recFrames .* (repmat(win, 1, numFrames));
