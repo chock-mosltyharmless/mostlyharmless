@@ -109,6 +109,9 @@ void fallingBall(float ftime)
 	glDisable(GL_BLEND);
 
 	// draw background:
+	glClearColor(0.0f, 0.0f, 0.3f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
 	glMatrixMode(GL_MODELVIEW);	
 
 	parameterMatrix[0] = ftime; // time	
@@ -128,7 +131,8 @@ void fallingBall(float ftime)
 	glViewport(0, 0, XRES, YRES);
 	glUseProgram(shaderPrograms[0]);
 	glBindTexture(GL_TEXTURE_3D, noiseTexture);
-	glRectf(-1.0f, -1.0f, 1.0f, 1.0f);
+	glColor3f(0.3f, 0.5f, 0.7f);
+	glRectf(-0.0f, -0.0f, 1.0f, 1.0f);
 }
 
 void intro_do( long itime )
