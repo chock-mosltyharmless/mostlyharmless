@@ -154,12 +154,14 @@
     <ClInclude Include="src\music.h" />
     <ClInclude Include="src\mzk.h" />
     <ClInclude Include="src\Parameter.h" />
+    <ClInclude Include="src\ParticleSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\GLTools.cpp" />
     <ClCompile Include="src\intro.cpp" />
     <ClCompile Include="src\mzk.cpp" />
     <ClCompile Include="src\Parameter.cpp" />
+    <ClCompile Include="src\ParticleSystem.cpp" />
     <ClCompile Include="src\_windows\main_deb.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
