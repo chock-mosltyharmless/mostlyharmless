@@ -102,9 +102,9 @@
     <ClCompile>
       <AdditionalOptions>/QIfist /Gs  %(AdditionalOptions)</AdditionalOptions>
       <Optimization>MaxSpeed</Optimization>
-      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <AdditionalIncludeDirectories>../;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WINDOWS;A32BITS;SIMD;NDEBUG;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <StringPooling>true</StringPooling>
@@ -131,9 +131,8 @@
     <Link>
       <AdditionalDependencies>opengl32.lib;glu32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <SuppressStartupBanner>true</SuppressStartupBanner>
-      <IgnoreAllDefaultLibraries>true</IgnoreAllDefaultLibraries>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <SubSystem>Windows</SubSystem>
-      <EntryPointSymbol>entrypoint</EntryPointSymbol>
       <BaseAddress>
       </BaseAddress>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -151,6 +150,7 @@
     <ClInclude Include="src\glext.h" />
     <ClInclude Include="src\GLTools.h" />
     <ClInclude Include="src\intro.h" />
+    <ClInclude Include="src\Mathhelpers.h" />
     <ClInclude Include="src\music.h" />
     <ClInclude Include="src\mzk.h" />
     <ClInclude Include="src\Parameter.h" />
@@ -159,14 +159,14 @@
   <ItemGroup>
     <ClCompile Include="src\GLTools.cpp" />
     <ClCompile Include="src\intro.cpp" />
+    <ClCompile Include="src\Mathhelpers.cpp" />
     <ClCompile Include="src\mzk.cpp" />
     <ClCompile Include="src\Parameter.cpp" />
     <ClCompile Include="src\ParticleSystem.cpp" />
-    <ClCompile Include="src\_windows\main_deb.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="src\_windows\main_deb.cpp" />
     <ClCompile Include="src\_windows\main_rel.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
