@@ -15,6 +15,7 @@
 #include "mzk.h"
 #include "Parameter.h"
 #include "GLTools.h"
+#include "ParticleSystem.h"
 
 float frand();
 int rand();
@@ -24,9 +25,6 @@ int rand();
 // -------------------------------------------------------------------
 
 HWND hWnd;
-
-// The model matrix is used to send the parameters to the hardware...
-static float parameterMatrix[16];
 
 // Name of the 32x32x32 noise texture
 #define FLOAT_TEXTURE
@@ -43,6 +41,9 @@ static int noiseTmp[4];
 GLuint vertexBufferID;
 
 static GLuint shaderPrograms[1];
+
+// The particle system is a singleton:
+static ParticleSystem particleSystem;
 
 // -------------------------------------------------------------------
 //                          Code:
@@ -102,10 +103,18 @@ void intro_init( void )
 
 	// RLY?
 	//glEnable(GL_CULL_FACE);
+
+	// Initialize the singleton particle system.
+	particleSystem.init();
 }
 
-void fallingBall(float ftime)
+void renderEffect(float ftime)
 {
+	// The model matrix is used to send the parameters to the hardware...
+	static float parameterMatrix[16];
+	// The camera transformation matrix
+	static float cameraMatrix[3][4];
+
 	glDisable(GL_BLEND);
 
 	// draw background:
@@ -114,30 +123,55 @@ void fallingBall(float ftime)
 
 	glMatrixMode(GL_MODELVIEW);	
 
-	parameterMatrix[0] = ftime; // time	
-	/* shader parameters */
-	parameterMatrix[1] = params.getParam(2, 0.75f);
-	parameterMatrix[2] = params.getParam(3, 0.83f);
-	parameterMatrix[3] = params.getParam(4, 0.21f);
-	parameterMatrix[4] = params.getParam(5, 0.83f);
-	parameterMatrix[5] = params.getParam(6, 0.72f);
-	parameterMatrix[6] = params.getParam(8, 0.79f);
-	parameterMatrix[7] = params.getParam(9, 0.09f);
-	parameterMatrix[8] = params.getParam(12, 0.1f);
-	parameterMatrix[9] = params.getParam(13, 1.0f);
+	// Clear shader parameters:
+	for (int i = 0; i < 16; i++)
+	{
+		parameterMatrix[i] = 0.0f;
+	}
+
+	/* Set non-zero shader parameters */
+	parameterMatrix[0] = ftime; // time		
+	// parameterMatrix[1] = params.getParam(2, 0.75f);
 	glLoadMatrixf(parameterMatrix);
 
-	// draw offscreen
-	glViewport(0, 0, XRES, YRES);
+	// draw some test triangle.
+	//glViewport(0, 0, XRES, YRES);
+	//glUseProgram(shaderPrograms[0]);
+	//glBindTexture(GL_TEXTURE_3D, noiseTexture);
+	//glColor3f(0.3f, 0.5f, 0.7f);
+	//glRectf(-0.0f, -0.0f, 1.0f, 1.0f);
+
+	// Set the camera matrix:
+	for (int k = 0; k < 3; k++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			if (j == k)
+			{
+				cameraMatrix[k][j] = 1.0f;
+			}
+			else
+			{
+				cameraMatrix[k][j] = 0.0f;
+			}
+		}
+	}
+
 	glUseProgram(shaderPrograms[0]);
 	glBindTexture(GL_TEXTURE_3D, noiseTexture);
-	glColor3f(0.3f, 0.5f, 0.7f);
-	glRectf(-0.0f, -0.0f, 1.0f, 1.0f);
+	particleSystem.render(cameraMatrix);
 }
 
 void intro_do( long itime )
 {
+	// TODO: I need some sort of lowpass filter of the time
+	// Some sort of median or the like, so that the display does
+	// not hop that much around on missed frames.
+	static float oldTime = 1.0e10f;
 	float ftime = 0.001f*(float)itime;
+	float deltaTime = ftime - oldTime;
+	if (deltaTime < 0.0f) deltaTime = 0.0f;
+	oldTime = ftime;
 
     // render
 	//glEnable(GL_DEPTH_TEST);
@@ -154,14 +188,11 @@ void intro_do( long itime )
 	// clear screan:
 	//glClear(GL_COLOR_BUFFER_BIT);
 
-	/* Set everything to beginning */
-	for (int i = 0; i < 16; i++)
-	{
-		parameterMatrix[i] = 0.0f;
-	}
+	// update the particle system:
+	particleSystem.update(deltaTime);
 
 	// This is the effect function
-	fallingBall(ftime);
+	renderEffect(ftime);
 }
 
 void intro_end()

@@ -2,7 +2,7 @@
 #define _PARTICLE_SYSTEM_H_
 #pragma once
 
-#include "math.h"
+#include <math.h>
 
 /**
  * In here is all the stuffs for particle systems.
@@ -21,7 +21,7 @@
 
 // The maximum number of particles in the particle System.
 // Maybe there are always that many particles, they are just gone?
-#define MAX_NUM_PARTICLES (1<<16)
+#define MAX_NUM_PARTICLES (1<<14)
 
 // The grid size of the hash map that contains the particles.
 // I have no idea what a sensible number might be...
@@ -30,7 +30,7 @@
 // The size of the particle system where it modulo-wrappes around
 // This number divided by PARTICLE_GRID_SIZE gives the maximum
 // sphere of influence of a particle
-#define PARTICLE_SYSTEM_SIZE (PARTICLE_GRID_SIZE * 32.0f)
+#define PARTICLE_SYSTEM_SIZE (PARTICLE_GRID_SIZE * 4.0f)
 
 // The maximum number of nearby particles that
 // are considered for updating the state of this
@@ -69,6 +69,7 @@ struct Particle;
 struct Particle
 {
 	float position[3];
+
 	// movement Direction is always normalized.
 	float movementDirection[3];
 	float movementSpeed;
@@ -116,7 +117,7 @@ public: // methods
 
 	// Renders the particle system. I have yet to see which parameters
 	// I have to pass to this function.
-	void render();
+	void render(float camera[3][4]);
 
 private: // methods
 	// Makes one update of the particle system with a time of
@@ -136,6 +137,9 @@ private: // methods
 	// for one tick count
 	void moveAllParticles();
 
+	// Sorts the array of transformedLocations along its thrid element.
+	void sortTransformed(int startIndex, int numEntries);
+
 	// Returns the distance vector between two vectors.
 	// Note that this handles particle-system wraparound correctly only
 	// if the vector locations are within [0..PARTICLE_SYSTEM_SIZE]
@@ -145,13 +149,24 @@ private: // methods
 	// This only works if the position is within [0..PARTICLE_SYSTEM_SIZE[
 	static int getGridIndex(float pos)
 	{
-		(int)(pos * (PARTICLE_GRID_SIZE / PARTICLE_SYSTEM_SIZE));
+		int index = (int)(pos * (PARTICLE_GRID_SIZE / PARTICLE_SYSTEM_SIZE));
+		// Due to problems with floatint point, I need to modulo the size.
+		index = (index + PARTICLE_GRID_SIZE) % PARTICLE_GRID_SIZE;
+		return index;
 	}
 
 private: // data
 	// The particles that are there. I do not yet know how to have particles
 	// disappear? Maybe a bitfield? We'll see.
 	Particle particle[MAX_NUM_PARTICLES];
+
+	// Transformed (rotated etc.) and projected particle locations
+	// This is X, Y, W (but no Z...)
+	float transformedLocation[MAX_NUM_PARTICLES][3];
+
+	// Sorted indices into the transformedLocation array so that
+	// I can render back to front.
+	int transformedIndex[MAX_NUM_PARTICLES];
 
 	// I need to consider how to do fast lookup of nearby particles. I think for
 	// now I will use a 3D grid that has a hash map of where the particles are.

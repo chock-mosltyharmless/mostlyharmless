@@ -1,27 +1,69 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\intro.cpp" />
-    <ClCompile Include="src\mzk.cpp" />
-    <ClCompile Include="src\Parameter.cpp" />
-    <ClCompile Include="src\_windows\main_deb.cpp" />
-    <ClCompile Include="src\_windows\main_rel.cpp" />
-    <ClCompile Include="src\GLTools.cpp" />
-    <ClCompile Include="src\ParticleSystem.cpp" />
+    <ClCompile Include="src\GLTools.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ParticleSystem.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\intro.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_windows\main_deb.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_windows\main_rel.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\mzk.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Parameter.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mathhelpers.cpp">
+      <Filter>Implementation</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\config.h" />
-    <ClInclude Include="src\glext.h" />
-    <ClInclude Include="src\intro.h" />
-    <ClInclude Include="src\music.h" />
-    <ClInclude Include="src\mzk.h" />
-    <ClInclude Include="src\Parameter.h" />
-    <ClInclude Include="src\GLTools.h" />
-    <ClInclude Include="src\ParticleSystem.h" />
+    <ClInclude Include="src\config.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\glext.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\GLTools.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\intro.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\music.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\mzk.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Parameter.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ParticleSystem.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mathhelpers.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shaders">
       <UniqueIdentifier>{406e6200-a51a-4334-9d88-eaea51f19160}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{751ca79e-0bc6-4339-a8f0-42ac30bd73e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Implementation">
+      <UniqueIdentifier>{40f6537e-4032-42a8-afee-8c4b2e04f5c2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
