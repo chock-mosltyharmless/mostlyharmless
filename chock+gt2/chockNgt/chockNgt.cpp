@@ -152,8 +152,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RegisterClass (&wc);
 
 	// Create the window
-    //mainWnd = CreateWindow (szAppName,szAppName,WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,600,0,0,hInstance,0);
-	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+    mainWnd = CreateWindow ("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,600,0,0,hInstance,0);
+	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	glInit();
 
     ShowWindow(mainWnd,SW_SHOW);
@@ -225,13 +225,14 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		//gluPerspective(25.0,  1.8, 1.1, 100.0);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		//gluLookAt(0.0, 0.0, -cameraDist,
-		//		  0.0, 0.0, 0.0,
+		// Instead of this look at matrix, I will use my own...
+		//gluLookAt(1., 0.5, -cameraDist,
+		//		  1., 0.5, 0.0,
 		//		  0.0, 1.0, 0.0);
-		gluLookAt(1., 0.5, -cameraDist,
-				  1., 0.5, 0.0,
-				  0.0, 1.0, 0.0);
-
+		Matrix modelView;
+		modelView.lookAt(1.0f, 0.5f, -cameraDist,
+						 1.0f, 0.5f, 0.0f,
+						 0.0f, 1.0f, 0.0f);
 
 		// lighting:
 		float ambient[4] = {0.3f, 0.23f, 0.2f, 1.0f};
@@ -333,9 +334,12 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			right[1] = tris.direction[i][2] * tris.normal[i][0] - tris.direction[i][0] * tris.normal[i][2];
 			right[2] = tris.direction[i][0] * tris.normal[i][1] - tris.direction[i][1] * tris.normal[i][0];
 			glNormal3fv(tris.normal[i]);
-			glVertex3f(tris.position[i][0] + 0.2f * tris.direction[i][0], tris.position[i][1] + 0.2f * tris.direction[i][1], tris.position[i][2] + 0.2f * tris.direction[i][2]);
-			glVertex3f(tris.position[i][0] + 0.2f * right[0], tris.position[i][1] + 0.2f * right[1], tris.position[i][2] + 0.2f * right[2]);
-			glVertex3f(tris.position[i][0] - 0.2f * right[0], tris.position[i][1] - 0.2f * right[0], tris.position[i][2] - 0.2f * right[0]);
+			//glVertex3f(tris.position[i][0] + 0.2f * tris.direction[i][0], tris.position[i][1] + 0.2f * tris.direction[i][1], tris.position[i][2] + 0.2f * tris.direction[i][2]);
+			//glVertex3f(tris.position[i][0] + 0.2f * right[0], tris.position[i][1] + 0.2f * right[1], tris.position[i][2] + 0.2f * right[2]);
+			//glVertex3f(tris.position[i][0] - 0.2f * right[0], tris.position[i][1] - 0.2f * right[0], tris.position[i][2] - 0.2f * right[0]);
+			modelView.vertex3f(tris.position[i][0] + 0.2f * tris.direction[i][0], tris.position[i][1] + 0.2f * tris.direction[i][1], tris.position[i][2] + 0.2f * tris.direction[i][2]);
+			modelView.vertex3f(tris.position[i][0] + 0.2f * right[0], tris.position[i][1] + 0.2f * right[1], tris.position[i][2] + 0.2f * right[2]);
+			modelView.vertex3f(tris.position[i][0] - 0.2f * right[0], tris.position[i][1] - 0.2f * right[0], tris.position[i][2] - 0.2f * right[0]);
 		}
 		glEnd();
 
@@ -381,6 +385,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			right[1] = tris.direction[i][2] * tris.normal[i][0] - tris.direction[i][0] * tris.normal[i][2];
 			right[2] = tris.direction[i][0] * tris.normal[i][1] - tris.direction[i][1] * tris.normal[i][0];
 			glNormal3fv(tris.normal[i]);
+#if 0
 			glVertex3f(tris.position[i][0] + 0.6f * tris.direction[i][0],
 					   tris.position[i][1] + 0.6f * tris.direction[i][1],
 					   tris.position[i][2] + 0.6f * tris.direction[i][2] - 0.1f);
@@ -390,6 +395,17 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			glVertex3f(tris.position[i][0] - 0.6f * right[0] - 0.2f * tris.direction[i][0],
 					   tris.position[i][1] - 0.6f * right[0] - 0.2f * tris.direction[i][1],
 					   tris.position[i][2] - 0.6f * right[0] - 0.2f * tris.direction[i][2] - 0.001f);
+#else
+			modelView.vertex3f(tris.position[i][0] + 0.6f * tris.direction[i][0],
+							   tris.position[i][1] + 0.6f * tris.direction[i][1],
+							   tris.position[i][2] + 0.6f * tris.direction[i][2] - 0.1f);
+			modelView.vertex3f(tris.position[i][0] + 0.6f * right[0] - 0.2f * tris.direction[i][0],
+							   tris.position[i][1] + 0.6f * right[1] - 0.2f * tris.direction[i][1],
+							   tris.position[i][2] + 0.6f * right[2] - 0.2f * tris.direction[i][2] - 0.001f);
+			modelView.vertex3f(tris.position[i][0] - 0.6f * right[0] - 0.2f * tris.direction[i][0],
+							   tris.position[i][1] - 0.6f * right[0] - 0.2f * tris.direction[i][1],
+							   tris.position[i][2] - 0.6f * right[0] - 0.2f * tris.direction[i][2] - 0.001f);
+#endif
 		}
 		glEnd();
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
