@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+extern void registerParameterChange(int keyID);
+
 static bool CopyToClipboard(char *strText)
 {
 	bool bRet = true;
@@ -112,6 +114,9 @@ void CALLBACK Parameter::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInst
 		int second = (dwParam1 >> 16) & 255;
 		params.changed[first] = true;
 		params.value[first] = (float)second / 127.0f;
+
+		// escalate the parameter change to the intro
+		registerParameterChange(first);
 	}
 }
 

@@ -52,6 +52,12 @@ static float interpolatedParameters[maxNumParameters];
 const int NUM_KEYS = 127;
 static int keyPressed[NUM_KEYS] = {0};
 
+// BPM stuff
+const int NUM_BEAT_TIMES = 7;
+float BPM = 0.0f;
+int beatDurations[NUM_BEAT_TIMES] = {900, 1200, 1100, 1000, 1400, 1000, 1000};
+int lastBeatTime = 0;
+
 
 // -------------------------------------------------------------------
 //                          Constants:
@@ -496,6 +502,7 @@ void hermaniak(float ftime)
 	// draw background:
 	glMatrixMode(GL_MODELVIEW);	
 
+#if 0
 	// Beat-dependent variables:
 	const int NUM_BPMS = 6;
 	const float BPMArray[NUM_BPMS] = {124.0f, 96.0f, 106.0f, 128.0f, 136.0f, 136.0f};
@@ -511,6 +518,8 @@ void hermaniak(float ftime)
 		}
 	}
 	float BPM = BPMArray[BPMIndex];
+#endif
+
 	float BPS = BPM / 60.0f;
 	// Here I should make something more sophisticated. I am thinking about an array... that has
 	// Lengthes until the next jump in order to make a beat like ||..||..||..|.|.
@@ -519,15 +528,17 @@ void hermaniak(float ftime)
 	float jumpTime = (ftime * jumpsPerSecond) + phase;
 	//float jumpTime = (ftime * jumpsPerSecond) + interpolatedParameters[22]; // JumpTime goes from 0 to 1 between two beats
 	jumpTime -= floor(jumpTime);
+#if 1
 	if (keyPressed[41] == 1)
 	{
 		phase -= jumpTime;
 		jumpTime = 0.0f;
 		if (phase < 0.0f) phase += 1.0;
 	}
+#endif
 	jumpTime = jumpTime * jumpTime;
 	// spike is between 0.0 and 1.0 depending on the position within whatever.
-	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 2.0f) + 0.5f;
+	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 1.0f) + 0.5f;
 
 	//parameterMatrix[0] = ftime; // time	
 	// Steuerbare time
@@ -807,3 +818,54 @@ void intro_do( long itime )
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 }
 
+// This function is called by Parameter.cpp when something changed.
+// I need this to get proper BPMs.
+// I need a timer here... Hmmm...
+void registerParameterChange(int keyID) {
+	const int beatKey = 41;
+	const int minBeatTime = 100;
+	const int maxBeatTime = 5000;
+	int sortedBeatDurations[NUM_BEAT_TIMES];
+
+	// Do nothing on key release!
+	if (params.getParam(beatKey) < 0.5f) return;
+
+	if (keyID == beatKey)
+	{
+		int t = timeGetTime();
+		int timeDiff = t - lastBeatTime;
+		if (timeDiff > minBeatTime && timeDiff < maxBeatTime)
+		{
+			for (int i = 0; i < NUM_BEAT_TIMES-1; i++)
+			{
+				beatDurations[i] = beatDurations[i+1];
+			}
+			beatDurations[NUM_BEAT_TIMES-1] = timeDiff;
+		}
+		lastBeatTime = t;
+	}
+
+	// copy sorted beat durations
+	for (int i = 0; i < NUM_BEAT_TIMES; i++)
+	{
+		sortedBeatDurations[i] = beatDurations[i];
+	}
+
+	// Calculate median of beat durations by bubble sorting.
+	bool sorted = false;
+	while (!sorted)
+	{
+		sorted = true;
+		for (int i = 0; i < NUM_BEAT_TIMES-1; i++)
+		{
+			if (sortedBeatDurations[i] < sortedBeatDurations[i+1]) {
+				int tmp = sortedBeatDurations[i+1];
+				sortedBeatDurations[i+1] = sortedBeatDurations[i];
+				sortedBeatDurations[i] = tmp;
+				sorted = false;
+			}
+		}
+	}
+
+	BPM = 60.0f * 1000.0f / sortedBeatDurations[NUM_BEAT_TIMES/2];
+}
