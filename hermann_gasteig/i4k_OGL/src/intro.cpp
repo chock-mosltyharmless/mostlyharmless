@@ -538,7 +538,7 @@ void hermaniak(float ftime)
 #endif
 	jumpTime = jumpTime * jumpTime;
 	// spike is between 0.0 and 1.0 depending on the position within whatever.
-	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 1.0f) + 0.5f;
+	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 1.5f) + 0.5f;
 
 	//parameterMatrix[0] = ftime; // time	
 	// Steuerbare time
@@ -581,7 +581,9 @@ void hermaniak(float ftime)
 	if (keyPressed[36] == 1) bgTexture = 3;
 	if (keyPressed[37] == 1) bgTexture = 4;
 
-	parameterMatrix[0] = lightShaderTime;
+	// I also want the jumping on the lighting on Hermann
+	parameterMatrix[0] = shaderTime;
+	//parameterMatrix[0] = lightShaderTime;
 	/* shader parameters */
 	parameterMatrix[1] = 10.0f * interpolatedParameters[20] * interpolatedParameters[20];  // bauchigkeit
 	parameterMatrix[2] = interpolatedParameters[21];			// line strength
