@@ -15,15 +15,15 @@ Shader::~Shader(void)
 	glDeleteShader(shaderID);
 }
 
-int Shader::loadShader(const char *filename, char *errorString)
+int Shader::loadShader(const char *name, char *errorString)
 {
 	char combinedName[SM_MAX_FILENAME_LENGTH+1] = SM_DIRECTORY;
 
 	// Set the name of the shader:
-	strcpy_s(shaderName, SM_MAX_FILENAME_LENGTH, filename);
+	strcpy_s(shaderName, SM_MAX_FILENAME_LENGTH, name);
 
 	// load from file
-	strcat_s(combinedName, SM_MAX_FILENAME_LENGTH, filename);
+	strcat_s(combinedName, SM_MAX_FILENAME_LENGTH, name);
 	FILE *fid;
 	if (fopen_s(&fid, combinedName, "rb"))
 	{
@@ -107,28 +107,101 @@ ShaderProgram::ShaderProgram(void)
 
 ShaderProgram::~ShaderProgram(void)
 {
+}
+
+void ShaderProgram::release(void)
+{
 	if (numShaders > 0)
 	{
 		glDeleteProgram(programID);
 		programID = 0;
 	}
+	numShaders = 0;
 }
 
-int ShaderProgram::init(int numUsedShaders, Shader* shaders[], char *errorText)
+int ShaderProgram::loadProgram(const char *name, ShaderManager *manager, char *errorString)
 {
-	if (numShaders != 0)
+	char programText[SM_MAX_PROGRAM_LENGTH+1];
+	char combinedName[SM_MAX_FILENAME_LENGTH+1] = SM_DIRECTORY;
+	// Names of the shaders
+	char *shaderName[SM_MAX_PROGRAM_SHADERS];
+
+	// Release the shader program if there was one.
+	release();
+
+	// Set the name of the shader:
+	strcpy_s(programName, SM_MAX_FILENAME_LENGTH, name);
+
+	// load from file
+	strcat_s(combinedName, SM_MAX_FILENAME_LENGTH, name);
+	FILE *fid;
+	if (fopen_s(&fid, combinedName, "rb"))
 	{
-		sprintf_s(errorText, MAX_ERROR_LENGTH, "Program can only be compiled once.");
+		sprintf_s(errorString, 	MAX_ERROR_LENGTH,
+			      "IO Error\nCould not open '%s' in ./shaders", combinedName);
 		return -1;
+	}
+	int programSize = fread(programText, 1, SM_MAX_PROGRAM_LENGTH, fid);
+	programText[programSize] = 0; // 0-terminate, just to make sure.
+	fclose(fid);
+	if (programSize == SM_MAX_PROGRAM_LENGTH)
+	{
+		sprintf_s(errorString, MAX_ERROR_LENGTH,
+				  "Shader Error\nprogram %s in ./shaders is too long.", combinedName);
+		return -1;
+	}
+	
+	// Very simple parser of the shader program
+	int numNames = 0;
+	boolean withinName = false; // Currently parsing inside a shader name
+	for (int i = 0; i < programSize; i++)
+	{
+		switch (programText[i])
+		{
+		case '\t':
+		case ' ':
+		case '\r':
+		case '\n':
+			withinName = false;
+			programText[i] = 0;
+			break;
+
+		default:
+			if (!withinName)
+			{
+				if (numNames >= SM_MAX_PROGRAM_SHADERS)
+				{
+					sprintf_s(errorString, MAX_ERROR_LENGTH,
+						"Shader Error\nprogram %s has too many shaders.", combinedName);
+					return -1;
+				}
+				shaderName[numNames] = &(programText[i]);
+				numNames++;
+				withinName = true;
+			}
+			break;
+		}
 	}
 
-	if (numUsedShaders != 2)
+	// For now I only support programs with two shaders.
+	if (numNames != 2)
 	{
-		sprintf_s(errorText, MAX_ERROR_LENGTH, "Unsupported number of shaders: %d",
-				  numUsedShaders);
+		sprintf_s(errorString, MAX_ERROR_LENGTH, "Unsupported number of shaders: %d",
+				  numNames);
 		return -1;
 	}
-	numShaders = numUsedShaders;
+	numShaders = numNames;
+
+	// Get the shader IDs from the manager:
+	for (int i = 0; i < numShaders; i++)
+	{
+		int retVal = manager->getShader(shaderName[i], &(usedShader[i]), errorString);
+		if (retVal)
+		{
+			numShaders = 0;
+			return retVal;
+		}
+	}
 
 	// Start the linking
 	// TODO: Check whether it actually worked...
@@ -136,11 +209,13 @@ int ShaderProgram::init(int numUsedShaders, Shader* shaders[], char *errorText)
 
 	for (int i = 0; i < numShaders; i++)
 	{
-		glAttachShader(programID, shaders[i]->getID());
-		usedShader[i] = shaders[i];
+		glAttachShader(programID, usedShader[i]->getID());
 	}
 	
 	glLinkProgram(programID);
+
+	// TODO: If the linking fails (e.g. because there is no main), then
+	// I am severely screwed!!!!!!!
 
 	return 0;
 }
@@ -173,25 +248,6 @@ int ShaderProgram::update(Shader *shader, char *errorText)
 	glLinkProgram(programID);
 
 	return 0;
-}
-
-boolean ShaderProgram::isProgram(int numUsedShaders, Shader *checkShaders[])
-{
-	if (numUsedShaders != numShaders)
-	{
-		return false;
-	}
-
-	for (int i = 0; i < numShaders; i++)
-	{
-		if (checkShaders[i] != usedShader[i])
-		{
-			return false;
-		}
-	}
-
-	// no differences found, this is go
-	return true;
 }
 
 ShaderManager::ShaderManager(void)
@@ -281,67 +337,64 @@ int ShaderManager::init(char *errorString)
 	fragmentTestShader = new Shader(GL_FRAGMENT_SHADER);
     vertexTestShader = new Shader(GL_VERTEX_SHADER);
 
+	// Load the programs in the shaders directory
+	// Go to first file in shaders directory
+	hFind = FindFirstFile(SM_DIRECTORY SM_PROGRAM_WILDCARD, &ffd);
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		sprintf_s(errorString, MAX_ERROR_LENGTH,
+				  "IO Error\nThere are no programs in " SM_DIRECTORY);
+		return -1;
+	}
+
+	// Load all the programs in the directory
+	do
+	{
+		program[numPrograms] = new ShaderProgram();
+		
+		int retVal = program[numPrograms]->loadProgram(ffd.cFileName, this, errorString);
+		if (retVal)
+		{
+			delete program[numPrograms];
+			return retVal;
+		}
+		numPrograms++;
+	} while (FindNextFile(hFind, &ffd));
+
 	return 0;
 }
 
-int ShaderManager::createProgram(int numUsedShaders, char *shaderNames[], GLuint *programID,
-								 char *errorText)
+int ShaderManager::getProgramID(const char *name, GLuint *id, char *errorString)
 {
-	Shader *progShader[SM_MAX_NUM_SHADERS];
-
-	if (numPrograms >= SM_MAX_NUM_PROGRAMS)
-	{
-		sprintf_s(errorText, MAX_ERROR_LENGTH, "Too many shader programs.");
-		return -1;
-	}
-
-	// Search for the shaders
-	for (int i = 0; i < numUsedShaders; i++)
-	{
-		for (int j = 0; j < numShaders; j++)
-		{
-			if (shader[j]->isShader(shaderNames[i]))
-			{
-				progShader[i] = shader[j];
-				break;
-			}
-		}
-		// Did not find the shader
-		sprintf_s(errorText, MAX_ERROR_LENGTH, "Unknown Shader: %s",
-				  shaderNames[i]);
-		return -1;
-	}
-
-	// Check if program already exists
 	for (int i = 0; i < numPrograms; i++)
 	{
-		if (program[i]->isProgram(numUsedShaders, progShader))
+		if (program[i]->isProgram(name))
 		{
-			// Hooray, the program was already made!
-			*programID = program[i]->getID();
+			*id = program[i]->getID();
 			return 0;
 		}
 	}
 
-	// Before creating a new shader check whether there is space left.
-	if (numUsedShaders > SM_MAX_PROGRAM_SHADERS)
-	{
-		sprintf_s(errorText, MAX_ERROR_LENGTH, "Too many shaders in program: %d",
-			      numUsedShaders);
-		return -1;
-	}
-
-	// And now create the program
-	program[numPrograms] = new ShaderProgram();
-	int retval = program[numPrograms]->init(numUsedShaders, progShader, errorText);
-	if (retval != 0)
-	{
-		delete program[numPrograms];
-		return retval;
-	}
-	
-	// Everything worked well, there is a new program
-	*programID = program[numPrograms]->getID();
-	numPrograms++;
+	// Got here without finding a texture, return error.
+	sprintf_s(errorString, MAX_ERROR_LENGTH,
+			  "Could not find shader program '%s'", name);
 	return 0;
 }
+
+int ShaderManager::getShader(const char *name, Shader **result, char *errorString)
+{
+	for (int i = 0; i < numShaders; i++)
+	{
+		if (shader[i]->isShader(name))
+		{
+			*result = shader[i];
+			return 0;
+		}
+	}
+
+	// Got here without finding a texture, return error.
+	sprintf_s(errorString, MAX_ERROR_LENGTH,
+			  "Could not find shader '%s'", name);
+	return 0;
+}
+

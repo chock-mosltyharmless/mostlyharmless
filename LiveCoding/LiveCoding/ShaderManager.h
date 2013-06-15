@@ -7,11 +7,17 @@
 #define SM_MAX_FILENAME_LENGTH 1024
 // Max 1 MB shaders supported
 #define SM_MAX_SHADER_LENGTH (1024*1024)
+// MAX 64k shaders supported
+#define SM_MAX_PROGRAM_LENGTH (64*1024)
 // Maximum number of shaders in a shader program
 #define SM_MAX_PROGRAM_SHADERS 2
 
 #define SM_DIRECTORY "shaders/"
 #define SM_SHADER_WILDCARD "*.?lsl"
+#define SM_PROGRAM_WILDCARD "*.gprg"
+
+// Forward declaration for reference
+class ShaderManager;
 
 class Shader
 {
@@ -31,7 +37,7 @@ public: // functions
 	// The errorString is filled with the error message if anything fails,
 	// it must have a length of at least MAX_ERROR_LENGTH
 	// Filename is relative to the shader directory.
-	int loadShader(const char *filename, char *errorString);
+	int loadShader(const char *name, char *errorString);
 
 	GLuint getID(void) {return shaderID;}
 	boolean isShader(const char *name) {return strcmp(shaderName, name) == 0;}
@@ -55,25 +61,27 @@ public:
 	~ShaderProgram(void);
 
 public: // functions
-	// Create new shader with that number of shaders. The shaders
-	// Must be existent and compiled.
+	// Loads a shader program from a .gprg file.
 	// The program is linked
+	// The program must be in the shader directory
 	// Returns 0 on success
-	int init(int numUsedShaders, Shader *shaders[], char *errorText);
+	int loadProgram(const char *name, ShaderManager *manager, char *errorString);
 	
 	// Checks whether this program uses the shader and if so, relinks the
 	// program. If shader is set to NULL, the program is always linked
 	// Returns 0 on success
 	int update(Shader *shader, char *errorText);
 
-	// Check whether this is the program I am looking for
-	boolean isProgram(int numUsedShaders, Shader *checkShaders[]);
-
 	GLuint getID(void) {return programID;}
+
+	boolean isProgram(const char *name) {return strcmp(programName, name) == 0;}
+
+	void release(void);
 
 private: // data
 	int numShaders;
 	Shader *usedShader[SM_MAX_PROGRAM_SHADERS];
+	char programName[SM_MAX_FILENAME_LENGTH+1];
 	GLuint programID;
 };
 
@@ -91,14 +99,13 @@ public: // functions
 	// characters. It contains errors from compilation/loading
 	int init(char *errorString);
 
-	// Creates a new program using a set of shaders.
-	// shaderNames are an array of filenames of shaders relative to the shaders dir.
-	// You can call this every time a program is used without using additional
-	// resources, but you will waste some processing power.
-	// TODO: WAIT! I do not know whether the program still exists after an update...
-	// returns 0 if successful
-	int createProgram(int numUsedShaders, char *shaderNames[], GLuint *programID,
-				      char *errorText);
+	// Get the ID of a shader program.
+	// Returns 0 if successful.
+	int getProgramID(const char *programName, GLuint *id, char *errorText);
+
+	// Get the ID of a shader.
+	// Returns 0 if successful.
+	int getShader(const char *shaderName, Shader **result, char *errorText);
 
 private: // functions
 	void releaseAll();
