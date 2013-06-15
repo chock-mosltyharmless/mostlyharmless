@@ -31,6 +31,9 @@
     <None Include="shaders\SimpleTexture.flsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\SimpleTexture.gprg">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -60,6 +63,9 @@
     <ClInclude Include="TextureManager.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Editor.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -72,6 +78,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="TextureManager.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

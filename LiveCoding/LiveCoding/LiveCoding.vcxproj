@@ -77,11 +77,13 @@
     <None Include="LiveCoding.ico" />
     <None Include="ReadMe.txt" />
     <None Include="shaders\SimpleTexture.flsl" />
+    <None Include="shaders\SimpleTexture.gprg" />
     <None Include="shaders\SimpleTexture.vlsl" />
     <None Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="Editor.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="GLNames.h" />
     <ClInclude Include="LiveCoding.h" />
@@ -92,6 +94,7 @@
     <ClInclude Include="TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Editor.cpp" />
     <ClCompile Include="LiveCoding.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="stdafx.cpp">

@@ -8,6 +8,7 @@
 #include "GLNames.h"
 #include "ShaderManager.h"
 #include "TextureManager.h"
+#include "Editor.h"
 
 #define MAX_LOADSTRING 100
 
@@ -29,6 +30,7 @@ const static char* glnames[NUM_GL_NAMES]={
  *************************************************/
 ShaderManager shaderManager;
 TextureManager textureManager;
+Editor editor;
 
 /*************************************************
  * Window core variables
@@ -95,6 +97,13 @@ static int initGL(WININFO *winInfo)
 	if (textureManager.init(errorString))
 	{
 		MessageBox(winInfo->hWnd, errorString, "Texture Manager Load", MB_OK);
+		return -1;
+	}
+
+	// Create the text editor
+	if (editor.init(&shaderManager, &textureManager, errorString))
+	{
+		MessageBox(winInfo->hWnd, errorString, "Editor init", MB_OK);
 		return -1;
 	}
 
@@ -290,7 +299,42 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         //intro_do( t );
-      
+		// Test rendering of one image
+#if 0
+		GLuint texID;
+		GLuint progID;
+		char errorString[MAX_ERROR_LENGTH + 1];
+		textureManager.getTextureID("font_512.tga", &texID, errorString);
+		glBindTexture(0, texID);
+		glColor4f(1.0f, 1.0f, 0.5f, 1.0f);
+		shaderManager.getProgramID("SimpleTexture.gprg", &progID, errorString);
+		glUseProgram(progID);
+		//int my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[0], "Texture0");
+		//glActiveTexture(GL_TEXTURE0);
+
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, 0.0f);
+		glVertex3f(-0.5f, -0.5f, 0.5f);
+		glTexCoord2f(1.0f, 0.0f);
+		glVertex3f(0.5f, -0.5f, 0.5f);
+		glTexCoord2f(1.0f, 1.0f);
+		glVertex3f(0.5f, 0.5f, 0.5f);
+		glTexCoord2f(0.0f, 1.0f);
+		glVertex3f(-0.5f, 0.5f, 0.5f);
+		glEnd();
+#endif
+
+		// Example editor usage
+#if 1
+	char errorText[MAX_ERROR_LENGTH+1];
+	if (editor.loadText("shaders/SimpleTexture.flsl", errorText))
+	{
+		MessageBox(info->hWnd, errorText, "Editor init", MB_OK);
+		return -1;
+	}
+
+#endif
+
 		SwapBuffers( info->hDC );
 	}
 
