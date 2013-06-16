@@ -120,27 +120,52 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		return( 0 );
 
 	// boton x o pulsacion de escape
-	if( uMsg==WM_CLOSE || uMsg==WM_DESTROY || (uMsg==WM_KEYDOWN && wParam==VK_ESCAPE) )
+	//if( uMsg==WM_CLOSE || uMsg==WM_DESTROY || (uMsg==WM_KEYDOWN && wParam==VK_ESCAPE) )
+	if( uMsg==WM_CLOSE || uMsg==WM_DESTROY )
 		{
 		PostQuitMessage(0);
         return( 0 );
 		}
 
-    if( uMsg==WM_CHAR )
+	// Reaction to command keys
+    if( uMsg==WM_KEYDOWN )
     {
 		switch (wParam)
 		{
+#if 0
 		case VK_ESCAPE:
 			PostQuitMessage(0);
 			return 0;
+#endif
+
+		case VK_LEFT:
+		case VK_RIGHT:
+		case VK_UP:
+		case VK_DOWN:
+		case VK_PRIOR:
+		case VK_NEXT:
+		case VK_END:
+		case VK_HOME:
+			editor.moveCursor(wParam);
+			break;
+
+		case VK_RETURN:
+		case VK_DELETE:
+		case VK_BACK:
+			editor.controlCharacter(wParam);
+			break;
 
 		case 'm':
 		case 'M':
-			SetWindowLong(hWnd, GWL_STYLE, WS_POPUP|WS_VISIBLE);
-			ShowWindow(hWnd, SW_MAXIMIZE);
-			GetClientRect(hWnd, &windowRect);
-			glViewport(0, 0, windowRect.right-windowRect.left, abs(windowRect.bottom - windowRect.top)); //NEW
-			ShowCursor(false);
+			if (GetAsyncKeyState(VK_CONTROL) < 0)
+			{
+				// TODO: Minimization again.
+				SetWindowLong(hWnd, GWL_STYLE, WS_POPUP|WS_VISIBLE);
+				ShowWindow(hWnd, SW_MAXIMIZE);
+				GetClientRect(hWnd, &windowRect);
+				glViewport(0, 0, windowRect.right-windowRect.left, abs(windowRect.bottom - windowRect.top)); //NEW
+				ShowCursor(false);
+			}
 			break;
 
 		default:
@@ -148,6 +173,11 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
     }
 
+	// Text entering
+	if (uMsg==WM_CHAR && GetAsyncKeyState(VK_CONTROL) >= 0)
+	{
+		editor.putCharacter(wParam);
+	}
 
     return( DefWindowProc(hWnd,uMsg,wParam,lParam) );
 }
@@ -325,7 +355,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		glVertex3f(-0.5f, 0.5f, 0.5f);
 		glEnd();
 #endif
-		editor.render();
+		editor.render(t);
 
 		SwapBuffers( info->hDC );
 	}

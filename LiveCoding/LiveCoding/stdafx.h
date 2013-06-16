@@ -17,6 +17,7 @@
 #include <memory.h>
 #include <tchar.h>
 #include <stdio.h>
+#include <math.h>
 
 // TODO: Hier auf zusätzliche Header, die das Programm erfordert, verweisen.
 #include <GL/gl.h>
