@@ -6,6 +6,7 @@
 
 Editor::Editor(void)
 {
+	lastRenderTime = 0;
 	clear();
 }
 
@@ -15,11 +16,22 @@ Editor::~Editor(void)
 
 void Editor::clear(void)
 {
-	numLines = 0;
+	numLines = 1; // So that I can do anything
 	for (int k = 0; k < ED_MAX_NUM_LINES; k++)
 	{
 		text[k][0] = 0;
 	}
+	// One empty line
+	for (int k = 0; k < ED_MAX_LINE_LENGTH; k++)
+	{
+		text[0][k] = ' ';
+	}
+	text[0][ED_MAX_LINE_LENGTH] = '\n';
+	cursorPos[0] = 0;
+	cursorPos[1] = 0;
+	cursorWantX = 0;
+	scrollPos = 0.0f;
+	scrollDestination = 0.0f;
 }
 
 int Editor::init(ShaderManager *shaderMgr, TextureManager *textureMgr, char *errorText)
@@ -30,8 +42,44 @@ int Editor::init(ShaderManager *shaderMgr, TextureManager *textureMgr, char *err
 	return 0;
 }
 
-void Editor::render(void)
+void Editor::render(long iTime)
 {
+	// The scrolling stuff comes first:
+	int iScrollPos = (int)scrollPos;
+	float dScrollPos = scrollPos - iScrollPos;
+	float scrollDifference = 0.0f;
+	if (cursorPos[1] < iScrollPos + ED_SCROLL_MARGIN)
+	{
+		scrollDifference = cursorPos[1] - (scrollPos + ED_SCROLL_MARGIN);
+#if 0
+		if (cursorPos[1] <= ED_SCROLL_MARGIN)
+		{
+			scrollDifference = -scrollPos;
+		}
+#endif
+	}
+	if (cursorPos[1] > iScrollPos + ED_DISPLAY_LINES - ED_SCROLL_MARGIN)
+	{
+		scrollDifference = cursorPos[1] - (scrollPos + ED_DISPLAY_LINES - ED_SCROLL_MARGIN);
+	}
+	// Scroll to next location if applicable
+	if (scrollDifference == 0.0f)
+	{
+		if (dScrollPos < 0.5f)
+		{
+			scrollDifference = -dScrollPos;
+		}
+		else
+		{
+			scrollDifference = 1.0f - dScrollPos;
+		}
+	}
+	float scrollSpeed = ED_SCROLL_SPEED * scrollDifference;
+	float scrollAdd = scrollSpeed * (iTime - lastRenderTime);
+	if (abs(scrollAdd) > abs(scrollDifference)) scrollAdd = scrollDifference;
+	scrollPos += scrollAdd;
+	if (scrollPos < 0) scrollPos = 0;
+
 	// So far I just render from the top
 	// There is no room for error here!
 	GLuint texID;
@@ -39,7 +87,6 @@ void Editor::render(void)
 	char errorString[MAX_ERROR_LENGTH + 1];
 	textureManager->getTextureID("font_512.tga", &texID, errorString);
 	glBindTexture(0, texID);
-	glColor4f(0.8f, 0.93f, 1.0f, 1.0f);
 	shaderManager->getProgramID("SimpleTexture.gprg", &progID, errorString);
 	glUseProgram(progID);	
 
@@ -49,21 +96,59 @@ void Editor::render(void)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
 	glBegin(GL_QUADS);
-	for (int y = 0; y < 100; y++)
+	// Draw text
+	for (int y = iScrollPos; y < ED_DISPLAY_LINES + iScrollPos + 1 && y < numLines; y++)
 	{
+		float yDisplay = y - scrollPos;
+		float alpha = 1.0f;
+		if (y == iScrollPos) alpha = 1.0f - dScrollPos;
+		if (y == ED_DISPLAY_LINES + iScrollPos) alpha = dScrollPos;
+
+		// Draw line number:
+		if (cursorPos[1] == y)
+		{
+			glColor4f(ED_LINENUM_RED, ED_LINENUM_GREEN, ED_LINENUM_BLUE, alpha);
+		}
+		else
+		{
+			glColor4f(ED_LINENUM_RED, ED_LINENUM_GREEN, ED_LINENUM_BLUE, ED_LINENUM_ALPHA * alpha);
+		}
+		if (y+1 > 999) drawChar(-5.0f, yDisplay, (((y+1)/1000) % 10) + '0');
+		if (y+1 > 99) drawChar(-4.0f, yDisplay, (((y+1)/100) % 10) + '0');
+		if (y+1 > 9) drawChar(-3.0f, yDisplay, (((y+1)/10) % 10) + '0');
+		drawChar(-2.0f, yDisplay, (((y+1)/1) % 10) + '0');
+
+		glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
 		for (int x = 0; x < ED_MAX_LINE_LENGTH; x++)
 		{
 			if (text[y][x] != ' ')
 			{
-				drawChar(x, y, text[y][x]);
+				drawChar((float)x, yDisplay, text[y][x]);
 			}
 		}
 	}
+
+	// Render the cursor
+	float alpha = 0.5f * sin((float)iTime * ED_CURSOR_BLINK_SPEED) + 0.5f;
+	glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
+	// '\r' Is the special char that is used for the cursor
+	drawChar((float)cursorPos[0], cursorPos[1] - scrollPos, '\r');
+
 	glEnd();
+
+	lastRenderTime = iTime;
 }
 
-void Editor::drawChar(int xPos, int yPos, unsigned char textBit)
+void Editor::drawChar(float xPos, float yPos, unsigned char textBit)
 {
+	// Special handling for the cursor character
+	float xAdjust = 0.0f;
+	if (textBit == '\r')
+	{
+		xAdjust = ED_CURSOR_X_ADJUST * ED_CHAR_WIDTH;
+		textBit = '|';
+	}
+
 	int texX = charIPos[textBit][0];
 	int texY = charIPos[textBit][1];
 
@@ -76,7 +161,8 @@ void Editor::drawChar(int xPos, int yPos, unsigned char textBit)
 		ED_CHAR_TEXY_BORDER;
 	float texBottom = texTop + ED_CHAR_TEX_HEIGHT - 2.0f * ED_CHAR_TEXY_BORDER;
 
-	float screenLeft = xPos * ED_CHAR_WIDTH + ED_CHAR_X_OFFSET + ED_CHAR_X_BORDER;
+	float screenLeft = xPos * ED_CHAR_WIDTH + ED_CHAR_X_OFFSET + ED_CHAR_X_BORDER
+		+ xAdjust; // Adjustment for the cursor character
 	float screenRight = screenLeft + ED_CHAR_WIDTH - 2.0f * ED_CHAR_X_BORDER;
 	float screenTop = yPos * ED_CHAR_HEIGHT + ED_CHAR_Y_OFFSET + ED_CHAR_Y_BORDER;
 	float screenBottom = screenTop + ED_CHAR_HEIGHT - 2.0f * ED_CHAR_Y_BORDER;
@@ -89,6 +175,200 @@ void Editor::drawChar(int xPos, int yPos, unsigned char textBit)
 	glVertex3f(screenRight, -screenTop, 0.5f);
 	glTexCoord2f(texLeft, 1.0f - texTop);
 	glVertex3f(screenLeft, -screenTop, 0.5f);
+}
+
+int Editor::getLineLength(int line)
+{
+	if (line < 0) return 0;
+	if (line >= numLines) return 0;
+	int lineLength = ED_MAX_LINE_LENGTH;
+	while (lineLength > 0 && text[line][lineLength-1] == ' ')
+	{
+		lineLength--;
+	}
+	return lineLength;
+}
+
+void Editor::controlCharacter(WPARAM vKey)
+{
+	switch (vKey)
+	{
+	case VK_RETURN:
+		if (numLines < ED_MAX_NUM_LINES)
+		{
+			// Copy all the following lines afront (ugh...)
+			for (int line = numLines; line > cursorPos[1]; line--)
+			{
+				for (int k = 0; k < ED_MAX_LINE_LENGTH+1; k++)
+				{
+					text[line][k] = text[line-1][k];
+				}
+			}
+			numLines++;
+			text[numLines][0] = 0;
+
+			// delete everything after the cursor pos
+			for (int k = cursorPos[0]; k < ED_MAX_LINE_LENGTH; k++)
+			{
+				text[cursorPos[1]][k] = ' ';
+			}
+			// delete everything before the cursor pos in next line
+			for (int k = cursorPos[0]; k < ED_MAX_LINE_LENGTH; k++)
+			{
+				text[cursorPos[1]+1][k - cursorPos[0]] =
+					text[cursorPos[1]+1][k];
+			}
+			for (int k = ED_MAX_LINE_LENGTH - cursorPos[0]; k < ED_MAX_LINE_LENGTH; k++)
+			{
+				text[cursorPos[1]+1][k] = ' ';
+			}
+			cursorPos[1]++;
+			cursorPos[0] = 0;
+		}
+		break;
+
+	case VK_BACK:
+		if (cursorPos[0] > 0)
+		{
+			for (int k = cursorPos[0]; k < ED_MAX_LINE_LENGTH; k++)
+			{
+				text[cursorPos[1]][k-1] = text[cursorPos[1]][k];
+			}
+			text[cursorPos[1]][ED_MAX_LINE_LENGTH-1] = ' ';
+			cursorPos[0]--;
+		}
+		else // This is the only way to delete a line
+		{
+			if (cursorPos[1] > 0)
+			{
+				int prevLineLength = getLineLength(cursorPos[1]-1);
+				int lineLength = getLineLength(cursorPos[1]);
+				if (prevLineLength + lineLength <= ED_MAX_LINE_LENGTH)
+				{
+					// Copy line to above one
+					for (int k = prevLineLength; k < ED_MAX_LINE_LENGTH; k++)
+					{
+						text[cursorPos[1]-1][k] =
+							text[cursorPos[1]][k - prevLineLength];
+					}
+					// Copy all other lines
+					for (int line = cursorPos[1]; line < numLines - 1; line++)
+					{
+						for (int k = 0; k < ED_MAX_LINE_LENGTH+1; k++)
+						{
+							text[line][k] = text[line+1][k];
+						}
+					}
+					numLines--;
+					text[numLines][0] = 0;
+					cursorPos[1]--;
+					cursorPos[0] = prevLineLength;
+				}
+			}
+		}
+		break;
+
+	case VK_DELETE:
+		if (cursorPos[0] < ED_MAX_LINE_LENGTH)
+		{
+			for (int k = cursorPos[0] + 1; k < ED_MAX_LINE_LENGTH; k++)
+			{
+				text[cursorPos[1]][k-1] = text[cursorPos[1]][k];
+			}
+			text[cursorPos[1]][ED_MAX_LINE_LENGTH-1] = ' ';
+		}
+		break;
+	}
+
+	// When putting a control character, the cursor want position is resetted
+	cursorWantX = cursorPos[0];
+}
+
+void Editor::putCharacter(WPARAM vKey)
+{
+	// Check whether there is space in the line left:
+	if (text[cursorPos[1]][ED_MAX_LINE_LENGTH - 1] != ' ')
+	{
+		return;
+	}
+
+	// Only do stuff that can be displayed!
+	if (charIPos[vKey][1] > 20 && vKey != ' ') return;
+
+	// Do not insert spaces at the beginning of a line
+	if (cursorPos[0] == 0 && vKey == ' ') return;
+
+	// only enter real characters:
+	if (cursorPos[0] < ED_MAX_LINE_LENGTH)
+	{
+		// move everything to the right:
+		for (int i = ED_MAX_LINE_LENGTH - 1; i > cursorPos[0]; i--)
+		{
+			text[cursorPos[1]][i] = text[cursorPos[1]][i-1];
+		}
+		text[cursorPos[1]][cursorPos[0]] = vKey;
+		cursorPos[0]++;
+		if (cursorPos[0] > ED_MAX_LINE_LENGTH) cursorPos[0] = ED_MAX_LINE_LENGTH;
+
+		// When putting a character, the cursor want position is resetted
+		cursorWantX = cursorPos[0];
+	}
+}
+
+void Editor::moveCursor(WPARAM vKey)
+{
+	switch (vKey)
+	{
+	case VK_LEFT:
+		cursorPos[0]--;
+		break;
+
+	case VK_RIGHT:
+		cursorPos[0]++;
+		break;
+
+	case VK_UP:
+		cursorPos[1]--;
+		cursorPos[0] = cursorWantX;
+		break;
+
+	case VK_DOWN:
+		cursorPos[1]++;
+		cursorPos[0] = cursorWantX;
+		break;
+
+	case VK_PRIOR:
+		cursorPos[1] -= ED_PAGE_LENGTH;
+		cursorPos[0] = cursorWantX;
+		break;
+
+	case VK_NEXT:
+		cursorPos[1] += ED_PAGE_LENGTH;
+		cursorPos[0] = cursorWantX;
+		break;
+
+	case VK_HOME:
+		cursorPos[0] = 0;
+		break;
+
+	case VK_END:
+		cursorPos[0] = ED_MAX_LINE_LENGTH;
+		break;
+	}
+
+	// Make sure that the cursor is within range
+	if (cursorPos[1] < 0) cursorPos[1] = 0;
+	if (cursorPos[1] >= numLines) cursorPos[1] = numLines - 1;
+	if (cursorPos[0] < 0) cursorPos[0] = 0;
+	int lineLength = getLineLength(cursorPos[1]);
+	if (cursorPos[0] > lineLength) cursorPos[0] = lineLength;
+
+	// update the location where the cursor wants to be
+	if (vKey == VK_LEFT || vKey == VK_RIGHT ||
+		vKey == VK_HOME || vKey == VK_END)
+	{
+		cursorWantX = cursorPos[0];
+	}
 }
 
 int Editor::loadText(const char *filename, char *errorText)
@@ -114,6 +394,8 @@ int Editor::loadText(const char *filename, char *errorText)
 
 	// Clear the buffer
 	clear();
+	// Reset the number of lines to (was set to 1 by clear())
+	numLines = 0;
 
 	// Basic parsing of file into buffer
 	boolean isFinished = false;
@@ -124,12 +406,32 @@ int Editor::loadText(const char *filename, char *errorText)
 		{
 			sprintf_s(errorText, MAX_ERROR_LENGTH,
 				      "Editor error: File %s has too many lines.", filename);
+			clear();
 			return -1;
 		}
 
 		boolean lineEnded = false;
 		for (int i = 0; i < ED_MAX_LINE_LENGTH; i++)
 		{
+			// ignore CR!
+			while (bufferPos < bufferSize && textBuffer[bufferPos] == '\r')
+			{
+				bufferPos++;
+			}
+
+			// Only do stuff that can be displayed!
+			if (charIPos[textBuffer[bufferPos]][1] > 20 &&
+				textBuffer[bufferPos] != ' ' &&
+				textBuffer[bufferPos] != '\n' &&
+				textBuffer[bufferPos] != 0)
+			{
+				sprintf_s(errorText, MAX_ERROR_LENGTH,
+					      "Editor error: Can not display '%c' in %s.",
+						  textBuffer[bufferPos], filename);
+				clear();
+				return -1;
+			}
+
 			if (lineEnded)
 			{
 				text[numLines][i] = ' ';
@@ -144,17 +446,15 @@ int Editor::loadText(const char *filename, char *errorText)
 				else
 				{
 					// Check if the line ends on this char
-					if (textBuffer[bufferPos] == '\n' ||
-						textBuffer[bufferPos] == '\r')
+					if (textBuffer[bufferPos] == '\n')
 					{
 						lineEnded = true;
 						bufferPos++;
 						// Scan forward until we reached some text
 						while (bufferPos < bufferSize &&
 							   (textBuffer[bufferPos] == ' ' ||
-							    textBuffer[bufferPos] == '\t' ||
-								textBuffer[bufferPos] == '\r' ||
-								textBuffer[bufferPos] == '\n'))
+							    textBuffer[bufferPos] == '\r' ||
+							    textBuffer[bufferPos] == '\t'))
 						{
 							bufferPos++;
 						}
@@ -166,6 +466,11 @@ int Editor::loadText(const char *filename, char *errorText)
 					{
 						text[numLines][i] = textBuffer[bufferPos];
 						bufferPos++;
+						if (bufferPos >= bufferSize)
+						{
+							lineEnded = true;
+							isFinished = true;
+						}
 					}
 				}
 			}
@@ -177,6 +482,7 @@ int Editor::loadText(const char *filename, char *errorText)
 			sprintf_s(errorText, MAX_ERROR_LENGTH, 
 					  "Editor error: Line %d in %s too long.",
 					  numLines, filename);
+			clear();
 			return -1;
 		}
 
@@ -186,6 +492,12 @@ int Editor::loadText(const char *filename, char *errorText)
 	
 	text[numLines][0] = 0; // Terminate text with a zero.
 	
+	// If the file was empty, clear everything
+	if (numLines == 0)
+	{
+		clear();
+	}
+
 	return 0;
 }
 
@@ -195,7 +507,7 @@ void Editor::createFontTable(void)
 	for (int i = 0; i < 256; i++)
 	{
 		charIPos[i][0] = 0;
-		charIPos[i][1] = 10;
+		charIPos[i][1] = 100;
 	}
 
 	charIPos['a'][0] = 0;
