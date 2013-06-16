@@ -134,17 +134,6 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			PostQuitMessage(0);
 			return 0;
 
-		case 'p': // To Rhytm police
-		case 'P':
-			//whatToDo = 1;
-			break;
-
-		case 'y':
-		case 'Y':
-		//case VK_F1:
-			//loadShaders();
-			break;
-
 		case 'm':
 		case 'M':
 			SetWindowLong(hWnd, GWL_STYLE, WS_POPUP|WS_VISIBLE);
@@ -286,6 +275,16 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)) exit(-1);
 
+		// Example editor usage
+#if 1
+	char errorText[MAX_ERROR_LENGTH+1];
+	if (editor.loadText("shaders/SimpleTexture.flsl", errorText))
+	{
+		MessageBox(info->hWnd, errorText, "Editor init", MB_OK);
+		return -1;
+	}
+#endif
+
     long to=timeGetTime();
     while( !done )
         {
@@ -297,6 +296,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		    TranslateMessage( &msg );
             DispatchMessage( &msg );
         }
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
         //intro_do( t );
 		// Test rendering of one image
@@ -323,17 +325,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		glVertex3f(-0.5f, 0.5f, 0.5f);
 		glEnd();
 #endif
-
-		// Example editor usage
-#if 1
-	char errorText[MAX_ERROR_LENGTH+1];
-	if (editor.loadText("shaders/SimpleTexture.flsl", errorText))
-	{
-		MessageBox(info->hWnd, errorText, "Editor init", MB_OK);
-		return -1;
-	}
-
-#endif
+		editor.render();
 
 		SwapBuffers( info->hDC );
 	}

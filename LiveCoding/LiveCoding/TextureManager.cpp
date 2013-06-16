@@ -2,6 +2,7 @@
 #include "TextureManager.h"
 #include "Configuration.h"
 #include "glext.h"
+#include "gl/glu.h"
 
 
 TextureManager::TextureManager(void)
@@ -73,10 +74,16 @@ int TextureManager::loadTGA(const char *filename, char *errorString)
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
 	glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
+#if 0 // Use simple mipmap generation	
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 				 textureWidth[numTextures], textureHeight[numTextures],
 				 0, GL_BGRA, GL_UNSIGNED_BYTE, textureData);
-		
+#else
+	gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
+					  textureWidth[numTextures], textureHeight[numTextures],
+					  GL_BGRA, GL_UNSIGNED_BYTE, textureData);
+#endif
+
 	delete [] textureData;
 	fclose(fid);
 	strcpy_s(textureName[numTextures], TM_MAX_FILENAME_LENGTH, filename);

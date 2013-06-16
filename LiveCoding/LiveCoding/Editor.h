@@ -5,6 +5,20 @@
 #define ED_MAX_FILESIZE (ED_MAX_LINE_LENGTH*(ED_MAX_NUM_LINES+1))
 #define ED_MAX_FILENAME_LENGTH 1024
 
+// Font size stuff
+#define ED_CHAR_TEX_WIDTH 0.0688100961538462f
+#define ED_CHAR_TEX_HEIGHT 0.0732421875f
+#define ED_CHAR_TEXX_OFFSET 0.017578125f
+#define ED_CHAR_TEXY_OFFSET 0.0078125f
+#define ED_CHAR_TEXX_BORDER 0.002f
+#define ED_CHAR_TEXY_BORDER 0.002f
+#define ED_CHAR_WIDTH 0.025f
+#define ED_CHAR_HEIGHT 0.07f
+#define ED_CHAR_X_BORDER -0.008f
+#define ED_CHAR_Y_BORDER 0.003f
+#define ED_CHAR_X_OFFSET -0.95f
+#define ED_CHAR_Y_OFFSET -0.925f
+
 #include "ShaderManager.h"
 #include "TextureManager.h"
 
@@ -32,15 +46,24 @@ public: // functions
 	// Returns 0 on success.
 	int loadText(const char *filename, char *errorText);
 
+	// Draw the text. There is no room for error here.
+	void render(void);
+
 private: // functions
 	void clear(void);
+	void createFontTable(void);
+	// Uses scrolling position, assumes glBegin(GL_QUADS), correct program/texture.
+	// It does not change color.
+	void drawChar(int xPos, int yPos, unsigned char textBit);
 
 private: // data
-	char text[ED_MAX_NUM_LINES+1][ED_MAX_LINE_LENGTH+1];
+	unsigned char text[ED_MAX_NUM_LINES+1][ED_MAX_LINE_LENGTH+1];
 	char filename[ED_MAX_FILENAME_LENGTH+1];
-	char textBuffer[ED_MAX_FILESIZE+1];
+	unsigned char textBuffer[ED_MAX_FILESIZE+1];
 	int numLines;
 	ShaderManager *shaderManager;
 	TextureManager *textureManager;
-};
 
+	// Font stuff
+	int charIPos[256][2];
+};
