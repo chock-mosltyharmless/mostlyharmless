@@ -93,10 +93,23 @@ int Shader::changeShader(const char *newText, char *errorString)
 	shaderText[dstIndex] = 0;
 	dstIndex++;
 
-	// Delete old shader and build new one
-	glDeleteShader(shaderID);
+	// Possibly delete old shader and build new one if successful
+	GLuint oldShaderID = shaderID;
 	shaderID = glCreateShader(type);
-	return compileShader(errorString);
+	int retVal = compileShader(errorString);
+	if (retVal)
+	{
+		// It failed, get the old one back!
+		glDeleteShader(shaderID);
+		shaderID = oldShaderID;		
+	}
+	else
+	{
+		// The old shader is no longer needed.
+		glDeleteShader(oldShaderID);
+	}
+	
+	return retVal;
 }
 
 ShaderProgram::ShaderProgram(void)
@@ -253,8 +266,6 @@ int ShaderProgram::update(Shader *shader, char *errorText)
 ShaderManager::ShaderManager(void)
 {
 	numShaders = 0;
-	vertexTestShader = 0;
-	fragmentTestShader = 0;
 }
 
 ShaderManager::~ShaderManager(void)
@@ -263,12 +274,7 @@ ShaderManager::~ShaderManager(void)
 }
 
 void ShaderManager::releaseAll(void)
-{
-	if (vertexTestShader) delete vertexTestShader;
-	vertexTestShader = 0;
-	if (fragmentTestShader) delete fragmentTestShader;
-	fragmentTestShader = 0;
-	
+{	
 	for (int i = 0; i < numShaders; i++)
 	{
 		if (shader[i]) delete shader[i];
@@ -334,9 +340,6 @@ int ShaderManager::init(char *errorString)
 		numShaders++;
 	} while (FindNextFile(hFind, &ffd));
 
-	fragmentTestShader = new Shader(GL_FRAGMENT_SHADER);
-    vertexTestShader = new Shader(GL_VERTEX_SHADER);
-
 	// Load the programs in the shaders directory
 	// Go to first file in shaders directory
 	hFind = FindFirstFile(SM_DIRECTORY SM_PROGRAM_WILDCARD, &ffd);
@@ -378,6 +381,27 @@ int ShaderManager::getProgramID(const char *name, GLuint *id, char *errorString)
 	// Got here without finding a texture, return error.
 	sprintf_s(errorString, MAX_ERROR_LENGTH,
 			  "Could not find shader program '%s'", name);
+	return 0;
+}
+
+int ShaderManager::updateShader(const char *shaderName, const char *shaderText,
+								char *errorText)
+{
+	Shader *theShader;
+
+	int retval = getShader(shaderName, &theShader, errorText);
+	if (retval) return retval;
+	
+	retval = theShader->changeShader(shaderText, errorText);
+	if (retval) return retval;
+
+	// Update programs if applicable
+	for (int i = 0; i < numPrograms; i++)
+	{
+		retval = program[i]->update(theShader, errorText);
+		if (retval) return retval;
+	}
+
 	return 0;
 }
 

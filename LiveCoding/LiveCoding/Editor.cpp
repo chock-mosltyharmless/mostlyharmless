@@ -32,6 +32,7 @@ void Editor::clear(void)
 	cursorWantX = 0;
 	scrollPos = 0.0f;
 	scrollDestination = 0.0f;
+	updateIndentation();
 }
 
 int Editor::init(ShaderManager *shaderMgr, TextureManager *textureMgr, char *errorText)
@@ -51,12 +52,6 @@ void Editor::render(long iTime)
 	if (cursorPos[1] < iScrollPos + ED_SCROLL_MARGIN)
 	{
 		scrollDifference = cursorPos[1] - (scrollPos + ED_SCROLL_MARGIN);
-#if 0
-		if (cursorPos[1] <= ED_SCROLL_MARGIN)
-		{
-			scrollDifference = -scrollPos;
-		}
-#endif
 	}
 	if (cursorPos[1] > iScrollPos + ED_DISPLAY_LINES - ED_SCROLL_MARGIN)
 	{
@@ -94,7 +89,7 @@ void Editor::render(long iTime)
 	// TODO: I only draw in a sensible range!!!!
 	//       And fade out whatever...
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+	glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	glBegin(GL_QUADS);
 	// Draw text
 	for (int y = iScrollPos; y < ED_DISPLAY_LINES + iScrollPos + 1 && y < numLines; y++)
@@ -119,11 +114,12 @@ void Editor::render(long iTime)
 		drawChar(-2.0f, yDisplay, (((y+1)/1) % 10) + '0');
 
 		glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
+		float indent = indentation[y] * ED_INDENTATION_WIDTH;
 		for (int x = 0; x < ED_MAX_LINE_LENGTH; x++)
 		{
 			if (text[y][x] != ' ')
 			{
-				drawChar((float)x, yDisplay, text[y][x]);
+				drawChar((float)x + indent, yDisplay, text[y][x]);
 			}
 		}
 	}
@@ -131,8 +127,9 @@ void Editor::render(long iTime)
 	// Render the cursor
 	float alpha = 0.5f * sin((float)iTime * ED_CURSOR_BLINK_SPEED) + 0.5f;
 	glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
+	float indent = indentation[cursorPos[1]] * ED_INDENTATION_WIDTH;
 	// '\r' Is the special char that is used for the cursor
-	drawChar((float)cursorPos[0], cursorPos[1] - scrollPos, '\r');
+	drawChar((float)cursorPos[0] + indent, cursorPos[1] - scrollPos, '\r');
 
 	glEnd();
 
@@ -224,6 +221,7 @@ void Editor::controlCharacter(WPARAM vKey)
 			}
 			cursorPos[1]++;
 			cursorPos[0] = 0;
+			updateIndentation();
 		}
 		break;
 
@@ -265,6 +263,7 @@ void Editor::controlCharacter(WPARAM vKey)
 					cursorPos[0] = prevLineLength;
 				}
 			}
+			updateIndentation();
 		}
 		break;
 
@@ -298,7 +297,7 @@ void Editor::putCharacter(WPARAM vKey)
 	// Do not insert spaces at the beginning of a line
 	if (cursorPos[0] == 0 && vKey == ' ') return;
 
-	// only enter real characters:
+	// only enter if there is space left:
 	if (cursorPos[0] < ED_MAX_LINE_LENGTH)
 	{
 		// move everything to the right:
@@ -312,6 +311,18 @@ void Editor::putCharacter(WPARAM vKey)
 
 		// When putting a character, the cursor want position is resetted
 		cursorWantX = cursorPos[0];
+
+		// some magic if we entered '{'
+		if (vKey == '{')
+		{
+			controlCharacter(VK_RETURN);
+			moveCursor(VK_END);
+			controlCharacter(VK_RETURN);
+			putCharacter('}');
+			moveCursor(VK_LEFT);
+			moveCursor(VK_UP);
+			updateIndentation();
+		}
 	}
 }
 
@@ -498,7 +509,41 @@ int Editor::loadText(const char *filename, char *errorText)
 		clear();
 	}
 
+	// Create the indentation
+	updateIndentation();
+
 	return 0;
+}
+
+// Update the indentation used for rendering
+void Editor::updateIndentation(void)
+{
+	int indent = 0;
+	bool oldLineEnded = true;
+	for (int line = 0; line < numLines; line++)
+	{
+		bool lineEnded = true;
+
+		// look for indentation left
+		for (int k = 0; k < ED_MAX_LINE_LENGTH; k++)
+		{
+			if (text[line][k] == '}') indent--;
+			if (text[line][k] != ' ') lineEnded = false;
+		}
+
+		indentation[line] = indent;
+
+		// look for indentation right
+		for (int k = 0; k < ED_MAX_LINE_LENGTH; k++)
+		{
+			if (text[line][k] == '{') indent++;
+			if (text[line][k] == '{') lineEnded = true;
+			if (text[line][k] == ';') lineEnded = true;
+			if (text[line][k] == '}') lineEnded = true;
+		}
+		if (!oldLineEnded) indentation[line] += 2;
+		oldLineEnded = lineEnded;
+	}
 }
 
 // Creates all the indices of locations of the font
