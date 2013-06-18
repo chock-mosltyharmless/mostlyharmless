@@ -168,6 +168,22 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			}
 			break;
 
+		case 's':
+		case 'S':
+			// We want a new shader
+			if (GetAsyncKeyState(VK_CONTROL) < 0)
+			{
+				Shader *shader;
+				char errorText[MAX_ERROR_LENGTH];
+				char *shaderText;
+				shaderText = editor.getText();
+				if (shaderManager.updateShader("EmptyEffect.flsl", shaderText, errorText))
+				{
+					MessageBox(wininfo.hWnd, errorText, "Shader change", MB_OK);
+				}
+			}
+			break;
+
 		default:
 			break;
 		}
@@ -277,6 +293,21 @@ static int window_init( WININFO *info )
 }
 
 
+void intro_do(long t)
+{
+	char errorText[MAX_ERROR_LENGTH+1];
+	float ftime = 0.001f*(float)t;
+
+	glDisable(GL_BLEND);
+	glDisable(GL_DEPTH_TEST);
+
+	GLuint programID;
+	shaderManager.getProgramID("EmptyEffect.gprg", &programID, errorText);
+	glUseProgram(programID);
+	glRectf(-1.0, -1.0, 1.0, 1.0);
+}
+
+
 int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
     MSG         msg;
@@ -308,7 +339,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// Example editor usage
 #if 1
 	char errorText[MAX_ERROR_LENGTH+1];
-	if (editor.loadText("shaders/SimpleTexture.flsl", errorText))
+	if (editor.loadText("shaders/EmptyEffect.flsl", errorText))
 	{
 		MessageBox(info->hWnd, errorText, "Editor init", MB_OK);
 		return -1;
@@ -330,31 +361,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-        //intro_do( t );
-		// Test rendering of one image
-#if 0
-		GLuint texID;
-		GLuint progID;
-		char errorString[MAX_ERROR_LENGTH + 1];
-		textureManager.getTextureID("font_512.tga", &texID, errorString);
-		glBindTexture(0, texID);
-		glColor4f(1.0f, 1.0f, 0.5f, 1.0f);
-		shaderManager.getProgramID("SimpleTexture.gprg", &progID, errorString);
-		glUseProgram(progID);
-		//int my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[0], "Texture0");
-		//glActiveTexture(GL_TEXTURE0);
-
-		glBegin(GL_QUADS);
-		glTexCoord2f(0.0f, 0.0f);
-		glVertex3f(-0.5f, -0.5f, 0.5f);
-		glTexCoord2f(1.0f, 0.0f);
-		glVertex3f(0.5f, -0.5f, 0.5f);
-		glTexCoord2f(1.0f, 1.0f);
-		glVertex3f(0.5f, 0.5f, 0.5f);
-		glTexCoord2f(0.0f, 1.0f);
-		glVertex3f(-0.5f, 0.5f, 0.5f);
-		glEnd();
-#endif
+        intro_do(t);
 		editor.render(t);
 
 		SwapBuffers( info->hDC );

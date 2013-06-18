@@ -7,7 +7,7 @@
 
 // Font size stuff
 #define ED_CHAR_TEX_WIDTH 0.0688100961538462f
-#define ED_CHAR_TEX_HEIGHT 0.0732421875f
+#define ED_CHAR_TEX_HEIGHT (0.0732421875f - 0.0005f)
 #define ED_CHAR_TEXX_OFFSET 0.017578125f
 #define ED_CHAR_TEXY_OFFSET 0.0078125f
 #define ED_CHAR_TEXX_BORDER 0.002f
@@ -18,14 +18,15 @@
 #define ED_CHAR_Y_BORDER 0.003f
 #define ED_CHAR_X_OFFSET (-0.99f + (5.0f * ED_CHAR_WIDTH))
 #define ED_CHAR_Y_OFFSET -0.925f
+#define ED_INDENTATION_WIDTH (1.7f)
 
 // Number of lines that are displayed
 #define ED_DISPLAY_LINES 20
 
 // Cursor and text stuff
 #define ED_CURSOR_BLINK_SPEED 0.015f
-#define ED_TEXT_RED 0.7f
-#define ED_TEXT_GREEN 0.9f
+#define ED_TEXT_RED 1.0f
+#define ED_TEXT_GREEN 1.0f
 #define ED_TEXT_BLUE 1.0f
 #define ED_LINENUM_RED 1.0f
 #define ED_LINENUM_GREEN 0.9f
@@ -79,6 +80,9 @@ public: // functions
 	// A key was pressed, it can be put in...
 	void putCharacter(WPARAM key);
 
+	// Get a pointer to the text that is edited.
+	char *getText(void) {return (char*)&(text[0][0]);}
+
 private: // functions
 	void clear(void);
 	void createFontTable(void);
@@ -86,9 +90,12 @@ private: // functions
 	// It does not change color.
 	void drawChar(float xPos, float yPos, unsigned char textBit);
 	int getLineLength(int line);
+	void updateIndentation(void);
 
 private: // data
 	unsigned char text[ED_MAX_NUM_LINES+1][ED_MAX_LINE_LENGTH+1];
+	// indentation of each line...
+	int indentation[ED_MAX_NUM_LINES+1];
 	char filename[ED_MAX_FILENAME_LENGTH+1];
 	unsigned char textBuffer[ED_MAX_FILESIZE+1];
 	int numLines;

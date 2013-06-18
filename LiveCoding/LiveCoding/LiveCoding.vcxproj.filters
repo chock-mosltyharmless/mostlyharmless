@@ -34,6 +34,15 @@
     <None Include="shaders\SimpleTexture.gprg">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\EmptyEffect.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\EmptyEffect.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\EmptyEffect.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

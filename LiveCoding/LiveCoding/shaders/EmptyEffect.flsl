@@ -1,0 +1,8 @@
+varying vec4 color;
+varying vec2 ppos;
+
+void main(void) {
+	vec4 col = vec4(0.7, 0.9, 1.0, 1.0);
+	if (length(ppos) < 0.7) col = vec4(0.5, 0.0, 0.0, 1.0);
+	gl_FragColor = col;
+}

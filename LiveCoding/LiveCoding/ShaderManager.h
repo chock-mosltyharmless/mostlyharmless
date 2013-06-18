@@ -107,6 +107,9 @@ public: // functions
 	// Returns 0 if successful.
 	int getShader(const char *shaderName, Shader **result, char *errorText);
 
+	// Update a shader and compile it into programs if neccessary.
+	int updateShader(const char *shaderName, const char *shaderText, char *errorText);
+
 private: // functions
 	void releaseAll();
 
@@ -115,10 +118,5 @@ private: // data
 	int numShaders;
 	ShaderProgram *program[SM_MAX_NUM_PROGRAMS];
 	int numPrograms;
-
-	// These shaders are used to test written shaders without affecting the
-	// system if anything fails.
-	Shader *vertexTestShader;
-	Shader *fragmentTestShader;
 };
 
