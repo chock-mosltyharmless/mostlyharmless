@@ -33,6 +33,13 @@ void Editor::clear(void)
 	scrollPos = 0.0f;
 	scrollDestination = 0.0f;
 	updateIndentation();
+
+	// error display
+	isErrorFading = true;
+	displayedError[0] = 0;
+	errorDisplayAlpha = 0.0f;
+	isTextFading = true;
+	textDisplayAlpha = 0.0f;
 }
 
 int Editor::init(ShaderManager *shaderMgr, TextureManager *textureMgr, char *errorText)
@@ -75,13 +82,26 @@ void Editor::render(long iTime)
 	scrollPos += scrollAdd;
 	if (scrollPos < 0) scrollPos = 0;
 
+	// update alpha
+	if (isErrorFading)
+	{
+		errorDisplayAlpha *= exp(-(float)(iTime - lastRenderTime) * ED_FADE_SPEED);
+		errorDisplayAlpha = errorDisplayAlpha < 0.0f ? 0.0f : errorDisplayAlpha;
+	}
+	if (isTextFading)
+	{
+		textDisplayAlpha *= exp(-(float)(iTime - lastRenderTime) * ED_FADE_SPEED);
+		textDisplayAlpha = textDisplayAlpha < 0.0f ? 0.0f : textDisplayAlpha;
+	}
+
+
 	// So far I just render from the top
 	// There is no room for error here!
 	GLuint texID;
 	GLuint progID;
 	char errorString[MAX_ERROR_LENGTH + 1];
 	textureManager->getTextureID("font_512.tga", &texID, errorString);
-	glBindTexture(0, texID);
+	glBindTexture(GL_TEXTURE_2D, texID);
 	shaderManager->getProgramID("SimpleTexture.gprg", &progID, errorString);
 	glUseProgram(progID);	
 
@@ -95,9 +115,9 @@ void Editor::render(long iTime)
 	for (int y = iScrollPos; y < ED_DISPLAY_LINES + iScrollPos + 1 && y < numLines; y++)
 	{
 		float yDisplay = y - scrollPos;
-		float alpha = 1.0f;
-		if (y == iScrollPos) alpha = 1.0f - dScrollPos;
-		if (y == ED_DISPLAY_LINES + iScrollPos) alpha = dScrollPos;
+		float alpha = textDisplayAlpha;
+		if (y == iScrollPos) alpha *= 1.0f - dScrollPos;
+		if (y == ED_DISPLAY_LINES + iScrollPos) alpha *= dScrollPos;
 
 		// Draw line number:
 		if (cursorPos[1] == y)
@@ -113,7 +133,14 @@ void Editor::render(long iTime)
 		if (y+1 > 9) drawChar(-3.0f, yDisplay, (((y+1)/10) % 10) + '0');
 		drawChar(-2.0f, yDisplay, (((y+1)/1) % 10) + '0');
 
-		glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
+		if (isTextFading)
+		{
+			glColor4f(ED_OK_RED, ED_OK_GREEN, ED_OK_BLUE, alpha);
+		}
+		else
+		{
+			glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
+		}
 		float indent = indentation[y] * ED_INDENTATION_WIDTH;
 		for (int x = 0; x < ED_MAX_LINE_LENGTH; x++)
 		{
@@ -126,10 +153,54 @@ void Editor::render(long iTime)
 
 	// Render the cursor
 	float alpha = 0.5f * sin((float)iTime * ED_CURSOR_BLINK_SPEED) + 0.5f;
+	alpha *= textDisplayAlpha;
 	glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
 	float indent = indentation[cursorPos[1]] * ED_INDENTATION_WIDTH;
 	// '\r' Is the special char that is used for the cursor
 	drawChar((float)cursorPos[0] + indent, cursorPos[1] - scrollPos, '\r');
+
+	// render the error text
+	int errorTextPos = 0;
+	int errorTextX = 0;
+	int errorTextY = 0;
+	while (displayedError[errorTextPos] != 0)
+	{
+		float yDisplay = (float)errorTextY;
+		float alpha = errorDisplayAlpha;
+
+		if (isErrorFading)
+		{
+			glColor4f(ED_OK_RED, ED_OK_GREEN, ED_OK_BLUE, alpha);
+		}
+		else
+		{
+			glColor4f(ED_ERROR_RED, ED_ERROR_GREEN, ED_ERROR_BLUE, alpha);
+		}
+		for (int x = 0; x < ED_MAX_LINE_LENGTH; x++)
+		{
+			if (displayedError[errorTextPos] != ' ' &&
+				displayedError[errorTextPos] != '\r' &&
+				displayedError[errorTextPos] != '\t')
+			{
+				drawChar((float)errorTextX, yDisplay + ED_ERROR_Y_OFFSET,
+					     displayedError[errorTextPos]);
+			}
+		}
+
+		errorTextX++;
+		if (displayedError[errorTextPos+1] == '\n')
+		{
+			errorTextX = 0;
+			errorTextY++;
+			errorTextPos++;
+		}
+		if (errorTextX >= ED_MAX_LINE_LENGTH)
+		{
+			errorTextX = 0;
+			errorTextY++;
+		}
+		errorTextPos++;
+	}
 
 	glEnd();
 
@@ -188,6 +259,10 @@ int Editor::getLineLength(int line)
 
 void Editor::controlCharacter(WPARAM vKey)
 {
+	// Change --> show
+	textDisplayAlpha = 1.0f;
+	isTextFading = false;
+
 	switch (vKey)
 	{
 	case VK_RETURN:
@@ -285,6 +360,10 @@ void Editor::controlCharacter(WPARAM vKey)
 
 void Editor::putCharacter(WPARAM vKey)
 {
+	// Change --> show
+	textDisplayAlpha = 1.0f;
+	isTextFading = false;
+
 	// Check whether there is space in the line left:
 	if (text[cursorPos[1]][ED_MAX_LINE_LENGTH - 1] != ' ')
 	{
@@ -328,6 +407,10 @@ void Editor::putCharacter(WPARAM vKey)
 
 void Editor::moveCursor(WPARAM vKey)
 {
+	// Change --> show
+	textDisplayAlpha = 1.0f;
+	isTextFading = false;
+
 	switch (vKey)
 	{
 	case VK_LEFT:
@@ -544,6 +627,24 @@ void Editor::updateIndentation(void)
 		if (!oldLineEnded) indentation[line] += 2;
 		oldLineEnded = lineEnded;
 	}
+}
+
+void Editor::unshowError(void)
+{
+	isErrorFading = true;
+}
+
+void Editor::unshowText(void)
+{
+	isTextFading = true;
+}
+
+void Editor::setErrorText(char *errorText)
+{
+	strcpy_s((char *)displayedError, MAX_ERROR_LENGTH, errorText);
+	displayedError[MAX_ERROR_LENGTH] = 0;
+	isErrorFading = false;
+	errorDisplayAlpha = 1.0f;
 }
 
 // Creates all the indices of locations of the font
