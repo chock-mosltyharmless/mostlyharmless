@@ -173,13 +173,18 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			// We want a new shader
 			if (GetAsyncKeyState(VK_CONTROL) < 0)
 			{
-				Shader *shader;
 				char errorText[MAX_ERROR_LENGTH];
 				char *shaderText;
 				shaderText = editor.getText();
 				if (shaderManager.updateShader("EmptyEffect.flsl", shaderText, errorText))
 				{
-					MessageBox(wininfo.hWnd, errorText, "Shader change", MB_OK);
+					//MessageBox(wininfo.hWnd, errorText, "Shader change", MB_OK);
+					editor.setErrorText(errorText);
+				}
+				else
+				{
+					editor.unshowError();
+					editor.unshowText();
 				}
 			}
 			break;
@@ -301,10 +306,38 @@ void intro_do(long t)
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 
+	// render to larger offscreen texture
+	glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 	GLuint programID;
 	shaderManager.getProgramID("EmptyEffect.gprg", &programID, errorText);
 	glUseProgram(programID);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
+
+	// Copy backbuffer to texture
+	GLuint textureID;
+	textureManager.getTextureID("renderTarget", &textureID, errorText);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+
+	// Copy backbuffer to front (so far no improvement)
+	int xres = windowRect.right - windowRect.left;
+	int yres = windowRect.bottom - windowRect.top;
+	glViewport(0, 0, xres, yres);
+	shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+	glUseProgram(programID);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glDisable(GL_BLEND);
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex2f(-1.0f, -1.0f);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex2f(1.0f, -1.0f);
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex2f(1.0f, 1.0f);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex2f(-1.0f, 1.0f);
+	glEnd();
 }
 
 

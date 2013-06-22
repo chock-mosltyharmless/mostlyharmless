@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Configuration.h"
+
 #define ED_MAX_LINE_LENGTH 70
 #define ED_MAX_NUM_LINES 5000
 #define ED_MAX_FILESIZE (ED_MAX_LINE_LENGTH*(ED_MAX_NUM_LINES+1))
@@ -18,6 +20,7 @@
 #define ED_CHAR_Y_BORDER 0.003f
 #define ED_CHAR_X_OFFSET (-0.99f + (5.0f * ED_CHAR_WIDTH))
 #define ED_CHAR_Y_OFFSET -0.925f
+#define ED_ERROR_Y_OFFSET 21.0f
 #define ED_INDENTATION_WIDTH (1.7f)
 
 // Number of lines that are displayed
@@ -28,6 +31,12 @@
 #define ED_TEXT_RED 1.0f
 #define ED_TEXT_GREEN 1.0f
 #define ED_TEXT_BLUE 1.0f
+#define ED_ERROR_RED 1.0f
+#define ED_ERROR_GREEN 0.2f
+#define ED_ERROR_BLUE 0.1f
+#define ED_OK_RED 0.4f
+#define ED_OK_GREEN 0.7f
+#define ED_OK_BLUE 0.4f
 #define ED_LINENUM_RED 1.0f
 #define ED_LINENUM_GREEN 0.9f
 #define ED_LINENUM_BLUE 0.7f
@@ -40,6 +49,9 @@
 // Scrolling constants
 #define ED_SCROLL_MARGIN 5
 #define ED_SCROLL_SPEED 0.003f
+
+// Text out fading speed
+#define ED_FADE_SPEED 0.01f
 
 #include "ShaderManager.h"
 #include "TextureManager.h"
@@ -83,6 +95,16 @@ public: // functions
 	// Get a pointer to the text that is edited.
 	char *getText(void) {return (char*)&(text[0][0]);}
 
+	// Set the string to display as error, also displays error
+	void setErrorText(char *errorText);
+
+	// Mark that the error shall fade off (if it isn't off already)
+	void unshowError(void);
+
+	// Mark that the text shall fade off (if it isn't off already)
+	// The text is faded in once there is any modification
+	void unshowText(void);
+
 private: // functions
 	void clear(void);
 	void createFontTable(void);
@@ -101,6 +123,14 @@ private: // data
 	int numLines;
 	ShaderManager *shaderManager;
 	TextureManager *textureManager;
+
+	// Information for the displayed error
+	unsigned char displayedError[MAX_ERROR_LENGTH+1];
+	bool isErrorFading;
+	float errorDisplayAlpha;
+	// Information for the displayed text
+	bool isTextFading;
+	float textDisplayAlpha;
 
 	// For the timing of scrolling and stuff
 	long lastRenderTime;

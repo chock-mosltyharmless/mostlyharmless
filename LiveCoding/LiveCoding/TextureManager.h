@@ -15,6 +15,14 @@
 #define TM_MAX_NUM_TEXTURES 64
 #define TM_MAX_FILENAME_LENGTH 1024
 
+#define TM_OFFSCREEN_NAME "renderTarget"
+#define TM_HIGHLIGHT_NAME "smallTarget"
+#define TM_NOISE_NAME "noise2D"
+
+// The noise texture dimension
+#define TM_NOISE_TEXTURE_SIZE 256
+#define TM_FILTER_KERNEL_SIZE 32
+
 struct TGAHeader
 {
 	unsigned char identSize;
@@ -57,7 +65,15 @@ public: // functions
 
 private: // functions
 	void releaseAll(void);
+	int createRenderTargetTexture(char *errorString, int width, int height,
+								  const char *name);
 	int loadTGA(const char *filename, char *errorString);
+	float frand(void);
+	void normalizeKernel(float *kernel, int kernelLength);
+	void normalizeTexture(float *texture, int textureSize);
+	void makeIntTexture(void);
+	void generateNoiseTexture(void);
+	int createNoiseTexture(char *errorString, const char *name);
 
 private: // data
 	int numTextures;
