@@ -1,138 +1,114 @@
-varying vec4 color;                                                   
-varying vec2 ppos;                                                    
-uniform sampler2D Texture0;                                           
-                                                                      
-// uniforms;                                                          
-uniform float time;                                                   
-uniform float spike;                                                  
-uniform float knob1, knob2, knob3, knob4, knob5;                      
-uniform float knob6, knob7, knob8, knob9;                             
-uniform float slider1, slider2, slider3, slider4, slider5;            
-uniform float slider6, slider7, slider8, slider9;                     
-                                                                      
-vec4 noise1(vec4 pos, float lod) {                                    
-vec4 result = vec4(0.0);                                              
-                                                                      
-vec2 texPos1 = pos.xy;                                                
-vec2 texPos2 = pos.zw;                                                
-                                                                      
-vec4 tex1 = (texture2DLod(Texture0, texPos1, lod) - 0.5);             
-vec4 tex2 = (texture2DLod(Texture0, texPos2, lod) - 0.5);             
-result += (tex1+tex2);                                                
-                                                                      
-return result;                                                        
-}                                                                     
-                                                                      
-uniform float fTime0_X;                                               
-                                                                      
-vec4 noise(vec4 pos, int iterations, float reduction) {               
-float intensity = 1.;                                                 
-float size = 1.;                                                      
-vec4 result = vec4(0.);                                               
-                                                                      
-// rotate noise to decorelate;                                        
-mat4 decor = mat4(vec4(-0.3, 0.7, 0.8, -0.5),                         
-vec4(0.2, -0.9, 0.6, -0.5),                                           
-vec4(0.6, 0.3, -0.6, -0.4),                                           
-vec4(-0.7, -0.1, 0.5, 0.6));                                          
-pos = pos * decor;                                                    
-                                                                      
-for (int k = 0; k < iterations; k++)                                  
-{                                                                     
-vec4 inp = noise1(pos * size * 3., 0.0);                              
-result += inp * intensity;                                            
-intensity = intensity * reduction;                                    
-size = size * 2.0;                                                    
-}                                                                     
-                                                                      
-return result * 0.3;                                                  
-}                                                                     
-                                                                      
-vec3 fireColor(vec3 pos, float sphereSize) {                          
-vec3 relpos = pos * 0.5;                                              
-                                                                      
-relpos += noise(relpos.xyxy * 0.1 , 2, 0.6).xyz * 0.2 +               
-fTime0_X * 0.03;                                                      
-float brightness = -1.0, color, whiteness;                            
-                                                                      
-brightness = noise(relpos.xyzx, 5, 0.8).r * 0.2 +                     
-1.3*length(pos) - 0.75;                                               
-                                                                      
-color = abs(brightness * 8.0);                                        
-whiteness = brightness * 0.6;                                         
-                                                                      
-vec3 bumpNormal = +2.5*pos + 1.0;                                     
-                                                                      
-float hemi = 0.5 + 0.5 * bumpNormal.y;                                
-hemi = 0.6 * smoothstep(-0.1, 0.5, hemi) - 0.1;                       
-float hemiSpec = clamp(1.0 * whiteness, 0.0, 0.5);                    
-                                                                      
-return clamp(hemiSpec + hemi *                                        
-(whiteness + color * vec3(0.3, 0.6, 1.0)), -0.2, 1.5);                
-}                                                                     
-                                                                      
-void main(void) {                                                     
-vec3 tvNoise = noise(ppos.xyyx*0.05 +                                 
-vec4(0.,0.,time*0.01,0.0), 8, 0.65).xyz;                              
-                                                                      
-vec3 rayDir = normalize(vec3(ppos, 1.0) * vec3(1.0, 0.6, 1.0));       
-vec3 camPos = vec3(0.0, 0.0, -2.7 + 0.0 * sin(fTime0_X*0.5));         
-                                                                      
-// rotate camera around y axis;                                       
-float alpha = -0.42;                                                  
-camPos.yz = vec2(cos(alpha)*camPos.y - sin(alpha)*camPos.z,           
-sin(alpha)*camPos.y + cos(alpha)*camPos.z);                           
-rayDir.yz = vec2(cos(alpha)*rayDir.y - sin(alpha)*rayDir.z,           
-sin(alpha)*rayDir.y + cos(alpha)*rayDir.z);                           
-alpha = time * 0.25;                                                  
-camPos.xz = vec2(cos(alpha)*camPos.x - sin(alpha)*camPos.z,           
-sin(alpha)*camPos.x + cos(alpha)*camPos.z);                           
-rayDir.xz = vec2(cos(alpha)*rayDir.x - sin(alpha)*rayDir.z,           
-sin(alpha)*rayDir.x + cos(alpha)*rayDir.z);                           
-                                                                      
-                                                                      
-vec3 rayPos = camPos;                                                 
-float sceneSize = 4.0;                                                
-vec3 totalColor = vec3(0.,0.,0.);                                     
-float stepSize;                                                       
-float totalDensity = 0.0;                                             
-                                                                      
-for (int i = 0; i < 80 &&                                             
-length(rayPos)<sceneSize && totalDensity < 0.95; i++) {               
-// base head;                                                         
-vec3 tmpPos = rayPos;                                                 
-float base1 = abs(tmpPos.y+0.1);                                      
-float base2 = abs(length(tmpPos.xz*vec2(1.2,1.0)+vec2(0.2,0.0)));     
-float socket = length(rayPos + vec3(0., 5., 0.)) - 4.2;               
-float base = max(base1 - 1.1, base2 - 0.45);                          
-float movement = abs(sin(fTime0_X * 6.)) * 0.5;                       
-float implicitVal = min(socket, base);                                
-                                                                      
-float noiseVal = noise(rayPos.xyzx*0.07 -                             
-vec4(0.0, time*0.01, 0.0, 0.0), 5, 0.7).r *                           
-0.54 * (1.+0.*sin(fTime0_X * 0.3));                                   
-implicitVal -= noiseVal;                                              
-                                                                      
-totalColor += vec3(1./50., 1./70., 1./110.) *                         
-0.1 * (4.+1.*exp2(4.*noise(vec4(time*0.02), 2, 0.7)).r);              
-totalDensity += 1./200.;                                              
-                                                                      
-if (implicitVal < 0.05) {                                             
-float localDensity = min(1.0, 0.05 - implicitVal);                    
-totalColor = totalColor + (1.-totalDensity) *                         
-fireColor(rayPos, 0.) * localDensity;                                 
-totalDensity = totalDensity + (1.-totalDensity) * localDensity;       
-}                                                                     
-                                                                      
-stepSize = (implicitVal) * 0.25;                                      
-stepSize = max(0.01, stepSize) * (tvNoise.r*0.04+0.96);               
-rayPos += rayDir * stepSize;                                          
-}                                                                     
-                                                                      
-float grad = normalize(rayPos).y;                                     
-totalColor += (1.-totalDensity) * (grad * vec3(0.0,0.0,0.1) +         
-(1.-grad)*vec3(0.0,0.1,0.2));                                         
-                                                                      
-gl_FragColor = vec4(totalColor-vec3(0.2), 1.0);                       
-}                                                                     
-                                                                      
+varying vec4 color;
+varying vec2 ppos;
+uniform sampler3D Texture0;
+
+// uniforms;
+uniform float time;
+uniform float spike;
+uniform float knob1, knob2, knob3, knob4, knob5;
+uniform float knob6, knob7, knob8, knob9;
+uniform float slider1, slider2, slider3, slider4, slider5;
+uniform float slider6, slider7, slider8, slider9;
+
+vec3 noise(vec3 pos, int iterations, float reduction)
+{
+   pos *= 2.; // adjust texture size
+   float intensity = 1.;
+   float size = 1.;
+   vec3 result = vec3(0.);
+
+   for (int k = 0; k < iterations; k++)
+   {
+      vec3 pos2 = floor(pos*size*16.) +
+			smoothstep(0.,1., (pos*size*16.) - floor(pos*size*16.)) - 0.5;
+      vec4 inp = texture3D(Texture0, pos2/16.);
+      result += inp.xyz * intensity;
+      intensity = intensity * reduction;
+      size = size * 1.93;
+   }
+   
+   return result;
+}
+
+vec3 color3D(vec3 pos, vec3 noiseData)
+{
+  float fTime0_X = time;
+  vec3 innercolor = vec3(0.4, 0.1, 0.0);
+  vec3 outercolor = vec3(0.1, 0.35, 0.65);
+  float height = (pos.y + noiseData.x);
+  float colorpart = smoothstep(-0.5, 0.5, -length(pos) + 
+		noiseData.x*12.*(slider8+1.) + 2.);
+  float border = smoothstep(-0.8, 0.8, abs(colorpart - 0.5));
+  return mix(innercolor, outercolor, colorpart) * border + 
+		clamp(height - 2.*slider7 - 1.,0.0,100.0);
+}
+
+vec2 rotate(vec2 pos, float angle)
+{
+	return pos * mat2(cos(angle),-sin(angle),sin(angle),cos(angle));
+}
+
+void main(void)
+{  
+   float fTime0_X = time;
+   vec3 rayDir = normalize(vec3(ppos, 1.0) * vec3(1.0, 0.6, 1.0));
+   vec3 camPos = vec3(0.0, 0.0, -8. + 8. * slider1);
+
+   // rotate camera around y axis;
+   float alpha;
+   alpha = slider3*9.42;
+   camPos.xz = rotate(camPos.xz, alpha);
+   rayDir.xz = rotate(rayDir.xz, alpha);
+   alpha = slider2*9.42;
+   camPos.yz = rotate(camPos.yz, alpha);
+   rayDir.yz = rotate(rayDir.yz, alpha);
+   
+   vec3 rayPos = camPos;
+   float sceneSize = 16.0;
+   vec3 totalColor = vec3(0.,0.,0.);
+   float stepSize;
+   float totalDensity = 0.0;
+   vec3 totalColorAdder = 
+		(vec3(0.016, 0.012, 0.009)) * slider4;
+   
+   for (int i = 0; i < 150 && length(rayPos)<sceneSize &&
+		totalDensity < 0.95; i++)
+   {
+      // base head;
+      vec3 tmpPos = rayPos;
+      float base1 = abs(tmpPos.y);
+	  float base2 = abs(length(rayPos.xz) - 2.0 + 
+			2.0 * slider4) * (0.5 + slider6);
+	  float socket = length(rayPos + vec3(0., 9., 0.)) -
+			8.2 + 20.*slider8;
+	  float base = (max(base1 - 1.1 - slider7*20.,
+			base2 - 2.0*slider6 + 1.2));
+	  float implicitVal = min(socket, base);
+
+      vec3 noiseAdder = noise(rayPos * 0.03 - 
+			vec3(0.0, fTime0_X*0.02, 0.0), 2, 0.8) * 0.1 * slider5;
+      float noiseVal = noise(noiseAdder*0.3 + 
+			rayPos*0.04*vec3(1.0,0.05+0.95*slider5, 1.0) -
+			vec3(0.0, fTime0_X*0.03, 0.0), 7, 0.7).r * 0.6;
+      implicitVal -= noiseVal;
+     
+	  totalColor += totalColorAdder;
+      totalDensity += 0.005;
+      if (implicitVal < 0.0)
+      {
+	     float localDensity = 1. - exp(implicitVal);
+		 localDensity = (1.-totalDensity) * localDensity;
+         totalColor += color3D(rayPos, vec3(noiseVal)) * localDensity;
+         totalDensity += localDensity;
+      }
+      
+	  stepSize = (implicitVal) * 0.5;
+      stepSize = max(0.03, stepSize);
+      rayPos += rayDir * stepSize;
+   }
+   
+   float grad = normalize(rayPos).y;
+   totalColor += (1.-totalDensity) * (grad * vec3(0.0,0.0,0.1) +
+		(1.-grad)*vec3(0.0,0.1,0.2));
+   gl_FragColor = vec4(sqrt(smoothstep(0.3, 1.4, totalColor)), 1.0);
+}

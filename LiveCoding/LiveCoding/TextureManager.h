@@ -4,6 +4,7 @@
  * holds some special textures. Here is a list of textures:
  * TODO: Shall the texture manager handle the render target stuff or not????
  * - 'noise2D': Core 2D noise texture. In the future there might be more
+ * - 'noise3D': Core 3D noise texture.
  * - 'renderTarget': Core render target at render target resolution
  * - 'smallTarget': Smaller render target for hypnoglow and the like
  */
@@ -18,10 +19,14 @@
 #define TM_OFFSCREEN_NAME "renderTarget"
 #define TM_HIGHLIGHT_NAME "smallTarget"
 #define TM_NOISE_NAME "noise2D"
+#define TM_NOISE3D_NAME "noise3D"
 
 // The noise texture dimension
 #define TM_NOISE_TEXTURE_SIZE 256
 #define TM_FILTER_KERNEL_SIZE 32
+
+// Name of the 32x32x32 noise texture
+#define TM_3DNOISE_TEXTURE_SIZE 16 // try smaller?
 
 struct TGAHeader
 {
@@ -74,6 +79,7 @@ private: // functions
 	void makeIntTexture(void);
 	void generateNoiseTexture(void);
 	int createNoiseTexture(char *errorString, const char *name);
+	int createNoiseTexture3D(char *errorString, const char *name);
 
 private: // data
 	int numTextures;

@@ -3,9 +3,11 @@
 #include "Configuration.h"
 #include "glext.h"
 #include "gl/glu.h"
+#include "GLNames.h"
 
 float noiseData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
 unsigned char noiseIntData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
+float noiseData3D[TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE_TEXTURE_SIZE * 4];
 
 TextureManager::TextureManager(void)
 {
@@ -102,6 +104,7 @@ int TextureManager::init(char *errorString)
 	createRenderTargetTexture(errorString, X_OFFSCREEN, Y_OFFSCREEN, TM_OFFSCREEN_NAME);
 	createRenderTargetTexture(errorString, X_HIGHLIGHT, Y_HIGHLIGHT, TM_HIGHLIGHT_NAME);
 	createNoiseTexture(errorString, TM_NOISE_NAME);
+	createNoiseTexture3D(errorString, TM_NOISE3D_NAME);
 
 	// Go throught the shaders directory and load all shaders.
 	HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -159,6 +162,31 @@ int TextureManager::createNoiseTexture(char *errorString, const char *name)
 					  GL_BGRA, GL_UNSIGNED_BYTE, noiseIntData);
 	textureWidth[numTextures] = TM_NOISE_TEXTURE_SIZE;
 	textureHeight[numTextures] = TM_NOISE_TEXTURE_SIZE;
+	numTextures++;
+	return 0;
+}
+
+int TextureManager::createNoiseTexture3D(char *errorString, const char *name)
+{
+	// create noise Texture
+	for (int i = 0; i < TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE_TEXTURE_SIZE * 4; i++)
+	{
+		noiseData3D[i] = frand() - 0.5f;
+	}
+
+	glGenTextures(1, textureID + numTextures);
+	strcpy_s(textureName[numTextures], TM_MAX_FILENAME_LENGTH, name);
+	glBindTexture(GL_TEXTURE_3D, textureID[numTextures]);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F,
+				 TM_3DNOISE_TEXTURE_SIZE, TM_3DNOISE_TEXTURE_SIZE, TM_3DNOISE_TEXTURE_SIZE,
+				 0, GL_RGBA, GL_FLOAT, noiseData3D);
+	textureWidth[numTextures] = -1;
+	textureHeight[numTextures] = -1;
 	numTextures++;
 	return 0;
 }
@@ -347,4 +375,3 @@ void TextureManager::generateNoiseTexture(void)
 
 	makeIntTexture();
 }
-
