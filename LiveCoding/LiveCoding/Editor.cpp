@@ -570,14 +570,28 @@ int Editor::loadText(const char *filename, char *errorText)
 			}
 		}
 
-		// Line ends here:
+		// Line should have eneded here here:
 		if (!lineEnded)
 		{
-			sprintf_s(errorText, MAX_ERROR_LENGTH, 
-					  "Editor error: Line %d in %s too long.",
-					  numLines, filename);
-			clear();
-			return -1;
+			while ((textBuffer[bufferPos] == '\r' || textBuffer[bufferPos] == '\n') &&
+				   bufferPos < bufferSize)
+			{
+				lineEnded = true;
+				bufferPos++;
+			}
+			if (bufferPos >= bufferSize)
+			{
+				isFinished = true;
+			}
+			
+			if (!lineEnded)
+			{
+				sprintf_s(errorText, MAX_ERROR_LENGTH, 
+						  "Editor error: Line %d in %s too long.",
+						  numLines, filename);
+				clear();
+				return -1;
+			}
 		}
 
 		text[numLines][ED_MAX_LINE_LENGTH] = '\n';

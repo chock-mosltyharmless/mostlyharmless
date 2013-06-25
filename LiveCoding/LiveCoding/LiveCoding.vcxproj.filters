@@ -43,6 +43,15 @@
     <None Include="shaders\EmptyEffect.vlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\FireBar.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\FireBar.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\FireBar.gprg">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

@@ -13,6 +13,10 @@
 
 #define MAX_LOADSTRING 100
 
+// The used effect (will be changeable later on)
+char *usedShader = "FireBar.flsl";
+char *usedProgram = "FireBar.gprg";
+
 /*************************************************
  * GL Core variables
  *************************************************/
@@ -207,7 +211,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				char errorText[MAX_ERROR_LENGTH];
 				char *shaderText;
 				shaderText = editor.getText();
-				if (shaderManager.updateShader("EmptyEffect.flsl", shaderText, errorText))
+				if (shaderManager.updateShader(usedShader, shaderText, errorText))
 				{
 					//MessageBox(wininfo.hWnd, errorText, "Shader change", MB_OK);
 					editor.setErrorText(errorText);
@@ -215,7 +219,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				else
 				{
 					// It worked, so save the shader
-					shaderManager.saveProgress("EmptyEffect.flsl", errorText);
+					shaderManager.saveProgress(usedShader, errorText);
 					editor.unshowError();
 					editor.unshowText();
 				}
@@ -371,7 +375,7 @@ void intro_do(long t)
 
 	// Set the program uniforms
 	GLuint programID;
-	shaderManager.getProgramID("EmptyEffect.gprg", &programID, errorText);
+	shaderManager.getProgramID(usedProgram, &programID, errorText);
 	glUseProgram(programID);
 	GLuint loc = glGetUniformLocation(programID, "time");
 	glUniform1f(loc, (float)(t * 0.001f));
@@ -479,7 +483,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		// Example editor usage
 #if 1
 	char errorText[MAX_ERROR_LENGTH+1];
-	if (editor.loadText("shaders/EmptyEffect.flsl", errorText))
+	char filename[SM_MAX_FILENAME_LENGTH+1];
+	sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "shaders/%s", usedShader);
+	if (editor.loadText(filename, errorText))
 	{
 		MessageBox(info->hWnd, errorText, "Editor init", MB_OK);
 		return -1;
