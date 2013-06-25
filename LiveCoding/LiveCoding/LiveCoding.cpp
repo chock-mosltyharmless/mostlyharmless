@@ -9,6 +9,7 @@
 #include "ShaderManager.h"
 #include "TextureManager.h"
 #include "Editor.h"
+#include "Parameter.h"
 
 #define MAX_LOADSTRING 100
 
@@ -21,7 +22,7 @@ const static char* glnames[NUM_GL_NAMES]={
      "glAttachShader", "glLinkProgram", "glUseProgram",
 	 "glTexImage3D", "glGetShaderiv","glGetShaderInfoLog",
 	 "glDeleteProgram", "glDeleteShader",
-	 "glActiveTexture", "glGetUniformLocation", "glUniform1i",
+	 "glActiveTexture", "glGetUniformLocation", "glUniform1i", "glUniform1f",
 	 "glMultiTexCoord2f"
 };
 
@@ -74,6 +75,36 @@ static const PIXELFORMATDESCRIPTOR pfd =
 static WININFO wininfo = {  0,0,0,0,0,
 							{'l','c','_',0}
                             };
+
+/**************************************************
+ * Parameters from the midi stuff
+ ****************************************************/
+// ---------------------------------------------------------------
+//					Parameter interpolation stuff
+// ------------------------------------------------------------
+// I want to interpolate the new values from the old ones.
+const int maxNumParameters = 25;
+const static float defaultParameters[maxNumParameters] = 
+{
+	-1.0f, -1.0f,
+	0.0f, 0.0f,	0.0f, 0.0f, 0.0f,	// 2-6 ~= 1-5
+	-1.0f,
+	0.0f, 0.0f,						// 8,9 ~= 6,7
+	-1.0f, -1.0f,
+	0.0f, 0.0f,						// 12,13 ~= 8-9
+	0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+	0.0f, 0.0f, 0.0f, 0.0f,			// 14-22 ~= 1b-9b
+};
+static float interpolatedParameters[maxNumParameters];
+const int NUM_KEYS = 127;
+static int keyPressed[NUM_KEYS] = {0};
+
+// BPM stuff
+const int NUM_BEAT_TIMES = 7;
+float BPM = 0.0f;
+int beatDurations[NUM_BEAT_TIMES] = {900, 1200, 1100, 1000, 1400, 1000, 1000};
+int lastBeatTime = 0;
+
 
 
 /*************************************************
@@ -183,6 +214,8 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				}
 				else
 				{
+					// It worked, so save the shader
+					shaderManager.saveProgress("EmptyEffect.flsl", errorText);
 					editor.unshowError();
 					editor.unshowText();
 				}
@@ -302,19 +335,93 @@ void intro_do(long t)
 {
 	char errorText[MAX_ERROR_LENGTH+1];
 	float ftime = 0.001f*(float)t;
+	GLuint textureID;
 
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 
-	// render to larger offscreen texture
-	glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+	// Those are key-Press indicators. I only act on 0-to-1.
+	for (int i = 0; i < maxNumParameters; i++)
+	{
+		interpolatedParameters[i] = 0.9f * interpolatedParameters[i] +
+									0.1f * params.getParam(i, defaultParameters[i]);
+	}
+	// Update key press events.
+	for (int i = 0; i < NUM_KEYS; i++)
+	{
+		if (params.getParam(i, 0.0) > 0.5f) keyPressed[i]++;
+		else keyPressed[i] = 0;
+	}
+
+	// BPM => spike calculation
+	float BPS = BPM / 60.0f;
+	float jumpsPerSecond = BPS / 1.0f; // Jump on every fourth beat.
+	static float phase = 0.0f;
+	float jumpTime = (ftime * jumpsPerSecond) + phase;
+	jumpTime -= floor(jumpTime);
+	if (keyPressed[41] == 1)
+	{
+		phase -= jumpTime;
+		jumpTime = 0.0f;
+		if (phase < 0.0f) phase += 1.0;
+	}
+	jumpTime = jumpTime * jumpTime;
+	// spike is between 0.0 and 1.0 depending on the position within whatever.
+	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 1.5f) + 0.5f;
+
+	// Set the program uniforms
 	GLuint programID;
 	shaderManager.getProgramID("EmptyEffect.gprg", &programID, errorText);
 	glUseProgram(programID);
+	GLuint loc = glGetUniformLocation(programID, "time");
+	glUniform1f(loc, (float)(t * 0.001f));
+	// For now I am just sending the spike to the shader. I might need something better...
+	loc = glGetUniformLocation(programID, "spike");
+	glUniform1f(loc, spike);
+	loc = glGetUniformLocation(programID, "knob1");
+	glUniform1f(loc, interpolatedParameters[14]);
+	loc = glGetUniformLocation(programID, "knob2");
+	glUniform1f(loc, interpolatedParameters[15]);
+	loc = glGetUniformLocation(programID, "knob3");
+	glUniform1f(loc, interpolatedParameters[16]);
+	loc = glGetUniformLocation(programID, "knob4");
+	glUniform1f(loc, interpolatedParameters[17]);
+	loc = glGetUniformLocation(programID, "knob5");
+	glUniform1f(loc, interpolatedParameters[18]);
+	loc = glGetUniformLocation(programID, "knob6");
+	glUniform1f(loc, interpolatedParameters[19]);
+	loc = glGetUniformLocation(programID, "knob7");
+	glUniform1f(loc, interpolatedParameters[20]);
+	loc = glGetUniformLocation(programID, "knob8");
+	glUniform1f(loc, interpolatedParameters[21]);
+	loc = glGetUniformLocation(programID, "knob9");
+	glUniform1f(loc, interpolatedParameters[22]);
+	loc = glGetUniformLocation(programID, "slider1");
+	glUniform1f(loc, interpolatedParameters[2]);
+	loc = glGetUniformLocation(programID, "slider2");
+	glUniform1f(loc, interpolatedParameters[3]);
+	loc = glGetUniformLocation(programID, "slider3");
+	glUniform1f(loc, interpolatedParameters[4]);
+	loc = glGetUniformLocation(programID, "slider4");
+	glUniform1f(loc, interpolatedParameters[5]);
+	loc = glGetUniformLocation(programID, "slider5");
+	glUniform1f(loc, interpolatedParameters[6]);
+	loc = glGetUniformLocation(programID, "slider6");
+	glUniform1f(loc, interpolatedParameters[8]);
+	loc = glGetUniformLocation(programID, "slider7");
+	glUniform1f(loc, interpolatedParameters[9]);
+	loc = glGetUniformLocation(programID, "slider8");
+	glUniform1f(loc, interpolatedParameters[12]);
+	loc = glGetUniformLocation(programID, "slider9");
+	glUniform1f(loc, interpolatedParameters[13]);
+
+	// render to larger offscreen texture
+	textureManager.getTextureID("noise2D", &textureID, errorText);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// Copy backbuffer to texture
-	GLuint textureID;
 	textureManager.getTextureID("renderTarget", &textureID, errorText);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
@@ -408,3 +515,53 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return( 0 );
 }
 
+// Note that a key was pressed
+void registerParameterChange(int keyID)
+{
+	const int beatKey = 41;
+	const int minBeatTime = 100;
+	const int maxBeatTime = 5000;
+	int sortedBeatDurations[NUM_BEAT_TIMES];
+
+	// Do nothing on key release!
+	if (params.getParam(beatKey) < 0.5f) return;
+
+	if (keyID == beatKey)
+	{
+		int t = timeGetTime();
+		int timeDiff = t - lastBeatTime;
+		if (timeDiff > minBeatTime && timeDiff < maxBeatTime)
+		{
+			for (int i = 0; i < NUM_BEAT_TIMES-1; i++)
+			{
+				beatDurations[i] = beatDurations[i+1];
+			}
+			beatDurations[NUM_BEAT_TIMES-1] = timeDiff;
+		}
+		lastBeatTime = t;
+	}
+
+	// copy sorted beat durations
+	for (int i = 0; i < NUM_BEAT_TIMES; i++)
+	{
+		sortedBeatDurations[i] = beatDurations[i];
+	}
+
+	// Calculate median of beat durations by bubble sorting.
+	bool sorted = false;
+	while (!sorted)
+	{
+		sorted = true;
+		for (int i = 0; i < NUM_BEAT_TIMES-1; i++)
+		{
+			if (sortedBeatDurations[i] < sortedBeatDurations[i+1]) {
+				int tmp = sortedBeatDurations[i+1];
+				sortedBeatDurations[i+1] = sortedBeatDurations[i];
+				sortedBeatDurations[i] = tmp;
+				sorted = false;
+			}
+		}
+	}
+
+	BPM = 60.0f * 1000.0f / sortedBeatDurations[NUM_BEAT_TIMES/2];
+}

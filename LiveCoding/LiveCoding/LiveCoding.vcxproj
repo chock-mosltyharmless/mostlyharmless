@@ -90,6 +90,7 @@
     <ClInclude Include="glext.h" />
     <ClInclude Include="GLNames.h" />
     <ClInclude Include="LiveCoding.h" />
+    <ClInclude Include="Parameter.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="stdafx.h" />
@@ -99,6 +100,7 @@
   <ItemGroup>
     <ClCompile Include="Editor.cpp" />
     <ClCompile Include="LiveCoding.cpp" />
+    <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
