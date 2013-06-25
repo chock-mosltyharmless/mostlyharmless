@@ -420,8 +420,8 @@ void intro_do(long t)
 	glUniform1f(loc, interpolatedParameters[13]);
 
 	// render to larger offscreen texture
-	textureManager.getTextureID("noise2D", &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
+	textureManager.getTextureID("noise3D", &textureID, errorText);
+	glBindTexture(GL_TEXTURE_3D, textureID);
 	glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
