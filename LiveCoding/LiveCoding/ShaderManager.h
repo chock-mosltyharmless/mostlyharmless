@@ -13,6 +13,7 @@
 #define SM_MAX_PROGRAM_SHADERS 2
 
 #define SM_DIRECTORY "shaders/"
+#define SM_PROGRESS_DIRECTORY (SM_DIRECTORY "progress/")
 #define SM_SHADER_WILDCARD "*.?lsl"
 #define SM_PROGRAM_WILDCARD "*.gprg"
 
@@ -41,6 +42,12 @@ public: // functions
 
 	GLuint getID(void) {return shaderID;}
 	boolean isShader(const char *name) {return strcmp(shaderName, name) == 0;}
+
+	// Save the progress of the shader text to a file
+	// The current date and time are encoded in the filename
+	void saveProgress(void);
+
+	char *getShaderText(void) {return shaderText;}
 
 private: // functions
 	int compileShader(char *errorString);
@@ -109,6 +116,10 @@ public: // functions
 
 	// Update a shader and compile it into programs if neccessary.
 	int updateShader(const char *shaderName, const char *shaderText, char *errorText);
+
+	// Save the progress of the shader text to a file
+	// The current date and time are encoded in the filename
+	int saveProgress(const char *shaderName, char *errorText);
 
 private: // functions
 	void releaseAll();

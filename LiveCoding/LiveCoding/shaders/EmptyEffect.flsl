@@ -1,5 +1,28 @@
 varying vec4 color;
 varying vec2 ppos;
+uniform sampler2D Texture0;
+
+// uniforms;
+uniform float time;
+uniform float spike;
+uniform float knob1, knob2, knob3, knob4, knob5;
+uniform float knob6, knob7, knob8, knob9;
+uniform float slider1, slider2, slider3, slider4, slider5;
+uniform float slider6, slider7, slider8, slider9;
+
+vec4 noise(vec4 pos, float lod)
+{
+   vec4 result = vec4(0.0);
+   
+   vec2 texPos1 = pos.xy;
+   vec2 texPos2 = pos.zw;
+   
+   vec4 tex1 = (texture2DLod(Texture0, texPos1, lod) - 0.5);
+   vec4 tex2 = (texture2DLod(Texture0, texPos2, lod) - 0.5);   
+   result += (tex1+tex2);
+   
+   return result;
+}
 
 void main(void) {
 	vec4 col = vec4(0.7, 0.9, 1.0, 1.0);

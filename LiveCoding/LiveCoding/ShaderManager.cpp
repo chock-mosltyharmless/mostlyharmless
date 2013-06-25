@@ -419,6 +419,31 @@ int ShaderManager::getShader(const char *name, Shader **result, char *errorStrin
 	// Got here without finding a texture, return error.
 	sprintf_s(errorString, MAX_ERROR_LENGTH,
 			  "Could not find shader '%s'", name);
-	return 0;
+	return -1;
 }
 
+int ShaderManager::saveProgress(const char *shaderName, char *errorText)
+{
+	Shader *shader;
+	int retVal = getShader(shaderName, &shader, errorText);
+	if (retVal) return retVal;
+
+	SYSTEMTIME sysTime;
+	GetSystemTime(&sysTime);
+
+	char filename[SM_MAX_FILENAME_LENGTH];
+	sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "%s%s.%d_%d_%d_%d_%d_%d",
+		SM_PROGRESS_DIRECTORY, shaderName, sysTime.wYear, sysTime.wMonth,
+		sysTime.wDay, sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
+	FILE *fid;
+	if (fopen_s(&fid, filename, "wb"))
+	{
+		sprintf_s(errorText, MAX_ERROR_LENGTH,
+			      "Could not write to '%s'", filename);
+		return -1;
+	}
+	fwrite(shader->getShaderText(), sizeof(char), strlen(shader->getShaderText()), fid);
+	fclose(fid);
+
+	return 0;
+}
