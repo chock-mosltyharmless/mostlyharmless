@@ -14,8 +14,10 @@
 #define MAX_LOADSTRING 100
 
 // The used effect (will be changeable later on)
-char *usedShader = "FireBar.flsl";
-char *usedProgram = "FireBar.gprg";
+#define NUM_USED_PROGRAMS 3
+char *usedShader[NUM_USED_PROGRAMS] = {"explode1.flsl", "otone1.flsl", "FireBar.flsl"};
+char *usedProgram[NUM_USED_PROGRAMS] = {"explode1.gprg", "otone1.gprg", "FireBar.gprg"};
+int usedIndex = 0;
 
 /*************************************************
  * GL Core variables
@@ -211,7 +213,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				char errorText[MAX_ERROR_LENGTH];
 				char *shaderText;
 				shaderText = editor.getText();
-				if (shaderManager.updateShader(usedShader, shaderText, errorText))
+				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
 				{
 					//MessageBox(wininfo.hWnd, errorText, "Shader change", MB_OK);
 					editor.setErrorText(errorText);
@@ -219,9 +221,35 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				else
 				{
 					// It worked, so save the shader
-					shaderManager.saveProgress(usedShader, errorText);
+					shaderManager.saveProgress(usedShader[usedIndex], errorText);
 					editor.unshowError();
 					editor.unshowText();
+				}
+			}
+			break;
+
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			if (GetAsyncKeyState(VK_CONTROL) < 0)
+			{
+				// I use the ordering of keys to be able to get to the shader...
+				usedIndex = wParam - '1';
+				if (usedIndex >= NUM_USED_PROGRAMS) usedIndex = NUM_USED_PROGRAMS - 1;
+
+				char errorText[MAX_ERROR_LENGTH+1];
+				char filename[SM_MAX_FILENAME_LENGTH+1];
+				sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "shaders/%s", usedShader[usedIndex]);
+				if (editor.loadText(filename, errorText))
+				{
+					MessageBox(wininfo.hWnd, errorText, "Editor init", MB_OK);
+					return -1;
 				}
 			}
 			break;
@@ -347,8 +375,8 @@ void intro_do(long t)
 	// Those are key-Press indicators. I only act on 0-to-1.
 	for (int i = 0; i < maxNumParameters; i++)
 	{
-		interpolatedParameters[i] = 0.9f * interpolatedParameters[i] +
-									0.1f * params.getParam(i, defaultParameters[i]);
+		interpolatedParameters[i] = 0.98f * interpolatedParameters[i] +
+									0.02f * params.getParam(i, defaultParameters[i]);
 	}
 	// Update key press events.
 	for (int i = 0; i < NUM_KEYS; i++)
@@ -375,7 +403,7 @@ void intro_do(long t)
 
 	// Set the program uniforms
 	GLuint programID;
-	shaderManager.getProgramID(usedProgram, &programID, errorText);
+	shaderManager.getProgramID(usedProgram[usedIndex], &programID, errorText);
 	glUseProgram(programID);
 	GLuint loc = glGetUniformLocation(programID, "time");
 	glUniform1f(loc, (float)(t * 0.001f));
@@ -480,17 +508,15 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)) exit(-1);
 
-		// Example editor usage
-#if 1
+	// Example editor usage
 	char errorText[MAX_ERROR_LENGTH+1];
 	char filename[SM_MAX_FILENAME_LENGTH+1];
-	sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "shaders/%s", usedShader);
+	sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "shaders/%s", usedShader[usedIndex]);
 	if (editor.loadText(filename, errorText))
 	{
 		MessageBox(info->hWnd, errorText, "Editor init", MB_OK);
 		return -1;
 	}
-#endif
 
     long to=timeGetTime();
     while( !done )

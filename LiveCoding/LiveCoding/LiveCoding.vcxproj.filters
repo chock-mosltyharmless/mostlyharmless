@@ -52,6 +52,24 @@
     <None Include="shaders\FireBar.gprg">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\otone1.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\otone1.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\otone1.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\explode1.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\explode1.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\explode1.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
