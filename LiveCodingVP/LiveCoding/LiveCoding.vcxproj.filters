@@ -61,13 +61,13 @@
     <None Include="shaders\otone1.vlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\explode1.flsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="shaders\explode1.gprg">
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\explode1.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\explode1.jlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
