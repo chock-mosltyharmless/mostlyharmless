@@ -79,8 +79,8 @@
     <None Include="shaders\EmptyEffect.flsl" />
     <None Include="shaders\EmptyEffect.gprg" />
     <None Include="shaders\EmptyEffect.vlsl" />
-    <None Include="shaders\explode1.flsl" />
     <None Include="shaders\explode1.gprg" />
+    <None Include="shaders\explode1.jlsl" />
     <None Include="shaders\explode1.vlsl" />
     <None Include="shaders\FireBar.flsl" />
     <None Include="shaders\FireBar.gprg" />
