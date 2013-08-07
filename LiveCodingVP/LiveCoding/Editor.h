@@ -5,7 +5,8 @@
 #define ED_MAX_LINE_LENGTH 70
 #define ED_MAX_NUM_LINES 5000
 #define ED_MAX_FILESIZE (ED_MAX_LINE_LENGTH*(ED_MAX_NUM_LINES+1))
-#define ED_MAX_FILENAME_LENGTH 1024
+#define ED_MAX_FILENAME_LENGTH 256
+#define ED_MAX_FILE_HISTORY 256
 
 // Font size stuff
 #define ED_CHAR_TEX_WIDTH 0.0688100961538462f
@@ -104,6 +105,12 @@ public: // functions
 	// Mark that the text shall fade off (if it isn't off already)
 	// The text is faded in once there is any modification
 	void unshowText(void);
+	void showText(void) { isTextFading = false; textDisplayAlpha = 1.0f; }
+
+	// Call this function as a return point for undo
+	void setSnapshot(const char *filename);
+	void undo();
+	void redo();
 
 private: // functions
 	void clear(void);
@@ -118,11 +125,17 @@ private: // data
 	unsigned char text[ED_MAX_NUM_LINES+1][ED_MAX_LINE_LENGTH+1];
 	// indentation of each line...
 	int indentation[ED_MAX_NUM_LINES+1];
-	char filename[ED_MAX_FILENAME_LENGTH+1];
 	unsigned char textBuffer[ED_MAX_FILESIZE+1];
 	int numLines;
 	ShaderManager *shaderManager;
 	TextureManager *textureManager;
+
+	// File history for undo
+	// File History is actually a ring buffer
+	char fileHistory[ED_MAX_FILE_HISTORY][ED_MAX_FILENAME_LENGTH+1];
+	int nextFileHistory; // position where to next store a file history
+	int lastFileHistory; // Where to go when you press CTRL-Z (set to -1 if no more undo possible)
+	int firstFileHistory; // Do no go before this position
 
 	// Information for the displayed error
 	unsigned char displayedError[MAX_ERROR_LENGTH+1];
