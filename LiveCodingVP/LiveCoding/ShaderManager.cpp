@@ -15,7 +15,7 @@ const char *Shader::jlslHeader =
 "uniform float knob6, knob7, knob8, knob9;                             "
 "uniform float slider1, slider2, slider3, slider4, slider5;            "
 "uniform float slider6, slider7, slider8, slider9;                     "
-"vec4 noise1(vec3 pos, float reduction) {                              "
+"vec4 noise1(vec3 pos) {                              "
 "vec3 pos2 = floor(pos*16.) +                                          "                        
 "smoothstep(0.,1., (pos*16.) - floor(pos*16.)) - 0.5;                  "
 "return texture3D(Texture0, pos2/16.) - vec4(0.5);                     "
