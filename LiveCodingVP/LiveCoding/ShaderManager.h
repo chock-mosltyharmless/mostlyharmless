@@ -19,6 +19,7 @@
 
 // Forward declaration for reference
 class ShaderManager;
+class Editor;
 
 class Shader
 {
@@ -120,7 +121,7 @@ public: // functions
 
 	// Save the progress of the shader text to a file
 	// The current date and time are encoded in the filename
-	int saveProgress(const char *shaderName, char *errorText);
+	int saveProgress(const char *shaderName, char *errorText, Editor *editor = NULL);
 
 private: // functions
 	void releaseAll();

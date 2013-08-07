@@ -3,6 +3,7 @@
 #include "glext.h"
 #include "GLnames.h"
 #include "Configuration.h"
+#include "Editor.h"
 
 // I should make this local to the Shader class
 const char *Shader::jlslHeader =
@@ -489,7 +490,7 @@ int ShaderManager::getShader(const char *name, Shader **result, char *errorStrin
 	return -1;
 }
 
-int ShaderManager::saveProgress(const char *shaderName, char *errorText)
+int ShaderManager::saveProgress(const char *shaderName, char *errorText, Editor *editor)
 {
 	Shader *shader;
 	int retVal = getShader(shaderName, &shader, errorText);
@@ -498,7 +499,7 @@ int ShaderManager::saveProgress(const char *shaderName, char *errorText)
 	SYSTEMTIME sysTime;
 	GetSystemTime(&sysTime);
 
-	char filename[SM_MAX_FILENAME_LENGTH];
+	char filename[SM_MAX_FILENAME_LENGTH+1];
 	sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "%s%s.%d_%d_%d_%d_%d_%d",
 		SM_PROGRESS_DIRECTORY, shaderName, sysTime.wYear, sysTime.wMonth,
 		sysTime.wDay, sysTime.wHour, sysTime.wMinute, sysTime.wSecond);
@@ -511,6 +512,12 @@ int ShaderManager::saveProgress(const char *shaderName, char *errorText)
 	}
 	fwrite(shader->getShaderText(), sizeof(char), strlen(shader->getShaderText()), fid);
 	fclose(fid);
+
+	// If there is an editor attached, set a snapshot
+	if (editor)
+	{
+		editor->setSnapshot(filename);
+	}
 
 	return 0;
 }

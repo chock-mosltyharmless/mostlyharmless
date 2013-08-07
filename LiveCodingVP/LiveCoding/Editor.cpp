@@ -7,6 +7,10 @@
 Editor::Editor(void)
 {
 	lastRenderTime = 0;
+	// Undo
+	nextFileHistory = 0; // position where to next store a file history
+	lastFileHistory = -1; // Where to go when you press CTRL-Z (set to -1 if no more undo possible)
+	firstFileHistory = -1; // Do no go before this position
 	clear();
 }
 
@@ -255,6 +259,56 @@ int Editor::getLineLength(int line)
 		lineLength--;
 	}
 	return lineLength;
+}
+
+void Editor::setSnapshot(const char *filename)
+{
+	strcpy_s(fileHistory[nextFileHistory], ED_MAX_FILENAME_LENGTH, filename);
+	if (firstFileHistory < 0) firstFileHistory = nextFileHistory;
+	lastFileHistory = nextFileHistory; // return to this snapshot on undo()
+	nextFileHistory = (nextFileHistory+1) % ED_MAX_FILE_HISTORY;
+	if (nextFileHistory == firstFileHistory)
+	{
+		// buffer overflow, remove last entry
+		firstFileHistory = (firstFileHistory+1) % ED_MAX_FILE_HISTORY;
+	}
+}
+
+void Editor::undo()
+{
+	char dummyError[MAX_ERROR_LENGTH+1];
+	if (lastFileHistory < 0) return;
+
+	// should never throw an error. Hopefully.
+	if (loadText(fileHistory[lastFileHistory], dummyError) != 0)
+	{
+		setErrorText(dummyError);
+	}
+
+	// Go to previous file history if applicable
+	if (lastFileHistory != firstFileHistory)
+	{
+		lastFileHistory = (lastFileHistory+ED_MAX_FILE_HISTORY-1) % ED_MAX_FILE_HISTORY;
+	}
+}
+
+void Editor::redo()
+{
+	char dummyError[MAX_ERROR_LENGTH+1];
+	if (firstFileHistory < 0) return;
+	if (lastFileHistory < 0)
+	{
+		lastFileHistory = firstFileHistory;
+	}
+
+	int prev = (lastFileHistory + 1) % ED_MAX_FILE_HISTORY;
+	if (prev == nextFileHistory) return;
+
+	if (loadText(fileHistory[prev], dummyError) != 0)
+	{
+		setErrorText(dummyError);
+	}
+	lastFileHistory = prev;
 }
 
 void Editor::controlCharacter(WPARAM vKey)

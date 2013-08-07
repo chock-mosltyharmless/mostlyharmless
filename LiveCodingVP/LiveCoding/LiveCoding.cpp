@@ -192,6 +192,40 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			editor.controlCharacter(wParam);
 			break;
 
+		case 'z':
+		case 'Z':
+			if (GetAsyncKeyState(VK_CONTROL) < 0)
+			{
+				editor.undo();
+				char errorText[MAX_ERROR_LENGTH];
+				char *shaderText;
+				shaderText = editor.getText();
+				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
+				{
+					editor.setErrorText(errorText);
+				}
+				else editor.unshowError();
+				editor.showText();
+			}
+			break;
+
+		case 'y':
+		case 'Y':
+			if (GetAsyncKeyState(VK_CONTROL) < 0)
+			{
+				editor.redo();
+				char errorText[MAX_ERROR_LENGTH];
+				char *shaderText;
+				shaderText = editor.getText();
+				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
+				{
+					editor.setErrorText(errorText);
+				}
+				else editor.unshowError();
+				editor.showText();
+			}
+			break;
+
 		case 'm':
 		case 'M':
 			if (GetAsyncKeyState(VK_CONTROL) < 0)
@@ -221,7 +255,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				else
 				{
 					// It worked, so save the shader
-					shaderManager.saveProgress(usedShader[usedIndex], errorText);
+					shaderManager.saveProgress(usedShader[usedIndex], errorText, &editor);
 					editor.unshowError();
 					editor.unshowText();
 				}
