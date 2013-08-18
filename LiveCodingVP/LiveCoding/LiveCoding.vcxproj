@@ -76,21 +76,16 @@
   <ItemGroup>
     <None Include="LiveCoding.ico" />
     <None Include="ReadMe.txt" />
-    <None Include="shaders\EmptyEffect.flsl" />
-    <None Include="shaders\EmptyEffect.gprg" />
-    <None Include="shaders\EmptyEffect.vlsl" />
-    <None Include="shaders\explode1.gprg" />
-    <None Include="shaders\explode1.jlsl" />
-    <None Include="shaders\explode1.vlsl" />
-    <None Include="shaders\FireBar.flsl" />
-    <None Include="shaders\FireBar.gprg" />
-    <None Include="shaders\FireBar.vlsl" />
-    <None Include="shaders\otone1.flsl" />
-    <None Include="shaders\otone1.gprg" />
-    <None Include="shaders\otone1.vlsl" />
+    <None Include="shaders\empty.gprg" />
+    <None Include="shaders\empty.jlsl" />
+    <None Include="shaders\empty.vlsl" />
     <None Include="shaders\SimpleTexture.flsl" />
     <None Include="shaders\SimpleTexture.gprg" />
     <None Include="shaders\SimpleTexture.vlsl" />
+    <None Include="shaders\vp1.gprg" />
+    <None Include="shaders\vp1.jlsl" />
+    <None Include="shaders\vp2.gprg" />
+    <None Include="shaders\vp2.jlsl" />
     <None Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
