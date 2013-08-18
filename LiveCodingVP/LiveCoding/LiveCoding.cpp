@@ -14,9 +14,9 @@
 #define MAX_LOADSTRING 100
 
 // The used effect (will be changeable later on)
-#define NUM_USED_PROGRAMS 2
-char *usedShader[NUM_USED_PROGRAMS] = {"empty.jlsl", "vp1.jlsl"};
-char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg"};
+#define NUM_USED_PROGRAMS 3
+char *usedShader[NUM_USED_PROGRAMS] = {"empty.jlsl", "vp1.jlsl", "vp2.jlsl"};
+char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg"};
 int usedIndex = 0;
 
 /*************************************************
