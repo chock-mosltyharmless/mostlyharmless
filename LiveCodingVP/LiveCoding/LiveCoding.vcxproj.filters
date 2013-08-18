@@ -34,40 +34,25 @@
     <None Include="shaders\SimpleTexture.gprg">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\EmptyEffect.gprg">
+    <None Include="shaders\empty.gprg">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\EmptyEffect.flsl">
+    <None Include="shaders\empty.jlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\EmptyEffect.vlsl">
+    <None Include="shaders\empty.vlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\FireBar.flsl">
+    <None Include="shaders\vp1.gprg">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\FireBar.vlsl">
+    <None Include="shaders\vp1.jlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\FireBar.gprg">
+    <None Include="shaders\vp2.gprg">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\otone1.flsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\otone1.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\otone1.vlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\explode1.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\explode1.vlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\explode1.jlsl">
+    <None Include="shaders\vp2.jlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
