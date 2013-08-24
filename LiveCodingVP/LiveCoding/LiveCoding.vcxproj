@@ -86,6 +86,8 @@
     <None Include="shaders\vp1.jlsl" />
     <None Include="shaders\vp2.gprg" />
     <None Include="shaders\vp2.jlsl" />
+    <None Include="shaders\vp3.gprg" />
+    <None Include="shaders\vp3.jlsl" />
     <None Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
