@@ -55,6 +55,12 @@
     <None Include="shaders\vp2.jlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\vp3.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp3.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
