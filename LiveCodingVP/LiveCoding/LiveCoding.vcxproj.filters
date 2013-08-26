@@ -61,6 +61,36 @@
     <None Include="shaders\vp3.jlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\vp4.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp4.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp5.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp5.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp6.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp6.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\DitherTexture.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\DitherTexture.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp7.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp7.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

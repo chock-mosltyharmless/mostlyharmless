@@ -14,9 +14,9 @@
 #define MAX_LOADSTRING 100
 
 // The used effect (will be changeable later on)
-#define NUM_USED_PROGRAMS 4
-char *usedShader[NUM_USED_PROGRAMS] = {"empty.jlsl", "vp1.jlsl", "vp2.jlsl", "vp3.jlsl"};
-char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg", "vp3.gprg"};
+#define NUM_USED_PROGRAMS 9
+char *usedShader[NUM_USED_PROGRAMS] = {"empty.jlsl", "vp1.jlsl", "vp2.jlsl", "vp3.jlsl", "vp4.jlsl", "vp5.jlsl", "vp6.jlsl", "vp7.jlsl", "vp8.jlsl"};
+char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg", "vp3.gprg", "vp4.gprg", "vp5.gprg", "vp6.gprg", "vp7.gprg", "vp8.gprg"};
 int usedIndex = 0;
 
 /*************************************************
@@ -496,7 +496,7 @@ void intro_do(long t)
 	int xres = windowRect.right - windowRect.left;
 	int yres = windowRect.bottom - windowRect.top;
 	glViewport(0, 0, xres, yres);
-	shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+	shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
 	glUseProgram(programID);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glDisable(GL_BLEND);

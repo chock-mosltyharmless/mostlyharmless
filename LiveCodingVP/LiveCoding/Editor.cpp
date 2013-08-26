@@ -90,11 +90,13 @@ void Editor::render(long iTime)
 	if (isErrorFading)
 	{
 		errorDisplayAlpha *= exp(-(float)(iTime - lastRenderTime) * ED_FADE_SPEED);
+		errorDisplayAlpha = errorDisplayAlpha > 1.0f ? 1.0f : errorDisplayAlpha;
 		errorDisplayAlpha = errorDisplayAlpha < 0.0f ? 0.0f : errorDisplayAlpha;
 	}
 	if (isTextFading)
 	{
 		textDisplayAlpha *= exp(-(float)(iTime - lastRenderTime) * ED_FADE_SPEED);
+		textDisplayAlpha = textDisplayAlpha > 1.0f ? 1.0f : textDisplayAlpha;
 		textDisplayAlpha = textDisplayAlpha < 0.0f ? 0.0f : textDisplayAlpha;
 	}
 
@@ -313,13 +315,12 @@ void Editor::redo()
 
 void Editor::controlCharacter(WPARAM vKey)
 {
-	// Change --> show
-	textDisplayAlpha = 1.0f;
-	isTextFading = false;
-
 	switch (vKey)
 	{
 	case VK_RETURN:
+		// Change --> show
+		textDisplayAlpha = 1.0f;
+		isTextFading = false;
 		if (numLines < ED_MAX_NUM_LINES)
 		{
 			// Copy all the following lines afront (ugh...)
@@ -355,6 +356,9 @@ void Editor::controlCharacter(WPARAM vKey)
 		break;
 
 	case VK_BACK:
+		// Change --> show
+		textDisplayAlpha = 1.0f;
+		isTextFading = false;
 		if (cursorPos[0] > 0)
 		{
 			for (int k = cursorPos[0]; k < ED_MAX_LINE_LENGTH; k++)
@@ -397,6 +401,9 @@ void Editor::controlCharacter(WPARAM vKey)
 		break;
 
 	case VK_DELETE:
+		// Change --> show
+		textDisplayAlpha = 1.0f;
+		isTextFading = false;
 		if (cursorPos[0] < ED_MAX_LINE_LENGTH)
 		{
 			for (int k = cursorPos[0] + 1; k < ED_MAX_LINE_LENGTH; k++)
