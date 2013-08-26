@@ -91,6 +91,12 @@
     <None Include="shaders\vp7.jlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\vp8.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp8.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

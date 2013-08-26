@@ -12,6 +12,7 @@
 #include "Parameter.h"
 
 #define MAX_LOADSTRING 100
+#define BLOB_FADE_SPEED 1.0f
 
 // The used effect (will be changeable later on)
 #define NUM_USED_PROGRAMS 9
@@ -110,6 +111,7 @@ const int NUM_BEAT_TIMES = 7;
 float BPM = 0.0f;
 int beatDurations[NUM_BEAT_TIMES] = {900, 1200, 1100, 1000, 1400, 1000, 1000};
 int lastBeatTime = 0;
+float blob = 0.;
 
 
 
@@ -143,6 +145,7 @@ static int initGL(WININFO *winInfo)
 		MessageBox(winInfo->hWnd, errorString, "Editor init", MB_OK);
 		return -1;
 	}
+	blob = 0.;
 
 	return 0;
 }
@@ -434,6 +437,10 @@ void intro_do(long t)
 	jumpTime = jumpTime * jumpTime;
 	// spike is between 0.0 and 1.0 depending on the position within whatever.
 	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 1.5f) + 0.5f;
+	// blob is growing down from 1. after keypress
+	static float lastFTime = 0.f;
+	blob *= exp(-(float)(ftime - lastFTime) * BLOB_FADE_SPEED);
+	lastFTime = ftime;
 
 	// Set the program uniforms
 	GLuint programID;
@@ -444,6 +451,8 @@ void intro_do(long t)
 	// For now I am just sending the spike to the shader. I might need something better...
 	loc = glGetUniformLocation(programID, "spike");
 	glUniform1f(loc, spike);
+	loc = glGetUniformLocation(programID, "blob");
+	glUniform1f(loc, blob);
 	loc = glGetUniformLocation(programID, "knob1");
 	glUniform1f(loc, interpolatedParameters[14]);
 	loc = glGetUniformLocation(programID, "knob2");
@@ -585,9 +594,13 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 void registerParameterChange(int keyID)
 {
 	const int beatKey = 41;
+	const int blobKey = 40;
 	const int minBeatTime = 100;
 	const int maxBeatTime = 5000;
 	int sortedBeatDurations[NUM_BEAT_TIMES];
+
+	// get the blobber
+	if (params.getParam(blobKey) > 0.5f) blob = 1.f;
 
 	// Do nothing on key release!
 	if (params.getParam(beatKey) < 0.5f) return;
@@ -628,6 +641,8 @@ void registerParameterChange(int keyID)
 			}
 		}
 	}
+
+	
 
 	BPM = 60.0f * 1000.0f / sortedBeatDurations[NUM_BEAT_TIMES/2];
 }
