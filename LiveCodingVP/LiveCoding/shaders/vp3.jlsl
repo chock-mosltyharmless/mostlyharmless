@@ -1,3 +1,8 @@
+vec2 rotate(vec2 source, float alpha) {                      
+return vec2(cos(alpha)*source.x - sin(alpha)*source.y,     
+sin(alpha)*source.x + cos(alpha)*source.y);                
+}
+
 void main(void) {                                              
 float height = ppos.y;                                                
 height += vnoise1(vec3(ppos*0.1 + spike*slider2*0.1, time*0.1) + 
