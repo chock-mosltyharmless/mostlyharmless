@@ -1,0 +1,34 @@
+void main(void) {                                                     
+float height = ppos.y;                                                
+height += vnoise1(vec3(ppos*0.1,time*0.1) + vnoise8(                  
+vec3(ppos*0.05, 0.5),0.5).rgb).r;                                     
+height = smoothstep(-1.5, 0.9,height);                                
+vec3 color = mix(vec3(1.5, 0.9,0.5),vec3(0.),height);                 
+                                                                      
+vec3 rayPos = vec3(0.,0.,-8.);                                        
+vec3 rayDir = normalize(vec3(ppos, 2.));                              
+float totalDensity = 0.;                                              
+vec3 totalColor = vec3(0.);                                           
+                                                                      
+rayPos.xz = rotate(rayPos.xz, time);                                  
+rayDir.xz = rotate(rayDir.xz, time);                                  
+                                                                      
+for (int i =0;i<100&& length(rayPos) < 12.                            
+&& totalDensity<0.95;i++){                                            
+vec4 n = vnoise5(rayPos*0.02 - vec3(time*0.02), 0.5);                 
+float implicit = length(rayPos - n.rgb*4. + 0.7) - 2.;                
+                                                                      
+totalDensity += (1.-totalDensity) * smoothstep(0.0, -0.5, implicit);
+                                                                      
+totalDensity += 0.01;                                                 
+totalColor += mix(vec3(0.02, 0.02, 0.03), vec3(0.03, 0.0, -0.03),    
+n.a + 0.2);                                                          
+                                                                      
+rayPos += rayDir * max(0.03, abs(implicit)*0.2);                      
+}                                                                     
+                                                                      
+color = mix(color, totalColor, totalDensity);                         
+                                                                      
+gl_FragColor = vec4(color, 1.0);                                      
+}                                                                     
+                                                                      

@@ -35,9 +35,9 @@
 #define ED_ERROR_RED 1.0f
 #define ED_ERROR_GREEN 0.2f
 #define ED_ERROR_BLUE 0.1f
-#define ED_OK_RED 0.4f
-#define ED_OK_GREEN 0.7f
-#define ED_OK_BLUE 0.4f
+#define ED_OK_RED 0.7f
+#define ED_OK_GREEN 1.0f
+#define ED_OK_BLUE 0.7f
 #define ED_LINENUM_RED 1.0f
 #define ED_LINENUM_GREEN 0.9f
 #define ED_LINENUM_BLUE 0.7f
@@ -49,10 +49,11 @@
 
 // Scrolling constants
 #define ED_SCROLL_MARGIN 5
-#define ED_SCROLL_SPEED 0.003f
+#define ED_SCROLL_SPEED 0.007f
 
 // Text out fading speed
-#define ED_FADE_SPEED 0.01f
+//#define ED_FADE_SPEED 0.01f
+#define ED_FADE_SPEED 0.005f
 
 #include "ShaderManager.h"
 #include "TextureManager.h"
