@@ -1,39 +1,39 @@
-vec2 rotate(vec2 source, float alpha) {                      
-return vec2(cos(alpha)*source.x - sin(alpha)*source.y,     
-sin(alpha)*source.x + cos(alpha)*source.y);                
-}
-
+vec2 rotate(vec2 pos, float angle) {                                  
+return pos*mat2(cos(angle),-sin(angle),sin(angle),cos(angle));        
+}                                                                     
+                                                                      
 void main(void) {                                                     
 float height = ppos.y;                                                
-height += vnoise1(vec3(ppos*0.1,time*0.1) + vnoise8(                  
-vec3(ppos*0.05, 0.5),0.5).rgb).r;                                     
-height = smoothstep(-1.5, 0.9,height);                                
-vec3 color = mix(vec3(1.5, 0.9,0.5),vec3(0.),height);                 
+height += vnoise1(vec3(ppos*0.1, time*0.1) + vnoise8(                 
+vec3(ppos*0.05, spike*0.01), 0.5).rgb).r;                             
+height = smoothstep(-1.5,0.9, height);                                
+vec3 color = mix(vec3(1.5, 0.9, 0.5), vec3(0.0), height);             
                                                                       
 vec3 rayPos = vec3(0.,0.,-8.);                                        
 vec3 rayDir = normalize(vec3(ppos, 2.));                              
-float totalDensity = 0.;                                              
 vec3 totalColor = vec3(0.);                                           
+float totalDensity = 0.;                                              
                                                                       
-rayPos.xz = rotate(rayPos.xz, time);                                  
 rayDir.xz = rotate(rayDir.xz, time);                                  
+rayPos.xz = rotate(rayPos.xz, time);                                  
                                                                       
-for (int i =0;i<100&& length(rayPos) < 12.                            
-&& totalDensity<0.95;i++){                                            
-float amount= pow(1. - time*0.75 + floor(time*0.75),2.);             
-vec4 n = vnoise5(rayPos*0.02 - vec3(time*0.02),0.5*amount + 0.4);     
-float implicit = length(rayPos - n.rgb*4. + 0.7) - 2. -amount;        
+for (int i = 0; i < 100 && length(rayPos)<12. &&                      
+totalDensity < 0.98; i++) {                                           
+vec4 n = vnoise5(vnoise3(rayPos*0.002,slider4*0.1).rgb -              
+vec3(time)*0.01, slider2 + 0.5*blob);                                 
+float implicit = length(rayPos - n.rgb*5. - vec3(slider9))-2.;        
+implicit=min(implicit, length(rayPos-n.bag*5.+vec3(slider9))-2.);     
                                                                       
-totalDensity += (1.-totalDensity) * smoothstep(0.0, -0.5, implicit);
-                                                                      
+float density = smoothstep(0.,-0.3,implicit);                         
+totalDensity += (1.-totalDensity)*density;                            
 totalDensity += 0.01;                                                 
-totalColor += mix(vec3(0.02, 0.02, 0.03), vec3(0.03, 0.0, -0.03),    
-n.a + 0.2) * (1.+amount);                                             
+totalColor += mix(vec3(0.02, 0.02, 0.03), vec3(0.03, 0.,-0.03),       
+n.a-0.5+slider3);                                                     
                                                                       
-rayPos += rayDir * max(0.03, abs(implicit)*0.2);                      
+rayPos += rayDir * max(0.03, abs(implicit)*slider1*.5);               
 }                                                                     
                                                                       
-color = mix(color, totalColor, totalDensity);                         
+color = mix(color,totalColor,totalDensity);                           
                                                                       
 gl_FragColor = vec4(color, 1.0);                                      
 }                                                                     

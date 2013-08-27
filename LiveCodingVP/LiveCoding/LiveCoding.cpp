@@ -412,8 +412,8 @@ void intro_do(long t)
 	// Those are key-Press indicators. I only act on 0-to-1.
 	for (int i = 0; i < maxNumParameters; i++)
 	{
-		interpolatedParameters[i] = 0.98f * interpolatedParameters[i] +
-									0.02f * params.getParam(i, defaultParameters[i]);
+		interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
+									0.05f * params.getParam(i, defaultParameters[i]);
 	}
 	// Update key press events.
 	for (int i = 0; i < NUM_KEYS; i++)
