@@ -16,6 +16,8 @@ float totalDensity = 0.;
                                                                       
 rayDir.xz = rotate(rayDir.xz, time);                                  
 rayPos.xz = rotate(rayPos.xz, time);                                  
+rayDir.xy = rotate(rayDir.xy, time);
+rayPos.xy = rotate(rayPos.xy, time);
                                                                       
 for (int i = 0; i < 100 && length(rayPos)<12. &&                      
 totalDensity < 0.98; i++) {                                           
