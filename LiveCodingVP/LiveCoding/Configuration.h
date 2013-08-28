@@ -8,8 +8,8 @@
 #define YRES 600
 
 // The resolution of the background stuff
-#define X_OFFSCREEN 512
-#define Y_OFFSCREEN 400
+#define X_OFFSCREEN 400
+#define Y_OFFSCREEN 300
 #define X_HIGHLIGHT 128
 #define Y_HIGHLIGHT 64
 
