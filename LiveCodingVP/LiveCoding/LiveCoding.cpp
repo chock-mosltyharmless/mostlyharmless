@@ -19,6 +19,7 @@
 char *usedShader[NUM_USED_PROGRAMS] = {"empty.jlsl", "vp1.jlsl", "vp2.jlsl", "vp3.jlsl", "vp4.jlsl", "vp5.jlsl", "vp6.jlsl", "vp7.jlsl", "vp8.jlsl"};
 char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg", "vp3.gprg", "vp4.gprg", "vp5.gprg", "vp6.gprg", "vp7.gprg", "vp8.gprg"};
 int usedIndex = 0;
+float aspectRatio = (float)XRES / (float)YRES;
 
 /*************************************************
  * GL Core variables
@@ -238,6 +239,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				ShowWindow(hWnd, SW_MAXIMIZE);
 				GetClientRect(hWnd, &windowRect);
 				glViewport(0, 0, windowRect.right-windowRect.left, abs(windowRect.bottom - windowRect.top)); //NEW
+				aspectRatio = (float)(windowRect.right-windowRect.left) / (float)(abs(windowRect.bottom - windowRect.top));
 				ShowCursor(false);
 			}
 			break;
@@ -446,7 +448,9 @@ void intro_do(long t)
 	GLuint programID;
 	shaderManager.getProgramID(usedProgram[usedIndex], &programID, errorText);
 	glUseProgram(programID);
-	GLuint loc = glGetUniformLocation(programID, "time");
+	GLuint loc = glGetUniformLocation(programID, "aspectRatio");
+	glUniform1f(loc, aspectRatio);
+	loc = glGetUniformLocation(programID, "time");
 	glUniform1f(loc, (float)(t * 0.001f));
 	// For now I am just sending the spike to the shader. I might need something better...
 	loc = glGetUniformLocation(programID, "spike");
