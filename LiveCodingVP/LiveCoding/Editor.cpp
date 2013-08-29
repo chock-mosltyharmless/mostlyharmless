@@ -147,7 +147,7 @@ void Editor::render(long iTime)
 		{
 			glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
 		}
-		float indent = indentation[y] * ED_INDENTATION_WIDTH;
+		float indent = indentation[y] * ED_INDENTATION_WIDTH / aspectRatio;
 		for (int x = 0; x < ED_MAX_LINE_LENGTH; x++)
 		{
 			if (text[y][x] != ' ')
@@ -161,7 +161,7 @@ void Editor::render(long iTime)
 	float alpha = 0.5f * sin((float)iTime * ED_CURSOR_BLINK_SPEED) + 0.5f;
 	alpha *= textDisplayAlpha;
 	glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
-	float indent = indentation[cursorPos[1]] * ED_INDENTATION_WIDTH;
+	float indent = indentation[cursorPos[1]] * ED_INDENTATION_WIDTH / aspectRatio;
 	// '\r' Is the special char that is used for the cursor
 	drawChar((float)cursorPos[0] + indent, cursorPos[1] - scrollPos, '\r');
 
@@ -219,7 +219,7 @@ void Editor::drawChar(float xPos, float yPos, unsigned char textBit)
 	float xAdjust = 0.0f;
 	if (textBit == '\r')
 	{
-		xAdjust = ED_CURSOR_X_ADJUST * ED_CHAR_WIDTH;
+		xAdjust = ED_CURSOR_X_ADJUST * ED_CHAR_WIDTH / aspectRatio;
 		textBit = '|';
 	}
 
@@ -235,9 +235,9 @@ void Editor::drawChar(float xPos, float yPos, unsigned char textBit)
 		ED_CHAR_TEXY_BORDER;
 	float texBottom = texTop + ED_CHAR_TEX_HEIGHT - 2.0f * ED_CHAR_TEXY_BORDER;
 
-	float screenLeft = xPos * ED_CHAR_WIDTH + ED_CHAR_X_OFFSET + ED_CHAR_X_BORDER
-		+ xAdjust; // Adjustment for the cursor character
-	float screenRight = screenLeft + ED_CHAR_WIDTH - 2.0f * ED_CHAR_X_BORDER;
+	float screenLeft = xPos * ED_CHAR_WIDTH / aspectRatio +
+		ED_CHAR_X_OFFSET + ED_CHAR_X_BORDER / aspectRatio + xAdjust; // Adjustment for the cursor character
+	float screenRight = screenLeft + ED_CHAR_WIDTH / aspectRatio - 2.0f * ED_CHAR_X_BORDER / aspectRatio;
 	float screenTop = yPos * ED_CHAR_HEIGHT + ED_CHAR_Y_OFFSET + ED_CHAR_Y_BORDER;
 	float screenBottom = screenTop + ED_CHAR_HEIGHT - 2.0f * ED_CHAR_Y_BORDER;
 

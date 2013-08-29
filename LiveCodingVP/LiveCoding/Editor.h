@@ -8,6 +8,8 @@
 #define ED_MAX_FILENAME_LENGTH 256
 #define ED_MAX_FILE_HISTORY 256
 
+extern float aspectRatio;
+
 // Font size stuff
 #define ED_CHAR_TEX_WIDTH 0.0688100961538462f
 #define ED_CHAR_TEX_HEIGHT (0.0732421875f - 0.0005f)
@@ -15,14 +17,14 @@
 #define ED_CHAR_TEXY_OFFSET 0.0078125f
 #define ED_CHAR_TEXX_BORDER 0.002f
 #define ED_CHAR_TEXY_BORDER 0.002f
-#define ED_CHAR_WIDTH 0.025f
+#define ED_CHAR_WIDTH (0.025f * 1.33f)
 #define ED_CHAR_HEIGHT 0.07f
-#define ED_CHAR_X_BORDER -0.008f
+#define ED_CHAR_X_BORDER (-0.008f*1.33f)
 #define ED_CHAR_Y_BORDER 0.003f
-#define ED_CHAR_X_OFFSET (-0.99f + (5.0f * ED_CHAR_WIDTH))
+#define ED_CHAR_X_OFFSET (-0.975f + (5.0f * ED_CHAR_WIDTH))
 #define ED_CHAR_Y_OFFSET -0.925f
 #define ED_ERROR_Y_OFFSET 21.0f
-#define ED_INDENTATION_WIDTH (1.7f)
+#define ED_INDENTATION_WIDTH (1.7f * 1.33f)
 
 // Number of lines that are displayed
 #define ED_DISPLAY_LINES 20
