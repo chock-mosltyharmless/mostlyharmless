@@ -9,7 +9,7 @@ vec3(ppos*0.05, spike*0.01), 0.5).rgb).r;
 height = smoothstep(-1.5,0.9, height);                                
 vec3 color = mix(vec3(1.5, 0.9, 0.5), vec3(0.0), height);             
                                                                       
-vec3 rayPos = vec3(0.,0.,-8.);                                        
+vec3 rayPos = vec3(0.,0.,-6.);                                        
 vec3 rayDir = normalize(vec3(ppos, 2.));                              
 vec3 totalColor = vec3(0.);                                           
 float totalDensity = 0.;                                              

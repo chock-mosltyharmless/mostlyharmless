@@ -9,22 +9,24 @@ vec3(ppos*0.05, spike*0.01), 0.5).rgb).r;
 height = smoothstep(-1.5,0.9, height);                                
 vec3 color = mix(vec3(1.5, 0.9, 0.5), vec3(0.0), height);             
                                                                       
-vec3 rayPos = vec3(0.,0.,-8.);                                        
+vec3 rayPos = vec3(0.,0.,-6.);                                        
 vec3 rayDir = normalize(vec3(ppos, 2.));                              
 vec3 totalColor = vec3(0.);                                           
 float totalDensity = 0.;                                              
                                                                       
 rayDir.xz = rotate(rayDir.xz, time);                                  
 rayPos.xz = rotate(rayPos.xz, time);                                  
-rayDir.xy = rotate(rayDir.xy, time);
-rayPos.xy = rotate(rayPos.xy, time);
+rayDir.xy = rotate(rayDir.xy, time*0.3);
+rayPos.xy = rotate(rayPos.xy, time*0.3);
                                                                       
-for (int i = 0; i < 100 && length(rayPos)<12. &&                      
+for (int i = 0; i < 100 && length(rayPos)<112. &&          
 totalDensity < 0.98; i++) {                                           
+vec3 relPos = frac(rayPos*0.1 + vec3(0.5))*10.-5.;
 vec4 n = vnoise5(vnoise3(rayPos*0.002,slider4*0.1).rgb -              
 vec3(time)*0.01, slider2 + 0.5*blob);                                 
-float implicit = length(rayPos - n.rgb*5. - vec3(slider9))-2.;        
-implicit=min(implicit, length(rayPos-n.bag*5.+vec3(slider9))-2.);     
+float implicit = length(relPos - n.rgb)-2.;        
+implicit=min(implicit, length(rayPos-n.bag+vec3(slider9))-2.);     
+implicit = min(implicit, 4.);
                                                                       
 float density = smoothstep(0.,-0.3,implicit);                         
 totalDensity += (1.-totalDensity)*density;                            
