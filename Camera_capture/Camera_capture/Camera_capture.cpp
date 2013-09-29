@@ -1,3 +1,4 @@
+//
 // Camera_capture.cpp : Definiert den Einstiegspunkt für die Anwendung.
 //
 
