@@ -1,5 +1,7 @@
 function R = waveform(len, reduction)
   
+  % This is not good.
+  
   R = zeros(len, 1);
   strength = 1;
   for k = 1:floor(len/2) - 1
