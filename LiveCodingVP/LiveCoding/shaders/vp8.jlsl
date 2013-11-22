@@ -21,7 +21,7 @@ rayPos.xy = rotate(rayPos.xy, time*0.3);
                                                                       
 for (int i = 0; i < 100 && length(rayPos)<112. &&          
 totalDensity < 0.98; i++) {                                           
-vec3 relPos = frac(rayPos*0.1 + vec3(0.5))*10.-5.;
+vec3 relPos = fract(rayPos*0.1 + vec3(0.5))*10.-5.;
 vec4 n = vnoise5(vnoise3(rayPos*0.002,slider4*0.1).rgb -              
 vec3(time)*0.01, slider2 + 0.5*blob);                                 
 float implicit = length(relPos - n.rgb)-2.;        
