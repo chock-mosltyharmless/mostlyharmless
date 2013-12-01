@@ -33,7 +33,7 @@ int rand();
 // -------------------------------------------------------------------
 
 const GLchar *fragmentMainBackground="\
-#version 150 core\n\
+#version 330 core\n\
 in vec3 pass_Position;\n\
 out vec4 out_Color;\n\
 \n\
@@ -43,7 +43,7 @@ void main(void)\n\
 }";
 
 const GLchar *vertexMainObject="\
-#version 150 core\n\
+#version 330 core\n\
 in vec3 in_Position;\n\
 out vec3 pass_Position;\n\
 void main(void)\

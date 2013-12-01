@@ -68,7 +68,7 @@ static WININFO wininfo = {  0,0,0,0,0,
                             };
 
 static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-						   WGL_CONTEXT_MINOR_VERSION_ARB, 0,
+						   WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			               NULL}; 
 
