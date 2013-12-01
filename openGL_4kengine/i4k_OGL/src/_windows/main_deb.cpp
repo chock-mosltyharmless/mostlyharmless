@@ -16,6 +16,21 @@
 
 //----------------------------------------------------------------------------
 
+typedef HGLRC (APIENTRY *PFNWGLCREATECONTEXTATTRIBSARB)(HDC hdc,
+													    HGLRC hshareContext,
+														const int *attribList);
+#define WGL_CONTEXT_DEBUG_BIT_ARB               0x0001
+#define WGL_CONTEXT_FLAGS_ARB                   0x2094
+#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB  0x0002
+#define WGL_CONTEXT_LAYER_PLANE_ARB             0x2093
+#define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
+#define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
+#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB        0x00000001
+#define WGL_CONTEXT_PROFILE_MASK_ARB            0x9126
+
+#define GL_MAJOR_VERSION 0x821B
+#define GL_MINOR_VERSION 0x821C
+
 typedef struct
 {
     //---------------
@@ -52,6 +67,10 @@ static WININFO wininfo = {  0,0,0,0,0,
 							{'i','q','_',0}
                             };
 
+static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+						   WGL_CONTEXT_MINOR_VERSION_ARB, 0,
+						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+			               NULL}; 
 
 static const int wavHeader[11] = {
     0x46464952, 
@@ -162,25 +181,36 @@ static int window_init( WININFO *info )
                                (GetSystemMetrics(SM_CXSCREEN)-rec.right+rec.left)>>1,
                                (GetSystemMetrics(SM_CYSCREEN)-rec.bottom+rec.top)>>1,
                                rec.right-rec.left, rec.bottom-rec.top, 0, 0, info->hInstance, 0 );
-    if( !info->hWnd )
-        return( 0 );
+    if(!info->hWnd) return 0;
 	hWnd = info->hWnd;
 
-    if( !(info->hDC=GetDC(info->hWnd)) )
-        return( 0 );
+    if(!(info->hDC = GetDC(info->hWnd))) return 0;
 
-    if( !(PixelFormat=ChoosePixelFormat(info->hDC,&pfd)) )
-        return( 0 );
+    if(!(PixelFormat = ChoosePixelFormat(info->hDC, &pfd))) return 0;
 
-    if( !SetPixelFormat(info->hDC,PixelFormat,&pfd) )
-        return( 0 );
+    if(!SetPixelFormat(info->hDC, PixelFormat, &pfd)) return 0;
 
-    if( !(info->hRC=wglCreateContext(info->hDC)) )
-        return( 0 );
+	HGLRC tempOpenGLContext;
+    if (!(tempOpenGLContext = wglCreateContext(info->hDC))) return 0;
+	if (!wglMakeCurrent(info->hDC, tempOpenGLContext)) return 0;
 
-    if( !wglMakeCurrent(info->hDC,info->hRC) )
-        return( 0 );
-    
+	PFNWGLCREATECONTEXTATTRIBSARB wglCreateContextAttribsARB;
+	if (!(wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARB)
+		  wglGetProcAddress("wglCreateContextAttribsARB"))) return 0;
+	if (!(info->hRC = wglCreateContextAttribsARB(info->hDC, NULL, glAttribs))) return 0;
+	
+	// Remove temporary context and set new one
+	wglMakeCurrent(NULL, NULL);
+	wglDeleteContext(tempOpenGLContext);
+	if (!wglMakeCurrent(info->hDC, info->hRC)) return 0;
+
+	// Test GL version
+	int nMajorVersion = -1;
+	int nMinorVersion = -1;
+	glGetIntegerv(GL_MAJOR_VERSION, &nMajorVersion);
+	glGetIntegerv(GL_MINOR_VERSION, &nMinorVersion);
+	//printf("Reported GL Version %d.%d [Supported]\n", nMajorVersion, nMinorVersion);
+
     return( 1 );
 }
 
