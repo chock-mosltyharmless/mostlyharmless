@@ -57,6 +57,35 @@ static DEVMODE screenSettings = { {0},
     };
 #endif
 
+// OpenGL function stuff
+GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
+
+static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+						   WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+			               NULL}; 
+
+#ifdef SHADER_DEBUG
+const static char* glnames[NUM_GL_NAMES]={
+	 "wglCreateContextAttribsARB",
+     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
+     "glAttachShader", "glLinkProgram", "glUseProgram",
+	 "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
+	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
+	 "glBindAttribLocation", "glEnableVertexAttribArray",
+	 "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
+};
+#else
+const static char* glnames[NUM_GL_NAMES]={
+	 "wglCreateContextAttribsARB",
+     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
+     "glAttachShader", "glLinkProgram", "glUseProgram",
+	 "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
+	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
+	 "glBindAttribLocation", "glEnableVertexAttribArray"
+};
+#endif
+
 static short myMuzik[MZK_NUMSAMPLESC+22];
 
 void entrypoint( void )
@@ -68,10 +97,20 @@ void entrypoint( void )
     // create window
     HWND hWnd = CreateWindow( "static",0,WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,0,0);
     HDC hDC = GetDC(hWnd);
-    // initalize opengl
+    
+	// initalize opengl
     if( !SetPixelFormat(hDC,ChoosePixelFormat(hDC,&pfd),&pfd) ) return;
-    HGLRC hRC = wglCreateContext(hDC);
-    wglMakeCurrent(hDC,hRC);
+
+	HGLRC tempOpenGLContext;
+    tempOpenGLContext = wglCreateContext(hDC);
+	wglMakeCurrent(hDC, tempOpenGLContext);
+	// create openGL functions
+	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
+	HGLRC hRC = wglCreateContextAttribsARB(hDC, NULL, glAttribs);
+	// Remove temporary context and set new one
+	wglMakeCurrent(NULL, NULL);
+	wglDeleteContext(tempOpenGLContext);
+	wglMakeCurrent(hDC, hRC);
 
 	// init intro
 	intro_init();
