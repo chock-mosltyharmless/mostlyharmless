@@ -16,21 +16,6 @@
 
 //----------------------------------------------------------------------------
 
-typedef HGLRC (APIENTRY *PFNWGLCREATECONTEXTATTRIBSARB)(HDC hdc,
-													    HGLRC hshareContext,
-														const int *attribList);
-#define WGL_CONTEXT_DEBUG_BIT_ARB               0x0001
-#define WGL_CONTEXT_FLAGS_ARB                   0x2094
-#define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB  0x0002
-#define WGL_CONTEXT_LAYER_PLANE_ARB             0x2093
-#define WGL_CONTEXT_MAJOR_VERSION_ARB           0x2091
-#define WGL_CONTEXT_MINOR_VERSION_ARB           0x2092
-#define WGL_CONTEXT_CORE_PROFILE_BIT_ARB        0x00000001
-#define WGL_CONTEXT_PROFILE_MASK_ARB            0x9126
-
-#define GL_MAJOR_VERSION 0x821B
-#define GL_MINOR_VERSION 0x821C
-
 typedef struct
 {
     //---------------
@@ -85,6 +70,30 @@ static const int wavHeader[11] = {
     0x61746164, 
     MZK_NUMSAMPLESC*sizeof(short)
     };
+
+// OpenGL function stuff
+GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
+
+#ifdef SHADER_DEBUG
+const static char* glnames[NUM_GL_NAMES]={
+	 "wglCreateContextAttribsARB",
+     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
+     "glAttachShader", "glLinkProgram", "glUseProgram",
+	 "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
+	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
+	 "glBindAttribLocation", "glEnableVertexAttribArray",
+	 "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
+};
+#else
+const static char* glnames[NUM_GL_NAMES]={
+	 "wglCreateContextAttribsARB",
+     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
+     "glAttachShader", "glLinkProgram", "glUseProgram",
+	 "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
+	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
+	 "glBindAttribLocation", "glEnableVertexAttribArray"
+};
+#endif
 
 //==============================================================================================
 
@@ -185,18 +194,15 @@ static int window_init( WININFO *info )
 	hWnd = info->hWnd;
 
     if(!(info->hDC = GetDC(info->hWnd))) return 0;
-
     if(!(PixelFormat = ChoosePixelFormat(info->hDC, &pfd))) return 0;
-
     if(!SetPixelFormat(info->hDC, PixelFormat, &pfd)) return 0;
 
 	HGLRC tempOpenGLContext;
     if (!(tempOpenGLContext = wglCreateContext(info->hDC))) return 0;
 	if (!wglMakeCurrent(info->hDC, tempOpenGLContext)) return 0;
 
-	PFNWGLCREATECONTEXTATTRIBSARB wglCreateContextAttribsARB;
-	if (!(wglCreateContextAttribsARB = (PFNWGLCREATECONTEXTATTRIBSARB)
-		  wglGetProcAddress("wglCreateContextAttribsARB"))) return 0;
+	// create openGL functions
+	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
 	if (!(info->hRC = wglCreateContextAttribsARB(info->hDC, NULL, glAttribs))) return 0;
 	
 	// Remove temporary context and set new one

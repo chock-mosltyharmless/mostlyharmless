@@ -14,9 +14,6 @@
 #include "intro.h"
 #include "mzk.h"
 
-// Include this to get debug information in case of a shader failure
-#define SHADER_DEBUG
-
 // You can access the wave output for basic synchronization
 extern double outwave[][2];
 
@@ -58,58 +55,7 @@ void main(void)\
 
 HWND hWnd;
 
-#ifdef SHADER_DEBUG
-#define NUM_GL_NAMES 19
-const static char* glnames[NUM_GL_NAMES]={
-     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
-     "glAttachShader", "glLinkProgram", "glUseProgram",
-	 "glTexImage3D",
-	 "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
-	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
-	 "glBindAttribLocation", "glEnableVertexAttribArray",
-	 "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
-};
-#else
-#define NUM_GL_NAMES 16
-const static char* glnames[NUM_GL_NAMES]={
-     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
-     "glAttachShader", "glLinkProgram", "glUseProgram",
-	 "glTexImage3D",
-	 "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
-	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
-	 "glBindAttribLocation", "glEnableVertexAttribArray"
-};
-#endif
-
-#define glCreateShader ((PFNGLCREATESHADERPROC)glFP[0])
-#define glCreateProgram ((PFNGLCREATEPROGRAMPROC)glFP[1])
-#define glShaderSource ((PFNGLSHADERSOURCEPROC)glFP[2])
-#define glCompileShader ((PFNGLCOMPILESHADERPROC)glFP[3])
-#define glAttachShader ((PFNGLATTACHSHADERPROC)glFP[4])
-#define glLinkProgram ((PFNGLLINKPROGRAMPROC)glFP[5])
-#define glUseProgram ((PFNGLUSEPROGRAMPROC)glFP[6])
-#define glTexImage3D ((PFNGLTEXIMAGE3DPROC)glFP[7])
-#define glGenVertexArrays ((PFNGLGENVERTEXARRAYSPROC)glFP[8])
-#define glBindVertexArray ((PFNGLBINDVERTEXARRAYPROC)glFP[9])
-#define glGenBuffers ((PFNGLGENBUFFERSPROC)glFP[10])
-#define glBindBuffer ((PFNGLBINDBUFFERPROC)glFP[11])
-#define glBufferData ((PFNGLBUFFERDATAPROC)glFP[12])
-#define glVertexAttribPointer ((PFNGLVERTEXATTRIBPOINTERPROC)glFP[13])
-#define glBindAttribLocation ((PFNGLBINDATTRIBLOCATIONPROC)glFP[14])
-#define glEnableVertexAttribArray ((PFNGLENABLEVERTEXATTRIBARRAYPROC)glFP[15])
-#ifdef SHADER_DEBUG
-#define glGetShaderiv ((PFNGLGETSHADERIVPROC)glFP[16])
-#define glGetShaderInfoLog ((PFNGLGETSHADERINFOLOGPROC)glFP[17])
-#define glGetProgramiv ((PFNGLGETPROGRAMIVPROC)glFP[18])
-#endif
-
-// The model matrix is used to send the parameters to the hardware...
-static float parameterMatrix[16];
-
-typedef void (*GenFP)(void); // pointer to openGL functions
-static GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 static GLuint shaderPrograms[1];
-GLint viewport[4];
 
 #ifdef SHADER_DEBUG
 char err[4097];
@@ -127,9 +73,6 @@ GLfloat vertices[18];
 
 void intro_init( void )
 {
-	// create openGL functions
-	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
-
 	// Create and link shader and stuff:
 	// I will have to separate these to be able to use more than one shader...
 	// TODO: I should make some sort of compiling and linking loop...
@@ -220,8 +163,7 @@ void intro_do( long itime )
     // render
     glDisable( GL_CULL_FACE );
 
-	//glMatrixMode(GL_MODELVIEW);
-	parameterMatrix[0] = ftime; // time	
+	//parameterMatrix[0] = ftime; // time	
 	// get music information
 #ifdef USEDSOUND
 	double loudness = 1.0;
@@ -232,10 +174,9 @@ void intro_do( long itime )
 	}
 	parameterMatrix[15] = (float)log(loudness) * (1.f/24.f); // This makes it silent?
 #endif
-	//glLoadMatrixf(parameterMatrix);
 
-	glClearColor(0.5f, 0.3f, 0.1f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	//glClearColor(0.5f, 0.3f, 0.1f, 1.0f);
+	//glClear(GL_COLOR_BUFFER_BIT);
 
 	// set the viewport (not neccessary?)
 	//glGetIntegerv(GL_VIEWPORT, viewport);
