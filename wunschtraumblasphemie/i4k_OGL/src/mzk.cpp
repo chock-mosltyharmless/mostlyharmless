@@ -10,7 +10,7 @@
 double noise[NOISE_LENGTH];
 double outwave[MZK_NUMSAMPLES][2];
 
-static unsigned long seed;
+unsigned long seed;
 
 // create random value between -65534 and 65534?
 /*int rand()

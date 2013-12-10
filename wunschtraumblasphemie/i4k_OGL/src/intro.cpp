@@ -53,14 +53,18 @@ void main(void)\
 //                          Constants:
 // -------------------------------------------------------------------
 
+#define FRACTAL_TREE_DEPTH 3
+#define FRACTAL_NUM_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
+// It's actually less than that:
+#define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES * 2)
+
+// This is only used if SHADER_DEBUG is on, but I will leave it for now.
 HWND hWnd;
-
-static GLuint shaderPrograms[1];
-
 #ifdef SHADER_DEBUG
 char err[4097];
 #endif
 
+static GLuint shaderPrograms[1];
 // The vertex array and vertex buffer
 unsigned int vaoID;
 unsigned int vboID;
@@ -68,8 +72,65 @@ unsigned int vboID;
 GLfloat vertices[18];
 
 // -------------------------------------------------------------------
+//                          Data for the fractal:
+// -------------------------------------------------------------------
+
+// The fractals are saved in a tree of 4x4 matrices
+float fractalTree[FRACTAL_TREE_NUM_ENTRIES][4][4];
+
+// The transformation matrices of the fractal
+float transformMat[4][4][4];
+
+// -------------------------------------------------------------------
 //                          Code:
 // -------------------------------------------------------------------
+
+// Multiplices two 4x4 matrices
+void matrixMult(float src1[4][4], float src2[4][4], float dest[4][4])
+{
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			dest[i][j] = 0.0f;
+			for (int k = 0; k < 4; k++)
+			{
+				dest[i][j] += src1[i][k] * src2[k][j];
+			}
+		}
+	}
+}
+
+// Creates a 4x4 rotation matrix from a quaternion?
+void matrixFromQuaternion(float quat[4], float mat[4][4])
+{
+	float xsquare = 2 * quat[0] * quat[0];
+	float ysquare = 2 * quat[1] * quat[1];
+	float zsquare = 2 * quat[2] * quat[2];
+	float xy = 2 * quat[0] * quat[1];
+	float zw = 2 * quat[2] * quat[3];
+	float xz = 2 * quat[0] * quat[2];
+	float yw = 2 * quat[1] * quat[3];
+	float yz = 2 * quat[1] * quat[2];
+	float xw = 2 * quat[0] * quat[3];
+	
+	mat[0][0] = 1 - ysquare - zsquare;
+	mat[0][1] = xy - zw;
+	mat[0][2] = xz - yw;
+	mat[0][3] = 0.0f;
+	mat[1][0] = xy + zw;
+	mat[1][1] = 1 - xsquare - zsquare;
+	mat[1][2] = yz - xw;
+	mat[1][3] = 0.0f;
+	mat[2][0] = xz - yw;
+	mat[2][1] = yz + xw;
+	mat[2][2] = 1 - xsquare - ysquare;
+	mat[2][3] = 0.0f;
+	mat[3][0] = 0.0f;
+	mat[3][1] = 0.0f;
+	mat[3][2] = 0.0f;
+	mat[3][3] = 1.0f;
+}
 
 void intro_init( void )
 {
@@ -156,9 +217,60 @@ void intro_init( void )
 #endif
 }
 
+// The seed value of the random number generator is accessed here!
+extern unsigned long seed;
+void createTransforms(unsigned long startSeed)
+{
+	seed = startSeed;
+	float quaternion[4];
+
+	for (int transform = 0; transform < 4; transform++)
+	{
+		// Set quaternion values
+		float invQuatLen = 0.0f;
+		for (int qdim = 0; qdim < 4; qdim++)
+		{
+			// RANDOM!!!
+			quaternion[qdim] = frand() - 0.5f;
+			invQuatLen += quaternion[qdim] * quaternion[qdim];
+		}
+		invQuatLen = 1.0f / (float)sqrt(invQuatLen);
+		for (int qdim = 0; qdim < 4; qdim++)
+		{
+			quaternion[qdim] *= invQuatLen;
+		}
+
+		matrixFromQuaternion(quaternion, transformMat[transform]);
+
+		// Multiply by scaling
+		for (int dim = 0; dim < 3; dim++)
+		{
+			// RANDOM!!!
+			float scaling = frand() * 0.25f + 0.625f;
+			for (int i = 0; i < 4; i++)
+			{
+				transformMat[transform][dim][i] *= scaling;
+			}
+		}
+
+		// Transform x-y
+		for (int dim = 0; dim < 3; dim++)
+		{
+			// RANDOM!!!
+			transformMat[transform][dim][3] = frand() - 0.5f;
+		}
+	}
+}
+
 void intro_do( long itime )
 {
 	float ftime = 0.001f*(float)itime;
+
+	// Create the transformation matrices from random values
+	createTransforms(1);
+
+	// Create the matrix tree
+	// But first: I have to write the geometry shader stuffiskaya!
 
     // render
     glDisable( GL_CULL_FACE );
@@ -174,9 +286,6 @@ void intro_do( long itime )
 	}
 	parameterMatrix[15] = (float)log(loudness) * (1.f/24.f); // This makes it silent?
 #endif
-
-	//glClearColor(0.5f, 0.3f, 0.1f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT);
 
 	// set the viewport (not neccessary?)
 	//glGetIntegerv(GL_VIEWPORT, viewport);
