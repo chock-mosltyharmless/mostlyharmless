@@ -29,24 +29,42 @@ int rand();
 //                          SHADER CODE:
 // -------------------------------------------------------------------
 
-const GLchar *fragmentMainBackground="\
+const GLchar *fragmentMainParticle="\
 #version 330 core\n\
-in vec3 pass_Position;\n\
+in vec3 g2fPosition;\n\
 out vec4 out_Color;\n\
 \n\
 void main(void)\n\
 {\n\
-   out_Color = vec4(pass_Position, 1.0);\n\
+   out_Color = vec4(g2fPosition, 1.0);\n\
 }";
 
-const GLchar *vertexMainObject="\
+const GLchar *geometryMainParticle="\
+#version 330 compatibility\n\
+layout(triangles) in;\n\
+layout(triangle_strip, max_vertices=3) out;\n\
+in vec3 v2gPosition[];\n\
+out vec3 g2fPosition;\n\
+\n\
+void main()\n\
+{\n\
+	for(int i=0; i<3; i++)\n\
+	{\n\
+		gl_Position = gl_in[i].gl_Position;\n\
+		g2fPosition = v2gPosition[i].xyz;\n\
+		EmitVertex();\n\
+	}\n\
+	EndPrimitive();\n\
+}";
+
+const GLchar *vertexMainParticle="\
 #version 330 core\n\
 in vec3 in_Position;\n\
-out vec3 pass_Position;\n\
+out vec3 v2gPosition;\n\
 void main(void)\
 {\
     gl_Position = vec4(in_Position, 1.);\n\
-	pass_Position = in_Position;\n\
+	v2gPosition = in_Position;\n\
 }";
 
 // -------------------------------------------------------------------
@@ -139,39 +157,51 @@ void intro_init( void )
 	// TODO: I should make some sort of compiling and linking loop...
 	
 	// init objects:
-	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fMainBackground = glCreateShader(GL_FRAGMENT_SHADER);
+	GLuint vMainParticle = glCreateShader(GL_VERTEX_SHADER);
+	GLuint gMainParticle = glCreateShader(GL_GEOMETRY_SHADER_EXT);
+	GLuint fMainParticle = glCreateShader(GL_FRAGMENT_SHADER);
 	shaderPrograms[0] = glCreateProgram();
 	// compile sources:
-	glShaderSource(vMainObject, 1, &vertexMainObject, NULL);
-	glCompileShader(vMainObject);
-	glShaderSource(fMainBackground, 1, &fragmentMainBackground, NULL);
-	glCompileShader(fMainBackground);
+	glShaderSource(vMainParticle, 1, &vertexMainParticle, NULL);
+	glCompileShader(vMainParticle);
+	glShaderSource(gMainParticle, 1, &geometryMainParticle, NULL);
+	glCompileShader(gMainParticle);
+	glShaderSource(fMainParticle, 1, &fragmentMainParticle, NULL);
+	glCompileShader(fMainParticle);
 
 #ifdef SHADER_DEBUG
 	// Check programs
 	int tmp, tmp2;
-	glGetShaderiv(vMainObject, GL_COMPILE_STATUS, &tmp);
+	glGetShaderiv(vMainParticle, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
 	{
-		glGetShaderInfoLog(vMainObject, 4096, &tmp2, err);
+		glGetShaderInfoLog(vMainParticle, 4096, &tmp2, err);
 		err[tmp2]=0;
-		MessageBox(hWnd, err, "vMainObject shader error", MB_OK);
+		MessageBox(hWnd, err, "vMainParticle shader error", MB_OK);
 		return;
 	}
-	glGetShaderiv(fMainBackground, GL_COMPILE_STATUS, &tmp);
+	glGetShaderiv(gMainParticle, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
 	{
-		glGetShaderInfoLog(fMainBackground, 4096, &tmp2, err);
+		glGetShaderInfoLog(gMainParticle, 4096, &tmp2, err);
 		err[tmp2]=0;
-		MessageBox(hWnd, err, "fMainBackground shader error", MB_OK);
+		MessageBox(hWnd, err, "gMainParticle shader error", MB_OK);
+		return;
+	}
+	glGetShaderiv(fMainParticle, GL_COMPILE_STATUS, &tmp);
+	if (!tmp)
+	{
+		glGetShaderInfoLog(fMainParticle, 4096, &tmp2, err);
+		err[tmp2]=0;
+		MessageBox(hWnd, err, "fMainParticle shader error", MB_OK);
 		return;
 	}
 #endif
 
 	// link shaders:
-	glAttachShader(shaderPrograms[0], vMainObject);
-	glAttachShader(shaderPrograms[0], fMainBackground);
+	glAttachShader(shaderPrograms[0], vMainParticle);
+	glAttachShader(shaderPrograms[0], gMainParticle);
+	glAttachShader(shaderPrograms[0], fMainParticle);
 	glLinkProgram(shaderPrograms[0]);
 	// The in_Position is at 0:
 	glBindAttribLocation(shaderPrograms[0], 0, "in_Position");
