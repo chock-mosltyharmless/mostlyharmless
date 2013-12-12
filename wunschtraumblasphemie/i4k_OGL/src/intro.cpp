@@ -31,40 +31,44 @@ int rand();
 
 const GLchar *fragmentMainParticle="\
 #version 330 core\n\
-in vec3 g2fPosition;\n\
+in vec2 g2fPosition;\n\
 out vec4 out_Color;\n\
 \n\
 void main(void)\n\
 {\n\
-   out_Color = vec4(g2fPosition, 1.0);\n\
+	float intensity = smoothstep(1.0, 0.8, length(g2fPosition));\n\
+	out_Color = vec4(vec3(intensity) * vec3(0.3, 0.2, 0.1), 1.0);\n\
 }";
 
 const GLchar *geometryMainParticle="\
 #version 330 compatibility\n\
-layout(triangles) in;\n\
-layout(triangle_strip, max_vertices=3) out;\n\
-in vec3 v2gPosition[];\n\
-out vec3 g2fPosition;\n\
+layout(points) in;\n\
+layout(triangle_strip, max_vertices=4) out;\n\
+out vec2 g2fPosition;\n\
 \n\
 void main()\n\
 {\n\
-	for(int i=0; i<3; i++)\n\
-	{\n\
-		gl_Position = gl_in[i].gl_Position;\n\
-		g2fPosition = v2gPosition[i].xyz;\n\
-		EmitVertex();\n\
-	}\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-0.1, 0.1, 0.0, 0.0);\n\
+	g2fPosition = vec2(-1.0, 1.0);\n\
+	EmitVertex();\n\
+	gl_Position = gl_in[0].gl_Position + vec4(0.1, 0.1, 0.0, 0.0);\n\
+	g2fPosition = vec2(1.0, 1.0);\n\
+	EmitVertex();\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-0.1, -0.1, 0.0, 0.0);\n\
+	g2fPosition = vec2(-1.0, -1.0);\n\
+	EmitVertex();\n\
+	gl_Position = gl_in[0].gl_Position + vec4(0.1, -0.1, 0.0, 0.0);\n\
+	g2fPosition = vec2(1.0, -1.0);\n\
+	EmitVertex();\n\
 	EndPrimitive();\n\
 }";
 
 const GLchar *vertexMainParticle="\
 #version 330 core\n\
 in vec3 in_Position;\n\
-out vec3 v2gPosition;\n\
 void main(void)\
 {\
     gl_Position = vec4(in_Position, 1.);\n\
-	v2gPosition = in_Position;\n\
 }";
 
 // -------------------------------------------------------------------
@@ -217,12 +221,12 @@ void intro_init( void )
 	}
 #endif
 
-	vertices[0] = -1.0f; vertices[1] = -1.0f; vertices[2] = 1.0f; // Bottom left corner  
-	vertices[3] = -1.0f; vertices[4] = 1.0f; vertices[5] = 1.0f; // Top left corner  
-	vertices[6] = 1.0f; vertices[7] = 1.0f; vertices[8] = 1.0f; // Top Right corner  
-	vertices[9] = 1.0f; vertices[10] = -1.0f; vertices[11] = 1.0f; // Bottom right corner  
-	vertices[12] = -1.0f; vertices[13] = -1.0f; vertices[14] = 1.0f; // Bottom left corner  
-	vertices[15] = 1.0f; vertices[16] = 1.0f; vertices[17] = 1.0f; // Top Right corner  
+	vertices[0] = -0.5f; vertices[1] = -0.5f; vertices[2] = 0.5f; // Bottom left corner  
+	vertices[3] = -0.5f; vertices[4] = 0.5f; vertices[5] = 0.5f; // Top left corner  
+	vertices[6] = 0.5f; vertices[7] = 0.5f; vertices[8] = 0.5f; // Top Right corner  
+	vertices[9] = 0.5f; vertices[10] = -0.5f; vertices[11] = 0.5f; // Bottom right corner  
+	vertices[12] = -0.5f; vertices[13] = -0.5f; vertices[14] = 0.5f; // Bottom left corner  
+	vertices[15] = 0.5f; vertices[16] = 0.5f; vertices[17] = 0.5f; // Top Right corner  
 
 	// Set up vertex buffer and stuff
 	glGenVertexArrays(1, &vaoID); // Create our Vertex Array Object  
@@ -302,8 +306,13 @@ void intro_do( long itime )
 	// Create the matrix tree
 	// But first: I have to write the geometry shader stuffiskaya!
 
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
     // render
     glDisable( GL_CULL_FACE );
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_ONE,GL_ONE);
 
 	//parameterMatrix[0] = ftime; // time	
 	// get music information
@@ -324,6 +333,6 @@ void intro_do( long itime )
 	glUseProgram(shaderPrograms[0]);
 
 	//glBindVertexArray(vaoID);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawArrays(GL_POINTS, 0, 6);
 	//glBindVertexArray(0);
 }
