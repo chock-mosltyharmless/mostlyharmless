@@ -36,7 +36,7 @@ out vec4 out_Color;\n\
 \n\
 void main(void)\n\
 {\n\
-	float intensity = smoothstep(1.0, 0.8, length(g2fPosition));\n\
+	float intensity = smoothstep(1.0, 0.6, length(g2fPosition));\n\
 	out_Color = vec4(vec3(intensity) * vec3(0.3, 0.2, 0.1), 1.0);\n\
 }";
 
@@ -48,16 +48,16 @@ out vec2 g2fPosition;\n\
 \n\
 void main()\n\
 {\n\
-	gl_Position = gl_in[0].gl_Position + vec4(-0.1, 0.1, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-0.01, 0.01, 0.0, 0.0);\n\
 	g2fPosition = vec2(-1.0, 1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(0.1, 0.1, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(0.01, 0.01, 0.0, 0.0);\n\
 	g2fPosition = vec2(1.0, 1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(-0.1, -0.1, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-0.01, -0.01, 0.0, 0.0);\n\
 	g2fPosition = vec2(-1.0, -1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(0.1, -0.1, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(0.01, -0.01, 0.0, 0.0);\n\
 	g2fPosition = vec2(1.0, -1.0);\n\
 	EmitVertex();\n\
 	EndPrimitive();\n\
@@ -75,7 +75,7 @@ void main(void)\
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define FRACTAL_TREE_DEPTH 3
+#define FRACTAL_TREE_DEPTH 6
 #define FRACTAL_NUM_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
 // It's actually less than that:
 #define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES * 2)
@@ -91,7 +91,7 @@ static GLuint shaderPrograms[1];
 unsigned int vaoID;
 unsigned int vboID;
 // And the actual vertices
-GLfloat vertices[18];
+GLfloat vertices[FRACTAL_NUM_LEAVES * 3];
 
 // -------------------------------------------------------------------
 //                          Data for the fractal:
@@ -99,6 +99,7 @@ GLfloat vertices[18];
 
 // The fractals are saved in a tree of 4x4 matrices
 float fractalTree[FRACTAL_TREE_NUM_ENTRIES][4][4];
+int firstTreeLeaf; // The first of the leaf entries
 
 // The transformation matrices of the fractal
 float transformMat[4][4][4];
@@ -234,8 +235,9 @@ void intro_init( void )
   
 	glGenBuffers(1, &vboID); // Generate our Vertex Buffer Object  
 	glBindBuffer(GL_ARRAY_BUFFER, vboID); // Bind our Vertex Buffer Object  
-	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(GLfloat), vertices, GL_DYNAMIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
-  
+	glBufferData(GL_ARRAY_BUFFER, FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat),
+		         NULL, GL_DYNAMIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
+
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0); // Set up our vertex attributes pointer 
 	//glBindVertexArray(0);
@@ -296,12 +298,61 @@ void createTransforms(unsigned long startSeed)
 	}
 }
 
+void buildTree(void)
+{
+	// Set the first entry in the tree to unity (assuming all zeroes)
+	fractalTree[0][0][0] = 1.0f;
+	fractalTree[0][1][1] = 1.0f;
+	fractalTree[0][2][2] = 1.0f;
+	fractalTree[0][3][3] = 1.0f;
+
+	int startEntry = 0;
+	int endEntry = 1;
+	for (int depth = 1; depth < FRACTAL_TREE_DEPTH; depth++)
+	{
+		firstTreeLeaf = startEntry;
+
+		for (int entry = startEntry; entry < endEntry; entry++)
+		{
+			for (int transform = 0; transform < 4; transform++)
+			{
+				int destEntry = entry * 4 + 1 + transform;
+				matrixMult(transformMat[transform], fractalTree[entry],
+					       fractalTree[destEntry]);
+			}
+		}
+
+		startEntry = endEntry;
+		endEntry += 1 << (2*depth);
+	}
+}
+
+// Create the particle locations and move them to the GPU
+void generateParticles(void)
+{
+	// Copy the positions to the vertices:
+	for (int entry = 0; entry < FRACTAL_NUM_LEAVES; entry++)
+	{
+		for (int dim = 0; dim < 3; dim++)
+		{
+			vertices[entry*3 + dim] =
+				fractalTree[entry + firstTreeLeaf][dim][3];
+		}
+	}
+
+	// Send the data to the graphics card
+	glBufferSubData(GL_ARRAY_BUFFER, 0,
+		            FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat), vertices);  
+}
+
 void intro_do( long itime )
 {
 	float ftime = 0.001f*(float)itime;
 
 	// Create the transformation matrices from random values
-	createTransforms(1);
+	createTransforms(itime / 3000);
+	buildTree();
+	generateParticles();
 
 	// Create the matrix tree
 	// But first: I have to write the geometry shader stuffiskaya!
@@ -333,6 +384,6 @@ void intro_do( long itime )
 	glUseProgram(shaderPrograms[0]);
 
 	//glBindVertexArray(vaoID);
-	glDrawArrays(GL_POINTS, 0, 6);
+	glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
 	//glBindVertexArray(0);
 }
