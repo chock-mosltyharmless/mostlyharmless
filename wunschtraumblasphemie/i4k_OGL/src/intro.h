@@ -35,9 +35,9 @@ typedef HGLRC (APIENTRY *PFNWGLCREATECONTEXTATTRIBSARB)(HDC hdc,
 #define GL_MINOR_VERSION 0x821C
 
 #ifdef SHADER_DEBUG
-#define NUM_GL_NAMES 19
+#define NUM_GL_NAMES 20
 #else
-#define NUM_GL_NAMES 18
+#define NUM_GL_NAMES 17
 #endif
 
 typedef void (*GenFP)(void); // pointer to openGL functions
@@ -59,10 +59,11 @@ extern GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 #define glVertexAttribPointer ((PFNGLVERTEXATTRIBPOINTERPROC)glFP[13])
 #define glBindAttribLocation ((PFNGLBINDATTRIBLOCATIONPROC)glFP[14])
 #define glEnableVertexAttribArray ((PFNGLENABLEVERTEXATTRIBARRAYPROC)glFP[15])
+#define glBufferSubData ((PFNGLBUFFERSUBDATAPROC)glFP[16])
 #ifdef SHADER_DEBUG
-#define glGetShaderiv ((PFNGLGETSHADERIVPROC)glFP[16])
-#define glGetShaderInfoLog ((PFNGLGETSHADERINFOLOGPROC)glFP[17])
-#define glGetProgramiv ((PFNGLGETPROGRAMIVPROC)glFP[18])
+#define glGetShaderiv ((PFNGLGETSHADERIVPROC)glFP[17])
+#define glGetShaderInfoLog ((PFNGLGETSHADERINFOLOGPROC)glFP[18])
+#define glGetProgramiv ((PFNGLGETPROGRAMIVPROC)glFP[19])
 #endif
 
 #endif
