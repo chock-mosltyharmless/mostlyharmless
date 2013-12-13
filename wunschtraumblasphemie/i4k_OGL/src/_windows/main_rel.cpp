@@ -72,7 +72,7 @@ const static char* glnames[NUM_GL_NAMES]={
      "glAttachShader", "glLinkProgram", "glUseProgram",
 	 "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
 	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
-	 "glBindAttribLocation", "glEnableVertexAttribArray",
+	 "glEnableVertexAttribArray",
 	 "glBufferSubData",
 	 "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
 };
@@ -83,8 +83,8 @@ const static char* glnames[NUM_GL_NAMES]={
      "glAttachShader", "glLinkProgram", "glUseProgram",
 	 "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
 	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
-	 "glBindAttribLocation", "glEnableVertexAttribArray",
-	 "glBufferSubData"
+	 "glEnableVertexAttribArray",
+	 "glBufferSubData",
 };
 #endif
 

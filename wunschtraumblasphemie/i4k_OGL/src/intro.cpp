@@ -65,17 +65,18 @@ void main()\n\
 
 const GLchar *vertexMainParticle="\
 #version 330 core\n\
-in vec3 in_Position;\n\
+layout (location=0) in vec3 in_Position;\n\
 void main(void)\
 {\
-    gl_Position = vec4(in_Position, 1.);\n\
+	vec3 transformPos = in_Position;\n\
+    gl_Position = vec4(transformPos, 1.);\n\
 }";
 
 // -------------------------------------------------------------------
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define FRACTAL_TREE_DEPTH 6
+#define FRACTAL_TREE_DEPTH 4
 #define FRACTAL_NUM_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
 // It's actually less than that:
 #define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES * 2)
@@ -89,6 +90,7 @@ char err[4097];
 static GLuint shaderPrograms[1];
 // The vertex array and vertex buffer
 unsigned int vaoID;
+// 0 is for particle positions, 1 is for particle matrices
 unsigned int vboID;
 // And the actual vertices
 GLfloat vertices[FRACTAL_NUM_LEAVES * 3];
@@ -208,9 +210,6 @@ void intro_init( void )
 	glAttachShader(shaderPrograms[0], gMainParticle);
 	glAttachShader(shaderPrograms[0], fMainParticle);
 	glLinkProgram(shaderPrograms[0]);
-	// The in_Position is at 0:
-	glBindAttribLocation(shaderPrograms[0], 0, "in_Position");
-	//glBinAttribLocation(shader_id, 1, "in_Color");
 
 #ifdef SHADER_DEBUG
 	int programStatus;
@@ -222,32 +221,33 @@ void intro_init( void )
 	}
 #endif
 
-	vertices[0] = -0.5f; vertices[1] = -0.5f; vertices[2] = 0.5f; // Bottom left corner  
-	vertices[3] = -0.5f; vertices[4] = 0.5f; vertices[5] = 0.5f; // Top left corner  
-	vertices[6] = 0.5f; vertices[7] = 0.5f; vertices[8] = 0.5f; // Top Right corner  
-	vertices[9] = 0.5f; vertices[10] = -0.5f; vertices[11] = 0.5f; // Bottom right corner  
-	vertices[12] = -0.5f; vertices[13] = -0.5f; vertices[14] = 0.5f; // Bottom left corner  
-	vertices[15] = 0.5f; vertices[16] = 0.5f; vertices[17] = 0.5f; // Top Right corner  
-
 	// Set up vertex buffer and stuff
 	glGenVertexArrays(1, &vaoID); // Create our Vertex Array Object  
 	glBindVertexArray(vaoID); // Bind our Vertex Array Object so we can use it  
   
+	int maxAttrt;
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttrt);
+
 	glGenBuffers(1, &vboID); // Generate our Vertex Buffer Object  
+	
+	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vboID); // Bind our Vertex Buffer Object  
 	glBufferData(GL_ARRAY_BUFFER, FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat),
 		         NULL, GL_DYNAMIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
-
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0); // Set up our vertex attributes pointer 
-	//glBindVertexArray(0);
+	glVertexAttribPointer(0, // attribute
+						  3, // size
+						  GL_FLOAT, // type
+						  GL_FALSE, // normalized?
+						  0, // stride
+						  (void*)0); // array buffer offset
 
 #ifdef SHADER_DEBUG
 	// Get all the errors:
 	GLenum errorValue = glGetError();
 	if (errorValue != GL_NO_ERROR)
 	{
-		MessageBox(hWnd, "There was an error.", "Init error", MB_OK);
+		char *errorString = (char *)gluErrorString(errorValue);
+		MessageBox(hWnd, errorString, "Init error", MB_OK);
 		return;
 	}
 #endif
