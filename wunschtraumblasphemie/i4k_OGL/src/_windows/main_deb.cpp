@@ -52,8 +52,8 @@ static WININFO wininfo = {  0,0,0,0,0,
 							{'i','q','_',0}
                             };
 
-static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-						   WGL_CONTEXT_MINOR_VERSION_ARB, 3,
+static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+						   WGL_CONTEXT_MINOR_VERSION_ARB, 4,
 						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			               NULL}; 
 
@@ -83,6 +83,7 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
 	 "glEnableVertexAttribArray",
 	 "glBufferSubData",
+	 "glUniformMatrix4fv",
 	 "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
 };
 #else
@@ -94,6 +95,7 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glBindBuffer", "glBufferData", "glVertexAttribPointer",
 	 "glEnableVertexAttribArray",
 	 "glBufferSubData",
+	 "glUniformMatrix4fv",
 };
 #endif
 
