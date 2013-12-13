@@ -30,45 +30,46 @@ int rand();
 // -------------------------------------------------------------------
 
 const GLchar *fragmentMainParticle="\
-#version 330 core\n\
+#version 440 core\n\
 in vec2 g2fPosition;\n\
 out vec4 out_Color;\n\
 \n\
 void main(void)\n\
 {\n\
 	float intensity = smoothstep(1.0, 0.6, length(g2fPosition));\n\
-	out_Color = vec4(vec3(intensity) * vec3(0.3, 0.2, 0.1), 1.0);\n\
+	out_Color = vec4(vec3(intensity) * vec3(0.03, 0.02, 0.01), 1.0);\n\
 }";
 
 const GLchar *geometryMainParticle="\
-#version 330 compatibility\n\
+#version 440 compatibility\n\
 layout(points) in;\n\
 layout(triangle_strip, max_vertices=4) out;\n\
 out vec2 g2fPosition;\n\
 \n\
 void main()\n\
 {\n\
-	gl_Position = gl_in[0].gl_Position + vec4(-0.01, 0.01, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-0.005, 0.005, 0.0, 0.0);\n\
 	g2fPosition = vec2(-1.0, 1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(0.01, 0.01, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(0.005, 0.005, 0.0, 0.0);\n\
 	g2fPosition = vec2(1.0, 1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(-0.01, -0.01, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-0.005, -0.005, 0.0, 0.0);\n\
 	g2fPosition = vec2(-1.0, -1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(0.01, -0.01, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(0.005, -0.005, 0.0, 0.0);\n\
 	g2fPosition = vec2(1.0, -1.0);\n\
 	EmitVertex();\n\
 	EndPrimitive();\n\
 }";
 
 const GLchar *vertexMainParticle="\
-#version 330 core\n\
+#version 440 core\n\
 layout (location=0) in vec3 in_Position;\n\
+layout (location=1) uniform mat4 transformMatrix;\n\
 void main(void)\
 {\
-	vec3 transformPos = in_Position;\n\
+	vec3 transformPos = (vec4(in_Position, 1.0) * transformMatrix).xyz;\n\
     gl_Position = vec4(transformPos, 1.);\n\
 }";
 
@@ -76,7 +77,7 @@ void main(void)\
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define FRACTAL_TREE_DEPTH 4
+#define FRACTAL_TREE_DEPTH 6
 #define FRACTAL_NUM_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
 // It's actually less than that:
 #define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES * 2)
@@ -350,7 +351,7 @@ void intro_do( long itime )
 	float ftime = 0.001f*(float)itime;
 
 	// Create the transformation matrices from random values
-	createTransforms(itime / 3000);
+	createTransforms(itime / 500);
 	buildTree();
 	generateParticles();
 
@@ -384,6 +385,10 @@ void intro_do( long itime )
 	glUseProgram(shaderPrograms[0]);
 
 	//glBindVertexArray(vaoID);
-	glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
+	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
+	{
+		glUniformMatrix4fv(1, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
+		glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
+	}
 	//glBindVertexArray(0);
 }
