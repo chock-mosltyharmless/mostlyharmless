@@ -37,7 +37,7 @@ out vec4 out_Color;\n\
 void main(void)\n\
 {\n\
 	float intensity = smoothstep(1.0, 0.6, length(g2fPosition));\n\
-	out_Color = vec4(vec3(intensity) * vec3(0.03, 0.02, 0.01), 1.0);\n\
+	out_Color = vec4(vec3(intensity) * vec3(0.6, 0.5, 0.3), 1.0);\n\
 }";
 
 const GLchar *geometryMainParticle="\
@@ -48,16 +48,16 @@ out vec2 g2fPosition;\n\
 \n\
 void main()\n\
 {\n\
-	gl_Position = gl_in[0].gl_Position + vec4(-0.005, 0.005, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-0.002, 0.002, 0.0, 0.0);\n\
 	g2fPosition = vec2(-1.0, 1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(0.005, 0.005, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(0.002, 0.002, 0.0, 0.0);\n\
 	g2fPosition = vec2(1.0, 1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(-0.005, -0.005, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-0.002, -0.002, 0.0, 0.0);\n\
 	g2fPosition = vec2(-1.0, -1.0);\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(0.005, -0.005, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(0.002, -0.002, 0.0, 0.0);\n\
 	g2fPosition = vec2(1.0, -1.0);\n\
 	EmitVertex();\n\
 	EndPrimitive();\n\
@@ -66,10 +66,14 @@ void main()\n\
 const GLchar *vertexMainParticle="\
 #version 440 core\n\
 layout (location=0) in vec3 in_Position;\n\
-layout (location=1) uniform mat4 transformMatrix;\n\
+layout (location=0) uniform mat4 transformMatrix;\n\
 void main(void)\
 {\
 	vec3 transformPos = (vec4(in_Position, 1.0) * transformMatrix).xyz;\n\
+	// Perspective projection\n\
+	// Here I need to think about z-clip aswell. Maybe I do the w stuff?\n\
+	float w = 1.0f / transformPos.z;\n\
+	transformPos *= w;\n\
     gl_Position = vec4(transformPos, 1.);\n\
 }";
 
@@ -346,14 +350,46 @@ void generateParticles(void)
 		            FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat), vertices);  
 }
 
+// This function first generates a transformation matrix for the camera
+// Then it multiplies it with all the transforms in the fractal tree leaves...
+void generateFractalTransforms(float ftime)
+{
+	// Generate a transformation matrix. I'd rather do a look-at?
+	float sa = sin(ftime);
+	float ca = cos(ftime);
+	float rotation[4][4] = {
+		{ca, 0, sa, 0},
+		{0, 1, 0, 0},
+		{-sa, 0, ca, 0},
+		{0, 0, 0, 1}};
+
+	// multiply camera transform with leaf matrices
+	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
+	{
+		float tmpMatrix[4][4];
+		matrixMult(rotation, fractalTree[firstTreeLeaf+draw], tmpMatrix);
+		for (int s = 0; s < 4; s++)
+		{
+			for (int t = 0; t < 4; t++)
+			{
+				fractalTree[firstTreeLeaf+draw][s][t] = tmpMatrix[s][t];
+			}
+		}
+
+		glUniformMatrix4fv(0, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
+		glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
+	}
+}
+
 void intro_do( long itime )
 {
 	float ftime = 0.001f*(float)itime;
 
 	// Create the transformation matrices from random values
-	createTransforms(itime / 500);
+	createTransforms(itime / 5000);
 	buildTree();
 	generateParticles();
+	generateFractalTransforms(ftime);
 
 	// Create the matrix tree
 	// But first: I have to write the geometry shader stuffiskaya!
@@ -387,7 +423,7 @@ void intro_do( long itime )
 	//glBindVertexArray(vaoID);
 	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
 	{
-		glUniformMatrix4fv(1, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
+		glUniformMatrix4fv(0, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
 		glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
 	}
 	//glBindVertexArray(0);
