@@ -151,10 +151,12 @@
     <ClInclude Include="src\intro.h" />
     <ClInclude Include="src\music.h" />
     <ClInclude Include="src\mzk.h" />
+    <ClInclude Include="src\Parameter.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp" />
     <ClCompile Include="src\mzk.cpp" />
+    <ClCompile Include="src\Parameter.cpp" />
     <ClCompile Include="src\_windows\main_deb.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>

@@ -13,6 +13,7 @@
 #include "config.h"
 #include "intro.h"
 #include "mzk.h"
+#include "Parameter.h"
 
 // You can access the wave output for basic synchronization
 extern double outwave[][2];
@@ -37,7 +38,8 @@ out vec4 out_Color;\n\
 \n\
 void main(void)\n\
 {\n\
-	float intensity = smoothstep(1.0, 0.8, length(g2f_Position));\n\
+	float dist = length(g2f_Position);\n\
+	float intensity = smoothstep(1.0, 0.7, dist);\n\
 	out_Color = vec4(vec3(intensity) * g2f_Color.rgb, 1.0);\n\
 }";
 
@@ -55,22 +57,22 @@ void main()\n\
 	const vec4 pos = gl_in[0].gl_Position;\n\
 	\n\
 	// Calculate size and color \n\
-	float coreBrightness = 0.3;\n\
-	float lenseFocus = 0.8; // Should be a uniform!\n\
+	float coreBrightness = 0.6;\n\
+	float lenseFocus = 0.5; // Should be a uniform!\n\
 	float lenseSize = 0.05;\n\
 	float defocus = abs(pos.z - lenseFocus);\n\
-	float coreParticleSize = 0.002;\n\
+	float coreParticleSize = 0.001;\n\
 	float particleSize = coreParticleSize + defocus * lenseSize;\n\
 	float relSize = coreParticleSize / particleSize;\n\
 	// cheat for gamma: relSize^3\n\
-	float brightness = coreBrightness * pow(relSize, 2.5);\n\
+	float brightness = coreBrightness * pow(relSize, 2.2);\n\
 	\n\
 	// Brightness of the DOFer?\n\
 	float comparisonValue = pow(relSize, 1.6);\n\
 	brightness *= smoothstep(comparisonValue, 0.5*comparisonValue, v2g_Color[0].a) /\n\
 		comparisonValue;\n\
 	\n\
-	if (v2g_Color[0].a <= comparisonValue)\n\
+	if (v2g_Color[0].a <= comparisonValue && brightness > 0.03)\n\
 	{\n\
 		\n\
 		// Drop the thing\n\
@@ -102,11 +104,17 @@ layout (location=0) uniform mat4 transformMatrix;\n\
 out vec4 v2g_Color;\n\
 void main(void)\
 {\
-	vec3 transformPos = (vec4(in_Position.xyz, 1.0) * transformMatrix).xyz;\n\
+	mat4 tMat = transformMatrix;\n\
+	vec4 batchColor = transformMatrix[3];\n\
+	batchColor.a = in_Color.a;\n\
+	tMat[3][0] = 0.;\n\
+	tMat[3][1] = 0.;\n\
+	tMat[3][2] = 0.;\n\
+	vec3 transformPos = (vec4(in_Position.xyz, 1.0) * tMat).xyz;\n\
 	// Perspective projection\n\
 	// Here I need to think about z-clip aswell. Maybe I do the w stuff?\n\
     gl_Position = vec4(transformPos, transformPos.z+0.0001);\n\
-	v2g_Color = in_Color;\n\
+	v2g_Color = mix(in_Color, batchColor, 0.3);\n\
 }";
 
 // -------------------------------------------------------------------
@@ -143,12 +151,15 @@ int firstTreeLeaf; // The first of the leaf entries
 
 // The transformation matrices of the fractal
 float transformMat[4][4][4];
-const float transformColor[4][3] =
+//const float transformColor[4][3] =
+//2:0.99(127) 3:0.96(123) 4:0.73(94) 5:0.99(127) 6:0.90(115) 8:0.99(127)
+//    9:0.75(96) 12:0.87(111) 13:0.99(127) 14:0.99(127) 15:0.99(127) 16:0.99(127) 
+float transformColor[4][3] =
 {
-	{1.0f, 0.25f, 0.25f},
-	{1.0f, 0.5f, 0.25f},
-	{0.5f, 0.75f, 1.0f},
-	{0.75f, 0.5f, 1.0f},
+	{1.0f, 0.9f, 0.66f},
+	{1.0f, 0.35f, 0.4f},
+	{0.2f, 0.6f, 1.0f},
+	{0.95f, 0.9f, 0.9f},
 };
 
 // -------------------------------------------------------------------
@@ -314,7 +325,7 @@ void intro_init( void )
 
 // The seed value of the random number generator is accessed here!
 extern unsigned long seed;
-void createTransforms(unsigned long startSeed)
+void createTransforms(unsigned long startSeed, float changer)
 {
 	seed = startSeed;
 	float quaternion[4];
@@ -326,7 +337,7 @@ void createTransforms(unsigned long startSeed)
 		for (int qdim = 0; qdim < 4; qdim++)
 		{
 			// RANDOM!!!
-			quaternion[qdim] = frand() - 0.5f;
+			quaternion[qdim] = frand() - 0.5f + 0.25f * sin(0.125f*changer+qdim);
 			invQuatLen += quaternion[qdim] * quaternion[qdim];
 		}
 		invQuatLen = 1.0f / (float)sqrt(invQuatLen);
@@ -365,9 +376,9 @@ void buildTree(void)
 	fractalTree[0][1][1] = 1.0f;
 	fractalTree[0][2][2] = 1.0f;
 	fractalTree[0][3][3] = 1.0f;
-	fractalColorTree[0][0] = 0.5f;
-	fractalColorTree[0][1] = 0.5f;
-	fractalColorTree[0][2] = 0.5f;
+	fractalColorTree[0][0] = 1.0f;
+	fractalColorTree[0][1] = 1.0f;
+	fractalColorTree[0][2] = 1.0f;
 
 	int startEntry = 0;
 	int endEntry = 1;
@@ -388,9 +399,9 @@ void buildTree(void)
 				// Create the color:
 				for (int col = 0; col < 3; col++)
 				{
-					fractalColorTree[destEntry][col] = 0.5f * 
-						(fractalColorTree[entry][col] +
-						 transformColor[transform][col]);
+					fractalColorTree[destEntry][col] =
+						0.625f * fractalColorTree[entry][col] +
+						0.375f * transformColor[transform][col];
 				}
 				fractalColorTree[destEntry][3] = frand();
 			}
@@ -410,7 +421,7 @@ void generateParticles(void)
 	{
 		for (int dim = 0; dim < 3; dim++)
 		{
-			vertices[entry*3 + dim] =
+			vertices[entry*3 + dim] = 
 				fractalTree[entry + firstTreeLeaf][dim][3];
 		}
 	}
@@ -441,15 +452,15 @@ void generateFractalTransforms(float ftime)
 		{0, 0, 0, 1}
 	};
 	float aspect[4][4] = {
-		{9.0f/8.0f, 0.0f, 0.0f, 0.0f},
-		{0.0f, 16.0f/8.0f, 0.0f, 0.0f},
+		{9.0f/16.0f, 0.0f, 0.0f, 0.0f},
+		{0.0f, 16.0f/16.0f, 0.0f, 0.0f},
 		{0.0f, 0.0f, 1.0f, 0.0f},
 		{0.0f, 0.0f, 0.0f, 1.0f}
 	};
 	float finalTransform[4][4];
 	matrixMult(aspect, rotation, finalTransform);
 
-	finalTransform[2][3] = 1.0f;
+	finalTransform[2][3] = 0.6f + 0.25f * sin(ftime);
 
 	// multiply camera transform with leaf matrices
 	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
@@ -464,6 +475,10 @@ void generateFractalTransforms(float ftime)
 			}
 		}
 
+		// encode the color in the matrix
+		fractalTree[firstTreeLeaf+draw][3][0] = fractalColorTree[firstTreeLeaf+draw][0];
+		fractalTree[firstTreeLeaf+draw][3][1] = fractalColorTree[firstTreeLeaf+draw][1];
+		fractalTree[firstTreeLeaf+draw][3][2] = fractalColorTree[firstTreeLeaf+draw][2];
 		glUniformMatrix4fv(0, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
 		glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
 	}
@@ -471,10 +486,28 @@ void generateFractalTransforms(float ftime)
 
 void intro_do( long itime )
 {
+	//2:0.35(45) 3:0.31(40) 4:0.00(0) 5:0.20(25) 6:0.16(21) 8:0.22(28)
+	//9:0.00(0) 12:0.38(48) 13:0.54(69) 14:0.16(21) 15:0.00(0) 16:0.00(0) 
+	transformColor[0][0] = params.getParam(2, 0.35f);
+	transformColor[0][1] = params.getParam(3, 0.31f);
+	transformColor[0][2] = params.getParam(4, 0.00f);
+	
+	transformColor[1][0] = params.getParam(5, 0.20f);
+	transformColor[1][1] = params.getParam(6, 0.16f);
+	transformColor[1][2] = params.getParam(8, 0.22f);
+	
+	transformColor[2][0] = params.getParam(9, 0.00f);
+	transformColor[2][1] = params.getParam(12, 0.38f);
+	transformColor[2][2] = params.getParam(13, 0.54f);
+	
+	transformColor[3][0] = params.getParam(14, 0.16f);
+	transformColor[3][1] = params.getParam(15, 0.00f);
+	transformColor[3][2] = params.getParam(16, 0.00f);
+
 	float ftime = 0.001f*(float)itime;
 
 	// Create the transformation matrices from random values
-	createTransforms(itime / 2000);
+	createTransforms(itime / 2000, (itime % 2000)*0.001f);
 	buildTree();
 	generateParticles();
 	generateFractalTransforms(ftime);
