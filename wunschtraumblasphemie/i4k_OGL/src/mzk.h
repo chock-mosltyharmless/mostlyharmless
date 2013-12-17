@@ -6,7 +6,7 @@
 #define _MZK_H_
 
 // I dislike MZK_DURATION???
-#define MZK_DURATION    63
+#define MZK_DURATION    163
 #define MZK_RATE        44100
 #define MZK_NUMCHANNELS 2
 
