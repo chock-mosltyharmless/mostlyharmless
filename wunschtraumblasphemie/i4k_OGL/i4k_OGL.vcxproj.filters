@@ -22,6 +22,9 @@
     <ClInclude Include="src\mzk.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Parameter.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp">
@@ -35,6 +38,9 @@
     </ClCompile>
     <ClCompile Include="src\_windows\main_rel.cpp">
       <Filter>Source Files\_windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Parameter.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
