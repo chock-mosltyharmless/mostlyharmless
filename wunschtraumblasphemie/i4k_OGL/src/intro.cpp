@@ -51,20 +51,30 @@ out vec2 g2f_Position;\n\
 \n\
 void main()\n\
 {\n\
-	float brightness = 0.2;\n\
-	gl_Position = gl_in[0].gl_Position + vec4(-0.002, 0.002, 0.0, 0.0);\n\
+	// Calculate size and color \n\
+	float coreBrightness = 1.0;\n\
+	float lenseFocus = 0.3; // Should be a uniform!\n\
+	float lenseSize = 0.05;\n\
+	float defocus = abs(gl_in[0].gl_Position.z - lenseFocus);\n\
+	float coreParticleSize = 0.003;\n\
+	float particleSize = coreParticleSize + defocus * lenseSize;\n\
+	float relSize = coreParticleSize / particleSize;\n\
+	float brightness = coreBrightness * relSize * relSize;\n\
+	\n\
+	// Drop the thing\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-particleSize, particleSize, 0.0, 0.0);\n\
 	g2f_Position = vec2(-1.0, 1.0);\n\
 	g2f_Color = brightness * v2g_Color[0];\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(0.002, 0.002, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(particleSize, particleSize, 0.0, 0.0);\n\
 	g2f_Position = vec2(1.0, 1.0);\n\
 	g2f_Color = brightness * v2g_Color[0];\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(-0.002, -0.002, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(-particleSize, -particleSize, 0.0, 0.0);\n\
 	g2f_Position = vec2(-1.0, -1.0);\n\
 	g2f_Color = brightness * v2g_Color[0];\n\
 	EmitVertex();\n\
-	gl_Position = gl_in[0].gl_Position + vec4(0.002, -0.002, 0.0, 0.0);\n\
+	gl_Position = gl_in[0].gl_Position + vec4(particleSize, -particleSize, 0.0, 0.0);\n\
 	g2f_Position = vec2(1.0, -1.0);\n\
 	g2f_Color = brightness * v2g_Color[0];\n\
 	EmitVertex();\n\
@@ -83,8 +93,8 @@ void main(void)\
 	// Perspective projection\n\
 	// Here I need to think about z-clip aswell. Maybe I do the w stuff?\n\
 	float w = 1.0f / transformPos.z;\n\
-	transformPos *= w;\n\
-    gl_Position = vec4(transformPos, 1.);\n\
+	//transformPos *= w;\n\
+    gl_Position = vec4(transformPos, transformPos.z);\n\
 	v2g_Color = in_Color;\n\
 }";
 
@@ -92,7 +102,7 @@ void main(void)\
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define FRACTAL_TREE_DEPTH 6
+#define FRACTAL_TREE_DEPTH 5
 #define FRACTAL_NUM_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
 // It's actually less than that:
 #define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES * 2)
@@ -405,8 +415,8 @@ void generateParticles(void)
 void generateFractalTransforms(float ftime)
 {
 	// Generate a transformation matrix. I'd rather do a look-at?
-	float sa = sin(ftime);
-	float ca = cos(ftime);
+	float sa = sin(ftime * 0.4f);
+	float ca = cos(ftime * 0.4f);
 	float rotation[4][4] = {
 		{ca, 0, sa, 0},
 		{0, 1, 0, 0},
@@ -436,7 +446,7 @@ void intro_do( long itime )
 	float ftime = 0.001f*(float)itime;
 
 	// Create the transformation matrices from random values
-	createTransforms(itime / 5000);
+	createTransforms(itime / 2000);
 	buildTree();
 	generateParticles();
 	generateFractalTransforms(ftime);
