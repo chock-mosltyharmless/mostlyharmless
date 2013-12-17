@@ -32,21 +32,21 @@ int rand();
 const GLchar *fragmentMainParticle="\
 #version 440 core\n\
 in vec2 g2f_Position;\n\
-in vec3 g2f_Color;\n\
+in vec4 g2f_Color;\n\
 out vec4 out_Color;\n\
 \n\
 void main(void)\n\
 {\n\
-	float intensity = smoothstep(1.0, 0.6, length(g2f_Position));\n\
-	out_Color = vec4(vec3(intensity) * g2f_Color, 1.0);\n\
+	float intensity = smoothstep(1.0, 0.8, length(g2f_Position));\n\
+	out_Color = vec4(vec3(intensity) * g2f_Color.rgb, 1.0);\n\
 }";
 
 const GLchar *geometryMainParticle="\
 #version 440 compatibility\n\
 layout(points) in;\n\
 layout(triangle_strip, max_vertices=4) out;\n\
-in vec3 v2g_Color[];\n\
-out vec3 g2f_Color;\n\
+in vec4 v2g_Color[];\n\
+out vec4 g2f_Color;\n\
 out vec2 g2f_Position;\n\
 \n\
 void main()\n\
@@ -55,41 +55,51 @@ void main()\n\
 	const vec4 pos = gl_in[0].gl_Position;\n\
 	\n\
 	// Calculate size and color \n\
-	float coreBrightness = 1.0;\n\
-	float lenseFocus = 1.0; // Should be a uniform!\n\
+	float coreBrightness = 0.3;\n\
+	float lenseFocus = 0.8; // Should be a uniform!\n\
 	float lenseSize = 0.05;\n\
 	float defocus = abs(pos.z - lenseFocus);\n\
-	float coreParticleSize = 0.003;\n\
+	float coreParticleSize = 0.002;\n\
 	float particleSize = coreParticleSize + defocus * lenseSize;\n\
 	float relSize = coreParticleSize / particleSize;\n\
-	float brightness = coreBrightness * relSize * relSize;\n\
+	// cheat for gamma: relSize^3\n\
+	float brightness = coreBrightness * pow(relSize, 2.5);\n\
 	\n\
-	// Drop the thing\n\
-	gl_Position = pos + vec4(-aspect*particleSize, particleSize, 0.0, 0.0);\n\
-	g2f_Position = vec2(-1.0, 1.0);\n\
-	g2f_Color = brightness * v2g_Color[0];\n\
-	EmitVertex();\n\
-	gl_Position = pos + vec4(aspect*particleSize, particleSize, 0.0, 0.0);\n\
-	g2f_Position = vec2(1.0, 1.0);\n\
-	g2f_Color = brightness * v2g_Color[0];\n\
-	EmitVertex();\n\
-	gl_Position = pos + vec4(-aspect*particleSize, -particleSize, 0.0, 0.0);\n\
-	g2f_Position = vec2(-1.0, -1.0);\n\
-	g2f_Color = brightness * v2g_Color[0];\n\
-	EmitVertex();\n\
-	gl_Position = pos + vec4(aspect*particleSize, -particleSize, 0.0, 0.0);\n\
-	g2f_Position = vec2(1.0, -1.0);\n\
-	g2f_Color = brightness * v2g_Color[0];\n\
-	EmitVertex();\n\
+	// Brightness of the DOFer?\n\
+	float comparisonValue = pow(relSize, 1.6);\n\
+	brightness *= smoothstep(comparisonValue, 0.5*comparisonValue, v2g_Color[0].a) /\n\
+		comparisonValue;\n\
+	\n\
+	if (v2g_Color[0].a <= comparisonValue)\n\
+	{\n\
+		\n\
+		// Drop the thing\n\
+		gl_Position = pos + vec4(-aspect*particleSize, particleSize, 0.0, 0.0);\n\
+		g2f_Position = vec2(-1.0, 1.0);\n\
+		g2f_Color = brightness * v2g_Color[0];\n\
+		EmitVertex();\n\
+		gl_Position = pos + vec4(aspect*particleSize, particleSize, 0.0, 0.0);\n\
+		g2f_Position = vec2(1.0, 1.0);\n\
+		g2f_Color = brightness * v2g_Color[0];\n\
+		EmitVertex();\n\
+		gl_Position = pos + vec4(-aspect*particleSize, -particleSize, 0.0, 0.0);\n\
+		g2f_Position = vec2(-1.0, -1.0);\n\
+		g2f_Color = brightness * v2g_Color[0];\n\
+		EmitVertex();\n\
+		gl_Position = pos + vec4(aspect*particleSize, -particleSize, 0.0, 0.0);\n\
+		g2f_Position = vec2(1.0, -1.0);\n\
+		g2f_Color = brightness * v2g_Color[0];\n\
+		EmitVertex();\n\
+	}\n\
 	EndPrimitive();\n\
 }";
 
 const GLchar *vertexMainParticle="\
 #version 440 core\n\
 layout (location=0) in vec4 in_Position;\n\
-layout (location=1) in vec3 in_Color;\n\
+layout (location=1) in vec4 in_Color;\n\
 layout (location=0) uniform mat4 transformMatrix;\n\
-out vec3 v2g_Color;\n\
+out vec4 v2g_Color;\n\
 void main(void)\
 {\
 	vec3 transformPos = (vec4(in_Position.xyz, 1.0) * transformMatrix).xyz;\n\
@@ -103,7 +113,7 @@ void main(void)\
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define FRACTAL_TREE_DEPTH 5
+#define FRACTAL_TREE_DEPTH 6
 #define FRACTAL_NUM_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
 // It's actually less than that:
 #define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES * 2)
@@ -120,7 +130,7 @@ unsigned int vaoID;
 // 0 is for particle positions, 1 is for particle colors
 unsigned int vboID[2];
 // And the actual vertices
-GLfloat vertices[FRACTAL_NUM_LEAVES * 4];
+GLfloat vertices[FRACTAL_NUM_LEAVES * 3];
 
 // -------------------------------------------------------------------
 //                          Data for the fractal:
@@ -128,7 +138,7 @@ GLfloat vertices[FRACTAL_NUM_LEAVES * 4];
 
 // The fractals are saved in a tree of 4x4 matrices
 float fractalTree[FRACTAL_TREE_NUM_ENTRIES][4][4];
-float fractalColorTree[FRACTAL_TREE_NUM_ENTRIES][3];
+float fractalColorTree[FRACTAL_TREE_NUM_ENTRIES][4];
 int firstTreeLeaf; // The first of the leaf entries
 
 // The transformation matrices of the fractal
@@ -268,7 +278,7 @@ void intro_init( void )
 	// Vertex array position data
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vboID[0]); // Bind our Vertex Buffer Object  
-	glBufferData(GL_ARRAY_BUFFER, FRACTAL_NUM_LEAVES * 4 * sizeof(GLfloat),
+	glBufferData(GL_ARRAY_BUFFER, FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat),
 		         NULL, GL_DYNAMIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
 	glVertexAttribPointer(0, // attribute
 						  3, // size
@@ -281,10 +291,10 @@ void intro_init( void )
 	// change to GL_STATIC_DRAW and single update for speed.
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); // Bind our Vertex Buffer Object  
-	glBufferData(GL_ARRAY_BUFFER, FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat),
+	glBufferData(GL_ARRAY_BUFFER, FRACTAL_NUM_LEAVES * 4 * sizeof(GLfloat),
 		         NULL, GL_DYNAMIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
 	glVertexAttribPointer(1, // attribute
-						  3, // size
+						  4, // size
 						  GL_FLOAT, // type
 						  GL_FALSE, // normalized?
 						  0, // stride
@@ -365,6 +375,9 @@ void buildTree(void)
 	{
 		firstTreeLeaf = startEntry;
 
+		// seed is stored...
+		unsigned int seedCopy = seed;
+		seed = 1;
 		for (int entry = startEntry; entry < endEntry; entry++)
 		{
 			for (int transform = 0; transform < 4; transform++)
@@ -379,8 +392,10 @@ void buildTree(void)
 						(fractalColorTree[entry][col] +
 						 transformColor[transform][col]);
 				}
+				fractalColorTree[destEntry][3] = frand();
 			}
 		}
+		seed = seedCopy;
 
 		startEntry = endEntry;
 		endEntry += 1 << (2*depth);
@@ -391,28 +406,24 @@ void buildTree(void)
 void generateParticles(void)
 {
 	// Copy the positions to the vertices:
-	unsigned int seedCopy = seed;
-	seed = 1;
 	for (int entry = 0; entry < FRACTAL_NUM_LEAVES; entry++)
 	{
 		for (int dim = 0; dim < 3; dim++)
 		{
-			vertices[entry*4 + dim] =
+			vertices[entry*3 + dim] =
 				fractalTree[entry + firstTreeLeaf][dim][3];
 		}
-		vertices[entry*4 + 3] = frand();
 	}
-	seed = seedCopy;
 
 	// Send the data to the graphics card
 	glBindBuffer(GL_ARRAY_BUFFER, vboID[0]); // Bind our Vertex Buffer Object  
 	glBufferSubData(GL_ARRAY_BUFFER, 0,
-		            FRACTAL_NUM_LEAVES * 4 * sizeof(GLfloat), vertices);  
+		            FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat), vertices);  
 
 	// Send the color data to the graphics card (only once for speed...)
 	glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); // Bind our Vertex Buffer Object  
 	glBufferSubData(GL_ARRAY_BUFFER, 0,
-					FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat),
+					FRACTAL_NUM_LEAVES * 4 * sizeof(GLfloat),
 					&(fractalColorTree[firstTreeLeaf][0]));
 }
 
