@@ -57,19 +57,23 @@ static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
 						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			               NULL}; 
 
-static const int wavHeader[11] = {
-    0x46464952, 
-    MZK_NUMSAMPLESC*sizeof(short)+36, 
-    0x45564157, 
-    0x20746D66, 
-    16, 
-    WAVE_FORMAT_PCM|(MZK_NUMCHANNELS<<16), 
-    MZK_RATE, 
-    MZK_RATE*MZK_NUMCHANNELS*sizeof(short), 
-    (MZK_NUMCHANNELS*sizeof(short))|((8*sizeof(short))<<16),
-    0x61746164, 
-    MZK_NUMSAMPLESC*sizeof(short)
-    };
+// Audio playback stuff
+static HWAVEOUT hWaveOut; // audio device handle
+// TODO: Use more than 2 buffers with very small sizes so that I have
+//       no influence on frame rate!
+static MMTIME timer; // Using getPosition of wave audio playback
+static int nextPlayBlock = 0; // The block that must be filled and played next
+short myMuzikBlock[2][AUDIO_BUFFER_SIZE*MZK_NUMCHANNELS]; // The audio blocks
+static WAVEHDR header[2];    // header of the audio block
+static const WAVEFORMATEX wfx = {
+	WAVE_FORMAT_PCM,					// wFormatTag
+	MZK_NUMCHANNELS,					// nChannels
+	MZK_RATE,							// nSamplesPerSec
+	MZK_RATE*MZK_NUMCHANNELS*2,			// nAvgBytesPerSec
+	MZK_NUMCHANNELS*2,					// nBlockAlign
+	16,									// wBitsPerSample
+	0									// cbSize
+};
 
 // OpenGL function stuff
 GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
@@ -227,10 +231,6 @@ static int window_init( WININFO *info )
 
 //==============================================================================================
 
-static short myMuzik[MZK_NUMSAMPLESC+22];
-
-//==============================================================================================
-
 int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
     MSG         msg;
@@ -241,7 +241,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     //if( MessageBox( 0, "fullscreen?", info->wndclass, MB_YESNO|MB_ICONQUESTION)==IDYES ) info->full++;
 
-    if( !window_init(info) )
+    if (!window_init(info))
     {
         window_end( info );
         MessageBox( 0, "window_init()!","error",MB_OK|MB_ICONEXCLAMATION );
@@ -251,39 +251,66 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     intro_init();
 
 #ifdef USEDSOUND
-    mzk_init( myMuzik+22 );
+	// open audio device
+	if (waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 
+					0, 0, CALLBACK_NULL) != MMSYSERR_NOERROR)
+	{
+		MessageBox(0, "unable to open WAVE_MAPPER device", "error", MB_OK|MB_ICONEXCLAMATION);
+		return 0;
+	}
 
-    memcpy( myMuzik, wavHeader, 44 );
-    if( !sndPlaySound( (const char*)&myMuzik, SND_ASYNC|SND_MEMORY ) )
-    {
-        window_end( info );
-        MessageBox( 0, "mzk???", "error", MB_OK|MB_ICONEXCLAMATION );
-        return( 0 );
-    }
+    // create music block
+	mzk_init();
+	// prepare and play music block
+	header[0].lpData = (char *)myMuzikBlock[0];
+	header[1].lpData = (char *)myMuzikBlock[1];
+	header[0].dwBufferLength = AUDIO_BUFFER_SIZE * MZK_NUMCHANNELS * 2;
+	header[1].dwBufferLength = AUDIO_BUFFER_SIZE * MZK_NUMCHANNELS * 2;
+	waveOutPrepareHeader(hWaveOut, &(header[0]), sizeof(WAVEHDR));
+	waveOutWrite(hWaveOut, &(header[0]), sizeof(WAVEHDR));
+	waveOutPrepareHeader(hWaveOut, &(header[1]), sizeof(WAVEHDR));
+	waveOutWrite(hWaveOut, &(header[1]), sizeof(WAVEHDR));
 #endif
 
-    long to=timeGetTime();
-    while( !done )
-        {
-		long t = timeGetTime() - to;
+	timer.wType = TIME_SAMPLES;
+	waveOutGetPosition(hWaveOut, &timer, sizeof(timer));
+	DWORD startTime = timer.u.sample;
+    while (!done)
+    {
+		waveOutGetPosition(hWaveOut, &timer, sizeof(timer));
+		DWORD t = timer.u.sample - startTime;
 
-        while( PeekMessage(&msg,0,0,0,PM_REMOVE) )
+        while (PeekMessage(&msg,0,0,0,PM_REMOVE))
         {
-            if( msg.message==WM_QUIT ) done=1;
-		    TranslateMessage( &msg );
-            DispatchMessage( &msg );
+            if (msg.message==WM_QUIT) done=1;
+		    TranslateMessage(&msg);
+            DispatchMessage(&msg);
         }
 
-        intro_do( t );
+        intro_do(t);
 
-        if( t>(MZK_DURATION*1000) )
+#if 0
+        if( t > (MZK_DURATION*1000) )
 		{
 			done = 1;
 		}
-        SwapBuffers( info->hDC );
-        }
+#endif
+        
+		SwapBuffers(info->hDC);
 
-    sndPlaySound( 0, 0 );
+		// Try to unprepare header
+		if (waveOutUnprepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR))
+			!= WAVERR_STILLPLAYING)
+		{
+			mzk_prepare_block(myMuzikBlock[nextPlayBlock]);
+			waveOutPrepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
+			waveOutWrite(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
+			nextPlayBlock = 1 - nextPlayBlock;
+		}
+    }
+
+    // Close the wave output (for savety?)
+	waveOutClose(hWaveOut);
     window_end( info );
 
     return( 0 );
