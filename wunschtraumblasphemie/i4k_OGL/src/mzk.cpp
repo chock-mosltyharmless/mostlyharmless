@@ -8,7 +8,7 @@
 
 #define NOISE_LENGTH (1<<20)
 double noise[NOISE_LENGTH];
-double outwave[MZK_NUMSAMPLES][2];
+double outwave[AUDIO_BUFFER_SIZE][2];
 
 unsigned long seed;
 
@@ -53,7 +53,7 @@ static double exp2jo(double f)
 #include <stdio.h>
 
 // This method transforms the music data so that it can be used to generate samples
-__inline void init_mzk_data()
+void mzk_init()
 {
 	// Generate noise
 	seed = 1;
@@ -71,19 +71,19 @@ __inline void init_mzk_data()
 }
 
 // put here your synth
-void mzk_init( short *buffer )
+void mzk_prepare_block(short *buffer)
 {
-	// init music data
-	init_mzk_data();
+	static unsigned int playPosition = 0;
 
-	for (int k = 0; k < MZK_NUMSAMPLES; k++)
+	for (unsigned int k = 0; k < AUDIO_BUFFER_SIZE; k++)
 	{
-		outwave[k][0] = (k*30) % 16000;
-		outwave[k][1] = (k*30) % 16000;
+		unsigned int pos = playPosition + k;
+		outwave[k][0] = (pos*30) % 16000 / 16;
+		outwave[k][1] = (pos*30) % 16000 / 16;
 	}
 
 	// move sample to output
-	for (int k = 0; k < MZK_NUMSAMPLESC; k++)
+	for (int k = 0; k < AUDIO_BUFFER_SIZE*MZK_NUMCHANNELS; k++)
 	{
 		// mono...
 		int waveval = (int)outwave[0][k];
@@ -94,6 +94,9 @@ void mzk_init( short *buffer )
 
 		buffer[k] = (short)waveval;
 	}
+
+	// Remember that we came so far already
+	playPosition += AUDIO_BUFFER_SIZE;
 
 	// Save to file to be able to look at it at a later time.
 #if 0

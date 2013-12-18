@@ -511,10 +511,10 @@ void intro_do( long itime )
 	transformColor[3][1] = params.getParam(15, 0.00f);
 	transformColor[3][2] = params.getParam(16, 0.00f);
 
-	float ftime = 0.001f*(float)itime;
+	float ftime = (float)itime / 44100.0f;
 
 	// Create the transformation matrices from random values
-	createTransforms(itime / 2000, (itime % 2000)*0.001f);
+	createTransforms(itime / 88200, (itime % 88200) / 44100.0f);
 	buildTree();
 	generateParticles();
 	generateFractalTransforms(ftime);
@@ -532,7 +532,7 @@ void intro_do( long itime )
 
 	//parameterMatrix[0] = ftime; // time	
 	// get music information
-#ifdef USEDSOUND
+#if 0
 	double loudness = 1.0;
 	int musicPos = (((itime)*441)/10);
 	for (int k = 0; k < 4096; k++)
