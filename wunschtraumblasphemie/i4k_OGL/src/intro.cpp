@@ -57,22 +57,23 @@ void main()\n\
 	const vec4 pos = gl_in[0].gl_Position;\n\
 	\n\
 	// Calculate size and color \n\
-	float coreBrightness = 0.6;\n\
+	float coreBrightness = 0.7;\n\
 	float lenseFocus = 0.5; // Should be a uniform!\n\
-	float lenseSize = 0.05;\n\
+	float lenseSize = 0.04;\n\
 	float defocus = abs(pos.z - lenseFocus);\n\
 	float coreParticleSize = 0.001;\n\
 	float particleSize = coreParticleSize + defocus * lenseSize;\n\
 	float relSize = coreParticleSize / particleSize;\n\
+	particleSize = min(particleSize, 0.2 * pos.w);\n\
 	// cheat for gamma: relSize^3\n\
 	float brightness = coreBrightness * pow(relSize, 2.2);\n\
 	\n\
 	// Brightness of the DOFer?\n\
-	float comparisonValue = pow(relSize, 1.6);\n\
+	float comparisonValue = pow(relSize, 1.7);\n\
 	brightness *= smoothstep(comparisonValue, 0.5*comparisonValue, v2g_Color[0].a) /\n\
 		comparisonValue;\n\
 	\n\
-	if (v2g_Color[0].a <= comparisonValue && brightness > 0.03)\n\
+	if (v2g_Color[0].a <= comparisonValue && brightness > 0.05)\n\
 	{\n\
 		\n\
 		// Drop the thing\n\
@@ -303,7 +304,7 @@ void intro_init( void )
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); // Bind our Vertex Buffer Object  
 	glBufferData(GL_ARRAY_BUFFER, FRACTAL_NUM_LEAVES * 4 * sizeof(GLfloat),
-		         NULL, GL_DYNAMIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
+		         NULL, GL_STATIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
 	glVertexAttribPointer(1, // attribute
 						  4, // size
 						  GL_FLOAT, // type
@@ -387,8 +388,8 @@ void buildTree(void)
 		firstTreeLeaf = startEntry;
 
 		// seed is stored...
-		unsigned int seedCopy = seed;
-		seed = 1;
+		//unsigned int seedCopy = seed;
+		//seed = 1;
 		for (int entry = startEntry; entry < endEntry; entry++)
 		{
 			for (int transform = 0; transform < 4; transform++)
@@ -406,7 +407,7 @@ void buildTree(void)
 				fractalColorTree[destEntry][3] = frand();
 			}
 		}
-		seed = seedCopy;
+		//seed = seedCopy;
 
 		startEntry = endEntry;
 		endEntry += 1 << (2*depth);
@@ -416,6 +417,8 @@ void buildTree(void)
 // Create the particle locations and move them to the GPU
 void generateParticles(void)
 {
+	bool firstTime = true;
+
 	// Copy the positions to the vertices:
 	for (int entry = 0; entry < FRACTAL_NUM_LEAVES; entry++)
 	{
@@ -432,10 +435,14 @@ void generateParticles(void)
 		            FRACTAL_NUM_LEAVES * 3 * sizeof(GLfloat), vertices);  
 
 	// Send the color data to the graphics card (only once for speed...)
-	glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); // Bind our Vertex Buffer Object  
-	glBufferSubData(GL_ARRAY_BUFFER, 0,
-					FRACTAL_NUM_LEAVES * 4 * sizeof(GLfloat),
-					&(fractalColorTree[firstTreeLeaf][0]));
+	if (firstTime)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); // Bind our Vertex Buffer Object  
+		glBufferSubData(GL_ARRAY_BUFFER, 0,
+						FRACTAL_NUM_LEAVES * 4 * sizeof(GLfloat),
+						&(fractalColorTree[firstTreeLeaf][0]));
+		firstTime = false;
+	}
 }
 
 // This function first generates a transformation matrix for the camera
