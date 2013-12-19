@@ -8,7 +8,7 @@
 #define _CONFIG_H_
 
 //#define SETRESOLUTION
-#define USEDSOUND
+//#define USEDSOUND
 #define USEDGRAPHICS
 //#define CLEANEXIT
 #define XRES        1024

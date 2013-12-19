@@ -250,7 +250,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     intro_init();
 
-#ifdef USEDSOUND
 	// open audio device
 	if (waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 
 					0, 0, CALLBACK_NULL) != MMSYSERR_NOERROR)
@@ -270,15 +269,12 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	waveOutWrite(hWaveOut, &(header[0]), sizeof(WAVEHDR));
 	waveOutPrepareHeader(hWaveOut, &(header[1]), sizeof(WAVEHDR));
 	waveOutWrite(hWaveOut, &(header[1]), sizeof(WAVEHDR));
-#endif
 
 	timer.wType = TIME_SAMPLES;
-	waveOutGetPosition(hWaveOut, &timer, sizeof(timer));
-	DWORD startTime = timer.u.sample;
     while (!done)
     {
 		waveOutGetPosition(hWaveOut, &timer, sizeof(timer));
-		DWORD t = timer.u.sample - startTime;
+		DWORD t = timer.u.sample;
 
         while (PeekMessage(&msg,0,0,0,PM_REMOVE))
         {
@@ -302,7 +298,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		if (waveOutUnprepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR))
 			!= WAVERR_STILLPLAYING)
 		{
+#ifdef USEDSOUND
 			mzk_prepare_block(myMuzikBlock[nextPlayBlock]);
+#endif
 			waveOutPrepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
 			waveOutWrite(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
 			nextPlayBlock = 1 - nextPlayBlock;
