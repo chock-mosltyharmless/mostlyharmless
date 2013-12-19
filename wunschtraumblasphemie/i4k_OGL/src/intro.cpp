@@ -122,10 +122,11 @@ void main(void)\
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define FRACTAL_TREE_DEPTH 6
-#define FRACTAL_NUM_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
+#define FRACTAL_TREE_DEPTH 7
+#define FRACTAL_NUM_LEAVES_4 (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
+#define FRACTAL_NUM_LEAVES (3*3*3*3*3*3)
 // It's actually less than that:
-#define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES * 2)
+#define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES_4 * 2)
 
 // This is only used if SHADER_DEBUG is on, but I will leave it for now.
 HWND hWnd;
@@ -392,9 +393,9 @@ void buildTree(void)
 		//seed = 1;
 		for (int entry = startEntry; entry < endEntry; entry++)
 		{
-			for (int transform = 0; transform < 4; transform++)
+			for (int transform = 0; transform < 3; transform++)
 			{
-				int destEntry = entry * 4 + 1 + transform;
+				int destEntry = entry * 3 + 1 + transform;
 				matrixMult(transformMat[transform], fractalTree[entry],
 					       fractalTree[destEntry]);
 				// Create the color:
