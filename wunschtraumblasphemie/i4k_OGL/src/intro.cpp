@@ -59,6 +59,14 @@ void main()\n\
 	\n\
 	// Calculate size and color \n\
 	float coreBrightness = 0.7;\n\
+	\n\
+	// sparkle \n\
+	float time = parameterMatrix[0];\n\
+	float sparklePos = sin(time*0.02);\n\
+	float sparkleDist = abs(sparklePos - sin(v2g_Color[0].r*100.));\n\
+	float sparkleAdd = smoothstep(0.003, 0.0, sparkleDist);\n\
+	coreBrightness += 4. * sparkleAdd;\n\
+	\n\
 	float lenseFocus = 0.5; // Should be a uniform!\n\
 	float lenseSize = 0.04;\n\
 	float defocus = abs(pos.z - lenseFocus);\n\
@@ -552,6 +560,10 @@ void intro_do( long itime )
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// Set the render matrix
+	float parameterMatrix[4][4];
+	parameterMatrix[0][0] = itime / 44100.0f;
+	glUniformMatrix4fv(1, 1, GL_FALSE, &(parameterMatrix[0][0]));
     // render
     glDisable( GL_CULL_FACE );
 	glEnable(GL_BLEND);
