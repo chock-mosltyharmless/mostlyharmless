@@ -50,6 +50,7 @@ layout(triangle_strip, max_vertices=4) out;\n\
 in vec4 v2g_Color[];\n\
 out vec4 g2f_Color;\n\
 out vec2 g2f_Position;\n\
+layout (location=1) uniform mat4 parameterMatrix;\n\
 \n\
 void main()\n\
 {\n\
@@ -115,7 +116,7 @@ void main(void)\
 	// Perspective projection\n\
 	// Here I need to think about z-clip aswell. Maybe I do the w stuff?\n\
     gl_Position = vec4(transformPos, transformPos.z+0.0001);\n\
-	v2g_Color = mix(in_Color, batchColor, 0.3);\n\
+	v2g_Color = mix(in_Color, batchColor, 0.4);\n\
 }";
 
 // -------------------------------------------------------------------
@@ -548,11 +549,6 @@ void intro_do( long itime )
 	transformColor[3][1] = params.getParam(15, 0.00f);
 	transformColor[3][2] = params.getParam(16, 0.00f);
 
-	doTheScripting(itime);
-
-	// Create the matrix tree
-	// But first: I have to write the geometry shader stuffiskaya!
-
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
@@ -561,8 +557,8 @@ void intro_do( long itime )
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_ONE,GL_ONE);
 
-	//parameterMatrix[0] = ftime; // time	
-	// get music information
+	doTheScripting(itime);
+
 #if 0
 	double loudness = 1.0;
 	int musicPos = (((itime)*441)/10);
@@ -578,12 +574,4 @@ void intro_do( long itime )
 	//glViewport(0, 0, XRES, YRES);
 	
 	glUseProgram(shaderPrograms[0]);
-
-	//glBindVertexArray(vaoID);
-	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
-	{
-		glUniformMatrix4fv(0, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
-		glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
-	}
-	//glBindVertexArray(0);
 }
