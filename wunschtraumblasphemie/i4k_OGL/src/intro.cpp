@@ -475,8 +475,8 @@ void generateOGLTransforms(int sceneID, float ftime)
 	float invQuatSize = 0.0f;
 	for (int dim = 0; dim < 4; dim++)
 	{
-		quaternion[0][dim] = ftime * quaternion[1][dim] + 
-			(1.0f - ftime) * quaternion[0][dim];
+		quaternion[0][dim] = 0.5f*ftime * quaternion[1][dim] + 
+			(1.0f - 0.5f*ftime) * quaternion[0][dim];
 		invQuatSize += quaternion[0][dim] * quaternion[0][dim];
 	}
 	invQuatSize = 1.0f / sqrtf(invQuatSize);
@@ -487,8 +487,8 @@ void generateOGLTransforms(int sceneID, float ftime)
 
 	matrixFromQuaternion(quaternion[0], finalTransform);
 
-	distance[0] = 0.7f;//frand() - 0.2f;
-	distance[1] = 0.7f;//frand() - 0.2f;
+	distance[0] = frand() - 0.2f;
+	distance[1] = frand() + 0.2f;
 	finalTransform[2][3] = ftime * distance[0] + (1.0f - ftime) * distance[1];
 
 	// multiply camera transform with leaf matrices
@@ -517,7 +517,7 @@ void generateOGLTransforms(int sceneID, float ftime)
 void doTheScripting(long itime)
 {
 	// The duration of one scene. Later on this should not be constant
-	const int sceneDuration = 100000;
+	const int sceneDuration = 200000;
 	static int sceneStartTime = 0; // The time that this scene started
 	static int sceneNumber = 0; // The number of the scene that is currently running
 	
