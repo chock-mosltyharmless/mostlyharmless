@@ -183,6 +183,24 @@ void matrixMult(float src1[4][4], float src2[4][4], float dest[4][4])
 	}
 }
 
+// Creates a pseudorandom quaternion using the current seed.
+// You can also specify some value that does some modification to the quat.
+void randomQuaternion(float quat[4], float changer)
+{
+	float invQuatLen = 0.0f;
+	for (int qdim = 0; qdim < 4; qdim++)
+	{
+		// RANDOM!!!
+		quat[qdim] = frand() - 0.5f + 0.25f * sin(0.0f*0.125f*changer+qdim);
+		invQuatLen += quat[qdim] * quat[qdim];
+	}
+	invQuatLen = 1.0f / (float)sqrt(invQuatLen);
+	for (int qdim = 0; qdim < 4; qdim++)
+	{
+		quat[qdim] *= invQuatLen;
+	}
+}
+
 // Creates a 4x4 rotation matrix from a quaternion?
 void matrixFromQuaternion(float quat[4], float mat[4][4])
 {
@@ -198,7 +216,7 @@ void matrixFromQuaternion(float quat[4], float mat[4][4])
 	
 	mat[0][0] = 1 - ysquare - zsquare;
 	mat[0][1] = xy - zw;
-	mat[0][2] = xz - yw;
+	mat[0][2] = xz + yw;
 	mat[0][3] = 0.0f;
 	mat[1][0] = xy + zw;
 	mat[1][1] = 1 - xsquare - zsquare;
@@ -334,19 +352,7 @@ void createTransforms(unsigned long startSeed, float changer)
 	for (int transform = 0; transform < 4; transform++)
 	{
 		// Set quaternion values
-		float invQuatLen = 0.0f;
-		for (int qdim = 0; qdim < 4; qdim++)
-		{
-			// RANDOM!!!
-			quaternion[qdim] = frand() - 0.5f + 0.25f * sin(0.125f*changer+qdim);
-			invQuatLen += quaternion[qdim] * quaternion[qdim];
-		}
-		invQuatLen = 1.0f / (float)sqrt(invQuatLen);
-		for (int qdim = 0; qdim < 4; qdim++)
-		{
-			quaternion[qdim] *= invQuatLen;
-		}
-
+		randomQuaternion(quaternion, changer);
 		matrixFromQuaternion(quaternion, transformMat[transform]);
 
 		// Multiply by scaling
@@ -447,27 +453,34 @@ void generateParticles(void)
 
 // This function first generates a transformation matrix for the camera
 // Then it multiplies it with all the transforms in the fractal tree leaves...
-void generateFractalTransforms(float ftime)
+void generateOGLTransforms(int sceneID, float ftime)
 {
-	// Generate a transformation matrix. I'd rather do a look-at?
-	float sa = sin(ftime * 0.4f);
-	float ca = cos(ftime * 0.4f);
-	float rotation[4][4] = {
-		{ca, 0, sa, 0},
-		{0, 1, 0, 0},
-		{-sa, 0, ca, 0},
-		{0, 0, 0, 1}
-	};
-	float aspect[4][4] = {
-		{9.0f/16.0f, 0.0f, 0.0f, 0.0f},
-		{0.0f, 16.0f/16.0f, 0.0f, 0.0f},
-		{0.0f, 0.0f, 1.0f, 0.0f},
-		{0.0f, 0.0f, 0.0f, 1.0f}
-	};
+	seed = sceneID; // Change the seed to be equal for the scene
+	float quaternion[2][4];
+	float distance[2];
 	float finalTransform[4][4];
-	matrixMult(aspect, rotation, finalTransform);
+	randomQuaternion(quaternion[0], 0.0f);
+	randomQuaternion(quaternion[1], 0.0f);
 
-	finalTransform[2][3] = 0.6f + 0.25f * sin(ftime);
+	// linear interpolation of the two quaternions
+	float invQuatSize = 0.0f;
+	for (int dim = 0; dim < 4; dim++)
+	{
+		quaternion[0][dim] = ftime * quaternion[1][dim] + 
+			(1.0f - ftime) * quaternion[0][dim];
+		invQuatSize += quaternion[0][dim] * quaternion[0][dim];
+	}
+	invQuatSize = 1.0f / sqrtf(invQuatSize);
+	for (int dim = 0; dim < 4; dim++)
+	{
+		quaternion[0][dim] *= invQuatSize;
+	}
+
+	matrixFromQuaternion(quaternion[0], finalTransform);
+
+	distance[0] = 0.7f;//frand() - 0.2f;
+	distance[1] = 0.7f;//frand() - 0.2f;
+	finalTransform[2][3] = ftime * distance[0] + (1.0f - ftime) * distance[1];
 
 	// multiply camera transform with leaf matrices
 	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
@@ -491,6 +504,30 @@ void generateFractalTransforms(float ftime)
 	}
 }
 
+// This function is finding the right thing to do based on the time that we are in
+void doTheScripting(long itime)
+{
+	// The duration of one scene. Later on this should not be constant
+	const int sceneDuration = 100000;
+	static int sceneStartTime = 0; // The time that this scene started
+	static int sceneNumber = 0; // The number of the scene that is currently running
+	
+	while (itime >= sceneStartTime + sceneDuration)
+	{
+		sceneStartTime += sceneDuration;
+		sceneNumber++;
+	}
+
+	int sceneID = sceneNumber; // That's the easiest thing, really
+	int sceneTime = itime - sceneStartTime;
+
+	// Create the stuff based on the current timing thing
+	createTransforms(sceneID, (float)sceneTime / 44100.0f);
+	buildTree();
+	generateParticles();
+	generateOGLTransforms(sceneID, (float)sceneTime / (float)sceneDuration);
+}
+
 void intro_do( long itime )
 {
 	//2:0.35(45) 3:0.31(40) 4:0.00(0) 5:0.20(25) 6:0.16(21) 8:0.22(28)
@@ -511,13 +548,7 @@ void intro_do( long itime )
 	transformColor[3][1] = params.getParam(15, 0.00f);
 	transformColor[3][2] = params.getParam(16, 0.00f);
 
-	float ftime = (float)itime / 44100.0f;
-
-	// Create the transformation matrices from random values
-	createTransforms(itime / 88200, (itime % 88200) / 44100.0f);
-	buildTree();
-	generateParticles();
-	generateFractalTransforms(ftime);
+	doTheScripting(itime);
 
 	// Create the matrix tree
 	// But first: I have to write the geometry shader stuffiskaya!
