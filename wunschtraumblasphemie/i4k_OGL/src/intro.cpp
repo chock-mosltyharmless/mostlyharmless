@@ -191,7 +191,7 @@ void randomQuaternion(float quat[4], float changer)
 	for (int qdim = 0; qdim < 4; qdim++)
 	{
 		// RANDOM!!!
-		quat[qdim] = frand() - 0.5f + 0.25f * sin(0.0f*0.125f*changer+qdim);
+		quat[qdim] = frand() - 0.5f + 0.25f * sin(0.125f*changer+qdim);
 		invQuatLen += quat[qdim] * quat[qdim];
 	}
 	invQuatLen = 1.0f / (float)sqrt(invQuatLen);
@@ -360,7 +360,7 @@ void createTransforms(unsigned long startSeed, float changer)
 		{
 			// RANDOM!!!
 			//float scaling = frand() * 0.25f + 0.625f;
-			float scaling = frand() * 0.375f + 0.5f;
+			float scaling = (0.875f - frand() * frand());
 			for (int i = 0; i < 4; i++)
 			{
 				transformMat[transform][dim][i] *= scaling;
