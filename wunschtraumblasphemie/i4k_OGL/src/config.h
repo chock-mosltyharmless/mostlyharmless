@@ -8,8 +8,8 @@
 #define _CONFIG_H_
 
 //#define SETRESOLUTION
-//#define USEDSOUND
-#define USEDGRAPHICS
+#define USEDSOUND
+//#define USEDGRAPHICS
 //#define CLEANEXIT
 #define XRES        1600
 #define YRES        (1080 * XRES / 1920)
