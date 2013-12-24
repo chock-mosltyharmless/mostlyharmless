@@ -52,8 +52,8 @@ static WININFO wininfo = {  0,0,0,0,0,
 							{'i','q','_',0}
                             };
 
-static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-						   WGL_CONTEXT_MINOR_VERSION_ARB, 4,
+static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+						   WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			               NULL}; 
 
@@ -248,7 +248,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return( 0 );
     }
 
+#ifdef USEDGRAPHICS
     intro_init();
+#endif
 
 	// open audio device
 	if (waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 
@@ -283,7 +285,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DispatchMessage(&msg);
         }
 
+#ifdef USEDGRAPHICS
         intro_do(t);
+#endif
 
 #if 0
         if( t > (MZK_DURATION*1000) )

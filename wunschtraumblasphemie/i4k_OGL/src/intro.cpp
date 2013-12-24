@@ -18,9 +18,6 @@
 // You can access the wave output for basic synchronization
 extern double outwave[][2];
 
-float frand();
-int rand();
-
 // -------------------------------------------------------------------
 //                          INTRO SCRIPT:
 // -------------------------------------------------------------------
@@ -31,7 +28,7 @@ int rand();
 // -------------------------------------------------------------------
 
 const GLchar *fragmentMainParticle="\
-#version 440 core\n\
+#version 330 core\n\
 in vec2 g2f_Position;\n\
 in vec4 g2f_Color;\n\
 out vec4 out_Color;\n\
@@ -44,7 +41,7 @@ void main(void)\n\
 }";
 
 const GLchar *geometryMainParticle="\
-#version 440 compatibility\n\
+#version 330 compatibility\n\
 layout(points) in;\n\
 layout(triangle_strip, max_vertices=4) out;\n\
 in vec4 v2g_Color[];\n\
@@ -55,13 +52,13 @@ layout (location=1) uniform mat4 parameterMatrix;\n\
 void main()\n\
 {\n\
 	const float aspect = 9./16.;\n\
-	const vec4 pos = gl_in[0].gl_Position;\n\
+	vec4 pos = gl_in[0].gl_Position;\n\
 	\n\
 	// Calculate size and color \n\
 	float coreBrightness = 0.7;\n\
 	\n\
 	// sparkle \n\
-	float time = parameterMatrix[0];\n\
+	float time = parameterMatrix[0][0];\n\
 	float sparklePos = sin(time*0.02);\n\
 	float sparkleDist = abs(sparklePos - sin(v2g_Color[0].r*100.));\n\
 	float sparkleAdd = smoothstep(0.003, 0.0, sparkleDist);\n\
@@ -107,7 +104,7 @@ void main()\n\
 }";
 
 const GLchar *vertexMainParticle="\
-#version 440 core\n\
+#version 330 core\n\
 layout (location=0) in vec4 in_Position;\n\
 layout (location=1) in vec4 in_Color;\n\
 layout (location=0) uniform mat4 transformMatrix;\n\
@@ -149,6 +146,9 @@ unsigned int vaoID;
 unsigned int vboID[2];
 // And the actual vertices
 GLfloat vertices[FRACTAL_NUM_LEAVES * 3];
+
+// seed values for random values
+unsigned int transformationSeed;
 
 // -------------------------------------------------------------------
 //                          Data for the fractal:
@@ -200,7 +200,7 @@ void randomQuaternion(float quat[4], float changer)
 	for (int qdim = 0; qdim < 4; qdim++)
 	{
 		// RANDOM!!!
-		quat[qdim] = frand() - 0.5f + 0.25f * sin(0.125f*changer+qdim);
+		quat[qdim] = frand(&transformationSeed) - 0.5f + 0.25f * sin(0.125f*changer+qdim);
 		invQuatLen += quat[qdim] * quat[qdim];
 	}
 	invQuatLen = 1.0f / (float)sqrt(invQuatLen);
@@ -352,10 +352,8 @@ void intro_init( void )
 }
 
 // The seed value of the random number generator is accessed here!
-extern unsigned long seed;
-void createTransforms(unsigned long startSeed, float changer)
+void createTransforms(float changer)
 {
-	seed = startSeed;
 	float quaternion[4];
 
 	for (int transform = 0; transform < 4; transform++)
@@ -369,7 +367,7 @@ void createTransforms(unsigned long startSeed, float changer)
 		{
 			// RANDOM!!!
 			//float scaling = frand() * 0.25f + 0.625f;
-			float scaling = (0.875f - frand() * frand());
+			float scaling = (0.875f - frand(&transformationSeed) * frand(&transformationSeed));
 			for (int i = 0; i < 4; i++)
 			{
 				transformMat[transform][dim][i] *= scaling;
@@ -380,7 +378,7 @@ void createTransforms(unsigned long startSeed, float changer)
 		for (int dim = 0; dim < 3; dim++)
 		{
 			// RANDOM!!!
-			transformMat[transform][dim][3] = frand() - 0.5f;
+			transformMat[transform][dim][3] = frand(&transformationSeed) - 0.5f;
 		}
 	}
 }
@@ -403,8 +401,6 @@ void buildTree(void)
 		firstTreeLeaf = startEntry;
 
 		// seed is stored...
-		//unsigned int seedCopy = seed;
-		//seed = 1;
 		for (int entry = startEntry; entry < endEntry; entry++)
 		{
 			for (int transform = 0; transform < 4; transform++)
@@ -419,10 +415,9 @@ void buildTree(void)
 						0.625f * fractalColorTree[entry][col] +
 						0.375f * transformColor[transform][col];
 				}
-				fractalColorTree[destEntry][3] = frand();
+				fractalColorTree[destEntry][3] = frand(&transformationSeed);
 			}
 		}
-		//seed = seedCopy;
 
 		startEntry = endEntry;
 		endEntry += 1 << (2*depth);
@@ -462,9 +457,8 @@ void generateParticles(void)
 
 // This function first generates a transformation matrix for the camera
 // Then it multiplies it with all the transforms in the fractal tree leaves...
-void generateOGLTransforms(int sceneID, float ftime)
+void generateOGLTransforms(float ftime)
 {
-	seed = sceneID; // Change the seed to be equal for the scene
 	float quaternion[2][4];
 	float distance[2];
 	float finalTransform[4][4];
@@ -487,8 +481,8 @@ void generateOGLTransforms(int sceneID, float ftime)
 
 	matrixFromQuaternion(quaternion[0], finalTransform);
 
-	distance[0] = frand() - 0.2f;
-	distance[1] = frand() + 0.2f;
+	distance[0] = frand(&transformationSeed) - 0.2f;
+	distance[1] = frand(&transformationSeed) + 0.2f;
 	finalTransform[2][3] = ftime * distance[0] + (1.0f - ftime) * distance[1];
 
 	// multiply camera transform with leaf matrices
@@ -531,10 +525,12 @@ void doTheScripting(long itime)
 	int sceneTime = itime - sceneStartTime;
 
 	// Create the stuff based on the current timing thing
-	createTransforms(sceneID, (float)sceneTime / 44100.0f);
+	transformationSeed = sceneID;
+	createTransforms((float)sceneTime / 44100.0f);
 	buildTree();
 	generateParticles();
-	generateOGLTransforms(sceneID, (float)sceneTime / (float)sceneDuration);
+	transformationSeed = sceneID;
+	generateOGLTransforms((float)sceneTime / (float)sceneDuration);
 }
 
 void intro_do( long itime )
