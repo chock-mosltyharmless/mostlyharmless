@@ -2,6 +2,11 @@
 // iq / rgba  .  tiny codes  .  2008                                        //
 //--------------------------------------------------------------------------//
 
+#define WIN32_LEAN_AND_MEAN
+#define WIN32_EXTRA_LEAN
+#include <windows.h>
+#include <MMSystem.h>
+
 #include <math.h>
 #include "mzk.h"
 #include "music.h"
@@ -14,8 +19,8 @@ static double outwave[AUDIO_BUFFER_SIZE][2];
 static float phaseStep[MAX_NUM_INSTRUMENTS];
 static float amplitude[MAX_NUM_INSTRUMENTS];
 static float phase[2][MAX_NUM_INSTRUMENTS]; // for stereo, not for next-note
-const int sceneDuration = 200000; // will be able to change over time
-static int sceneTime = 0; // The time inside the scene
+const int sceneDuration = 300000; // will be able to change over time
+static int sceneTime = (2*AUDIO_BUFFER_SIZE); // The time inside the scene
 // For createNextNote
 static unsigned int sceneSeed = 0;
 static int sceneID = 0;
@@ -81,11 +86,11 @@ void createNextNotes()
 	float baseFreq = (400.0f * 2.0f * 3.1415926f / 44100.0f) *
 		(int)(frand(&sceneSeed) * 2.5f + 1.0f) * 2.0f / 5.0f;
 
-	float multiplicator = (int)(frand(&sceneSeed)* 1.5f) / 2.0f + 1.0f;
+	//float multiplicator = (int)(frand(&sceneSeed)* 1.5f) / 2.0f + 1.0f;
 	for (int inst = 0; inst < MAX_NUM_INSTRUMENTS; inst++)
 	{
-		//phaseStep[inst] = baseFreq / 5.0f * (2*inst + (int)(frand(&sceneSeed)*8.0f));
-		phaseStep[inst] = baseFreq / 5.0f * (int)(multiplicator * (inst+1));
+		phaseStep[inst] = baseFreq / 5.0f * (inst + (int)(frand(&sceneSeed)*8.0f));
+		//phaseStep[inst] = baseFreq / 5.0f * (int)(multiplicator * (inst+1));
 		amplitude[inst] = 4096.0f / (phaseStep[inst] + 0.125f);
 	}
 }
@@ -93,6 +98,7 @@ void createNextNotes()
 // This method transforms the music data so that it can be used to generate samples
 void mzk_init()
 {
+	sceneSeed = timeGetTime(); // Music based on time
 	createNextNotes();
 }
 
