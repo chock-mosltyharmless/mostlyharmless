@@ -156,9 +156,6 @@ const int sceneDuration = 300000;
 static int sceneStartTime = 0; // The time that this scene started
 static int sceneNumber = 0; // The number of the scene that is currently running
 
-// Screen info
-float aspectRatio;
-
 // -------------------------------------------------------------------
 //                          Data for the fractal:
 // -------------------------------------------------------------------
@@ -255,10 +252,6 @@ void intro_init( void )
 	// Start scene based on time
 	sceneNumber = timeGetTime();
 	
-	RECT r;
-	GetWindowRect(hWnd, &r);
-	aspectRatio = (float)(r.right - r.left) / (float)(r.top - r.bottom);
-
 	// Create and link shader and stuff:
 	// I will have to separate these to be able to use more than one shader...
 	// TODO: I should make some sort of compiling and linking loop...
@@ -500,12 +493,6 @@ void generateOGLTransforms(float ftime)
 	distance[0] = frand(&transformationSeed) - 0.2f;
 	distance[1] = frand(&transformationSeed) + 0.2f;
 	finalTransform[2][3] = ftime * distance[0] + (1.0f - ftime) * distance[1];
-
-	// aspect ratio
-	for (int dim = 0; dim < 4; dim++)
-	{
-		finalTransform[dim][0] *= aspectRatio;
-	}
 
 	// multiply camera transform with leaf matrices
 	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
