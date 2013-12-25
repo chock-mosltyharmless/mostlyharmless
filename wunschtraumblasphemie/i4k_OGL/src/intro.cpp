@@ -28,7 +28,7 @@ extern double outwave[][2];
 // -------------------------------------------------------------------
 
 const GLchar *fragmentMainParticle="\
-#version 330 core\n\
+#version 430 core\n\
 in vec2 g2f_Position;\n\
 in vec4 g2f_Color;\n\
 out vec4 out_Color;\n\
@@ -41,7 +41,7 @@ void main(void)\n\
 }";
 
 const GLchar *geometryMainParticle="\
-#version 330 compatibility\n\
+#version 430 compatibility\n\
 layout(points) in;\n\
 layout(triangle_strip, max_vertices=4) out;\n\
 in vec4 v2g_Color[];\n\
@@ -65,21 +65,21 @@ void main()\n\
 	coreBrightness += 4. * sparkleAdd;\n\
 	\n\
 	float lenseFocus = 0.5; // Should be a uniform!\n\
-	float lenseSize = 0.04;\n\
+	float lenseSize = 0.08;\n\
 	float defocus = abs(pos.z - lenseFocus);\n\
 	float coreParticleSize = 0.001;\n\
 	float particleSize = coreParticleSize + defocus * lenseSize;\n\
 	float relSize = coreParticleSize / particleSize;\n\
 	particleSize = min(particleSize, 0.2 * pos.w);\n\
 	// cheat for gamma: relSize^3\n\
-	float brightness = coreBrightness * pow(relSize, 2.2);\n\
+	float brightness = coreBrightness * pow(relSize, 2.0);\n\
 	\n\
 	// Brightness of the DOFer?\n\
-	float comparisonValue = pow(relSize, 1.7);\n\
+	float comparisonValue = pow(relSize, 1.3);\n\
 	brightness *= smoothstep(comparisonValue, 0.5*comparisonValue, v2g_Color[0].a) /\n\
 		comparisonValue;\n\
 	\n\
-	if (v2g_Color[0].a <= comparisonValue && brightness > 0.05)\n\
+	if (v2g_Color[0].a <= comparisonValue && brightness > 0.01)\n\
 	{\n\
 		\n\
 		// Drop the thing\n\
@@ -104,7 +104,7 @@ void main()\n\
 }";
 
 const GLchar *vertexMainParticle="\
-#version 330 core\n\
+#version 430 core\n\
 layout (location=0) in vec4 in_Position;\n\
 layout (location=1) in vec4 in_Color;\n\
 layout (location=0) uniform mat4 transformMatrix;\n\
@@ -149,6 +149,13 @@ GLfloat vertices[FRACTAL_NUM_LEAVES * 3];
 
 // seed values for random values
 unsigned int transformationSeed;
+
+// scene stuff
+// The duration of one scene. Later on this should not be constant
+const int sceneDuration = 300000;
+static int sceneStartTime = 0; // The time that this scene started
+static int sceneNumber = 0; // The number of the scene that is currently running
+
 
 // -------------------------------------------------------------------
 //                          Data for the fractal:
@@ -243,6 +250,9 @@ void matrixFromQuaternion(float quat[4], float mat[4][4])
 
 void intro_init( void )
 {
+	// Start scene based on time
+	sceneNumber = timeGetTime();
+
 	// Create and link shader and stuff:
 	// I will have to separate these to be able to use more than one shader...
 	// TODO: I should make some sort of compiling and linking loop...
@@ -509,12 +519,7 @@ void generateOGLTransforms(float ftime)
 
 // This function is finding the right thing to do based on the time that we are in
 void doTheScripting(long itime)
-{
-	// The duration of one scene. Later on this should not be constant
-	const int sceneDuration = 200000;
-	static int sceneStartTime = 0; // The time that this scene started
-	static int sceneNumber = 0; // The number of the scene that is currently running
-	
+{	
 	while (itime >= sceneStartTime + sceneDuration)
 	{
 		sceneStartTime += sceneDuration;
