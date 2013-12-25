@@ -10,7 +10,6 @@ static double outwave[AUDIO_BUFFER_SIZE][2];
 
 // Music data
 #define MAX_NUM_INSTRUMENTS 12
-#define NUM_OVERTONES 3
 // TODO: combine frequency and phasestep and work in phaseStep domain directly.
 static float phaseStep[MAX_NUM_INSTRUMENTS];
 static float amplitude[MAX_NUM_INSTRUMENTS];
@@ -19,6 +18,7 @@ const int sceneDuration = 200000; // will be able to change over time
 static int sceneTime = 0; // The time inside the scene
 // For createNextNote
 static unsigned int sceneSeed = 0;
+static int sceneID = 0;
 
 // The grains
 static int grainPos[2][MAX_NUM_INSTRUMENTS]; // position inside the grain
@@ -69,6 +69,8 @@ static double exp2jo(double f)
 
 void createNextNotes()
 {
+	sceneID++;
+
 	// I generate one sound only here statically.
 	// phaseStep stores the frequency at first.
 	//phaseStep[nextInstrumentBank][0] = 400.0f;
@@ -76,7 +78,7 @@ void createNextNotes()
 
 	//float baseFreq = (200.0f * 2.0f * 3.1415926f / 44100.0f) *
 	//	(int)(frand(&sceneSeed) * 6.0f + 3.0f) / 5.0f;
-	float baseFreq = (600.0f * 2.0f * 3.1415926f / 44100.0f) *
+	float baseFreq = (400.0f * 2.0f * 3.1415926f / 44100.0f) *
 		(int)(frand(&sceneSeed) * 2.5f + 1.0f) * 2.0f / 5.0f;
 
 	float multiplicator = (int)(frand(&sceneSeed)* 1.5f) / 2.0f + 1.0f;
@@ -104,7 +106,7 @@ void mzk_prepare_block(short *buffer)
 
 		for (int channel = 0; channel < 2; channel++)
 		{
-			for (int inst = 0; inst < MAX_NUM_INSTRUMENTS; inst++)
+			for (int inst = 0; inst < MAX_NUM_INSTRUMENTS && inst < 2*sceneID; inst++)
 			{
 				if (grainPos[channel][inst] >= grainLength[channel][inst])
 				{
@@ -118,7 +120,7 @@ void mzk_prepare_block(short *buffer)
 				outwave[k][channel] += sin(grainPhase[channel][inst]) * grainAmplitude[channel][inst];
 
 				grainPhase[channel][inst] += grainPhaseStep[channel][inst];
-				grainPhaseStep[channel][inst] = phaseStep[inst] * (65536.0f*4.0f + grainPos[channel][inst]) / 65536.0f / 4.0f;
+				grainPhaseStep[channel][inst] = phaseStep[inst] + (65536.0f*4.0f + grainPos[channel][inst]) / 65536.0f / 4.0f / 64.0f;
 				if (grainPos[channel][inst] < 128) grainAmplitude[channel][inst] = amplitude[inst] * grainPos[channel][inst] / 128.0f;
 				else grainAmplitude[channel][inst] = amplitude[inst];
 				grainAmplitude[channel][inst] /= (64.0f + grainPos[channel][inst]) / 64.0f;
@@ -137,32 +139,6 @@ void mzk_prepare_block(short *buffer)
 		}
 
 	}
-	
-
-#if 0
-		for (unsigned int inst = 0; inst < MAX_NUM_INSTRUMENTS; inst++)
-		{
-			float multiplier = amplitude[inst] ;
-			for (int overtone = 1; overtone <= NUM_OVERTONES; overtone++)
-			{
-				outwave[k][0] += multiplier * sin(phase[0][inst] * overtone + overtone);
-				outwave[k][1] += multiplier * sin(phase[1][inst] * overtone + overtone);
-				multiplier *= 0.25f;
-			}
-			phase[0][inst] += phaseStep[inst] * 1.003f;
-			phase[1][inst] += phaseStep[inst] * 0.997f;
-		}
-	}
-
-	// normalize phases
-	for (int i = 0; i < MAX_NUM_INSTRUMENTS; i++)
-	{
-		for (int k = 0; k < 2; k++)
-		{
-			while (phase[k][i] > 2.0f * 3.1415926f) phase[k][i] -= 2.0f * 3.1415926f;
-		}
-	}
-#endif
 
 	// move sample to output
 	for (int k = 0; k < AUDIO_BUFFER_SIZE*MZK_NUMCHANNELS; k++)
