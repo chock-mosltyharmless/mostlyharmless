@@ -90,7 +90,23 @@ const static char* glnames[NUM_GL_NAMES]={
 };
 #endif
 
-static short myMuzik[MZK_NUMSAMPLESC+22];
+// Audio playback stuff
+static HWAVEOUT hWaveOut; // audio device handle
+// TODO: Use more than 2 buffers with very small sizes so that I have
+//       no influence on frame rate!
+static MMTIME timer; // Using getPosition of wave audio playback
+static int nextPlayBlock = 0; // The block that must be filled and played next
+short myMuzikBlock[2][AUDIO_BUFFER_SIZE*MZK_NUMCHANNELS]; // The audio blocks
+static WAVEHDR header[2];    // header of the audio block
+static const WAVEFORMATEX wfx = {
+	WAVE_FORMAT_PCM,					// wFormatTag
+	MZK_NUMCHANNELS,					// nChannels
+	MZK_RATE,							// nSamplesPerSec
+	MZK_RATE*MZK_NUMCHANNELS*2,			// nAvgBytesPerSec
+	MZK_NUMCHANNELS*2,					// nBlockAlign
+	16,									// wBitsPerSample
+	0									// cbSize
+};
 
 void entrypoint( void )
 {              
@@ -119,30 +135,44 @@ void entrypoint( void )
 	// init intro
 	intro_init();
 
-#ifdef USEDSOUND
-	// calculate music
-	mzk_init( myMuzik+22 );
-	// and play it 
-    memcpy( myMuzik, wavHeader, 44 );
-    sndPlaySound( (const char*)&myMuzik, SND_ASYNC|SND_MEMORY );
-#endif
+	// open audio device
+	waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 0, 0, CALLBACK_NULL);
+    // create music block
+	mzk_init();
+	// prepare and play music block
+	header[0].lpData = (char *)myMuzikBlock[0];
+	header[1].lpData = (char *)myMuzikBlock[1];
+	header[0].dwBufferLength = AUDIO_BUFFER_SIZE * MZK_NUMCHANNELS * 2;
+	header[1].dwBufferLength = AUDIO_BUFFER_SIZE * MZK_NUMCHANNELS * 2;
+	waveOutPrepareHeader(hWaveOut, &(header[0]), sizeof(WAVEHDR));
+	waveOutWrite(hWaveOut, &(header[0]), sizeof(WAVEHDR));
+	waveOutPrepareHeader(hWaveOut, &(header[1]), sizeof(WAVEHDR));
+	waveOutWrite(hWaveOut, &(header[1]), sizeof(WAVEHDR));
 
-    long t;
-	long to = timeGetTime();
+	timer.wType = TIME_SAMPLES;
     do 
 	{
 		MSG msg;
 		PeekMessage(&msg, NULL, 0, 0, PM_REMOVE);
 
 		ShowCursor(0);
-        t = timeGetTime(); 
-        //if( !to ) to=t; 
-        t = t-to;//-150;
+		waveOutGetPosition(hWaveOut, &timer, sizeof(timer));
+		DWORD t = timer.u.sample;
 
         intro_do(t);
         //SwapBuffers ( hDC );   
         wglSwapLayerBuffers( hDC, WGL_SWAP_MAIN_PLANE );
-	} while ( !(GetAsyncKeyState(VK_ESCAPE) || GetAsyncKeyState(VK_F4)) && t<(MZK_DURATION*1000) );
+
+		// Try to unprepare header
+		if (waveOutUnprepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR))
+			!= WAVERR_STILLPLAYING)
+		{
+			mzk_prepare_block(myMuzikBlock[nextPlayBlock]);
+			waveOutPrepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
+			waveOutWrite(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
+			nextPlayBlock = 1 - nextPlayBlock;
+		}
+	} while ( !(GetAsyncKeyState(VK_ESCAPE) || GetAsyncKeyState(VK_F4)));
 
     sndPlaySound(0,0);
 

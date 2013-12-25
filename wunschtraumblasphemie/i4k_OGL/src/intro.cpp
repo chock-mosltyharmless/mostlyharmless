@@ -79,7 +79,7 @@ void main()\n\
 	brightness *= smoothstep(comparisonValue, 0.5*comparisonValue, v2g_Color[0].a) /\n\
 		comparisonValue;\n\
 	\n\
-	if (v2g_Color[0].a <= comparisonValue && brightness > 0.01)\n\
+	if (v2g_Color[0].a <= comparisonValue && brightness > 0.02)\n\
 	{\n\
 		\n\
 		// Drop the thing\n\
@@ -156,6 +156,8 @@ const int sceneDuration = 300000;
 static int sceneStartTime = 0; // The time that this scene started
 static int sceneNumber = 0; // The number of the scene that is currently running
 
+// Screen info
+float aspectRatio;
 
 // -------------------------------------------------------------------
 //                          Data for the fractal:
@@ -173,10 +175,10 @@ float transformMat[4][4][4];
 //    9:0.75(96) 12:0.87(111) 13:0.99(127) 14:0.99(127) 15:0.99(127) 16:0.99(127) 
 float transformColor[4][3] =
 {
-	{1.0f, 0.9f, 0.66f},
-	{1.0f, 0.35f, 0.4f},
-	{0.2f, 0.6f, 1.0f},
-	{0.95f, 0.9f, 0.9f},
+	{0.35f, 0.31f, 0.00f},
+	{0.2f, 0.16f, 0.22f},
+	{0.0f, 0.38f, 0.54f},
+	{0.16f, 0.f, 0.f},
 };
 
 // -------------------------------------------------------------------
@@ -252,6 +254,10 @@ void intro_init( void )
 {
 	// Start scene based on time
 	sceneNumber = timeGetTime();
+	
+	RECT r;
+	GetWindowRect(hWnd, &r);
+	aspectRatio = (float)(r.right - r.left) / (float)(r.top - r.bottom);
 
 	// Create and link shader and stuff:
 	// I will have to separate these to be able to use more than one shader...
@@ -495,6 +501,12 @@ void generateOGLTransforms(float ftime)
 	distance[1] = frand(&transformationSeed) + 0.2f;
 	finalTransform[2][3] = ftime * distance[0] + (1.0f - ftime) * distance[1];
 
+	// aspect ratio
+	for (int dim = 0; dim < 4; dim++)
+	{
+		finalTransform[dim][0] *= aspectRatio;
+	}
+
 	// multiply camera transform with leaf matrices
 	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
 	{
@@ -542,6 +554,7 @@ void intro_do( long itime )
 {
 	//2:0.35(45) 3:0.31(40) 4:0.00(0) 5:0.20(25) 6:0.16(21) 8:0.22(28)
 	//9:0.00(0) 12:0.38(48) 13:0.54(69) 14:0.16(21) 15:0.00(0) 16:0.00(0) 
+#ifdef _DEBUG
 	transformColor[0][0] = params.getParam(2, 0.35f);
 	transformColor[0][1] = params.getParam(3, 0.31f);
 	transformColor[0][2] = params.getParam(4, 0.00f);
@@ -557,6 +570,7 @@ void intro_do( long itime )
 	transformColor[3][0] = params.getParam(14, 0.16f);
 	transformColor[3][1] = params.getParam(15, 0.00f);
 	transformColor[3][2] = params.getParam(16, 0.00f);
+#endif
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -571,16 +585,6 @@ void intro_do( long itime )
 	glBlendFunc(GL_ONE,GL_ONE);
 
 	doTheScripting(itime);
-
-#if 0
-	double loudness = 1.0;
-	int musicPos = (((itime)*441)/10);
-	for (int k = 0; k < 4096; k++)
-	{
-		loudness += outwave[musicPos][k]*outwave[musicPos][k];
-	}
-	parameterMatrix[15] = (float)log(loudness) * (1.f/24.f); // This makes it silent?
-#endif
 
 	// set the viewport (not neccessary?)
 	//glGetIntegerv(GL_VIEWPORT, viewport);
