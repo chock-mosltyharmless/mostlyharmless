@@ -28,7 +28,7 @@ static int sceneID = 0;
 // The grains
 static int grainPos[2][MAX_NUM_INSTRUMENTS]; // position inside the grain
 static int grainLength[2][MAX_NUM_INSTRUMENTS]; // Length of the grain until restart
-static float grainPhase[2][MAX_NUM_INSTRUMENTS]; // phase of the output stuff
+static float grainPhase[2][MAX_NUM_INSTRUMENTS][2]; // phase of the output stuff (2 for detune)
 static float grainPhaseStep[2][MAX_NUM_INSTRUMENTS];
 static float grainAmplitude[2][MAX_NUM_INSTRUMENTS]; // current amplitude
 
@@ -118,16 +118,19 @@ void mzk_prepare_block(short *buffer)
 				{
 					grainPos[channel][inst] = 0;
 					grainLength[channel][inst] = 16000 + (int)(frand(&sceneSeed) * 16768.0f);
-					grainPhase[channel][inst] = 0.0f;
+					grainPhase[channel][inst][0] = 0.0f;
+					grainPhase[channel][inst][1] = 0.0f;
 					grainPhaseStep[channel][inst] = phaseStep[inst];
 					grainAmplitude[channel][inst] = amplitude[inst];
 				}
 
-				outwave[k][channel] += sin(grainPhase[channel][inst]) * grainAmplitude[channel][inst];
-
-				grainPhase[channel][inst] += grainPhaseStep[channel][inst];
-				grainPhaseStep[channel][inst] = phaseStep[inst] + (65536.0f*4.0f + grainPos[channel][inst]) / 65536.0f / 4.0f / 64.0f;
-				if (grainPos[channel][inst] < 128) grainAmplitude[channel][inst] = amplitude[inst] * grainPos[channel][inst] / 128.0f;
+				outwave[k][channel] +=
+					(sin(grainPhase[channel][inst][0]) + sin(grainPhase[channel][inst][1])) *
+					grainAmplitude[channel][inst];
+				grainPhase[channel][inst][0] += grainPhaseStep[channel][inst] * 1.01f;
+				grainPhase[channel][inst][1] += grainPhaseStep[channel][inst] * 0.99f;
+				grainPhaseStep[channel][inst] = phaseStep[inst] + (65536.0f*4.0f + grainPos[channel][inst]) / 65536.0f / 4.0f / 48.0f;
+				if (grainPos[channel][inst] < 256) grainAmplitude[channel][inst] = amplitude[inst] * grainPos[channel][inst] / 256.0f;
 				else grainAmplitude[channel][inst] = amplitude[inst];
 				grainAmplitude[channel][inst] /= (64.0f + grainPos[channel][inst]) / 64.0f;
 				if (grainAmplitude[channel][inst] < 0.0f) grainAmplitude[channel][inst] = 0.0f;
