@@ -28,7 +28,7 @@ extern double outwave[][2];
 // -------------------------------------------------------------------
 
 const GLchar *fragmentMainParticle="\
-#version 430 core\n\
+#version 330 core\n\
 in vec2 n;\
 in vec4 w;\
 out vec4 t;\
@@ -39,13 +39,13 @@ t=vec4(vec3(smoothstep(1.,.7,length(n)))*w.xyz,1.);\
 }";
 
 const GLchar *geometryMainParticle="\
-#version 430 core\n\
+#version 330 core\n\
 layout(points) in;\
 layout(triangle_strip, max_vertices=4) out;\
 in vec4 o[];\
 out vec4 w;\
 out vec2 n;\
-layout (location=1) uniform mat4 r;\
+uniform mat4 r;\
 void main()\
 {\
 vec4 p=gl_in[0].gl_Position;\
@@ -78,10 +78,10 @@ EndPrimitive();\
 }";
 
 const GLchar *vertexMainParticle="\
-#version 430 core\n\
+#version 330 core\n\
 layout (location=0) in vec4 p;\
 layout (location=1) in vec4 c;\
-layout (location=0) uniform mat4 t;\
+uniform mat4 t;\
 out vec4 o;\
 void main(void)\
 {\
@@ -481,7 +481,8 @@ void generateOGLTransforms(float ftime)
 		fractalTree[firstTreeLeaf+draw][3][0] = fractalColorTree[firstTreeLeaf+draw][0];
 		fractalTree[firstTreeLeaf+draw][3][1] = fractalColorTree[firstTreeLeaf+draw][1];
 		fractalTree[firstTreeLeaf+draw][3][2] = fractalColorTree[firstTreeLeaf+draw][2];
-		glUniformMatrix4fv(0, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
+		int location = glGetUniformLocation(shaderPrograms[0], "t");
+		glUniformMatrix4fv(location, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
 		glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
 	}
 }
@@ -535,7 +536,8 @@ void intro_do( long itime )
 	// Set the render matrix
 	float parameterMatrix[4][4];
 	parameterMatrix[0][0] = itime / 44100.0f;
-	glUniformMatrix4fv(1, 1, GL_FALSE, &(parameterMatrix[0][0]));
+	int location = glGetUniformLocation(shaderPrograms[0], "r");
+	glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
     // render
     glDisable( GL_CULL_FACE );
 	glEnable(GL_BLEND);
