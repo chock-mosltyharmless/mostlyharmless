@@ -52,8 +52,8 @@ vec4 p=gl_in[0].gl_Position;\
 float s=.001+abs(p.z-.5)*.08;\
 float l=.001/s;\
 s=min(s,.2*p.w);\
-float b=(.7+4.*smoothstep(.003,.0,abs(sin(r[0][0]*.02)-sin(o[0].r*100.))))*pow(l,2.);\
-float c=pow(l,1.3);\
+float b=(.15+.5*smoothstep(.003,.0,abs(sin(r[0][0]*.02)-sin(o[0].r*100.))))*pow(l,2.);\
+float c=pow(l,1.5);\
 b*=smoothstep(c,.5*c,o[0].a)/c;\
 if (o[0].a<=c&&b>.02)\
 {\
@@ -98,8 +98,9 @@ o=mix(c,b,0.4);\
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define FRACTAL_TREE_DEPTH 6
+#define FRACTAL_TREE_DEPTH 7
 #define FRACTAL_NUM_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-1)))
+#define FRACTAL_NUM_PRE_LEAVES (1 << (2 * (FRACTAL_TREE_DEPTH-2)))
 // It's actually less than that:
 #define FRACTAL_TREE_NUM_ENTRIES (FRACTAL_NUM_LEAVES * 2)
 
@@ -134,6 +135,7 @@ static int sceneNumber = 0; // The number of the scene that is currently running
 float fractalTree[FRACTAL_TREE_NUM_ENTRIES][4][4];
 float fractalColorTree[FRACTAL_TREE_NUM_ENTRIES][4];
 int firstTreeLeaf; // The first of the leaf entries
+int firstPreLeaf; // vertex before tree leaves
 
 // The transformation matrices of the fractal
 float transformMat[4][4][4];
@@ -377,6 +379,7 @@ void buildTree(void)
 	int endEntry = 1;
 	for (int depth = 1; depth < FRACTAL_TREE_DEPTH; depth++)
 	{
+		firstPreLeaf = firstTreeLeaf;
 		firstTreeLeaf = startEntry;
 
 		// seed is stored...
@@ -465,24 +468,24 @@ void generateOGLTransforms(float ftime)
 	finalTransform[2][3] = ftime * distance[0] + (1.0f - ftime) * distance[1];
 
 	// multiply camera transform with leaf matrices
-	for (int draw = 0; draw < FRACTAL_NUM_LEAVES; draw++)
+	for (int draw = 0; draw < FRACTAL_NUM_PRE_LEAVES; draw++)
 	{
 		float tmpMatrix[4][4];
-		matrixMult(finalTransform, fractalTree[firstTreeLeaf+draw], tmpMatrix);
+		matrixMult(finalTransform, fractalTree[firstPreLeaf+draw], tmpMatrix);
 		for (int s = 0; s < 4; s++)
 		{
 			for (int t = 0; t < 4; t++)
 			{
-				fractalTree[firstTreeLeaf+draw][s][t] = tmpMatrix[s][t];
+				fractalTree[firstPreLeaf+draw][s][t] = tmpMatrix[s][t];
 			}
 		}
 
 		// encode the color in the matrix
-		fractalTree[firstTreeLeaf+draw][3][0] = fractalColorTree[firstTreeLeaf+draw][0];
-		fractalTree[firstTreeLeaf+draw][3][1] = fractalColorTree[firstTreeLeaf+draw][1];
-		fractalTree[firstTreeLeaf+draw][3][2] = fractalColorTree[firstTreeLeaf+draw][2];
+		fractalTree[firstPreLeaf+draw][3][0] = fractalColorTree[firstPreLeaf+draw][0];
+		fractalTree[firstPreLeaf+draw][3][1] = fractalColorTree[firstPreLeaf+draw][1];
+		fractalTree[firstPreLeaf+draw][3][2] = fractalColorTree[firstPreLeaf+draw][2];
 		int location = glGetUniformLocation(shaderPrograms[0], "t");
-		glUniformMatrix4fv(location, 1, GL_FALSE, &(fractalTree[firstTreeLeaf+draw][0][0]));
+		glUniformMatrix4fv(location, 1, GL_FALSE, &(fractalTree[firstPreLeaf+draw][0][0]));
 		glDrawArrays(GL_POINTS, 0, FRACTAL_NUM_LEAVES);
 	}
 }
@@ -510,6 +513,8 @@ void doTheScripting(long itime)
 
 void intro_do( long itime )
 {
+	static int lastTime = 0;
+	static int timeDiff = 0;
 	//2:0.35(45) 3:0.31(40) 4:0.00(0) 5:0.20(25) 6:0.16(21) 8:0.22(28)
 	//9:0.00(0) 12:0.38(48) 13:0.54(69) 14:0.16(21) 15:0.00(0) 16:0.00(0) 
 #ifdef _DEBUG
@@ -529,6 +534,11 @@ void intro_do( long itime )
 	transformColor[3][1] = params.getParam(15, 0.00f);
 	transformColor[3][2] = params.getParam(16, 0.00f);
 #endif
+
+	// smooth the time
+	timeDiff = (100 * timeDiff + (itime - lastTime) * 28) / 128;
+	itime = lastTime + timeDiff;
+	lastTime = itime;
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
