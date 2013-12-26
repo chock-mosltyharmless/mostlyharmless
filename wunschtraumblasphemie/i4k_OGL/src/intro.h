@@ -10,7 +10,9 @@
 #define _INTRO_H_
 
 // Include this to get debug information in case of a shader failure
+#ifdef _DEBUG
 #define SHADER_DEBUG
+#endif
 
 void intro_init( void );
 void intro_do( long time );

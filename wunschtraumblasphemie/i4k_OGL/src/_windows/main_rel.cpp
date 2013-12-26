@@ -61,7 +61,7 @@ static DEVMODE screenSettings = { {0},
 GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 
 static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-						   WGL_CONTEXT_MINOR_VERSION_ARB, 4,
+						   WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			               NULL}; 
 

@@ -29,99 +29,69 @@ extern double outwave[][2];
 
 const GLchar *fragmentMainParticle="\
 #version 430 core\n\
-in vec2 g2f_Position;\n\
-in vec4 g2f_Color;\n\
-out vec4 out_Color;\n\
-\n\
-void main(void)\n\
-{\n\
-	float dist = length(g2f_Position);\n\
-	float intensity = smoothstep(1.0, 0.7, dist);\n\
-	out_Color = vec4(vec3(intensity) * g2f_Color.rgb, 1.0);\n\
+in vec2 n;\
+in vec4 w;\
+out vec4 t;\
+\
+void main(void)\
+{\
+t=vec4(vec3(smoothstep(1.,.7,length(n)))*w.xyz,1.);\
 }";
 
 const GLchar *geometryMainParticle="\
-#version 430 compatibility\n\
-layout(points) in;\n\
-layout(triangle_strip, max_vertices=4) out;\n\
-in vec4 v2g_Color[];\n\
-out vec4 g2f_Color;\n\
-out vec2 g2f_Position;\n\
-layout (location=1) uniform mat4 parameterMatrix;\n\
-\n\
-void main()\n\
-{\n\
-	const float aspect = 9./16.;\n\
-	vec4 pos = gl_in[0].gl_Position;\n\
-	\n\
-	// Calculate size and color \n\
-	float coreBrightness = 0.7;\n\
-	\n\
-	// sparkle \n\
-	float time = parameterMatrix[0][0];\n\
-	float sparklePos = sin(time*0.02);\n\
-	float sparkleDist = abs(sparklePos - sin(v2g_Color[0].r*100.));\n\
-	float sparkleAdd = smoothstep(0.003, 0.0, sparkleDist);\n\
-	coreBrightness += 4. * sparkleAdd;\n\
-	\n\
-	float lenseFocus = 0.5; // Should be a uniform!\n\
-	float lenseSize = 0.08;\n\
-	float defocus = abs(pos.z - lenseFocus);\n\
-	float coreParticleSize = 0.001;\n\
-	float particleSize = coreParticleSize + defocus * lenseSize;\n\
-	float relSize = coreParticleSize / particleSize;\n\
-	particleSize = min(particleSize, 0.2 * pos.w);\n\
-	// cheat for gamma: relSize^3\n\
-	float brightness = coreBrightness * pow(relSize, 2.0);\n\
-	\n\
-	// Brightness of the DOFer?\n\
-	float comparisonValue = pow(relSize, 1.3);\n\
-	brightness *= smoothstep(comparisonValue, 0.5*comparisonValue, v2g_Color[0].a) /\n\
-		comparisonValue;\n\
-	\n\
-	if (v2g_Color[0].a <= comparisonValue && brightness > 0.02)\n\
-	{\n\
-		\n\
-		// Drop the thing\n\
-		gl_Position = pos + vec4(-aspect*particleSize, particleSize, 0.0, 0.0);\n\
-		g2f_Position = vec2(-1.0, 1.0);\n\
-		g2f_Color = brightness * v2g_Color[0];\n\
-		EmitVertex();\n\
-		gl_Position = pos + vec4(aspect*particleSize, particleSize, 0.0, 0.0);\n\
-		g2f_Position = vec2(1.0, 1.0);\n\
-		g2f_Color = brightness * v2g_Color[0];\n\
-		EmitVertex();\n\
-		gl_Position = pos + vec4(-aspect*particleSize, -particleSize, 0.0, 0.0);\n\
-		g2f_Position = vec2(-1.0, -1.0);\n\
-		g2f_Color = brightness * v2g_Color[0];\n\
-		EmitVertex();\n\
-		gl_Position = pos + vec4(aspect*particleSize, -particleSize, 0.0, 0.0);\n\
-		g2f_Position = vec2(1.0, -1.0);\n\
-		g2f_Color = brightness * v2g_Color[0];\n\
-		EmitVertex();\n\
-	}\n\
-	EndPrimitive();\n\
+#version 430 core\n\
+layout(points) in;\
+layout(triangle_strip, max_vertices=4) out;\
+in vec4 o[];\
+out vec4 w;\
+out vec2 n;\
+layout (location=1) uniform mat4 r;\
+void main()\
+{\
+vec4 p=gl_in[0].gl_Position;\
+float s=.001+abs(p.z-.5)*.08;\
+float l=.001/s;\
+s=min(s,.2*p.w);\
+float b=(.7+4.*smoothstep(.003,.0,abs(sin(r[0][0]*.02)-sin(o[0].r*100.))))*pow(l,2.);\
+float c=pow(l,1.3);\
+b*=smoothstep(c,.5*c,o[0].a)/c;\
+if (o[0].a<=c&&b>.02)\
+{\
+gl_Position=p+vec4(-.56*s,s,.0,.0);\
+n=vec2(-1.,1.);\
+w=b*o[0];\
+EmitVertex();\
+gl_Position=p+vec4(.56*s,s,.0,.0);\
+n=vec2(1.,1.);\
+w=b*o[0];\
+EmitVertex();\
+gl_Position=p+vec4(-.56*s,-s,.0,.0);\
+n=vec2(-1.,-1.);\
+w=b*o[0];\
+EmitVertex();\
+gl_Position=p+vec4(.56*s,-s,.0,.0);\
+n=vec2(1.,-1.);\
+w=b*o[0];\
+EmitVertex();\
+}\
+EndPrimitive();\
 }";
 
 const GLchar *vertexMainParticle="\
 #version 430 core\n\
-layout (location=0) in vec4 in_Position;\n\
-layout (location=1) in vec4 in_Color;\n\
-layout (location=0) uniform mat4 transformMatrix;\n\
-out vec4 v2g_Color;\n\
+layout (location=0) in vec4 p;\
+layout (location=1) in vec4 c;\
+layout (location=0) uniform mat4 t;\
+out vec4 o;\
 void main(void)\
 {\
-	mat4 tMat = transformMatrix;\n\
-	vec4 batchColor = transformMatrix[3];\n\
-	batchColor.a = in_Color.a;\n\
-	tMat[3][0] = 0.;\n\
-	tMat[3][1] = 0.;\n\
-	tMat[3][2] = 0.;\n\
-	vec3 transformPos = (vec4(in_Position.xyz, 1.0) * tMat).xyz;\n\
-	// Perspective projection\n\
-	// Here I need to think about z-clip aswell. Maybe I do the w stuff?\n\
-    gl_Position = vec4(transformPos, transformPos.z+0.0001);\n\
-	v2g_Color = mix(in_Color, batchColor, 0.4);\n\
+vec4 b=t[3];\
+b.a=c.a;\
+mat4 m=t;\
+m[3].xyz=vec3(0.);\
+vec3 f=(vec4(p.xyz, 1.0) * m).xyz;\
+gl_Position=vec4(f,f.z+.0001);\
+o=mix(c,b,0.4);\
 }";
 
 // -------------------------------------------------------------------
