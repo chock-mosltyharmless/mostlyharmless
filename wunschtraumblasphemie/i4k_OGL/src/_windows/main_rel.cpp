@@ -60,7 +60,7 @@ static DEVMODE screenSettings = { {0},
 // OpenGL function stuff
 GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 
-static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
+static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
 						   WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
 			               NULL}; 
@@ -75,6 +75,7 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glEnableVertexAttribArray",
 	 "glBufferSubData",
 	 "glUniformMatrix4fv",
+	 "glGetUniformLocation",
 	 "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
 };
 #else
@@ -87,6 +88,7 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glEnableVertexAttribArray",
 	 "glBufferSubData",
 	 "glUniformMatrix4fv",
+	 "glGetUniformLocation",
 };
 #endif
 
