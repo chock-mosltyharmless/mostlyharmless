@@ -1,0 +1,92 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{d5627302-e3d0-4ab4-abc6-0ad0e0aa4320}</UniqueIdentifier>
+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
+    </Filter>
+    <Filter Include="Source Files\_windows">
+      <UniqueIdentifier>{caee972f-5510-4acb-ba84-19482d19e150}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\shaders">
+      <UniqueIdentifier>{97409947-aff8-4ec6-a22b-a57c52808aba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\header">
+      <UniqueIdentifier>{bb6d366a-a1d4-4361-93d3-763f4e0e7f7a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\config.h">
+      <Filter>Source Files\header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\intro.h">
+      <Filter>Source Files\header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Parameter.h">
+      <Filter>Source Files\header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\noiseTexture.h">
+      <Filter>Source Files\header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bass.h">
+      <Filter>Source Files\header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\intro.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Parameter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_windows\main_deb.cpp">
+      <Filter>Source Files\_windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_windows\main_rel.cpp">
+      <Filter>Source Files\_windows</Filter>
+    </ClCompile>
+    <ClCompile Include="src\noiseTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stb_image.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\ball8.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\showTex.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\test.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\verystart.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\cloudstuff.1.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\gras20.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\gras10.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\gras12.2.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\Background.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+    <None Include="shaders\simpleTex.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="src\_windows\bass.lib">
+      <Filter>Source Files\_windows</Filter>
+    </Library>
+  </ItemGroup>
+</Project>
