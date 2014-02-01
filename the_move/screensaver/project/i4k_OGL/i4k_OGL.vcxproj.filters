@@ -83,6 +83,9 @@
     <None Include="shaders\simpleTex.shader">
       <Filter>Source Files\shaders</Filter>
     </None>
+    <None Include="shaders\fragmentOffscreenCopy.shader">
+      <Filter>Source Files\shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Library Include="src\_windows\bass.lib">
