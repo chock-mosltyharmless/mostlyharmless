@@ -1,4 +1,5 @@
 uniform sampler2D Texture0;
+uniform sampler2D Texture1;
 varying vec3 objectPosition;
 varying mat4 parameters;
 

@@ -150,14 +150,14 @@
     <ClInclude Include="src\bass.h" />
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\intro.h" />
-    <ClInclude Include="src\noiseTexture.h" />
     <ClInclude Include="src\Parameter.h" />
+    <ClInclude Include="src\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp" />
-    <ClCompile Include="src\noiseTexture.cpp" />
     <ClCompile Include="src\Parameter.cpp" />
     <ClCompile Include="src\stb_image.c" />
+    <ClCompile Include="src\TextureManager.cpp" />
     <ClCompile Include="src\_windows\main_deb.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
     </ClCompile>

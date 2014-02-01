@@ -25,10 +25,10 @@
     <ClInclude Include="src\Parameter.h">
       <Filter>Source Files\header</Filter>
     </ClInclude>
-    <ClInclude Include="src\noiseTexture.h">
+    <ClInclude Include="src\bass.h">
       <Filter>Source Files\header</Filter>
     </ClInclude>
-    <ClInclude Include="src\bass.h">
+    <ClInclude Include="src\TextureManager.h">
       <Filter>Source Files\header</Filter>
     </ClInclude>
   </ItemGroup>
@@ -45,10 +45,10 @@
     <ClCompile Include="src\_windows\main_rel.cpp">
       <Filter>Source Files\_windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\noiseTexture.cpp">
+    <ClCompile Include="src\stb_image.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\stb_image.c">
+    <ClCompile Include="src\TextureManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
