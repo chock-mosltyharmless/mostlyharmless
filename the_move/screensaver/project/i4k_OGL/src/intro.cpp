@@ -46,7 +46,7 @@ extern int realXRes;
 extern int realYRes;
 
 /* Number of names of the used shaders */
-#define NUM_SHADERS 9
+#define NUM_SHADERS 10
 const GLchar shaderFileName[NUM_SHADERS][128] =
 {
 	"shaders/verystart.shader",
@@ -57,72 +57,14 @@ const GLchar shaderFileName[NUM_SHADERS][128] =
 	"shaders/gras12.2.shader",
 	"shaders/ball8.shader",
 	"shaders/Background.shader",
-	"shaders/simpleTex.shader"
+	"shaders/simpleTex.shader",
+	"shaders/fragmentOffscreenCopy.shader"
 };
 /* Location where the loaded shader is stored */
 #define MAX_SHADER_LENGTH 200000
 GLchar fragmentMainBackground[MAX_SHADER_LENGTH];
 
 // Constant shader code that is used for all the effects.
-#if 1
-const GLchar *fragmentOffscreenCopy="\
-uniform sampler2D Texture0;\n\
-varying vec3 objectPosition;\n\
-varying mat4 parameters;\n\
-\n\
-void main(void)\n\
-{  \n\
-   float fTime0_X = parameters[0][0];\n\
-   vec3 noisePos = objectPosition + fTime0_X;\n\
-   vec2 noiseVal;\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43711.5453);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43717.5453);\n\
-   gl_FragColor = 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy);\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43731.5453);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43737.5453);\n\
-   gl_FragColor += 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy);\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43758.5453);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43753.5453);\n\
-   gl_FragColor += 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.01 - 0.015;\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 33758.5453);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43753.5453);\n\
-   gl_FragColor += 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.01 - 0.015;\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43285.5233);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43263.5635);\n\
-   gl_FragColor += 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.01 - 0.015;\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 41241.2413);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 28571.5343);\n\
-   gl_FragColor += 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.01 - 0.015;\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 33938.2456);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 49245.5456);\n\
-   gl_FragColor += 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.01 - 0.015;\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43571.5343);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 38134.3452);\n\
-   gl_FragColor += 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.01 - 0.015;\n\
-\n\
-   float vignette = objectPosition.x*objectPosition.x + objectPosition.y*objectPosition.y;\n\
-   //vignette = sqrt(vignette);\n\
-   gl_FragColor *= 1.2 - vignette * 0.3; // darken\n\
-   float meanColor = 0.3 * gl_FragColor.r + 0.59 * gl_FragColor.r + 0.11 * gl_FragColor.b;\n\
-   gl_FragColor = 0.2 * vignette * vec4(meanColor) + (1.0 - 0.6 * vignette) * gl_FragColor; // desaturate\n\
-\n\
-}";
-#else
-const GLchar *fragmentOffscreenCopy="\
-uniform sampler2D Texture0;\n\
-varying vec3 objectPosition;\n\
-varying mat4 parameters;\n\
-\n\
-void main(void)\n\
-{  \n\
-   float fTime0_X = parameters[0][0];\n\
-   vec3 noisePos = objectPosition + fTime0_X;\n\
-   vec2 noiseVal;\n\
-   gl_FragColor = texture2D(Texture0, 0.5*objectPosition.xy + 0.5);\n\
-\n\
-}";
-#endif
-
 const GLchar *vertexMainObject="\
 #version 120\n\
 varying vec3 objectPosition;\
@@ -176,7 +118,8 @@ static unsigned int creditsTexData[1024][1024];
 typedef void (*GenFP)(void); // pointer to openGL functions
 static GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 static GLuint shaderPrograms[NUM_SHADERS];
-static GLuint shaderCopyProgram;
+//static GLuint shaderCopyProgram;
+#define shaderCopyProgram (shaderPrograms[9])
 
 // -------------------------------------------------------------------
 //                          Code:
@@ -203,13 +146,9 @@ void compileShaders(void)
 	/* Generate general programs */
 	int tmp, tmp2;
 	char err[4097];
-	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fOffscreenCopy = glCreateShader(GL_FRAGMENT_SHADER);	
-	shaderCopyProgram = glCreateProgram();
+	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);	
 	glShaderSource(vMainObject, 1, &vertexMainObject, NULL);
 	glCompileShader(vMainObject);
-	glShaderSource(fOffscreenCopy, 1, &fragmentOffscreenCopy, NULL);
-	glCompileShader(fOffscreenCopy);
 	// Check programs
 	glGetShaderiv(vMainObject, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
@@ -219,6 +158,12 @@ void compileShaders(void)
 		MessageBox(hWnd, err, "vMainObject shader error", MB_OK);
 		return;
 	}
+
+#if 0
+	GLuint fOffscreenCopy = glCreateShader(GL_FRAGMENT_SHADER);	
+	shaderCopyProgram = glCreateProgram();
+	glShaderSource(fOffscreenCopy, 1, &fragmentOffscreenCopy, NULL);
+	glCompileShader(fOffscreenCopy);
 	glGetShaderiv(fOffscreenCopy, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
 	{
@@ -230,6 +175,7 @@ void compileShaders(void)
 	glAttachShader(shaderCopyProgram, vMainObject);
 	glAttachShader(shaderCopyProgram, fOffscreenCopy);
 	glLinkProgram(shaderCopyProgram);
+#endif
 
 	/* Generate shader specific programs */
 	for (int shaderIdx = 0; shaderIdx < NUM_SHADERS; shaderIdx++)
@@ -267,7 +213,9 @@ void compileShaders(void)
 	}
 
 	glDeleteShader(vMainObject);	
+#if 0
 	glDeleteShader(fOffscreenCopy);
+#endif
 }
 
 void intro_init( void )

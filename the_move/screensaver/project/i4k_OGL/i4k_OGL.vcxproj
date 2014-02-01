@@ -169,6 +169,7 @@
     <None Include="shaders\Background.shader" />
     <None Include="shaders\ball8.shader" />
     <None Include="shaders\cloudstuff.1.shader" />
+    <None Include="shaders\fragmentOffscreenCopy.shader" />
     <None Include="shaders\gras10.shader" />
     <None Include="shaders\gras12.2.shader" />
     <None Include="shaders\gras20.shader" />
