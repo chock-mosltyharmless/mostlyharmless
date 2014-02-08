@@ -58,6 +58,9 @@ static WININFO wininfo = {  0,0,0,0,0,
 
 static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
+	RECT rec;
+	GetClientRect(hWnd, &rec);
+
 	// salvapantallas
 	if( uMsg==WM_SYSCOMMAND && (wParam==SC_SCREENSAVE || wParam==SC_MONITORPOWER) )
 		return( 0 );
@@ -88,6 +91,15 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		}
     }
 
+	if ( uMsg==WM_LBUTTONDOWN)
+	{
+		int xPos = lParam & 0xffff;
+		int yPos = lParam >> 16;
+		float relXPos = (float)xPos / float(rec.right - rec.left);
+		float relYPos = (float)yPos / float(rec.bottom - rec.top);
+		intro_click(relXPos, relYPos);
+	}
+
     return( DefWindowProc(hWnd,uMsg,wParam,lParam) );
 }
 
@@ -107,7 +119,7 @@ static void window_end( WININFO *info )
     if( info->full )
     {
         ChangeDisplaySettings( 0, 0 );
-		ShowCursor( 1 );
+		//ShowCursor( 1 );
     }
 }
 
@@ -145,7 +157,7 @@ static int window_init( WININFO *info )
         //    return( 0 );
         dwExStyle = WS_EX_APPWINDOW;
         dwStyle   = WS_VISIBLE | WS_POPUP | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_MAXIMIZE;// | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-		ShowCursor( 0 );
+		//ShowCursor( 0 );
     }
     else
     {
@@ -156,7 +168,7 @@ static int window_init( WININFO *info )
 
 		realXRes = XRES;
 		realYRes = YRES;
-		ShowCursor(0);
+		//ShowCursor(0);
 		AdjustWindowRect( &rec, dwStyle, 0 );
     }
 

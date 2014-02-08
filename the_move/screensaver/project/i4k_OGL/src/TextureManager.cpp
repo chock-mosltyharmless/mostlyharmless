@@ -145,7 +145,7 @@ int TextureManager::getTextureID(const char *name, GLuint *id, char *errorString
 	// Got here without finding a texture, return error.
 	sprintf_s(errorString, MAX_ERROR_LENGTH,
 			  "Could not find texture '%s'", name);
-	return 0;
+	return -1;
 }
 
 int TextureManager::createNoiseTexture(char *errorString, const char *name)
@@ -374,4 +374,19 @@ void TextureManager::generateNoiseTexture(void)
 	delete [] filterKernel;
 
 	makeIntTexture();
+}
+
+void TextureManager::drawQuad(float startX, float startY, float endX, float endY, float alpha)
+{
+	glColor4f(1.0f, 1.0f, 1.0f, alpha);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex3f(startX, endY, 0.5);
+	glTexCoord2f(1.0f, 1.0f);
+	glVertex3f(endX, endY, 0.5);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex3f(endX, startY, 0.5);
+	glTexCoord2f(0.0, 0.0f);
+	glVertex3f(startX, startY, 0.5);
+	glEnd();
 }

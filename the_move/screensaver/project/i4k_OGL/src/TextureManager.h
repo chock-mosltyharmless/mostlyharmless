@@ -37,6 +37,29 @@
 // Name of the 32x32x32 noise texture
 #define TM_3DNOISE_TEXTURE_SIZE 16 // try smaller?
 
+struct TGAHeader
+{
+	unsigned char identSize;
+	unsigned char colourmapType;
+	unsigned char imageType;
+
+	// This is a stupid hack to fool the compiler.
+	// I do not know what happens if I compile it
+	// under release conditions.
+	unsigned char colourmapStart1;
+	unsigned char colourmapStart2;
+	unsigned char colourmapLength1;
+	unsigned char colourmapLength2;
+	unsigned char colourmapBits;
+
+	short xStart;
+	short yStart;
+	short width;
+	short height;
+	unsigned char bits;
+	unsigned char descriptor;
+};
+
 class TextureManager
 {
 public:
@@ -53,6 +76,9 @@ public: // functions
 	// Get the texture ID from a named texture
 	// That might either be a .tga or any of the special textures
 	int getTextureID(const char *name, GLuint *id, char *errorString);
+
+	// WHY IS THIS HERE?
+	void drawQuad(float startX, float startY, float endX, float endY, float alpha);
 
 private: // functions
 	void releaseAll(void);
