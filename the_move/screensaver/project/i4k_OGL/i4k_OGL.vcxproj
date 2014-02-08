@@ -149,11 +149,13 @@
   <ItemGroup>
     <ClInclude Include="src\bass.h" />
     <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\FlowIcon.h" />
     <ClInclude Include="src\intro.h" />
     <ClInclude Include="src\Parameter.h" />
     <ClInclude Include="src\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\FlowIcon.cpp" />
     <ClCompile Include="src\intro.cpp" />
     <ClCompile Include="src\Parameter.cpp" />
     <ClCompile Include="src\stb_image.c" />

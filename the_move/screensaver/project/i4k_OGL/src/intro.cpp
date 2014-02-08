@@ -16,30 +16,7 @@
 #include "Parameter.h"
 #include "GLNames.h"
 #include "TextureManager.h"
-
-struct TGAHeader
-{
-	unsigned char identSize;
-	unsigned char colourmapType;
-	unsigned char imageType;
-
-	// This is a stupid hack to fool the compiler.
-	// I do not know what happens if I compile it
-	// under release conditions.
-	unsigned char colourmapStart1;
-	unsigned char colourmapStart2;
-	unsigned char colourmapLength1;
-	unsigned char colourmapLength2;
-	unsigned char colourmapBits;
-
-	short xStart;
-	short yStart;
-	short width;
-	short height;
-	unsigned char bits;
-	unsigned char descriptor;
-};
-
+#include "FlowIcon.h"
 
 float frand();
 
@@ -61,6 +38,7 @@ const GLchar shaderFileName[NUM_SHADERS][128] =
 	"shaders/simpleTex.shader",
 	"shaders/fragmentOffscreenCopy.shader"
 };
+#define SIMPLE_TEX_SHADER 8
 /* Location where the loaded shader is stored */
 #define MAX_SHADER_LENGTH 200000
 GLchar fragmentMainBackground[MAX_SHADER_LENGTH];
@@ -107,6 +85,25 @@ GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 static GLuint shaderPrograms[NUM_SHADERS];
 //static GLuint shaderCopyProgram;
 #define shaderCopyProgram (shaderPrograms[9])
+
+// The Icons globally here
+#define NUM_ICONS 12
+FlowIcon icon[NUM_ICONS];
+char iconFileName[NUM_ICONS][1024] = 
+{
+	"alarm_icon.tga",
+	"chair_icon.tga",
+	"fernseher_icon.tga",
+	"fridge_icon.tga",
+	"garbage_icon.tga",
+	"garderobe_icon.tga",
+	"komode_icon.tga",
+	"lampe_icon.tga",
+	"music_icon.tga",
+	"plant_icon.tga",
+	"sofa_icon.tga",
+	"teppich_icon.tga"
+};
 
 // -------------------------------------------------------------------
 //                          Code:
@@ -205,35 +202,23 @@ void intro_init( void )
 
 	// RLY?
 	//glEnable(GL_CULL_FACE);
-}
 
-
-
-void drawQuad(float startX, float startY, float startV, float alpha)
-{
-	float endY = startY + 0.2f;
-	float endX = startX + 2.0f;
-	float endV = startV + 0.1f;
-
-	glColor4f(0.75f + 0.25f*alpha, 1.0f, 1.0f, alpha);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, endV);
-	glVertex3f(startX, endY, 0.5);
-	glTexCoord2f(1.0f, endV);
-	glVertex3f(endX, endY, 0.5);
-	glTexCoord2f(1.0f, startV);
-	glVertex3f(endX, startY, 0.5);
-	glTexCoord2f(0.0, startV);
-	glVertex3f(startX, startY, 0.5);
-	glEnd();
-
+	// Create the icons
+	int index = 0;
+	for (int y = 0; y < 3; y++)
+	{
+		for (int x = 0; x < 4; x++)
+		{
+			icon[index].init(iconFileName[index], x + 1, y + 1);
+			index++;
+		}
+	}
 }
 
 
 void veryStartScene(float ftime)
 {
 	char errorString[MAX_ERROR_LENGTH+1];
-	GLuint creditsTexID;
 	GLuint noiseTexID;
 	GLuint offscreenTexID;
 	GLUquadric* quad = gluNewQuadric();
@@ -273,50 +258,15 @@ void veryStartScene(float ftime)
 	glUseProgram(shaderCopyProgram);	
 	gluSphere(quad, 2.0f, 16, 16);
 
-	// draw credits
-	glDisable(GL_CULL_FACE);
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	textureManager.getTextureID("credits.tga", &creditsTexID, errorString);
-	glBindTexture(GL_TEXTURE_2D, creditsTexID);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
-	glUseProgram(shaderPrograms[8]);
 
-	if (ftime > 3.5f && ftime < 9.5f)
+	// Draw the icons
+	for (int i = 0; i < NUM_ICONS; i++)
 	{
-		float ctime = ftime - 6.5f;
-		float xp = -1.3f - 0.003f*ctime*ctime*ctime;
-		float alpha = 1.0f - ctime*ctime/8.0f;
-		drawQuad(xp, 0.45f, 0.9f, alpha);
-		xp = -1.3f + 0.003f*ctime*ctime*ctime;
-		drawQuad(xp, 0.28f, 0.79f, alpha);
-	}
-	else if (ftime < 17.0f)
-	{
-		float ctime = ftime - 14.0f;
-		float xp = -1.3f - 0.003f*ctime*ctime*ctime;
-		float alpha = 1.0f - ctime*ctime/8.0f;
-		drawQuad(xp, 0.45f, 0.68f, alpha);
-		xp = -1.3f + 0.003f*ctime*ctime*ctime;
-		drawQuad(xp, 0.28f, 0.57f, alpha);
-	}
-	else if (ftime < 24.5f)
-	{
-		float ctime = ftime - 21.5f;
-		float xp = -1.3f - 0.003f*ctime*ctime*ctime;
-		float alpha = 1.0f - ctime*ctime/8.0f;
-		drawQuad(xp, 0.45f, 0.46f, alpha);
-		xp = -1.3f + 0.003f*ctime*ctime*ctime;
-		drawQuad(xp, 0.28f, 0.35f, alpha);
-	}
-	else if (ftime < 32.0f)
-	{
-		float ctime = ftime - 29.0f;
-		float xp = -1.3f - 0.003f*ctime*ctime*ctime;
-		float alpha = 1.0f - ctime*ctime/8.0f;
-		drawQuad(xp, 0.45f, 0.24f, alpha);
-		xp = -1.3f + 0.003f*ctime*ctime*ctime;
-		drawQuad(xp, 0.28f, 0.13f, alpha);
+		icon[i].draw(ftime);
 	}
 	
 	glDisable(GL_BLEND);
@@ -431,7 +381,7 @@ void intro_do( long itime )
     // render
 	//glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_BLEND);
-    glEnable( GL_CULL_FACE );
+    glDisable( GL_CULL_FACE );
 	//glCullFace( GL_FRONT );
 	//glDisable( GL_BLEND );
     //glEnable( GL_LIGHTING );
@@ -451,23 +401,14 @@ void intro_do( long itime )
 		parameterMatrix[i] = 0.0f;
 	}
 	
-#if 1
-	if (ftime < 37.7f)
-	{
-		veryStartScene(ftime);
-	}
-	else
-	{
-		nothingScene(ftime);
-	}
-#else
-	float tt = ftime;
-	float dTime = 3.75f;
-	//float dTime = 7.3f;
-	//float dTime = 14.7f;
-	//float dTime = 50.0f;
-	while (tt > 6*dTime) tt -= 6*dTime;
-	ball8Preview(tt);
-#endif
+	veryStartScene(ftime);
 }
 
+void intro_click(float xpos, float ypos)
+{
+	for (int i = 0; i < NUM_ICONS; i++)
+	{
+		icon[i].setMousePosition(xpos, ypos);
+		icon[i].clickMouse();
+	}
+}

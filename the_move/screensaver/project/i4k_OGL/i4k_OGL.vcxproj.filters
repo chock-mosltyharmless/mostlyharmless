@@ -31,6 +31,9 @@
     <ClInclude Include="src\TextureManager.h">
       <Filter>Source Files\header</Filter>
     </ClInclude>
+    <ClInclude Include="src\FlowIcon.h">
+      <Filter>Source Files\header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp">
@@ -49,6 +52,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\TextureManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\FlowIcon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
