@@ -78,7 +78,8 @@ public: // functions
 	int getTextureID(const char *name, GLuint *id, char *errorString);
 
 	// WHY IS THIS HERE?
-	void drawQuad(float startX, float startY, float endX, float endY, float alpha);
+	void drawQuad(float startX, float startY, float endX, float endY, float alpha,
+				  float rotation = 0.0f);
 
 private: // functions
 	void releaseAll(void);

@@ -100,6 +100,15 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		intro_click(relXPos, relYPos);
 	}
 
+	if ( uMsg==WM_MOUSEMOVE )
+	{
+		int xPos = lParam & 0xfff;
+		int yPos = lParam >> 16;
+		float relXPos = (float)xPos / float(rec.right - rec.left);
+		float relYPos = (float)yPos / float(rec.bottom - rec.top);
+		intro_cursor(relXPos, relYPos);
+	}
+
     return( DefWindowProc(hWnd,uMsg,wParam,lParam) );
 }
 
