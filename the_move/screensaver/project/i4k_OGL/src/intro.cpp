@@ -10,6 +10,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include "glext.h"
+#include <stdlib.h>
 
 #include "config.h"
 #include "intro.h"
@@ -85,6 +86,12 @@ GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 static GLuint shaderPrograms[NUM_SHADERS];
 //static GLuint shaderCopyProgram;
 #define shaderCopyProgram (shaderPrograms[9])
+
+// mouse stuff
+bool isSubMenu = false;
+int subMenuIndex;
+float subMenuAlpha = 0.0f;
+float subMenuSize = 0.0f;
 
 // The Icons globally here
 #define NUM_ICONS 12
@@ -218,15 +225,35 @@ void intro_init( void )
 
 void veryStartScene(float ftime)
 {
+	static float lastTime = 0.0f;
+	float deltaTime = ftime - lastTime;
+	lastTime = ftime;
+	GLuint texID;
+
 	char errorString[MAX_ERROR_LENGTH+1];
-	GLuint noiseTexID;
-	GLuint offscreenTexID;
-	GLUquadric* quad = gluNewQuadric();
 
 	glDisable(GL_BLEND);
 
+	if (isSubMenu)
+	{
+		subMenuSize += deltaTime * 5.0f * (1.1f - subMenuSize);
+		subMenuAlpha += deltaTime * 5.0f * (1.1f - subMenuAlpha);
+		if (subMenuSize > 1.0f) subMenuSize = 1.0f;
+		if (subMenuAlpha > 1.0f) subMenuAlpha = 1.0f;
+	}
+	else
+	{
+		float expTime = exp(-deltaTime*3.0f);
+		subMenuAlpha *= expTime;
+	}
+
 	// draw background:
 	glMatrixMode(GL_MODELVIEW);	
+
+#if 0
+	GLuint noiseTexID;
+	GLuint offscreenTexID;
+	GLUquadric* quad = gluNewQuadric();
 
 	parameterMatrix[0] = ftime; // time
 	float totalSize = 0.0f;
@@ -257,16 +284,43 @@ void veryStartScene(float ftime)
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
 	glUseProgram(shaderCopyProgram);	
 	gluSphere(quad, 2.0f, 16, 16);
+#else
+	if (textureManager.getTextureID("sun-flower.tga", &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "texture not found", MB_OK);
+		exit(1);
+	}
+	glDisable(GL_BLEND);
+	glBindTexture(GL_TEXTURE_2D, texID);
+	textureManager.drawQuad(-1.2f, -1.3f, 1.6f, 1.0f, 1.0f);
+#endif
 
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
-
 	// Draw the icons
 	for (int i = 0; i < NUM_ICONS; i++)
 	{
 		icon[i].draw(ftime);
+	}
+
+	// Draw the menu if present
+	if (subMenuAlpha > 0.01f)
+	{
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+		if (textureManager.getTextureID("blue.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		float xp = icon[subMenuIndex].getGLX();
+		float yp = icon[subMenuIndex].getGLY();
+		textureManager.drawQuad(xp, yp,
+			xp+0.9f*subMenuSize, yp-subMenuSize*0.6f*ASPECT_RATIO, 0.9f * subMenuAlpha);
+
+		icon[subMenuIndex].draw(ftime);
 	}
 	
 	glDisable(GL_BLEND);
@@ -404,11 +458,32 @@ void intro_do( long itime )
 	veryStartScene(ftime);
 }
 
-void intro_click(float xpos, float ypos)
+void intro_cursor(float xpos, float ypos)
 {
 	for (int i = 0; i < NUM_ICONS; i++)
 	{
 		icon[i].setMousePosition(xpos, ypos);
-		icon[i].clickMouse();
+	}
+}
+
+void intro_click(float xpos, float ypos)
+{
+	if (!isSubMenu)
+	{
+		for (int i = 0; i < NUM_ICONS; i++)
+		{
+			icon[i].setMousePosition(xpos, ypos);
+			if (icon[i].clickMouse())
+			{
+				isSubMenu = true;
+				subMenuAlpha = 0.0f;
+				subMenuSize = 0.0f;
+				subMenuIndex = i;
+			}
+		}
+	}
+	else
+	{
+		isSubMenu = false;
 	}
 }

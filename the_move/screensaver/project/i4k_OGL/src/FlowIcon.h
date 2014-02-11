@@ -9,12 +9,12 @@ public:
 	void init(const char *texName, int xpos, int ypos);
 	void draw(float time);
 	void setMousePosition(float xpos, float ypos);
-	void clickMouse();
+	bool clickMouse();
+
+	float getGLX();
+	float getGLY();
 
 private:
-	float getGLX(int xpos);
-	float getGLY(int ypos);
-
 	int posX, posY;
 	const char *texName;
 	const static float borderWidth;
@@ -25,5 +25,8 @@ private:
 	float mouseX;
 	float mouseY;
 	float clickTime; // Set in the past to show normal
+	float mouseOverAmount;
+	float lastDrawTime;
+	bool mouseIsOver;
 };
 

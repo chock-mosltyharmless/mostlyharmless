@@ -376,17 +376,30 @@ void TextureManager::generateNoiseTexture(void)
 	makeIntTexture();
 }
 
-void TextureManager::drawQuad(float startX, float startY, float endX, float endY, float alpha)
+void TextureManager::drawQuad(float startX, float startY, float endX, float endY, float alpha,
+	                          float rotation)
 {
+	float midX = (startX + endX) * 0.5f;
+	float midY = (startY + endY) * 0.5f;
+
+	startX -= midX;
+	startY -= midY;
+	endX -= midX;
+	endY -= midY;
+
+	float c = cos(rotation);
+	float s = sin(rotation);
+
 	glColor4f(1.0f, 1.0f, 1.0f, alpha);
 	glBegin(GL_QUADS);
 	glTexCoord2f(0.0f, 1.0f);
-	glVertex3f(startX, endY, 0.5);
+	// bl
+	glVertex3f(c*startX - s*endY + midX, s*startX + c*endY + midY, 0.5);
 	glTexCoord2f(1.0f, 1.0f);
-	glVertex3f(endX, endY, 0.5);
+	glVertex3f(c*endX - s*endY + midX, s*endX + c*endY + midY, 0.5);
 	glTexCoord2f(1.0f, 0.0f);
-	glVertex3f(endX, startY, 0.5);
+	glVertex3f(c*endX - s*startY + midX, s*endX + c*startY + midY, 0.5);
 	glTexCoord2f(0.0, 0.0f);
-	glVertex3f(startX, startY, 0.5);
+	glVertex3f(c*startX - s*startY + midX, s*startX + c*startY + midY, 0.5);
 	glEnd();
 }

@@ -6,7 +6,7 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include "glext.h"
-#include "stdlib.h"
+#include <stdlib.h>
 
 #include "FlowIcon.h"
 #include "config.h"
@@ -20,10 +20,6 @@ extern HWND hWnd;
 
 FlowIcon::FlowIcon(void)
 {
-	mouseX = 1000.0f;
-	mouseY = 1000.0f;
-	curTime = -1000.0f;
-	clickTime = -2000.0f;
 }
 
 FlowIcon::~FlowIcon(void)
@@ -35,10 +31,19 @@ void FlowIcon::init(const char *texName, int xpos, int ypos)
 	posX = xpos;
 	posY = ypos;
 	this->texName = texName;
+
+	mouseX = 1000.0f;
+	mouseY = 1000.0f;
+	curTime = -1000.0f;
+	clickTime = -2000.0f;
+	mouseOverAmount = 0.0f;
+	lastDrawTime = -2000.0f;
+	mouseIsOver = false;
 }
 
-float FlowIcon::getGLX(int xpos)
+float FlowIcon::getGLX()
 {
+	int xpos = posX;
 	// get to floaty range
 	float fpx = xpos * distance;
 	// go to -1..1
@@ -47,8 +52,9 @@ float FlowIcon::getGLX(int xpos)
 	return fpx;
 }
 
-float FlowIcon::getGLY(int ypos)
+float FlowIcon::getGLY()
 {
+	int ypos = posY;
 	// get to floaty range
 	float fpy = ypos * distance;
 	// apply aspect ratio
@@ -67,7 +73,42 @@ void FlowIcon::draw(float time)
 	GLuint texID;
 	char errorString[MAX_ERROR_LENGTH];
 	
+	if (mouseIsOver)
+	{
+		mouseOverAmount += (time-lastDrawTime)*(1.0f - mouseOverAmount)*4.0f;
+		if (mouseOverAmount > 1.0f) mouseOverAmount = 1.0f;
+	}
+	else
+	{
+		float decay = exp(-(time-lastDrawTime));
+		mouseOverAmount *= decay;
+	}
+
+	// Draw the highlight
+	if (mouseOverAmount > 0.03f)
+	{
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		if (textureManager.getTextureID("highlight.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "vMainObject shader error", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+
+		float xp = getGLX();
+		float yp = getGLY();
+		for (int i = 0; i < 8; i++)
+		{
+			float bw = -0.03f - 0.03f * mouseOverAmount + 0.015f * sin(i*4.2f + 1.4f);
+			float rotation = time * sin(i * 1.4f + 4.2f);
+			textureManager.drawQuad(xp + bw, yp - (distance - bw) * ASPECT_RATIO,
+									xp + distance - bw, yp - bw*ASPECT_RATIO,
+									mouseOverAmount * 0.15f, rotation);
+		}
+	}
+
 	// set texture
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	if (textureManager.getTextureID(texName, &texID, errorString))
 	{
 		MessageBox(hWnd, errorString, "vMainObject shader error", MB_OK);
@@ -76,35 +117,71 @@ void FlowIcon::draw(float time)
 	glBindTexture(GL_TEXTURE_2D, texID);
 
 	// Core drawing?
-	float xp = getGLX(posX);
-	float yp = getGLY(posY);
+	float xp = getGLX();
+	float yp = getGLY();
 	float relClickTime = (time - clickTime) * 1.5f;
 	if (relClickTime > 1.0f) relClickTime = 1.0f;
 	if (relClickTime < 0.0f) relClickTime = 0.0f;
 	relClickTime = sqrtf(relClickTime);
-	float bw = borderWidth + 0.02f * (1.0f - relClickTime);
-	textureManager.drawQuad(xp + bw, yp - (distance - bw) * ASPECT_RATIO,
-		                    xp + distance - bw, yp - bw*ASPECT_RATIO,
-							relClickTime* 0.2f + 0.8f);
+	float bw = borderWidth + 0.03f * (1.0f - relClickTime);
+	float bwx = bw + 0.0015f * mouseOverAmount * (sin(8.3f * time + 5.2f) + sin(7.2f * time + 3.5f));
+	float bwy = bw + 0.0015f * mouseOverAmount * (sin(3.2f * time + 2.2f) + sin(9.1f * time + 1.1f));
+	textureManager.drawQuad(xp + bwx, yp - (distance - bwy) * ASPECT_RATIO,
+		                    xp + distance - bwx, yp - bwy*ASPECT_RATIO,
+							1.0f);
+	lastDrawTime = time;
+
+	// Draw the highlight
+	if (mouseOverAmount > 0.03f)
+	{
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		if (textureManager.getTextureID("highlight.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+
+		float xp = getGLX();
+		float yp = getGLY();
+		for (int i = 0; i < 2; i++)
+		{
+			float bw = -0.00f - 0.03f * mouseOverAmount + 0.01f * sin(i*4.2f + 1.4f);
+			float rotation = time * sin(i * 1.4f + 4.2f);
+			textureManager.drawQuad(xp + bw, yp - (distance - bw) * ASPECT_RATIO,
+									xp + distance - bw, yp - bw*ASPECT_RATIO,
+									mouseOverAmount * 0.1f, rotation);
+		}
+	}
 }
 
 void FlowIcon::setMousePosition(float xpos, float ypos)
-{
-	mouseX = xpos;
-	mouseY = ypos;
-}
-
-void FlowIcon::clickMouse()
 {
 	// Check if in range
 	float left = posX * distance * 0.5f;
 	float right = (posX + 1) * distance * 0.5f;
 	float top = posY * (distance*0.5f) * ASPECT_RATIO;
 	float bottom = (posY + 1) * (distance*0.5f) * ASPECT_RATIO;
+	mouseX = xpos;
+	mouseY = ypos;
 
 	if (mouseX > left && mouseX < right &&
 		mouseY > top && mouseY < bottom)
 	{
-		clickTime = curTime;
+		mouseIsOver = true;
 	}
+	else
+	{
+		mouseIsOver = false;
+	}
+}
+
+bool FlowIcon::clickMouse()
+{
+	if (mouseIsOver)
+	{
+		clickTime = curTime;
+		return true;
+	}
+	return false;
 }
