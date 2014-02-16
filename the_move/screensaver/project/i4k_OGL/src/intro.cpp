@@ -39,6 +39,7 @@ const GLchar shaderFileName[NUM_SHADERS][128] =
 	"shaders/simpleTex.shader",
 	"shaders/fragmentOffscreenCopy.shader"
 };
+#define OTONE_SHADER 7
 #define SIMPLE_TEX_SHADER 8
 /* Location where the loaded shader is stored */
 #define MAX_SHADER_LENGTH 200000
@@ -220,6 +221,17 @@ void intro_init( void )
 			index++;
 		}
 	}
+
+	// Set the texture locations in the relevant shaders:
+	// Set texture locations
+	glUseProgram(shaderPrograms[OTONE_SHADER]);
+	int my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[OTONE_SHADER], "Texture0");
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(my_sampler_uniform_location, 0);
+	my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[OTONE_SHADER], "Texture1");
+	glActiveTexture(GL_TEXTURE1);
+	glUniform1i(my_sampler_uniform_location, 1);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 
@@ -340,15 +352,17 @@ void otoneScene(float ftime)
 	// draw background:
 	glMatrixMode(GL_MODELVIEW);	
 
-	parameterMatrix[0] = sqrt(ftime) * 3.0f; // time
-	parameterMatrix[3] = sqrtf(ftime * 0.1f); // time
-	if (parameterMatrix[3] > 1.0f) parameterMatrix[3] = 1.0f;
+	//parameterMatrix[0] = sqrt(ftime) * 3.0f; // time
+	parameterMatrix[0] = ftime; // time
+	//parameterMatrix[3] = sqrtf(ftime * 0.1f); // time
+	//if (parameterMatrix[3] > 1.0f) parameterMatrix[3] = 1.0f;
+	parameterMatrix[3] = 1.0f;
 	parameterMatrix[1] = 0.0f;
 	parameterMatrix[6] = 0.0f;
 	// translation
-	float rotSpeed = 0.3f;
-	float rotAmount = 1.6f;
-	float moveSpeed = 0.25f;
+	float rotSpeed = 0.02f;//0.3f;
+	float rotAmount = 0.5f;//1.6f;
+	float moveSpeed = 0.02f;//0.25f;
 	float posX = rotAmount * sin(ftime * rotSpeed);
 	float posY = rotAmount * cos(ftime * rotSpeed) - moveSpeed * ftime;
 	float deltaX = rotAmount * rotSpeed * cos(ftime * rotSpeed);
@@ -373,9 +387,17 @@ void otoneScene(float ftime)
 	// draw offscreen
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
-	glUseProgram(shaderPrograms[7]);
+	glUseProgram(shaderPrograms[OTONE_SHADER]);
+	// Set texture0 (noise texture)
 	textureManager.getTextureID("noise2D", &noiseTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, noiseTexID);
+	// Set texture1 (the original scene)
+	glActiveTexture(GL_TEXTURE1);
+	textureManager.getTextureID("sun-flower.tga", &offscreenTexID, errorString);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
+	glActiveTexture(GL_TEXTURE0);
+
+	// Draw it
 	gluSphere(quad, 2.0f, 16, 16);
 
 	// copy to front
@@ -455,7 +477,8 @@ void intro_do( long itime )
 		parameterMatrix[i] = 0.0f;
 	}
 	
-	veryStartScene(ftime);
+	//veryStartScene(ftime);
+	otoneScene(ftime);
 }
 
 void intro_cursor(float xpos, float ypos)

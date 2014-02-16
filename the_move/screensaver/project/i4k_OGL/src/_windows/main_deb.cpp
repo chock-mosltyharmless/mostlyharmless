@@ -239,8 +239,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// start music playback
 	BASS_Init(-1,44100,0,info->hWnd,NULL);
 	mp3Str=BASS_StreamCreateFile(FALSE,"ana.mp3",0,0,0);
-	BASS_ChannelPlay(mp3Str, TRUE);
-	BASS_Start();
+	//BASS_ChannelPlay(mp3Str, TRUE);
+	//BASS_Start();
 
     long to=timeGetTime();
     while( !done )
