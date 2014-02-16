@@ -393,7 +393,7 @@ void otoneScene(float ftime)
 	glBindTexture(GL_TEXTURE_2D, noiseTexID);
 	// Set texture1 (the original scene)
 	glActiveTexture(GL_TEXTURE1);
-	textureManager.getTextureID("sun-flower.tga", &offscreenTexID, errorString);
+	textureManager.getTextureID("screensaver_core_concept.tga", &offscreenTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	glActiveTexture(GL_TEXTURE0);
 

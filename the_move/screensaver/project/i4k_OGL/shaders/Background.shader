@@ -7,7 +7,8 @@ vec2 getFog(vec2 relPos)
 {
 	float time = parameters[0][0];
 
-    vec4 swirl = texture2D(Texture0, relPos * 0.11);
+    //vec4 swirl = texture2D(Texture0, relPos * 0.11);
+	vec4 swirl = texture2D(Texture0, relPos * 0.06);
     swirl = 0.5 * swirl + 0.5 * texture2D(Texture0, relPos*0.63 + swirl.rg);
 	// apply some shattering
 	//swirl = 0.5 * swirl + 0.5 * texture2D(Texture0, relPos*0.14 + 0.2 * swirl.rg + vec2(time * 0.031, 0.0));
