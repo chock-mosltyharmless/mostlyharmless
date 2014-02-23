@@ -34,7 +34,7 @@ void main(void)
    gl_FragColor += 0.14 * texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.01 - 0.015;
 
    float vignette = objectPosition.x*objectPosition.x + objectPosition.y*objectPosition.y;
-   //vignette = sqrt(vignette);
+   vignette = sqrt(vignette);
    gl_FragColor *= 1.2 - vignette * 0.3; // darken
    float meanColor = 0.3 * gl_FragColor.r + 0.59 * gl_FragColor.r + 0.11 * gl_FragColor.b;
    gl_FragColor = 0.2 * vignette * vec4(meanColor) + (1.0 - 0.6 * vignette) * gl_FragColor; // desaturate

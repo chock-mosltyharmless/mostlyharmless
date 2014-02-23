@@ -235,7 +235,7 @@ void intro_init( void )
 }
 
 
-void veryStartScene(float ftime)
+void desktopScene(float ftime)
 {
 	static float lastTime = 0.0f;
 	float deltaTime = ftime - lastTime;
@@ -314,7 +314,14 @@ void veryStartScene(float ftime)
 	// Draw the icons
 	for (int i = 0; i < NUM_ICONS; i++)
 	{
-		icon[i].draw(ftime);
+		if (i == 0) // ALARM!
+		{
+			icon[i].drawAlarming(ftime);
+		}
+		else
+		{
+			icon[i].draw(ftime);
+		}
 	}
 
 	// Draw the menu if present
@@ -338,14 +345,53 @@ void veryStartScene(float ftime)
 	glDisable(GL_BLEND);
 }
 
+void drawLine(float startX, float startY, float endX, float endY)
+{
+	float width = 0.02f; // constant??
 
+	float dX = endX - startX;
+	float dY = endY - startY;
 
-void otoneScene(float ftime)
+	float dist = sqrtf(dX*dX + dY*dY);
+	int numSteps = (int)(dist/(width*0.75) + 2.0f);
+	float dStep = 1.0f / (numSteps - 1);
+
+	float xP = startX;
+	float yP = startY;
+	for (int i = 0; i < numSteps; i++)
+	{
+		textureManager.drawQuad(xP - width, yP + width, 
+			xP + width, yP-width, 1.0f, (float)i);
+		xP += dStep * dX;
+		yP += dStep * dY;
+	}
+}
+
+void screensaverScene(float ftime)
 {
 	char errorString[MAX_ERROR_LENGTH+1];
 	GLuint noiseTexID;
 	GLuint offscreenTexID;
 	GLUquadric* quad = gluNewQuadric();
+
+	// Draw the background image
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+    //desktopScene(ftime);
+
+	// Draw the background
+	glDisable(GL_BLEND);
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
+	textureManager.getTextureID("screensaver_background.tga", &offscreenTexID, errorString);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
+	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
+
+	// Draw a simple line
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
+	textureManager.getTextureID("blob.tga", &offscreenTexID, errorString);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
+	drawLine(0.2f, 0.2f, 0.8f, 0.8f);
 
 	glDisable(GL_BLEND);
 
@@ -384,7 +430,14 @@ void otoneScene(float ftime)
 	parameterMatrix[13] = deltaY;
 	glLoadMatrixf(parameterMatrix);
 
-	// draw offscreen
+#if 1
+	// copy the video to texture for later rendering
+	glViewport(0, 0, realXRes, realYRes);
+	textureManager.getTextureID("renderTarget", &offscreenTexID, errorString);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+
+	// draw offscreen painters effect
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
 	glUseProgram(shaderPrograms[OTONE_SHADER]);
@@ -393,7 +446,6 @@ void otoneScene(float ftime)
 	glBindTexture(GL_TEXTURE_2D, noiseTexID);
 	// Set texture1 (the original scene)
 	glActiveTexture(GL_TEXTURE1);
-	textureManager.getTextureID("screensaver_core_concept.tga", &offscreenTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	glActiveTexture(GL_TEXTURE0);
 
@@ -407,6 +459,7 @@ void otoneScene(float ftime)
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
 	glUseProgram(shaderCopyProgram);	
 	gluSphere(quad, 2.0f, 16, 16);
+#endif
 }
 
 
@@ -477,8 +530,8 @@ void intro_do( long itime )
 		parameterMatrix[i] = 0.0f;
 	}
 	
-	//veryStartScene(ftime);
-	otoneScene(ftime);
+	//desktopScene(ftime);
+	screensaverScene(ftime);
 }
 
 void intro_cursor(float xpos, float ypos)

@@ -8,6 +8,7 @@ public:
 
 	void init(const char *texName, int xpos, int ypos);
 	void draw(float time);
+	void drawAlarming(float time);
 	void setMousePosition(float xpos, float ypos);
 	bool clickMouse();
 
