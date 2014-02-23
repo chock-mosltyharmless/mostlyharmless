@@ -67,6 +67,37 @@ float FlowIcon::getGLY()
 	return fpy;
 }
 
+void FlowIcon::drawAlarming(float time)
+{
+	GLuint texID;
+	char errorString[MAX_ERROR_LENGTH];
+
+	float alarmAmount = (sin(time * 1.5f) + 0.8f) / 1.8f;
+	if (alarmAmount < 0.0f) alarmAmount = 0.0f;
+	alarmAmount = sqrtf(alarmAmount);
+	alarmAmount = sqrtf(alarmAmount);
+
+	// set texture
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (textureManager.getTextureID(texName, &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "vMainObject shader error", MB_OK);
+		exit(1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	// Core drawing?
+	float xp = getGLX();
+	float yp = getGLY();
+	yp += alarmAmount * 0.1f + 0.05f * alarmAmount*cos(time*33.0f);
+	float bw = borderWidth;
+	float bwx = bw - 0.03f * alarmAmount * ((sin(8.3f * time + 15.2f) + sin(7.2f * time + 13.5f)) + 0.4f);
+	float bwy = bw - 0.03f * alarmAmount * ((sin(8.3f * time + 15.2f) + sin(7.2f * time + 13.5f)) + 0.4f);
+	textureManager.drawQuad(xp + bwx, yp - (distance - bwy) * ASPECT_RATIO,
+		                    xp + distance - bwx, yp - bwy*ASPECT_RATIO,
+							1.0f, 0.4f*alarmAmount * sin(time*25.0f));
+}
+
 void FlowIcon::draw(float time)
 {
 	curTime = time;
@@ -85,6 +116,7 @@ void FlowIcon::draw(float time)
 	}
 
 	// Draw the highlight
+#if 0
 	if (mouseOverAmount > 0.03f)
 	{
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -106,6 +138,7 @@ void FlowIcon::draw(float time)
 									mouseOverAmount * 0.15f, rotation);
 		}
 	}
+#endif
 
 	// set texture
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -124,14 +157,15 @@ void FlowIcon::draw(float time)
 	if (relClickTime < 0.0f) relClickTime = 0.0f;
 	relClickTime = sqrtf(relClickTime);
 	float bw = borderWidth + 0.03f * (1.0f - relClickTime);
-	float bwx = bw + 0.0015f * mouseOverAmount * (sin(8.3f * time + 5.2f) + sin(7.2f * time + 3.5f));
-	float bwy = bw + 0.0015f * mouseOverAmount * (sin(3.2f * time + 2.2f) + sin(9.1f * time + 1.1f));
+	float bwx = bw + 0.002f * mouseOverAmount * (sin(8.3f * time + 5.2f) + sin(7.2f * time + 3.5f));
+	float bwy = bw + 0.002f * mouseOverAmount * (sin(3.2f * time + 2.2f) + sin(9.1f * time + 1.1f));
 	textureManager.drawQuad(xp + bwx, yp - (distance - bwy) * ASPECT_RATIO,
 		                    xp + distance - bwx, yp - bwy*ASPECT_RATIO,
 							1.0f);
 	lastDrawTime = time;
 
 	// Draw the highlight
+#if 0
 	if (mouseOverAmount > 0.03f)
 	{
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -153,6 +187,7 @@ void FlowIcon::draw(float time)
 									mouseOverAmount * 0.1f, rotation);
 		}
 	}
+#endif
 }
 
 void FlowIcon::setMousePosition(float xpos, float ypos)
