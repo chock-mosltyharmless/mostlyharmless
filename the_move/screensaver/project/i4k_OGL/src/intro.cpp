@@ -114,6 +114,38 @@ char iconFileName[NUM_ICONS][1024] =
 };
 
 // -------------------------------------------------------------------
+//        ALL the stuff that I need to represent scenes
+// -------------------------------------------------------------------
+struct Line
+{
+	const char *texName;
+	float start[3];  // Z is depth...
+	float end[3];
+	float width;
+	float color[4];
+	bool multipartLine;
+};
+
+struct Scene
+{
+	int outputID; // What can come after this scene
+	int numLines;
+	const Line *lines;
+};
+
+// Input 0: Scene with 3 Lines at the top.
+// I need some sort of perspective correction, no? And also aspect ratio...
+const Line basicSceneLines[] =
+{
+	{"mast1.tga", {-1.5f, 1.8f, 0.0f}, {-1.5f, -0.2f, 0.0f}, 0.2f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+	{"thin_line.tga", {-1.25f, 1.6f, -10.0f}, {-1.25f, 1.6f, 10.0f}, 0.03f, {0.3f, 0.3f, 0.3f, 1.0f}, true},
+};
+const Scene basicScenes[] = 
+{
+	{0, sizeof(basicSceneLines) / sizeof(Line), basicSceneLines},
+};
+
+// -------------------------------------------------------------------
 //                          Code:
 // -------------------------------------------------------------------
 
@@ -345,32 +377,66 @@ void desktopScene(float ftime)
 	glDisable(GL_BLEND);
 }
 
-void drawLine(float startX, float startY, float endX, float endY)
+// assumes that BLEND_mode is on standard.
+// Program must be standard
+// Ignores ASPECT RATIO... I have to think about it.
+void drawLine(float startX, float startY, float endX, float endY,
+	          float startWidth, float endWidth, const char *texName,
+			  const float color[4])
 {
-	float width = 0.02f; // constant??
-
-	float dX = endX - startX;
-	float dY = endY - startY;
-
-	float dist = sqrtf(dX*dX + dY*dY);
-	int numSteps = (int)(dist/(width*0.75) + 2.0f);
-	float dStep = 1.0f / (numSteps - 1);
-
-	float xP = startX;
-	float yP = startY;
-	for (int i = 0; i < numSteps; i++)
+	GLuint texID;
+	char errorString[MAX_ERROR_LENGTH+1];
+	if (textureManager.getTextureID(texName, &texID, errorString) < 0)
 	{
-		textureManager.drawQuad(xP - width, yP + width, 
-			xP + width, yP-width, 1.0f, (float)i);
-		xP += dStep * dX;
-		yP += dStep * dY;
+		MessageBox(hWnd, errorString, "Texture load error", MB_OK);
+		exit(-1);
 	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	// I have to set the color differently...
+	glColor4f(color[0], color[1], color[2], color[3]);
+
+	float lx = endX - startX;
+	float ly = endY - startY;
+	float invLen = 1.0f / sqrtf(lx * lx + ly * ly);
+	lx *= invLen;
+	ly *= invLen;
+	float nx = -ly;
+	float ny = lx;
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0f, 1.0f);
+	glVertex3f(startX + (-lx + nx)*startWidth, startY + (-ly + ny)*startWidth, 0.5);
+	glTexCoord2f(0.0f, 0.0f);
+	glVertex3f(endX + (lx + nx)*endWidth, endY + (ly + ny)*endWidth, 0.5);
+	glTexCoord2f(1.0f, 0.0f);
+	glVertex3f(endX + (lx - nx)*endWidth, endY + (ly - ny)*endWidth, 0.5);
+	glTexCoord2f(1.0, 1.0f);
+	glVertex3f(startX + (-lx - nx)*startWidth, startY + (-ly - ny)*startWidth, 0.5);
+	glEnd();
+}
+
+void rotateX(float dest[3], const float source[3], float alpha)
+{
+	float ca = (float)cos(alpha);
+	float sa = (float)sin(alpha);
+	dest[0] = source[0];
+	dest[1] = ca * source[1] - sa * source[2];
+	dest[2] = sa * source[1] + ca * source[2];
+}
+
+void rotateY(float dest[3], const float source[3], float alpha)
+{
+	float ca = (float)cos(alpha);
+	float sa = (float)sin(alpha);
+	dest[0] = ca * source[0] - sa * source[2];
+	dest[1] = source[1];
+	dest[2] = sa * source[0] + ca * source[2];
 }
 
 void screensaverScene(float ftime)
 {
 	char errorString[MAX_ERROR_LENGTH+1];
-	GLuint noiseTexID;
 	GLuint offscreenTexID;
 	GLUquadric* quad = gluNewQuadric();
 
@@ -386,12 +452,67 @@ void screensaverScene(float ftime)
 	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Draw a simple line
+#if 0
+	float color[4] = {0.8f, 0.7f, 0.6f, 1.0f};
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
-	textureManager.getTextureID("blob.tga", &offscreenTexID, errorString);
-	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
-	drawLine(0.2f, 0.2f, 0.8f, 0.8f);
+	drawLine(0.2f, 0.2f, 0.8f, 0.8f, 0.05f, 0.15f, "line_16x1.tga", color);
+	glDisable(GL_BLEND);
+#endif
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
+
+	// Draw all the lines in the current scene
+	int sceneID = 0;
+	const Scene *scene = &(basicScenes[sceneID]);
+	for (int i = 0; i < scene->numLines; i++)
+	{
+		const Line *line = &(scene->lines[i]);
+		float tmpV[3];
+		float transStart[3];
+		float transEnd[3];
+
+		// Translate (and copy...)
+		for (int i = 0; i < 3; i++)
+		{
+			transStart[i] = line->start[i];
+			transEnd[i] = line->end[i];
+		}
+		transStart[2] += sin(ftime*0.3f)*6.0f + 6.0f;
+		transEnd[2] += sin(ftime*0.3f)*6.0f + 6.0f;
+
+		// Move the lines
+		rotateY(tmpV, transStart, -0.3f);
+		rotateX(transStart, tmpV, 0.4f);
+		rotateY(tmpV, transEnd, -0.3f);
+	    rotateX(transEnd, tmpV, 0.4f);
+
+		// perspective correction
+		float invZ;
+		invZ = 3.0f / (fabsf(transStart[2]) + 0.01f);
+		transStart[0] *= invZ;
+		transStart[1] *= invZ * ASPECT_RATIO; // This ignores width.... ARGH!!!
+		float startWidth = line->width * invZ;
+		invZ = 3.0f / (fabsf(transEnd[2]) + 0.01f);
+		transEnd[0] *= invZ;
+		transEnd[1] *= invZ * ASPECT_RATIO;
+		float endWidth = line->width * invZ;
+		//startWidth = endWidth = line->width * invZ;
+
+		// draw
+		float col[4];
+		for (int i = 0; i < 4; i++)
+		{
+			col[i] = line->color[i];
+		}
+		invZ *= 4.0f;
+		if (invZ > 1.0f) invZ = 1.0f;
+		col[3] *= invZ;
+		drawLine(transStart[0], transStart[1], transEnd[0], transEnd[1], startWidth, endWidth, line->texName, col);
+	}
 
 	glDisable(GL_BLEND);
 
@@ -432,6 +553,7 @@ void screensaverScene(float ftime)
 
 #if 1
 	// copy the video to texture for later rendering
+	GLuint noiseTexID;
 	glViewport(0, 0, realXRes, realYRes);
 	textureManager.getTextureID("renderTarget", &offscreenTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
