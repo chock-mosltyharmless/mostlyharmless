@@ -16,8 +16,8 @@
 //#define YRES        (1080 * XRES / 1920)
 #define YRES        (480 * XRES / 640)
 #define ASPECT_RATIO ((float)XRES / (float)YRES)
-#define OFFSCREEN_WIDTH 512
-#define OFFSCREEN_HEIGHT 512
+#define OFFSCREEN_WIDTH XRES
+#define OFFSCREEN_HEIGHT YRES
 #define HIGHLIGHT_WIDTH 200
 #define HIGHLIGHT_HEIGHT 100
 //#define MZK_DURATION 123

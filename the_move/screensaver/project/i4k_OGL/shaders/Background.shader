@@ -77,7 +77,7 @@ void main(void)
    float grad = objectPosition.y * 0.5 + 0.5;
    vec3 totalColor = (grad * vec3(0.0,0.0,0.1) + (1.-grad)*vec3(0.0,0.1,0.2));
 
-   vec3 texColor = texture2D(Texture1, fog.rg * 0.05 + (objectPosition.xy + vec2(1.0)) * 0.495).rgb;
+   vec3 texColor = texture2D(Texture1, fog.rg * 0.005 + (objectPosition.xy + vec2(1.0)) * 0.485).rgb;
 
-	gl_FragColor = vec4(mix(redFogAdder + blackFogAdder + totalColor, texColor, 0.7), 1.0);
+   gl_FragColor = vec4(mix(redFogAdder + blackFogAdder + totalColor, texColor, 0.9), 1.0);
 }
