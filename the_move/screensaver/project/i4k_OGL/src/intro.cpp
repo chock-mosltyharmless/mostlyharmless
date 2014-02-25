@@ -124,6 +124,7 @@ struct Line
 	float width;
 	float color[4];
 	bool multipartLine;
+	float hangThrough;
 };
 
 struct Scene
@@ -137,11 +138,15 @@ struct Scene
 // I need some sort of perspective correction, no? And also aspect ratio...
 const Line basicSceneLines[] =
 {
-	{"mast1.tga", {-1.5f, 2.0f, 0.0f}, {-1.5f, -0.0f, 0.0f}, 0.2f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-1.251f, 1.653f, -10.5f}, {-1.252f, 1.664f, 10.5f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true},
-	{"thin_line_small.tga", {-1.258f, 1.557f, -10.5f}, {-1.254f, 1.539f, 10.5f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true},
-	{"thin_line_small.tga", {-1.253f, 1.453f, -10.5f}, {-1.254f, 1.448f, 10.5f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true},
-	{"thin_line_small.tga", {-1.256f, 1.34f, -10.5f}, {-1.259f, 1.32f, 10.5f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true},
+	{"mast1.tga", {-1.5f, 2.0f, 0.0f}, {-1.5f, -0.0f, 0.0f}, 0.2f, {1.0f, 1.0f, 1.0f, 1.0f}, false, 0.0f},
+	{"thin_line_small.tga", {-1.35f, 1.8f, -10.1f}, {-1.35f, 1.8f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f},
+	{"thin_line_small.tga", {-1.35f, 1.8f, -0.1f}, {-1.35f, 1.8f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f},
+	{"thin_line_small.tga", {-1.35f, 1.7f, -10.1f}, {-1.35f, 1.7f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f},
+	{"thin_line_small.tga", {-1.35f, 1.7f, -0.1f}, {-1.35f, 1.7f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f},
+	{"thin_line_small.tga", {-1.35f, 1.6f, -10.1f}, {-1.35f, 1.6f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f},
+	{"thin_line_small.tga", {-1.35f, 1.6f, -0.1f}, {-1.35f, 1.6f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f},
+	{"thin_line_small.tga", {-1.35f, 1.45f, -10.1f}, {-1.35f, 1.45f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f},
+	{"thin_line_small.tga", {-1.35f, 1.45f, -0.1f}, {-1.35f, 1.45f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f},
 };
 const Scene basicScenes[] = 
 {
@@ -442,7 +447,7 @@ void drawLine(float start[3], float end[3],
 // The same as drawline, but uses multiple segments, for perspective correction
 void drawMultiLine(float start[3], float end[3],
 	               float width, const char *texName,
-			       const float color[4])
+			       const float color[4], float hangThrough)
 {
 	const int numSegments = 20;
 
@@ -466,17 +471,27 @@ void drawMultiLine(float start[3], float end[3],
 		end[i] = start[i] + dPos[i];
 	}
 
+	float hangers[numSegments+1];
+	for (int i = 0; i < numSegments+1; i++)
+	{
+		// Stupid hanging:
+		float hanger = (float)(i - numSegments/2) / (float)(numSegments/2);
+		hanger *= hanger;
+		hanger = (hanger - 1.0f) * hangThrough;
+		hangers[i] = hanger;
+	}
+
 	for (int i = 0; i < numSegments; i++)
 	{
 		// perspective correction
 		float invZ;
 		invZ = 3.0f / (fabsf(start[2]) + 0.01f);
 		float startX = start[0] * invZ;
-		float startY = (start[1]) * invZ * ASPECT_RATIO; // This ignores width.... ARGH!!!
+		float startY = (start[1]+hangers[i]) * invZ * ASPECT_RATIO; // This ignores width.... ARGH!!!
 		float startWidth = width * invZ;
 		invZ = 3.0f / (fabsf(end[2]) + 0.01f);
 		float endX = end[0] * invZ;
-		float endY = (end[1]) * invZ * ASPECT_RATIO;
+		float endY = (end[1]+hangers[i + 1]) * invZ * ASPECT_RATIO;
 		float endWidth = width * invZ;
 
 		float lx = dPos[0];
@@ -540,9 +555,9 @@ void screensaverScene(float ftime)
 	// Draw the background
 	glDisable(GL_BLEND);
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
-	textureManager.getTextureID("screensaver_background.tga", &offscreenTexID, errorString);
+	textureManager.getTextureID("wolken1.tga", &offscreenTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
-	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
+	textureManager.drawQuad(-4.0f, -1.0f, 4.0f, 1.0f, 1.0f);
 
 	// Draw a simple line
 #if 0
@@ -586,7 +601,7 @@ void screensaverScene(float ftime)
 		// draw
 		if (line->multipartLine)
 		{
-			drawMultiLine(transStart, transEnd, line->width, line->texName, line->color);
+			drawMultiLine(transStart, transEnd, line->width, line->texName, line->color, line->hangThrough);
 		}
 		else
 		{
