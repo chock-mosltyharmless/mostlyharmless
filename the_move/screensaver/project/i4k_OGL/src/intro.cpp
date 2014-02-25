@@ -137,8 +137,11 @@ struct Scene
 // I need some sort of perspective correction, no? And also aspect ratio...
 const Line basicSceneLines[] =
 {
-	{"mast1.tga", {-1.5f, 1.8f, 0.0f}, {-1.5f, -0.2f, 0.0f}, 0.2f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line.tga", {-1.25f, 1.6f, -10.0f}, {-1.25f, 1.6f, 10.0f}, 0.03f, {0.3f, 0.3f, 0.3f, 1.0f}, true},
+	{"mast1.tga", {-1.5f, 2.0f, 0.0f}, {-1.5f, -0.0f, 0.0f}, 0.2f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+	{"thin_line_small.tga", {-1.251f, 1.653f, -10.5f}, {-1.252f, 1.664f, 10.5f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true},
+	{"thin_line_small.tga", {-1.258f, 1.557f, -10.5f}, {-1.254f, 1.539f, 10.5f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true},
+	{"thin_line_small.tga", {-1.253f, 1.453f, -10.5f}, {-1.254f, 1.448f, 10.5f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true},
+	{"thin_line_small.tga", {-1.256f, 1.34f, -10.5f}, {-1.259f, 1.32f, 10.5f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true},
 };
 const Scene basicScenes[] = 
 {
@@ -380,8 +383,8 @@ void desktopScene(float ftime)
 // assumes that BLEND_mode is on standard.
 // Program must be standard
 // Ignores ASPECT RATIO... I have to think about it.
-void drawLine(float startX, float startY, float endX, float endY,
-	          float startWidth, float endWidth, const char *texName,
+void drawLine(float start[3], float end[3],
+	          float width, const char *texName,
 			  const float color[4])
 {
 	GLuint texID;
@@ -392,6 +395,22 @@ void drawLine(float startX, float startY, float endX, float endY,
 		exit(-1);
 	}
 	glBindTexture(GL_TEXTURE_2D, texID);
+
+	// perspective correction
+	float invZ;
+	invZ = 3.0f / (fabsf(start[2]) + 0.01f);
+	start[0] *= invZ;
+	start[1] *= invZ * ASPECT_RATIO; // This ignores width.... ARGH!!!
+	float startWidth = width * invZ;
+	invZ = 3.0f / (fabsf(end[2]) + 0.01f);
+	end[0] *= invZ;
+	end[1] *= invZ * ASPECT_RATIO;
+	float endWidth = width * invZ;
+
+	float startX = start[0];
+	float startY = start[1];
+	float endX = end[0];
+	float endY = end[1];
 
 	// I have to set the color differently...
 	glColor4f(color[0], color[1], color[2], color[3]);
@@ -404,6 +423,10 @@ void drawLine(float startX, float startY, float endX, float endY,
 	float nx = -ly;
 	float ny = lx;
 
+	// I do not want to do that lx magic...
+	lx = 0.0f;
+	ly = 0.0f;
+
 	glBegin(GL_QUADS);
 	glTexCoord2f(0.0f, 1.0f);
 	glVertex3f(startX + (-lx + nx)*startWidth, startY + (-ly + ny)*startWidth, 0.5);
@@ -415,6 +438,76 @@ void drawLine(float startX, float startY, float endX, float endY,
 	glVertex3f(startX + (-lx - nx)*startWidth, startY + (-ly - ny)*startWidth, 0.5);
 	glEnd();
 }
+
+// The same as drawline, but uses multiple segments, for perspective correction
+void drawMultiLine(float start[3], float end[3],
+	               float width, const char *texName,
+			       const float color[4])
+{
+	const int numSegments = 20;
+
+#if 1
+	GLuint texID;
+	char errorString[MAX_ERROR_LENGTH+1];
+	if (textureManager.getTextureID(texName, &texID, errorString) < 0)
+	{
+		MessageBox(hWnd, errorString, "Texture load error", MB_OK);
+		exit(-1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+#else
+	glBindTexture(GL_TEXTURE_2D, 0);
+#endif
+
+	float dPos[3];
+	for (int i = 0; i < 3; i++)
+	{
+		dPos[i] = (end[i] - start[i]) / (float)numSegments;
+		end[i] = start[i] + dPos[i];
+	}
+
+	for (int i = 0; i < numSegments; i++)
+	{
+		// perspective correction
+		float invZ;
+		invZ = 3.0f / (fabsf(start[2]) + 0.01f);
+		float startX = start[0] * invZ;
+		float startY = (start[1]) * invZ * ASPECT_RATIO; // This ignores width.... ARGH!!!
+		float startWidth = width * invZ;
+		invZ = 3.0f / (fabsf(end[2]) + 0.01f);
+		float endX = end[0] * invZ;
+		float endY = (end[1]) * invZ * ASPECT_RATIO;
+		float endWidth = width * invZ;
+
+		float lx = dPos[0];
+		float ly = dPos[1];
+		float invLen = 1.0f / sqrtf(lx * lx + ly * ly);
+		lx *= invLen;
+		ly *= invLen;
+		float nx = -ly;
+		float ny = lx;
+
+		glColor4f(color[0], color[1], color[2], color[3]);
+
+		glBegin(GL_QUADS);
+		glTexCoord2f(0.0f, i/(float)numSegments);
+		glVertex3f(startX + nx*startWidth, startY + ny*startWidth, 0.5);
+		glTexCoord2f(0.0f, (i+1)/(float)numSegments);
+		glVertex3f(endX + nx*endWidth, endY + ny*endWidth, 0.5);
+		glTexCoord2f(1.0f, (i+1)/(float)numSegments);
+		glVertex3f(endX - nx*endWidth, endY - ny*endWidth, 0.5);
+		glTexCoord2f(1.0, i/(float)numSegments);
+		glVertex3f(startX - nx*startWidth, startY - ny*startWidth, 0.5);
+		glEnd();
+
+		for (int j = 0; j < 3; j++)
+		{
+			start[j] = end[j];
+			end[j] += dPos[j];
+		}
+	}
+}
+
 
 void rotateX(float dest[3], const float source[3], float alpha)
 {
@@ -481,8 +574,8 @@ void screensaverScene(float ftime)
 			transStart[i] = line->start[i];
 			transEnd[i] = line->end[i];
 		}
-		transStart[2] += sin(ftime*0.3f)*6.0f + 6.0f;
-		transEnd[2] += sin(ftime*0.3f)*6.0f + 6.0f;
+		transStart[2] += sin(ftime*0.1f)*16.0f;
+		transEnd[2] += sin(ftime*0.1f)*16.0f;
 
 		// Move the lines
 		rotateY(tmpV, transStart, -0.3f);
@@ -490,28 +583,15 @@ void screensaverScene(float ftime)
 		rotateY(tmpV, transEnd, -0.3f);
 	    rotateX(transEnd, tmpV, 0.4f);
 
-		// perspective correction
-		float invZ;
-		invZ = 3.0f / (fabsf(transStart[2]) + 0.01f);
-		transStart[0] *= invZ;
-		transStart[1] *= invZ * ASPECT_RATIO; // This ignores width.... ARGH!!!
-		float startWidth = line->width * invZ;
-		invZ = 3.0f / (fabsf(transEnd[2]) + 0.01f);
-		transEnd[0] *= invZ;
-		transEnd[1] *= invZ * ASPECT_RATIO;
-		float endWidth = line->width * invZ;
-		//startWidth = endWidth = line->width * invZ;
-
 		// draw
-		float col[4];
-		for (int i = 0; i < 4; i++)
+		if (line->multipartLine)
 		{
-			col[i] = line->color[i];
+			drawMultiLine(transStart, transEnd, line->width, line->texName, line->color);
 		}
-		invZ *= 4.0f;
-		if (invZ > 1.0f) invZ = 1.0f;
-		col[3] *= invZ;
-		drawLine(transStart[0], transStart[1], transEnd[0], transEnd[1], startWidth, endWidth, line->texName, col);
+		else
+		{
+			drawLine(transStart, transEnd, line->width, line->texName, line->color);
+		}
 	}
 
 	glDisable(GL_BLEND);
