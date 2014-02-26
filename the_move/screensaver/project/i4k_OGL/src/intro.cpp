@@ -137,25 +137,77 @@ struct Scene
 
 // Input 0: Scene with 3 Lines at the top.
 // I need some sort of perspective correction, no? And also aspect ratio...
-const Line basicSceneLines[] =
+const float CABLE_WIDTH = 0.01f;
+const float MAST_WIDTH = 0.6f;
+const float MAST_DISTANCE = 10.0f;
+const Line scene_5_5_a[] =
 {
-	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.45f, -0.1f}, {-1.25f, 1.45f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.27f, -0.1f}, {-1.25f, 1.27f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.6f},
-	{"thin_line_small.tga", {-1.25f, 1.22f, -0.1f}, {-1.25f, 1.22f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.53f},
-	{"mast5.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, 0.6f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-1.25f, 1.8f, -10.1f}, {-1.25f, 1.8f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.7f, -10.1f}, {-1.25f, 1.7f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.13f},	
-	{"thin_line_small.tga", {-1.25f, 1.6f, -10.1f}, {-1.25f, 1.6f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.45f, -10.1f}, {-1.25f, 1.45f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.27f, -10.1f}, {-1.25f, 1.27f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.6f},
-	{"thin_line_small.tga", {-1.25f, 1.22f, -10.1f}, {-1.25f, 1.22f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.53f},	
+	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.45f, -0.1f}, {-1.25f, 1.45f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.27f, -0.1f}, {-1.25f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.6f},
+	{"thin_line_small.tga", {-1.25f, 1.22f, -0.1f}, {-1.25f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.53f},
+	{"mast5.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
 };
+
+const Line scene_3_3_a[] =
+{
+	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
+	{"mast1.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+};
+
+const Line scene_3_3_b[] =
+{
+	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.22f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.1f, 0.13f},
+	{"mast2.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+};
+
+const Line scene_3_3_c[] =
+{
+	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.09f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.21f, 0.13f},
+	{"mast3.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, 0.6f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+};
+
+const Line scene_3_3_crossAtMast[] =
+{
+	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
+	{"thin_line_small.tga", {-11.26f, 1.65f, 0.0f}, {-1.25f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.24f, -0.01f},
+	{"thin_line_small.tga", {-1.25f, 1.65f, 0.0f}, {9.26f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, -0.01f},
+	{"thin_line_small.tga", {-11.26f, 1.5f, 0.0f}, {-1.25f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, -0.01f},
+	{"thin_line_small.tga", {-1.25f, 1.5f, 0.0f}, {9.26f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.01f},
+	{"mast2.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+};
+
+const Line scene_3_3_crossAbove[] =
+{
+	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
+	{"thin_line_small.tga", {-11.26f, 1.9f, 0.7f*MAST_DISTANCE}, {11.25f, 1.9f, 0.7f*MAST_DISTANCE}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.32f, -0.01f},
+	{"thin_line_small.tga", {-11.26f, 1.9f, 0.7f*MAST_DISTANCE+0.2f}, {11.25f, 1.9f, 0.7f*MAST_DISTANCE+0.2f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.31f, -0.01f},
+	{"thin_line_small.tga", {-11.26f, 1.9f, 0.7f*MAST_DISTANCE+0.4f}, {11.25f, 1.9f, 0.7f*MAST_DISTANCE+0.4f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.31f, -0.01f},
+	{"mast1.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+};
+
+
+const int numBasicScenes = 5;
+
 const Scene basicScenes[] = 
 {
-	{0, sizeof(basicSceneLines) / sizeof(Line), basicSceneLines},
+	{0, sizeof(scene_3_3_a) / sizeof(Line), scene_3_3_a},
+	{0, sizeof(scene_3_3_b) / sizeof(Line), scene_3_3_b},
+	{0, sizeof(scene_3_3_c) / sizeof(Line), scene_3_3_c},
+	{0, sizeof(scene_3_3_crossAtMast) / sizeof(Line), scene_3_3_crossAtMast},
+	{0, sizeof(scene_3_3_crossAbove) / sizeof(Line), scene_3_3_crossAbove},
 };
 
 // -------------------------------------------------------------------
@@ -570,9 +622,18 @@ void screensaverScene(float ftime)
 	glLoadIdentity();
 	gluPerspective(40, (float)XRES / (FLOAT)YRES, 0.1f, 1000.0f);
 
+	// Calculate where we are in the world
+	float distance = ftime * 4.0f;
+	int sceneIndex = (int)(distance / MAST_DISTANCE);
+	distance -= sceneIndex * MAST_DISTANCE;
+
 	// Draw all the lines in the current scene
-	int sceneID = 0;
-	const Scene *scene = &(basicScenes[sceneID]);
+	int sceneID[3];
+	sceneID[0] = (sceneIndex * 17) % numBasicScenes;
+	sceneIndex++;
+	sceneID[1] = (sceneIndex * 17) % numBasicScenes;
+	sceneIndex++;
+	sceneID[2] = (sceneIndex * 17) % numBasicScenes;
 	float tmpV[3];
 
 	// Get the direction after rotation
@@ -580,41 +641,46 @@ void screensaverScene(float ftime)
 	rotateY(tmpV, up, -0.3f);
 	rotateX(up, tmpV, 0.5f);
 
-	for (int i = 0; i < scene->numLines; i++)
+	for (int drawings = 2; drawings >= 0; drawings--)
 	{
-		const Line *line = &(scene->lines[i]);
-		float transStart[3];
-		float transEnd[3];
+		const Scene *scene = &(basicScenes[sceneID[drawings]]);
 
-		// Translate (and copy...)
-		for (int i = 0; i < 3; i++)
+		for (int i = 0; i < scene->numLines; i++)
 		{
-			transStart[i] = line->start[i];
-			transEnd[i] = line->end[i];
-		}
-		transStart[2] += sin(ftime*0.1f)*16.0f;
-		transEnd[2] += sin(ftime*0.1f)*16.0f;
+			const Line *line = &(scene->lines[i]);
+			float transStart[3];
+			float transEnd[3];
 
-		// Move the lines
-		rotateY(tmpV, transStart, -0.3f);
-		rotateX(transStart, tmpV, 0.5f);
-		rotateY(tmpV, transEnd, -0.3f);
-	    rotateX(transEnd, tmpV, 0.5f);
+			// Translate (and copy...)
+			for (int i = 0; i < 3; i++)
+			{
+				transStart[i] = line->start[i];
+				transEnd[i] = line->end[i];
+			}
+			transStart[2] -= distance - drawings * MAST_DISTANCE;
+			transEnd[2] -= distance - drawings * MAST_DISTANCE;
 
-		// transpose after rotate
-		transStart[0] += line->xTranspose * up[1];
-		transStart[1] += line->xTranspose * up[0];
-		transEnd[0] += line->xTranspose * up[1];
-		transEnd[1] += line->xTranspose * up[0];
+			// Move the lines
+			rotateY(tmpV, transStart, -0.3f);
+			rotateX(transStart, tmpV, 0.5f);
+			rotateY(tmpV, transEnd, -0.3f);
+			rotateX(transEnd, tmpV, 0.5f);
 
-		// draw
-		if (line->multipartLine)
-		{
-			drawMultiLine(transStart, transEnd, line->width, line->texName, line->color, line->hangThrough);
-		}
-		else
-		{
-			drawLine(transStart, transEnd, line->width, line->texName, line->color);
+			// transpose after rotate
+			transStart[0] += line->xTranspose * up[1];
+			transStart[1] += line->xTranspose * up[0];
+			transEnd[0] += line->xTranspose * up[1];
+			transEnd[1] += line->xTranspose * up[0];
+
+			// draw
+			if (line->multipartLine)
+			{
+				drawMultiLine(transStart, transEnd, line->width, line->texName, line->color, line->hangThrough);
+			}
+			else
+			{
+				drawLine(transStart, transEnd, line->width, line->texName, line->color);
+			}
 		}
 	}
 
