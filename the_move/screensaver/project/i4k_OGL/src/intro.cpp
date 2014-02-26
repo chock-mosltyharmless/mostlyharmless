@@ -139,19 +139,19 @@ struct Scene
 // I need some sort of perspective correction, no? And also aspect ratio...
 const Line basicSceneLines[] =
 {
-	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, -0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, -0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, -0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.45f, -0.1f}, {-1.25f, 1.45f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, -0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.27f, -0.1f}, {-1.25f, 1.27f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.48f},
-	{"thin_line_small.tga", {-1.25f, 1.22f, -0.1f}, {-1.25f, 1.22f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.37f},
-	{"mast4.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, 0.5f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-1.25f, 1.8f, -10.1f}, {-1.25f, 1.8f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, -0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.7f, -10.1f}, {-1.25f, 1.7f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.13f},	
-	{"thin_line_small.tga", {-1.25f, 1.6f, -10.1f}, {-1.25f, 1.6f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, -0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.45f, -10.1f}, {-1.25f, 1.45f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.13f},
-	{"thin_line_small.tga", {-1.25f, 1.27f, -10.1f}, {-1.25f, 1.27f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.48f},
-	{"thin_line_small.tga", {-1.25f, 1.22f, -10.1f}, {-1.25f, 1.22f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.37f},	
+	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.45f, -0.1f}, {-1.25f, 1.45f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.27f, -0.1f}, {-1.25f, 1.27f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.6f},
+	{"thin_line_small.tga", {-1.25f, 1.22f, -0.1f}, {-1.25f, 1.22f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.53f},
+	{"mast5.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, 0.6f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+	{"thin_line_small.tga", {-1.25f, 1.8f, -10.1f}, {-1.25f, 1.8f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -10.1f}, {-1.25f, 1.7f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.13f},	
+	{"thin_line_small.tga", {-1.25f, 1.6f, -10.1f}, {-1.25f, 1.6f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.45f, -10.1f}, {-1.25f, 1.45f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.27f, -10.1f}, {-1.25f, 1.27f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.6f},
+	{"thin_line_small.tga", {-1.25f, 1.22f, -10.1f}, {-1.25f, 1.22f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.53f},	
 };
 const Scene basicScenes[] = 
 {
