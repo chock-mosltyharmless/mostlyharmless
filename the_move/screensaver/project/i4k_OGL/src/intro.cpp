@@ -58,7 +58,7 @@ void main(void)\
    gl_TexCoord[0] = gl_MultiTexCoord0;\n\
    color = gl_Color;\n\
    objectPosition = vec3(gl_Vertex.x, gl_Vertex.y, 1.0);\
-   gl_Position = vec4(gl_Vertex.x, gl_Vertex.y, 0.5, 1.0);\
+   gl_Position = gl_ProjectionMatrix * vec4(gl_Vertex.x, gl_Vertex.y, gl_Vertex.z, 1.0) ;\
 }";
 
 // -------------------------------------------------------------------
@@ -125,6 +125,7 @@ struct Line
 	float color[4];
 	bool multipartLine;
 	float hangThrough;
+	float xTranspose;
 };
 
 struct Scene
@@ -138,15 +139,19 @@ struct Scene
 // I need some sort of perspective correction, no? And also aspect ratio...
 const Line basicSceneLines[] =
 {
-	{"mast1.tga", {-1.5f, 2.0f, 0.0f}, {-1.5f, -0.0f, 0.0f}, 0.2f, {1.0f, 1.0f, 1.0f, 1.0f}, false, 0.0f},
-	{"thin_line_small.tga", {-1.35f, 1.8f, -10.1f}, {-1.35f, 1.8f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f},
-	{"thin_line_small.tga", {-1.35f, 1.8f, -0.1f}, {-1.35f, 1.8f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f},
-	{"thin_line_small.tga", {-1.35f, 1.7f, -10.1f}, {-1.35f, 1.7f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f},
-	{"thin_line_small.tga", {-1.35f, 1.7f, -0.1f}, {-1.35f, 1.7f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f},
-	{"thin_line_small.tga", {-1.35f, 1.6f, -10.1f}, {-1.35f, 1.6f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f},
-	{"thin_line_small.tga", {-1.35f, 1.6f, -0.1f}, {-1.35f, 1.6f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f},
-	{"thin_line_small.tga", {-1.35f, 1.45f, -10.1f}, {-1.35f, 1.45f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f},
-	{"thin_line_small.tga", {-1.35f, 1.45f, -0.1f}, {-1.35f, 1.45f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f},
+	{"thin_line_small.tga", {-1.25f, 1.8f, -0.1f}, {-1.25f, 1.8f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, -0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -0.1f}, {-1.25f, 1.7f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, -0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.6f, -0.1f}, {-1.25f, 1.6f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, -0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.45f, -0.1f}, {-1.25f, 1.45f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, -0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.27f, -0.1f}, {-1.25f, 1.27f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.48f},
+	{"thin_line_small.tga", {-1.25f, 1.22f, -0.1f}, {-1.25f, 1.22f, 10.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.37f},
+	{"mast4.tga", {-1.25f, 2.0f, 0.0f}, {-1.25f, -0.5f, 0.0f}, 0.5f, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+	{"thin_line_small.tga", {-1.25f, 1.8f, -10.1f}, {-1.25f, 1.8f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, -0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.7f, -10.1f}, {-1.25f, 1.7f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.13f},	
+	{"thin_line_small.tga", {-1.25f, 1.6f, -10.1f}, {-1.25f, 1.6f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, -0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.45f, -10.1f}, {-1.25f, 1.45f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.13f},
+	{"thin_line_small.tga", {-1.25f, 1.27f, -10.1f}, {-1.25f, 1.27f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.48f},
+	{"thin_line_small.tga", {-1.25f, 1.22f, -10.1f}, {-1.25f, 1.22f, 0.1f}, 0.012f, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.35f, 0.37f},	
 };
 const Scene basicScenes[] = 
 {
@@ -401,21 +406,12 @@ void drawLine(float start[3], float end[3],
 	}
 	glBindTexture(GL_TEXTURE_2D, texID);
 
-	// perspective correction
-	float invZ;
-	invZ = 3.0f / (fabsf(start[2]) + 0.01f);
-	start[0] *= invZ;
-	start[1] *= invZ * ASPECT_RATIO; // This ignores width.... ARGH!!!
-	float startWidth = width * invZ;
-	invZ = 3.0f / (fabsf(end[2]) + 0.01f);
-	end[0] *= invZ;
-	end[1] *= invZ * ASPECT_RATIO;
-	float endWidth = width * invZ;
-
 	float startX = start[0];
 	float startY = start[1];
+	float startZ = start[2];
 	float endX = end[0];
 	float endY = end[1];
+	float endZ = end[2];
 
 	// I have to set the color differently...
 	glColor4f(color[0], color[1], color[2], color[3]);
@@ -434,13 +430,13 @@ void drawLine(float start[3], float end[3],
 
 	glBegin(GL_QUADS);
 	glTexCoord2f(0.0f, 1.0f);
-	glVertex3f(startX + (-lx + nx)*startWidth, startY + (-ly + ny)*startWidth, 0.5);
+	glVertex3f(startX + (-lx + nx)*width, startY + (-ly + ny)*width, -startZ);
 	glTexCoord2f(0.0f, 0.0f);
-	glVertex3f(endX + (lx + nx)*endWidth, endY + (ly + ny)*endWidth, 0.5);
+	glVertex3f(endX + (lx + nx)*width, endY + (ly + ny)*width, -endZ);
 	glTexCoord2f(1.0f, 0.0f);
-	glVertex3f(endX + (lx - nx)*endWidth, endY + (ly - ny)*endWidth, 0.5);
+	glVertex3f(endX + (lx - nx)*width, endY + (ly - ny)*width, -endZ);
 	glTexCoord2f(1.0, 1.0f);
-	glVertex3f(startX + (-lx - nx)*startWidth, startY + (-ly - ny)*startWidth, 0.5);
+	glVertex3f(startX + (-lx - nx)*width, startY + (-ly - ny)*width, -startZ);
 	glEnd();
 }
 
@@ -483,16 +479,12 @@ void drawMultiLine(float start[3], float end[3],
 
 	for (int i = 0; i < numSegments; i++)
 	{
-		// perspective correction
-		float invZ;
-		invZ = 3.0f / (fabsf(start[2]) + 0.01f);
-		float startX = start[0] * invZ;
-		float startY = (start[1]+hangers[i]) * invZ * ASPECT_RATIO; // This ignores width.... ARGH!!!
-		float startWidth = width * invZ;
-		invZ = 3.0f / (fabsf(end[2]) + 0.01f);
-		float endX = end[0] * invZ;
-		float endY = (end[1]+hangers[i + 1]) * invZ * ASPECT_RATIO;
-		float endWidth = width * invZ;
+		float startX = start[0];
+		float startY = start[1] + hangers[i];
+		float startZ = start[2];
+		float endX = end[0];
+		float endY = end[1] + hangers[i+1];
+		float endZ = end[2];
 
 		float lx = dPos[0];
 		float ly = dPos[1];
@@ -506,13 +498,13 @@ void drawMultiLine(float start[3], float end[3],
 
 		glBegin(GL_QUADS);
 		glTexCoord2f(0.0f, i/(float)numSegments);
-		glVertex3f(startX + nx*startWidth, startY + ny*startWidth, 0.5);
+		glVertex3f(startX + nx*width, startY + ny*width, -startZ);
 		glTexCoord2f(0.0f, (i+1)/(float)numSegments);
-		glVertex3f(endX + nx*endWidth, endY + ny*endWidth, 0.5);
+		glVertex3f(endX + nx*width, endY + ny*width, -endZ);
 		glTexCoord2f(1.0f, (i+1)/(float)numSegments);
-		glVertex3f(endX - nx*endWidth, endY - ny*endWidth, 0.5);
+		glVertex3f(endX - nx*width, endY - ny*width, -endZ);
 		glTexCoord2f(1.0, i/(float)numSegments);
-		glVertex3f(startX - nx*startWidth, startY - ny*startWidth, 0.5);
+		glVertex3f(startX - nx*width, startY - ny*width, -startZ);
 		glEnd();
 
 		for (int j = 0; j < 3; j++)
@@ -573,13 +565,24 @@ void screensaverScene(float ftime)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 
+	// Set perspective correction matrix
+	glMatrixMode(GL_PROJECTION);	
+	glLoadIdentity();
+	gluPerspective(40, (float)XRES / (FLOAT)YRES, 0.1f, 1000.0f);
+
 	// Draw all the lines in the current scene
 	int sceneID = 0;
 	const Scene *scene = &(basicScenes[sceneID]);
+	float tmpV[3];
+
+	// Get the direction after rotation
+	float up[3] = {0.0f, 1.0f, 0.0f};
+	rotateY(tmpV, up, -0.3f);
+	rotateX(up, tmpV, 0.5f);
+
 	for (int i = 0; i < scene->numLines; i++)
 	{
 		const Line *line = &(scene->lines[i]);
-		float tmpV[3];
 		float transStart[3];
 		float transEnd[3];
 
@@ -594,9 +597,15 @@ void screensaverScene(float ftime)
 
 		// Move the lines
 		rotateY(tmpV, transStart, -0.3f);
-		rotateX(transStart, tmpV, 0.4f);
+		rotateX(transStart, tmpV, 0.5f);
 		rotateY(tmpV, transEnd, -0.3f);
-	    rotateX(transEnd, tmpV, 0.4f);
+	    rotateX(transEnd, tmpV, 0.5f);
+
+		// transpose after rotate
+		transStart[0] += line->xTranspose * up[1];
+		transStart[1] += line->xTranspose * up[0];
+		transEnd[0] += line->xTranspose * up[1];
+		transEnd[1] += line->xTranspose * up[0];
 
 		// draw
 		if (line->multipartLine)
@@ -609,7 +618,10 @@ void screensaverScene(float ftime)
 		}
 	}
 
+	// Reset the GL settings
 	glDisable(GL_BLEND);
+	glMatrixMode(GL_PROJECTION);	
+	glLoadIdentity();
 
 	// draw background:
 	glMatrixMode(GL_MODELVIEW);	
@@ -667,7 +679,7 @@ void screensaverScene(float ftime)
 	glActiveTexture(GL_TEXTURE0);
 
 	// Draw it
-	gluSphere(quad, 2.0f, 16, 16);
+	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
 
 	// copy to front
 	glViewport(0, 0, realXRes, realYRes);
@@ -675,7 +687,7 @@ void screensaverScene(float ftime)
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
 	glUseProgram(shaderCopyProgram);	
-	gluSphere(quad, 2.0f, 16, 16);
+	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
 #endif
 }
 

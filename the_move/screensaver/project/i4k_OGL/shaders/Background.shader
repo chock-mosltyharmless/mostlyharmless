@@ -79,5 +79,5 @@ void main(void)
 
    vec3 texColor = texture2D(Texture1, fog.rg * 0.007 + (objectPosition.xy + vec2(1.0)) * 0.485).rgb;
 
-   gl_FragColor = vec4(mix(redFogAdder + blackFogAdder + totalColor, texColor, 0.85), 1.0);
+   gl_FragColor = vec4(mix(redFogAdder + blackFogAdder /*+ totalColor*/, texColor, 0.85), 1.0);
 }
