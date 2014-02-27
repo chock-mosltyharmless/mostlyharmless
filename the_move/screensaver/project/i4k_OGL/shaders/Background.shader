@@ -53,7 +53,7 @@ vec2 getFog(vec2 relPos)
 
 void main(void)
 {
-	float time = parameters[0][0];
+	float time = parameters[0][0] * 0.3;
 
 	// hackadoodle
 	vec2 relPos = vec2(parameters[3][0], parameters[3][1]) * objectPosition.x * 10./9. +
