@@ -38,5 +38,5 @@ void main(void)
    gl_FragColor *= 1.2 - vignette * 0.3; // darken
    float meanColor = 0.3 * gl_FragColor.r + 0.59 * gl_FragColor.r + 0.11 * gl_FragColor.b;
    gl_FragColor = 0.2 * vignette * vec4(meanColor) + (1.0 - 0.4 * vignette) * gl_FragColor; // desaturate
-   //gl_FragColor = (1.0 - 0.2 * vignette) * gl_FragColor;
+   gl_FragColor = (1.0 - 0.5 * vignette) * gl_FragColor;
 }
