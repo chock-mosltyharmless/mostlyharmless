@@ -19,6 +19,13 @@
 int realXRes;
 int realYRes;
 
+bool isScreenSaverRunning = true;
+int screenSaverStartTime = 0;
+int backgroundImage = 1;
+bool isAlarmRinging = false;
+int alarmStartTime = 0;
+int demoStartTime = 0;
+
 typedef struct
 {
     //---------------
@@ -86,9 +93,31 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			compileShaders();
 			break;
 
+		case 'q':
+		case 'Q':
+			isScreenSaverRunning = !isScreenSaverRunning;
+			ShowCursor(!isScreenSaverRunning);
+			screenSaverStartTime = timeGetTime();
+			break;
+
+		case 'm':
+		case 'M':
+			isAlarmRinging = !isAlarmRinging;
+			alarmStartTime = timeGetTime();
+			break;
+
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+			backgroundImage = wParam - '1' + 1;
+			break;
+
 		default:
 			break;
 		}
+		return 1;
     }
 
 	if ( uMsg==WM_LBUTTONDOWN)
@@ -97,7 +126,8 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		int yPos = lParam >> 16;
 		float relXPos = (float)xPos / float(rec.right - rec.left);
 		float relYPos = (float)yPos / float(rec.bottom - rec.top);
-		intro_click(relXPos, relYPos);
+		intro_click(relXPos, relYPos, timeGetTime());
+		return 1;
 	}
 
 	if ( uMsg==WM_MOUSEMOVE )
@@ -107,6 +137,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		float relXPos = (float)xPos / float(rec.right - rec.left);
 		float relYPos = (float)yPos / float(rec.bottom - rec.top);
 		intro_cursor(relXPos, relYPos);
+		return 1;
 	}
 
     return( DefWindowProc(hWnd,uMsg,wParam,lParam) );
@@ -242,10 +273,14 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//BASS_ChannelPlay(mp3Str, TRUE);
 	//BASS_Start();
 
-    long to=timeGetTime();
+    //long to=timeGetTime();
+	isScreenSaverRunning = false;
+	if (isScreenSaverRunning) ShowCursor(false);
+	screenSaverStartTime = timeGetTime();
+	demoStartTime = timeGetTime();
     while( !done )
         {
-		long t = timeGetTime() - to;
+		long t = timeGetTime();// - to;
 
         while( PeekMessage(&msg,0,0,0,PM_REMOVE) )
         {
@@ -256,7 +291,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         intro_do( t );
 
-#if 1
+#if 0
 		if( t>(MZK_DURATION*1000) )
 		{
 			done = 1;

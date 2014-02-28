@@ -13,9 +13,9 @@
 //#define XRES        (1280)
 //#define YRES        (1080 * 1280 / 1920)
 #define XRES        1200
-#define YRES        (1080 * XRES / 1920)
-//#define YRES        (480 * XRES / 640)
-#define ASPECT_RATIO ((float)XRES / (float)YRES)
+//#define YRES        (1080 * XRES / 1920)
+#define YRES        (480 * XRES / 640)
+#define ASPECT_RATIO ((float)realXRes / (float)realYRes)
 #define OFFSCREEN_WIDTH XRES
 #define OFFSCREEN_HEIGHT YRES
 #define HIGHLIGHT_WIDTH 200

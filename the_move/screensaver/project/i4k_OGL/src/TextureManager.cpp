@@ -124,8 +124,12 @@ int TextureManager::init(char *errorString)
 	do
 	{		
 		// Note that the number of textures is increased automatically
-		int retVal = loadTGA(ffd.cFileName, errorString);
-		if (retVal) return retVal;
+		int len = strlen(ffd.cFileName);
+		if (ffd.cFileName[len-3] == 't' && ffd.cFileName[len-2] == 'g' && ffd.cFileName[len-1] == 'a')
+		{
+			int retVal = loadTGA(ffd.cFileName, errorString);
+			if (retVal) return retVal;
+		}
 	} while (FindNextFile(hFind, &ffd));
 
 	return 0;

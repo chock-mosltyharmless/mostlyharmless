@@ -14,6 +14,8 @@ public:
 
 	float getGLX();
 	float getGLY();
+	static float getGLX(int x);
+	static float getGLY(int y);
 
 private:
 	int posX, posY;
