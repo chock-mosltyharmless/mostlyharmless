@@ -18,6 +18,9 @@ const float FlowIcon::distance = 0.2f;
 extern TextureManager textureManager;
 extern HWND hWnd;
 
+extern int realXRes;
+extern int realYRes;
+
 FlowIcon::FlowIcon(void)
 {
 }
@@ -43,6 +46,11 @@ void FlowIcon::init(const char *texName, int xpos, int ypos)
 
 float FlowIcon::getGLX()
 {
+	return getGLX(posX);
+}
+
+float FlowIcon::getGLX(int posX)
+{
 	int xpos = posX;
 	// get to floaty range
 	float fpx = xpos * distance;
@@ -52,7 +60,7 @@ float FlowIcon::getGLX()
 	return fpx;
 }
 
-float FlowIcon::getGLY()
+float FlowIcon::getGLY(int posY)
 {
 	int ypos = posY;
 	// get to floaty range
@@ -65,6 +73,11 @@ float FlowIcon::getGLY()
 	fpy = -fpy;
 
 	return fpy;
+}
+
+float FlowIcon::getGLY()
+{
+	return getGLY(posY);
 }
 
 void FlowIcon::drawAlarming(float time)

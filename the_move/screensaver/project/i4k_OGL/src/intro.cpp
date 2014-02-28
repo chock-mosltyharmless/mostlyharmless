@@ -23,6 +23,17 @@ float frand();
 
 extern int realXRes;
 extern int realYRes;
+extern int demoStartTime;
+extern bool isScreenSaverRunning;
+extern int screenSaverStartTime;
+extern int backgroundImage;
+extern bool isAlarmRinging;
+extern int alarmStartTime;
+
+bool isArrow = false;
+int arrowStartTime = 0;
+int arrowXi = 0;
+int arrowYi = 0;
 
 /* Number of names of the used shaders */
 #define NUM_SHADERS 10
@@ -584,7 +595,7 @@ void intro_init( void )
 }
 
 
-void desktopScene(float ftime)
+void desktopScene(float ftime, int itime)
 {
 	static float lastTime = 0.0f;
 	float deltaTime = ftime - lastTime;
@@ -611,50 +622,38 @@ void desktopScene(float ftime)
 	// draw background:
 	glMatrixMode(GL_MODELVIEW);	
 
-#if 0
-	GLuint noiseTexID;
-	GLuint offscreenTexID;
-	GLUquadric* quad = gluNewQuadric();
+	const char *bgTex;
 
-	parameterMatrix[0] = ftime; // time
-	float totalSize = 0.0f;
-	if (ftime > 33.0f)
+	switch(backgroundImage)
 	{
-		totalSize += (ftime - 33.0f) * (ftime - 33.0f) * 0.4f;
+	case 1:
+		bgTex = "yellow_watercolor.tga";
+		break;
+	case 2:
+		bgTex = "blue_watercolor.tga";
+		break;
+	case 3:
+	default:
+		bgTex = "green_watercolor.tga";
+		break;
 	}
-	if (ftime < 12.0f)
-	{
-		totalSize += (12.0f - ftime) * (12.0f - ftime) * 0.05f;
-	}
-	parameterMatrix[1] = totalSize;
-	glLoadMatrixf(parameterMatrix);
 
-	// draw offscreen
-	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	glUseProgram(shaderPrograms[0]);
-	//glBindTexture(GL_TEXTURE_2D, noiseTexture);
-	textureManager.getTextureID("noise2D", &noiseTexID, errorString);
-	glBindTexture(GL_TEXTURE_2D, noiseTexID);
-	gluSphere(quad, 2.0f, 16, 16);
-
-	// copy to front
-	glViewport(0, 0, realXRes, realYRes);
-	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
-	textureManager.getTextureID("renderTarget", &offscreenTexID, errorString);
-	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
-	glUseProgram(shaderCopyProgram);	
-	gluSphere(quad, 2.0f, 16, 16);
-#else
-	if (textureManager.getTextureID("sun-flower.tga", &texID, errorString))
+	if (textureManager.getTextureID(bgTex, &texID, errorString))
 	{
 		MessageBox(hWnd, errorString, "texture not found", MB_OK);
 		exit(1);
 	}
 	glDisable(GL_BLEND);
 	glBindTexture(GL_TEXTURE_2D, texID);
-	textureManager.drawQuad(-1.2f, -1.3f, 1.6f, 1.0f, 1.0f);
-#endif
+	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
+
+	if (textureManager.getTextureID("windows_panel.tga", &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "texture not found", MB_OK);
+		exit(1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, -1.0f + 2.0f * 47.0f / 1600.0f * ASPECT_RATIO, 1.0f);
 
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 	glEnable(GL_BLEND);
@@ -663,14 +662,19 @@ void desktopScene(float ftime)
 	// Draw the icons
 	for (int i = 0; i < NUM_ICONS; i++)
 	{
-		if (i == 0) // ALARM!
+		if (i == 0 && isAlarmRinging) // ALARM!
 		{
-			icon[i].drawAlarming(ftime);
+			// drawn later
+			//icon[i].drawAlarming(0.001f * (float)(itime - alarmStartTime));
 		}
 		else
 		{
 			icon[i].draw(ftime);
 		}
+	}
+	if (isAlarmRinging)
+	{
+		icon[0].drawAlarming(0.001f * (float)(itime - alarmStartTime));
 	}
 
 	// Draw the menu if present
@@ -689,6 +693,44 @@ void desktopScene(float ftime)
 			xp+0.9f*subMenuSize, yp-subMenuSize*0.6f*ASPECT_RATIO, 0.9f * subMenuAlpha);
 
 		icon[subMenuIndex].draw(ftime);
+	}
+
+	// Draw an error if present
+	if (isArrow)
+	{
+		float arrowTime = 0.001f * (float)(itime - arrowStartTime);
+		float arrowX = FlowIcon::getGLX(arrowXi);
+		float arrowY = FlowIcon::getGLY(arrowYi);
+
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+		float amount = arrowTime * 2.0f;
+		if (amount > 1.0f) amount = 1.0f;
+		if (textureManager.getTextureID("select_mask.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		textureManager.drawQuad(arrowX-2.0f, arrowY-2.0f*ASPECT_RATIO,
+			arrowX + 2.0f, arrowY + 2.0f*ASPECT_RATIO, 0.7f * amount);
+
+		// movement of arrow
+		int irelTime = (itime - arrowStartTime) % 1000;
+		float relTime = (float)(irelTime / 1000.0f);
+		relTime *= relTime;
+		float movement = cos(relTime * 3.1415f * 2.0f);
+		arrowX -= movement*0.03f;
+		arrowY -= movement*0.02f * ASPECT_RATIO;
+
+		if (textureManager.getTextureID("arrow2.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		textureManager.drawQuad(arrowX, arrowY,
+			arrowX + 0.25f, arrowY + 0.25f*ASPECT_RATIO, amount);
 	}
 	
 	glDisable(GL_BLEND);
@@ -1042,6 +1084,7 @@ void nothingScene(float ftime)
 
 void intro_do( long itime )
 {
+#if 0
 	static int oldTimes[5] = {0, 0, 0, 0, 0};
 	//static float ftime = -0.15f;
 	static float ftime = -0.2f;
@@ -1050,7 +1093,8 @@ void intro_do( long itime )
 	{
 		oldTimes[i] = oldTimes[i+1];
 	}
-	oldTimes[4] = itime;	
+	oldTimes[4] = itime;
+#endif
 
     // render
 	//glEnable(GL_DEPTH_TEST);
@@ -1075,8 +1119,16 @@ void intro_do( long itime )
 		parameterMatrix[i] = 0.0f;
 	}
 	
-	//desktopScene(ftime);
-	screensaverScene(ftime);
+	if (isScreenSaverRunning)
+	{
+		float ftime = 0.001f * (float)(itime - screenSaverStartTime);
+		screensaverScene(ftime);
+	}
+	else
+	{
+		float ftime = 0.001f * (float)(itime - demoStartTime);
+		desktopScene(ftime, itime);
+	}
 }
 
 void intro_cursor(float xpos, float ypos)
@@ -1087,24 +1139,33 @@ void intro_cursor(float xpos, float ypos)
 	}
 }
 
-void intro_click(float xpos, float ypos)
+void intro_click(float xpos, float ypos, int itime)
 {
-	if (!isSubMenu)
+	//if (!isSubMenu)
+	if (!isArrow)
 	{
 		for (int i = 0; i < NUM_ICONS; i++)
 		{
 			icon[i].setMousePosition(xpos, ypos);
 			if (icon[i].clickMouse())
 			{
-				isSubMenu = true;
-				subMenuAlpha = 0.0f;
-				subMenuSize = 0.0f;
-				subMenuIndex = i;
+				// Sub Menu does not work!
+				//isSubMenu = true;
+				//subMenuAlpha = 0.0f;
+				//subMenuSize = 0.0f;
+				//subMenuIndex = i;
+
+				// Instead I always find it...
+				isArrow = true;
+				arrowStartTime = itime;
+				arrowXi = 6;
+				arrowYi = 4;
 			}
 		}
 	}
 	else
 	{
-		isSubMenu = false;
+		//isSubMenu = false;
+		isArrow = false;
 	}
 }
