@@ -13,7 +13,8 @@ void compileShaders(void);
 void intro_init(void);
 void intro_do(long time);
 void intro_end(void);
-void intro_click(float xpos, float ypos, int itime);
+void intro_left_click(float xpos, float ypos, int itime);
+void intro_right_click(float xpos, float ypos, int itime);
 void intro_cursor(float xpos, float ypos);
 
 extern HWND hWnd;

@@ -25,6 +25,7 @@ int backgroundImage = 1;
 bool isAlarmRinging = false;
 int alarmStartTime = 0;
 int demoStartTime = 0;
+int numberOfTheDead = 1;
 
 typedef struct
 {
@@ -56,7 +57,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,1,
+static WININFO wininfo = {  0,0,0,0,0,
 							{'i','q','_',0}
                             };
 
@@ -87,11 +88,13 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			PostQuitMessage(0);
 			return 0;
 
+#if 0
 		case 'y':
 		case 'Y':
 		case VK_F1:
 			compileShaders();
 			break;
+#endif
 
 		case 'q':
 		case 'Q':
@@ -104,6 +107,18 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case 'M':
 			isAlarmRinging = !isAlarmRinging;
 			alarmStartTime = timeGetTime();
+			break;
+
+		case 'd':
+		case 'D':
+			numberOfTheDead++;
+			if (numberOfTheDead > 3) numberOfTheDead = 3;
+			break;
+		
+		case 's':
+		case 'S':
+			numberOfTheDead--;
+			if (numberOfTheDead < 1) numberOfTheDead = 1;
 			break;
 
 		case '1':
@@ -126,7 +141,17 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		int yPos = lParam >> 16;
 		float relXPos = (float)xPos / float(rec.right - rec.left);
 		float relYPos = (float)yPos / float(rec.bottom - rec.top);
-		intro_click(relXPos, relYPos, timeGetTime());
+		intro_left_click(relXPos, relYPos, timeGetTime());
+		return 1;
+	}
+
+	if ( uMsg==WM_RBUTTONDOWN)
+	{
+		int xPos = lParam & 0xffff;
+		int yPos = lParam >> 16;
+		float relXPos = (float)xPos / float(rec.right - rec.left);
+		float relYPos = (float)yPos / float(rec.bottom - rec.top);
+		intro_right_click(relXPos, relYPos, timeGetTime());
 		return 1;
 	}
 

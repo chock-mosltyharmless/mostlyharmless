@@ -6,22 +6,22 @@ public:
 	FlowIcon(void);
 	~FlowIcon(void);
 
-	void init(const char *texName, int xpos, int ypos);
+	// Distance is 2*width + 2*borderWidth
+	void init(const char *texName, float xpos, float ypos, float distance, float borderWidth);
 	void draw(float time);
 	void drawAlarming(float time);
+	void drawSubCategory(float time);
 	void setMousePosition(float xpos, float ypos);
 	bool clickMouse();
 
 	float getGLX();
 	float getGLY();
-	static float getGLX(int x);
-	static float getGLY(int y);
 
 private:
-	int posX, posY;
+	float posX, posY;
 	const char *texName;
-	const static float borderWidth;
-	const static float distance;
+	float borderWidth;
+	float distance;
 
 	// Control for wether it is clicked
 	float curTime;

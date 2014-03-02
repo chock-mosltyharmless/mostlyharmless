@@ -12,9 +12,6 @@
 #include "config.h"
 #include "TextureManager.h"
 
-const float FlowIcon::borderWidth = 0.02f;
-const float FlowIcon::distance = 0.2f;
-
 extern TextureManager textureManager;
 extern HWND hWnd;
 
@@ -29,11 +26,13 @@ FlowIcon::~FlowIcon(void)
 {
 }
 
-void FlowIcon::init(const char *texName, int xpos, int ypos)
+void FlowIcon::init(const char *texName, float xpos, float ypos, float distance, float borderWidth)
 {
 	posX = xpos;
 	posY = ypos;
 	this->texName = texName;
+	this->distance = distance;
+	this->borderWidth = borderWidth;
 
 	mouseX = 1000.0f;
 	mouseY = 1000.0f;
@@ -46,38 +45,12 @@ void FlowIcon::init(const char *texName, int xpos, int ypos)
 
 float FlowIcon::getGLX()
 {
-	return getGLX(posX);
-}
-
-float FlowIcon::getGLX(int posX)
-{
-	int xpos = posX;
-	// get to floaty range
-	float fpx = xpos * distance;
-	// go to -1..1
-	fpx = fpx - 1.0f;
-	
-	return fpx;
-}
-
-float FlowIcon::getGLY(int posY)
-{
-	int ypos = posY;
-	// get to floaty range
-	float fpy = ypos * distance;
-	// apply aspect ratio
-	fpy *= ASPECT_RATIO;
-	// go to -1..1
-	fpy = fpy - 1.0f;
-	// go to top-down
-	fpy = -fpy;
-
-	return fpy;
+	return posX;
 }
 
 float FlowIcon::getGLY()
 {
-	return getGLY(posY);
+	return posY;
 }
 
 void FlowIcon::drawAlarming(float time)
@@ -111,6 +84,59 @@ void FlowIcon::drawAlarming(float time)
 							1.0f, 0.4f*alarmAmount * sin(time*25.0f));
 }
 
+void FlowIcon::drawSubCategory(float time)
+{
+	curTime = time;
+	GLuint texID;
+	char errorString[MAX_ERROR_LENGTH];
+
+	if (mouseIsOver)
+	{
+		mouseOverAmount += (time-lastDrawTime)*(1.0f - mouseOverAmount)*8.0f;
+		if (mouseOverAmount > 1.0f) mouseOverAmount = 1.0f;
+	}
+	else
+	{
+		float decay = exp(-(time-lastDrawTime)*6.0f);
+		mouseOverAmount *= decay;
+	}
+
+	// Draw the background
+	if (textureManager.getTextureID("blue.tga", &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "texture not found", MB_OK);
+		exit(1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	float xp = getGLX();
+	float yp = getGLY();
+	float bw = borderWidth * 0.5f;
+	textureManager.drawQuad(xp + bw, yp - (distance - bw) * ASPECT_RATIO,
+							xp + distance - bw, yp - bw*ASPECT_RATIO,
+							mouseOverAmount);
+
+	// set texture
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (textureManager.getTextureID(texName, &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "vMainObject shader error", MB_OK);
+		exit(1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	// Core drawing?
+	xp = getGLX();
+	yp = getGLY();
+	bw = borderWidth;
+	textureManager.drawQuad(xp + bw, yp - (distance - bw) * ASPECT_RATIO,
+		                    xp + distance - bw, yp - bw*ASPECT_RATIO,
+							1.0f);
+	lastDrawTime = time;
+}
+
+
+
 void FlowIcon::draw(float time)
 {
 	curTime = time;
@@ -119,12 +145,12 @@ void FlowIcon::draw(float time)
 	
 	if (mouseIsOver)
 	{
-		mouseOverAmount += (time-lastDrawTime)*(1.0f - mouseOverAmount)*4.0f;
+		mouseOverAmount += (time-lastDrawTime)*(1.0f - mouseOverAmount)*6.0f;
 		if (mouseOverAmount > 1.0f) mouseOverAmount = 1.0f;
 	}
 	else
 	{
-		float decay = exp(-(time-lastDrawTime));
+		float decay = exp(-(time-lastDrawTime)*4.0f);
 		mouseOverAmount *= decay;
 	}
 
@@ -205,11 +231,14 @@ void FlowIcon::draw(float time)
 
 void FlowIcon::setMousePosition(float xpos, float ypos)
 {
+	// Other direction of y...
+	ypos = 1.0f - ypos;
+
 	// Check if in range
-	float left = posX * distance * 0.5f;
-	float right = (posX + 1) * distance * 0.5f;
-	float top = posY * (distance*0.5f) * ASPECT_RATIO;
-	float bottom = (posY + 1) * (distance*0.5f) * ASPECT_RATIO;
+	float left = (posX + 1.0f + borderWidth) * 0.5f;
+	float right = (posX + 1.0f + distance - borderWidth) * 0.5f;
+	float top = (posY + 1.0f - (distance-borderWidth)*ASPECT_RATIO) * 0.5f;
+	float bottom = (posY + 1.0f + borderWidth*ASPECT_RATIO) * 0.5f;
 	mouseX = xpos;
 	mouseY = ypos;
 
