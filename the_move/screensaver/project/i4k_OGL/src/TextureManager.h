@@ -22,7 +22,7 @@
 
 #define TM_DIRECTORY "textures/"
 #define TM_SHADER_WILDCARD "*.tga"
-#define TM_MAX_NUM_TEXTURES 64
+#define TM_MAX_NUM_TEXTURES 128
 #define TM_MAX_FILENAME_LENGTH 1024
 
 #define TM_OFFSCREEN_NAME "renderTarget"

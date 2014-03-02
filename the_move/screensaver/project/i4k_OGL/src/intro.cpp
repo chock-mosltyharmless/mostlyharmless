@@ -29,11 +29,15 @@ extern int screenSaverStartTime;
 extern int backgroundImage;
 extern bool isAlarmRinging;
 extern int alarmStartTime;
+extern int numberOfTheDead;
+
+const float iconDistance = 2.0f / 7.0f;
+const float iconBorderWidth = 0.02f;
 
 bool isArrow = false;
 int arrowStartTime = 0;
-int arrowXi = 0;
-int arrowYi = 0;
+float arrowX = 0;
+float arrowY = 0;
 
 const float FOV = 40;
 
@@ -105,25 +109,75 @@ static GLuint shaderPrograms[NUM_SHADERS];
 bool isSubMenu = false;
 int subMenuIndex;
 float subMenuAlpha = 0.0f;
-float subMenuSize = 0.0f;
 
 // The Icons globally here
-#define NUM_ICONS 12
+#define NUM_ICONS 15
 FlowIcon icon[NUM_ICONS];
+FlowIcon deadIcon[3];
 char iconFileName[NUM_ICONS][1024] = 
 {
-	"alarm_icon.tga",
-	"chair_icon.tga",
-	"fernseher_icon.tga",
-	"fridge_icon.tga",
 	"garbage_icon.tga",
-	"garderobe_icon.tga",
-	"komode_icon.tga",
-	"lampe_icon.tga",
+	"fernseher_icon.tga",
 	"music_icon.tga",
-	"plant_icon.tga",
+	"alarm_icon.tga",
+	"weather_icon.tga",
+	"wanne_icon.tga",
+	"lampe_icon.tga",
+	"fridge_icon.tga",
+	"teppich_icon.tga",
+	"komode_icon.tga",
+	"garderobe_icon.tga",
 	"sofa_icon.tga",
-	"teppich_icon.tga"
+	"tisch_icon.tga",
+	"chair_icon.tga",
+	"plant_icon.tga",
+};
+
+// icon subcategories
+const int MAX_X_SUBCATEGORIES = 2;
+const int MAX_Y_SUBCATEGORIES = 5;
+const float SUB_ICON_DISTANCE = 0.125f;
+const float SUB_ICON_BORDER_WIDTH = 0.01f;
+
+struct SubCategory
+{
+	int width, height; // Number of stuff in there...
+	const char *texName[MAX_X_SUBCATEGORIES][MAX_Y_SUBCATEGORIES];
+	float xPos, yPos; // Filled in later...
+	FlowIcon icons[MAX_X_SUBCATEGORIES][MAX_Y_SUBCATEGORIES]; // Created later...
+};
+SubCategory subCategories[NUM_ICONS] = 
+{
+	// Mülleimer
+	{1, 5, {{"affe.tga", "fisch.tga", "Zucker.tga", "pilz.tga", "gluehbirne.tga"}}},
+	// Television
+	{1, 3, {{"cracker.tga", "yen.tga", "zwiebel.tga"}}},
+	// Music
+	{1, 3, {{"herz.tga", "platte.tga", "magic.tga"}}},
+	// Alarm
+	{1, 2, {{"euro.tga", "spritze.tga"}}},
+	// Weather
+	{1, 4, {{"feuerloescher.tga", "schirm.tga", "banane.tga", "thermometer.tga"}}},
+	// Dusche
+	{1, 4, {{"bett.tga", "birne.tga", "fisch.tga", "stift.tga"}}},
+	// Lampe
+	{1, 4, {{"Tischdecke01.tga", "pfeffer.tga", "trauben.tga", "kinderwagen.tga"}}},
+	// Freezer
+	{2, 5, {{"bein.tga", "ananas.tga", "bier.tga", "eingelegtes.tga", "Kaese.tga"}, {"Milch.tga", "pfeffer.tga", "pilz.tga", "Kavier.tga", "zitrone.tga"}}},
+	// Teppich
+	{1, 2, {{"werkzeug.tga", "sanitaetskasten.tga"}}},
+	// Komode
+	{2, 5, {{"apfel.tga", "besteck.tga", "radiergummi.tga", "ordner.tga", "medizin.tga"}, {"tasse.tga", "schere.tga", "waescheleine.tga", "Zeitung.tga", "vase.tga"}}},
+	// Garderobe
+	{2, 5, {{"tischdecke02.tga", "topf.tga", "Waesche.tga", "werkzeug.tga", "weinglas.tga"}, {"aubergine.tga", "kanne.tga", "tischdecke03.tga", "hamburger.tga", "Waesche.tga"}}},
+	// Sofa
+	{1, 1, {{"euro.tga"}}},
+	// Tisch
+	{0, 0}, // Done directly!!!
+	// Chair
+	{0, 0}, // Done directly!!!
+	// Flower:
+	{1, 3, {{"sushi.tga", "bonbon.tga", "Eimer.tga"}}}
 };
 
 // -------------------------------------------------------------------
@@ -373,12 +427,35 @@ void intro_init( void )
 	int index = 0;
 	for (int y = 0; y < 3; y++)
 	{
-		for (int x = 0; x < 4; x++)
+		for (int x = 0; x < 5; x++)
 		{
-			icon[index].init(iconFileName[index], x + 1, y + 1);
+			icon[index].init(iconFileName[index], (x+1) * iconDistance - 1.0f,
+						     1.0f - (y+1) * iconDistance * ASPECT_RATIO, iconDistance, iconBorderWidth);
+			
+			// Create the subcategories:
+			float xpos = (x+1)*iconDistance+0.15f - 1.0f;
+			float ypos = 1.0f - (y+1)*iconDistance*ASPECT_RATIO - 0.1f*ASPECT_RATIO;
+			if (index == 10) ypos += 0.2f;
+			subCategories[index].xPos = xpos;
+			subCategories[index].yPos = ypos;
+
+			for (int sx = 0; sx < subCategories[index].width; sx++)
+			{
+				for (int sy = 0; sy < subCategories[index].height; sy++)
+				{
+					subCategories[index].icons[sx][sy].init(subCategories[index].texName[sx][sy],
+						xpos + sx * SUB_ICON_DISTANCE,
+						ypos - sy * SUB_ICON_DISTANCE * ASPECT_RATIO,
+						SUB_ICON_DISTANCE, SUB_ICON_BORDER_WIDTH);
+				}
+			}
+
 			index++;
 		}
 	}
+	deadIcon[0].init("man.tga", 5 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
+	deadIcon[1].init("woman.tga", 4 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
+	deadIcon[2].init("baby.tga", 3 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
 
 	// Set the texture locations in the relevant shaders:
 	// Set texture locations
@@ -406,9 +483,7 @@ void desktopScene(float ftime, int itime)
 
 	if (isSubMenu)
 	{
-		subMenuSize += deltaTime * 5.0f * (1.1f - subMenuSize);
 		subMenuAlpha += deltaTime * 5.0f * (1.1f - subMenuAlpha);
-		if (subMenuSize > 1.0f) subMenuSize = 1.0f;
 		if (subMenuAlpha > 1.0f) subMenuAlpha = 1.0f;
 	}
 	else
@@ -458,9 +533,13 @@ void desktopScene(float ftime, int itime)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
 	// Draw the icons
+	for (int i = 0; i < numberOfTheDead; i++)
+	{
+		deadIcon[i].draw(ftime);
+	}
 	for (int i = 0; i < NUM_ICONS; i++)
 	{
-		if (i == 0 && isAlarmRinging) // ALARM!
+		if (i == 3 && isAlarmRinging) // ALARM!
 		{
 			// drawn later
 			//icon[i].drawAlarming(0.001f * (float)(itime - alarmStartTime));
@@ -472,33 +551,51 @@ void desktopScene(float ftime, int itime)
 	}
 	if (isAlarmRinging)
 	{
-		icon[0].drawAlarming(0.001f * (float)(itime - alarmStartTime));
+		icon[3].drawAlarming(0.001f * (float)(itime - alarmStartTime));
 	}
 
 	// Draw the menu if present
 	if (subMenuAlpha > 0.01f)
 	{
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-		if (textureManager.getTextureID("blue.tga", &texID, errorString))
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		const char *texName = "white.tga";
+		if (subCategories[subMenuIndex].height == 1 && subCategories[subMenuIndex].width == 1) texName = "white_1x1.tga";
+		if (subCategories[subMenuIndex].height == 2 && subCategories[subMenuIndex].width == 1) texName = "white_2x1.tga";
+		if (subCategories[subMenuIndex].height == 3 && subCategories[subMenuIndex].width == 1) texName = "white_3x1.tga";
+		if (subCategories[subMenuIndex].height == 4 && subCategories[subMenuIndex].width == 1) texName = "white_4x1.tga";
+		if (subCategories[subMenuIndex].height == 5 && subCategories[subMenuIndex].width == 1) texName = "white_5x1.tga";
+		if (subCategories[subMenuIndex].height == 5 && subCategories[subMenuIndex].width == 2) texName = "white_5x2.tga";
+
+		if (textureManager.getTextureID(texName, &texID, errorString))
 		{
 			MessageBox(hWnd, errorString, "texture not found", MB_OK);
 			exit(1);
 		}
 		glBindTexture(GL_TEXTURE_2D, texID);
-		float xp = icon[subMenuIndex].getGLX();
-		float yp = icon[subMenuIndex].getGLY();
-		textureManager.drawQuad(xp, yp,
-			xp+0.9f*subMenuSize, yp-subMenuSize*0.6f*ASPECT_RATIO, 0.9f * subMenuAlpha);
+		float xp = subCategories[subMenuIndex].xPos;
+		float yp = subCategories[subMenuIndex].yPos;
+		float height = (float)subCategories[subMenuIndex].height * SUB_ICON_DISTANCE * ASPECT_RATIO;
+		float width = (float)subCategories[subMenuIndex].width * SUB_ICON_DISTANCE;
+		textureManager.drawQuad(xp, yp, xp+width, yp-height, subMenuAlpha);
 
-		icon[subMenuIndex].draw(ftime);
+		// Draw all icons
+		for (int y = 0; y < subCategories[subMenuIndex].height; y++)
+		{
+			for (int x = 0; x < subCategories[subMenuIndex].width; x++)
+			{
+				// here I'd rather have a subDraw!
+				subCategories[subMenuIndex].icons[x][y].drawSubCategory(ftime);
+			}
+		}
 	}
 
 	// Draw an error if present
 	if (isArrow)
 	{
-		float arrowTime = 0.001f * (float)(itime - arrowStartTime);
-		float arrowX = FlowIcon::getGLX(arrowXi);
-		float arrowY = FlowIcon::getGLY(arrowYi);
+		float arrowTime = 0.003f * (float)(itime - arrowStartTime);
+		// Global:?
+		//float arrowX = 0.3f;
+		//float arrowY = 0.7f;
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -512,23 +609,6 @@ void desktopScene(float ftime, int itime)
 		glBindTexture(GL_TEXTURE_2D, texID);
 		textureManager.drawQuad(arrowX-2.0f, arrowY-2.0f*ASPECT_RATIO,
 			arrowX + 2.0f, arrowY + 2.0f*ASPECT_RATIO, 0.7f * amount);
-
-		// movement of arrow
-		int irelTime = (itime - arrowStartTime) % 1000;
-		float relTime = (float)(irelTime / 1000.0f);
-		relTime *= relTime;
-		float movement = cos(relTime * 3.1415f * 2.0f);
-		arrowX -= movement*0.03f;
-		arrowY -= movement*0.02f * ASPECT_RATIO;
-
-		if (textureManager.getTextureID("arrow2.tga", &texID, errorString))
-		{
-			MessageBox(hWnd, errorString, "texture not found", MB_OK);
-			exit(1);
-		}
-		glBindTexture(GL_TEXTURE_2D, texID);
-		textureManager.drawQuad(arrowX, arrowY,
-			arrowX + 0.25f, arrowY + 0.25f*ASPECT_RATIO, amount);
 	}
 	
 	glDisable(GL_BLEND);
@@ -769,7 +849,7 @@ void screensaverScene(float ftime)
 	// Set perspective correction matrix
 	glMatrixMode(GL_PROJECTION);	
 	glLoadIdentity();
-	gluPerspective(FOV, (float)XRES / (FLOAT)YRES, 0.1f, 1000.0f);
+	gluPerspective(FOV, ASPECT_RATIO, 0.1f, 1000.0f);
 
 	// Calculate where we are in the world
 	float distance = ftime * 2.0f;
@@ -992,39 +1072,113 @@ void intro_do( long itime )
 
 void intro_cursor(float xpos, float ypos)
 {
-	for (int i = 0; i < NUM_ICONS; i++)
+	if (isSubMenu)
 	{
-		icon[i].setMousePosition(xpos, ypos);
-	}
-}
-
-void intro_click(float xpos, float ypos, int itime)
-{
-	//if (!isSubMenu)
-	if (!isArrow)
-	{
-		for (int i = 0; i < NUM_ICONS; i++)
+		// Also inside all subcategories:
+		for (int x = 0; x < subCategories[subMenuIndex].width; x++)
 		{
-			icon[i].setMousePosition(xpos, ypos);
-			if (icon[i].clickMouse())
+			for (int y = 0; y < subCategories[subMenuIndex].height; y++)
 			{
-				// Sub Menu does not work!
-				//isSubMenu = true;
-				//subMenuAlpha = 0.0f;
-				//subMenuSize = 0.0f;
-				//subMenuIndex = i;
-
-				// Instead I always find it...
-				isArrow = true;
-				arrowStartTime = itime;
-				arrowXi = 6;
-				arrowYi = 4;
+				subCategories[subMenuIndex].icons[x][y].setMousePosition(xpos, ypos);
 			}
 		}
 	}
-	else
+	
+	for (int i = 0; i < NUM_ICONS; i++)
 	{
-		//isSubMenu = false;
+		if (isSubMenu)
+		{
+			icon[i].setMousePosition(-100.0f, -100.0f);
+		}
+		else
+		{
+			icon[i].setMousePosition(xpos, ypos);
+		}
+	}
+}
+
+void intro_left_click(float xpos, float ypos, int itime)
+{
+	if (isArrow)
+	{
+		// Arrow is no longer.
 		isArrow = false;
+		return;
+	}
+
+	if (isSubMenu)
+	{
+		for (int x = 0; x < subCategories[subMenuIndex].width; x++)
+		{
+			for (int y = 0; y < subCategories[subMenuIndex].height; y++)
+			{
+				subCategories[subMenuIndex].icons[x][y].setMousePosition(xpos, ypos);
+				if (subCategories[subMenuIndex].icons[x][y].clickMouse())
+				{
+					isArrow = true;
+					arrowStartTime = itime;
+					arrowX = 0.8f;
+					if ((subMenuIndex % 5) < 3) arrowX = -0.8f;
+					arrowY = 0.4f;
+					if ((subMenuIndex % 2) == 1) arrowY = -0.2f;
+				}
+			}
+		}
+
+		// The submenu is removed, possibly something is shinied:
+		isSubMenu = false;
+		subMenuAlpha = 0.0f;
+		return;
+	}
+
+	// No sub menu, click
+	for (int i = 0; i < NUM_ICONS; i++)
+	{
+		icon[i].setMousePosition(xpos, ypos);
+		if (icon[i].clickMouse())
+		{
+			//if (subCategories[i].width == 0)
+			{
+				// Instead do the thing directly			
+				isArrow = true;
+				arrowStartTime = itime;
+				arrowX = 0.0f;
+				arrowY = -0.5f;
+			}			
+		}
+	}
+}
+
+void intro_right_click(float xpos, float ypos, int itime)
+{
+	if (isArrow)
+	{
+		// Arrow was shown, show nothing now
+		isArrow = false;
+		return;
+	}
+
+	if (isSubMenu)
+	{
+		// Rightclick gets out of submenu
+		isSubMenu = false;
+		subMenuAlpha = 0.0f;
+		return;
+	}
+
+	// No sub menu, check...
+	for (int i = 0; i < NUM_ICONS; i++)
+	{
+		icon[i].setMousePosition(xpos, ypos);
+		if (icon[i].clickMouse())
+		{
+			if (subCategories[i].width > 0)
+			{
+				// There is a submenu, draw it:
+				isSubMenu = true;
+				subMenuAlpha = 1.0f;
+				subMenuIndex = i;
+			}
+		}
 	}
 }
