@@ -59,7 +59,7 @@ void main(void)
 	// hackadoodle
 	vec2 relPos = vec2(parameters[3][0], parameters[3][1]) * objectPosition.x * 10./9. +
 				  vec2(-parameters[3][1], parameters[3][0]) * objectPosition.y;
-	//relPos *= 0.25f;
+	relPos *= 1.5f;
 
 	relPos -= vec2(parameters[2][0], parameters[2][1]);
 
@@ -94,6 +94,6 @@ void main(void)
 
 	//gl_FragColor = vec4(redFogAdder + blackFogAdder + totalColor, 1.0);
 	gl_FragColor = vec4(texture2D(Texture1, (objectPosition.xy + fog.rg)*0.4 + 0.5).rgb, 1.0);
-	gl_FragColor.rgb = mix(gl_FragColor.rgb, redFogAdder + blackFogAdder + totalColor, 0.3);
+	gl_FragColor.rgb = mix(gl_FragColor.rgb, redFogAdder + blackFogAdder + totalColor, parameters[0][2]);
 	//gl_FragColor = swirl;
 }
