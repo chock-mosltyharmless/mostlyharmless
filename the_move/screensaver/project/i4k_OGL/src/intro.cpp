@@ -129,345 +129,124 @@ char iconFileName[NUM_ICONS][1024] =
 // -------------------------------------------------------------------
 //        ALL the stuff that I need to represent scenes
 // -------------------------------------------------------------------
-struct Line
-{
-	const char *texName;
-	float start[3];  // Z is depth...
-	float end[3];
-	float width;
-	float color[4];
-	bool multipartLine;
-	float hangThrough;
-	float xTranspose;
-};
 
-struct Scene
-{
-	int outputNumLines; // What can come after this scene
-	int numLines;
-	const Line *lines;
-};
-
-// Input 0: Scene with 3 Lines at the top.
-// I need some sort of perspective correction, no? And also aspect ratio...
-const float CABLE_WIDTH = 0.004f;
-const float MAST_WIDTH = 0.05f;
+const int NUM_POWER_LINES = 10;
+const int NUM_POWER_SCENES = 1000;
+const float POWER_LINE_WIDTH = 0.005f;
+const float MAST_LINE_WIDTH = 0.07f;
 const float MAST_DISTANCE = 10.0f;
+const int NUM_CORE_POWER_SCENES = 7;
 
-const Line scene_3_3_a[] =
+float coreMastLine[2][3] =
 {
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
+	{-1.0f, 2.52f, 0.0f}, {-1.0f, 0.5f, 0.0f}
 };
 
-const Line scene_3_3_b[] =
+const float corePowerLines[NUM_CORE_POWER_SCENES][NUM_POWER_LINES][3] =
 {
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.22f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.1f, 0.13f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_3_3_c[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, 10.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, 10.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.09f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, 10.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.21f, 0.13f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_3_5_up[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.53f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-0.85f, 0.0f, -1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.3f},
-	{"thin_line_small.tga", {-0.88f, 0.0f, -1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.21f, 0.38f},
-};
-
-const Line scene_3_5_leftUp[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, 0.53f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-2.75f, 0.0f, -1.2f}, {-0.85f, 1.36f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.3f},
-	{"thin_line_small.tga", {-2.78f, 0.0f, -1.2f}, {-0.85f, 1.36f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.38f},
-};
-
-const Line scene_3_3_crossAtMast[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-11.26f, 1.65f, 0.0f}, {-0.85f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.24f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.65f, 0.0f}, {9.26f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.5f, 0.0f}, {-0.85f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.5f, 0.0f}, {9.26f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.01f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_3_3_crossAtMastLots[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-11.26f, 1.65f, 0.0f}, {-0.85f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.65f, 0.0f}, {9.26f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.5f, 0.0f}, {-0.85f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.11f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.5f, 0.0f}, {9.26f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.6f, 0.3f}, {11.25f, 1.6f, 0.3f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.5f, 0.3f}, {11.25f, 1.5f, 0.3f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.5f, 0.5f}, {11.25f, 1.5f, 0.5f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, -0.01f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-
-const Line scene_3_3_crossAbove[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-11.26f, 1.9f, 0.7f*MAST_DISTANCE}, {11.25f, 1.9f, 0.7f*MAST_DISTANCE}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.32f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.9f, 0.7f*MAST_DISTANCE+0.2f}, {11.25f, 1.9f, 0.7f*MAST_DISTANCE+0.2f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.31f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.9f, 0.7f*MAST_DISTANCE+0.4f}, {11.25f, 1.9f, 0.7f*MAST_DISTANCE+0.4f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.31f, -0.01f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_5_5_a[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.25f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.53f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_5_5_b[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.11f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.11f, 0.53f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_5_3_a[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.11f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"thin_line_small.tga", {-11.26f, 1.35f, 0.0f}, {-0.85f, 1.35f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.4f, 0.0f}, {-0.85f, 1.4f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.01f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_5_3_b[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.21f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.65f, 0.0f}, {9.26f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.5f, 0.0f}, {9.26f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, -0.01f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_5_5_crossAtMast[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-11.26f, 1.65f, 0.0f}, {-0.85f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.65f, 0.0f}, {9.26f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.21f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.53f},
-	{"thin_line_small.tga", {-11.26f, 1.5f, 0.0f}, {-0.85f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.5f, 0.0f}, {9.26f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.01f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_5_5_crossUpMast[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.2f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.4f, 0.0f}, {9.26f, 1.4f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.21f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.53f},
-	{"thin_line_small.tga", {-0.85f, 1.35f, 0.0f}, {9.26f, 1.35f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, -0.01f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-0.85f, 0.0f, -1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.3f},
-	{"thin_line_small.tga", {-0.88f, 0.0f, -1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.21f, 0.38f},
-};
-
-const Line scene_5_3_down[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.11f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 0.0f, 1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.3f},
-	{"thin_line_small.tga", {-0.88f, 0.0f, 1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.38f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_5_7_up[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.11f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.35f, -0.1f}, {-0.85f, 1.35f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.25f, -0.1f}, {-0.85f, 1.25f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, 0.53f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-0.85f, 0.0f, -1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.3f},
-	{"thin_line_small.tga", {-0.88f, 0.0f, -1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.38f},
-};
-
-const Line scene_5_7_leftUp[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.35f, -0.1f}, {-0.85f, 1.35f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.25f, -0.1f}, {-0.85f, 1.25f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.53f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-2.75f, 0.0f, -1.2f}, {-0.85f, 1.36f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.3f},
-	{"thin_line_small.tga", {-2.78f, 0.0f, -1.2f}, {-0.85f, 1.36f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.38f},
-};
-
-
-
-
-const Line scene_7_7_a[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.35f, -0.1f}, {-0.85f, 1.35f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.19f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.25f, -0.1f}, {-0.85f, 1.25f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.53f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_7_7_b[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.35f, -0.1f}, {-0.85f, 1.35f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.25f, -0.1f}, {-0.85f, 1.25f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.53f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_7_5_a[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.53f},
-	{"thin_line_small.tga", {-11.26f, 1.25f, 0.0f}, {-0.85f, 1.25f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, -0.01f},
-	{"thin_line_small.tga", {-11.26f, 1.3f, 0.0f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, -0.01f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_7_7_crossAtMast[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"thin_line_small.tga", {-11.26f, 1.65f, 0.0f}, {-0.85f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.17f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.65f, 0.0f}, {9.26f, 1.65f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.14f, 0.53f},
-	{"thin_line_small.tga", {-11.26f, 1.5f, 0.0f}, {-0.85f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.5f, 0.0f}, {9.26f, 1.5f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.35f, -0.1f}, {-0.85f, 1.35f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.13f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.25f, -0.1f}, {-0.85f, 1.25f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-};
-
-const Line scene_7_7_crossUpMast[] =
-{
-	{"thin_line_small.tga", {-0.85f, 1.8f, -0.1f}, {-0.85f, 1.8f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.7f, -0.1f}, {-0.85f, 1.7f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.21f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.6f, -0.1f}, {-0.85f, 1.6f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.4f, 0.0f}, {9.26f, 1.4f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.11f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.27f, -0.1f}, {-0.85f, 1.27f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.6f},
-	{"thin_line_small.tga", {-0.85f, 1.22f, -0.1f}, {-0.85f, 1.22f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.12f, 0.53f},
-	{"thin_line_small.tga", {-0.85f, 1.35f, 0.0f}, {9.26f, 1.35f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, -0.01f},
-	{"thin_line_small.tga", {-0.85f, 1.35f, -0.1f}, {-0.85f, 1.35f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.16f, 0.13f},
-	{"thin_line_small.tga", {-0.85f, 1.25f, -0.1f}, {-0.85f, 1.25f, MAST_DISTANCE + 0.1f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.13f},
-	{"brown_mast_1.tga", {-0.85f, 2.5f, 0.0f}, {-0.85f, 0.5f, 0.0f}, MAST_WIDTH, {1.0f, 1.0f, 1.0f, 1.0f}, false},
-	{"thin_line_small.tga", {-0.85f, 0.0f, -1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.15f, 0.3f},
-	{"thin_line_small.tga", {-0.88f, 0.0f, -1.7f}, {-0.85f, 1.3f, 0.0f}, CABLE_WIDTH, {0.1f, 0.1f, 0.1f, 1.0f}, true, 0.18f, 0.38f},
-};
-
-
-
-
-const int numScenesInNode[] = {0, 0, 0, 8, 0, 10, 0, 5};
-
-const Scene sceneGraph[][20] = 
-{
-	{},
-	{},
-	{},
 	{
-		{3, sizeof(scene_3_3_a) / sizeof(Line), scene_3_3_a},
-		{3, sizeof(scene_3_3_b) / sizeof(Line), scene_3_3_b},
-		{3, sizeof(scene_3_3_c) / sizeof(Line), scene_3_3_c},
-		{3, sizeof(scene_3_3_crossAtMast) / sizeof(Line), scene_3_3_crossAtMast},
-		{3, sizeof(scene_3_3_crossAtMastLots) / sizeof(Line), scene_3_3_crossAtMastLots},
-		{3, sizeof(scene_3_3_crossAbove) / sizeof(Line), scene_3_3_crossAbove},		
-		{5, sizeof(scene_3_5_up) / sizeof(Line), scene_3_5_up},
-		{5, sizeof(scene_3_5_leftUp) / sizeof(Line), scene_3_5_leftUp},
+		{-1.10f, 2.50f, -0.0f},
+		{-1.00f, 2.50f, -0.0f},
+		{-0.90f, 2.50f, -0.0f},
+		{-0.98f, 2.35f, -0.0f},
+		{-0.98f, 2.25f, -0.0f},
+		{-0.98f, 2.15f, -0.0f},
+		{-0.90f, 2.20f, -0.0f},
+		{-0.80f, 2.15f, -0.0f},
+		{-0.72f, 2.12f, -0.0f},
+		{-0.98f, 2.00f, -0.0f}
 	},
-	{},
 	{
-		{5, sizeof(scene_5_5_a) / sizeof(Line), scene_5_5_a},
-		{5, sizeof(scene_5_5_b) / sizeof(Line), scene_5_5_b},
-		{5, sizeof(scene_5_5_b) / sizeof(Line), scene_5_5_b}, // DOUBLE FOR LONGER
-		{5, sizeof(scene_5_5_crossAtMast) / sizeof(Line), scene_5_5_crossAtMast},
-		{5, sizeof(scene_5_5_crossAtMast) / sizeof(Line), scene_5_5_crossAtMast}, // Double for Longer
-		{5, sizeof(scene_5_5_crossUpMast) / sizeof(Line), scene_5_5_crossUpMast},
-		{3, sizeof(scene_5_3_a) / sizeof(Line), scene_5_3_down},
-		{3, sizeof(scene_5_3_a) / sizeof(Line), scene_5_3_a},
-		{3, sizeof(scene_5_3_b) / sizeof(Line), scene_5_3_b},
-		{7, sizeof(scene_5_7_up) / sizeof(Line), scene_5_7_up},
-		{7, sizeof(scene_5_7_leftUp) / sizeof(Line), scene_5_7_leftUp},
+		{-7.10f, 2.50f, 4.0f},
+		{-7.00f, 2.50f, 4.0f},
+		{-6.90f, 2.50f, 4.0f},
+		{-0.98f, 2.35f, -0.0f},
+		{-0.98f, 2.25f, -0.0f},
+		{-0.98f, 2.15f, -0.0f},
+		{-0.90f, 2.20f, -0.0f},
+		{-0.80f, 2.15f, -0.0f},
+		{-0.72f, 2.12f, -0.0f},
+		{-0.98f, 2.00f, -0.0f}
 	},
-	{},
 	{
-		{7, sizeof(scene_7_7_a) / sizeof(Line), scene_7_7_a},
-		{7, sizeof(scene_7_7_b) / sizeof(Line), scene_7_7_b},
-		{7, sizeof(scene_7_7_crossAtMast) / sizeof(Line), scene_7_7_crossAtMast},
-		{7, sizeof(scene_7_7_crossUpMast) / sizeof(Line), scene_7_7_crossUpMast},
-		{5, sizeof(scene_7_5_a) / sizeof(Line), scene_7_5_a},
-	}
+		{6.90f, 2.50f, -3.0f},
+		{7.00f, 2.50f, -3.0f},
+		{7.10f, 2.50f, -3.0f},
+		{-0.98f, 2.35f, -0.0f},
+		{-0.98f, 2.25f, -0.0f},
+		{-0.98f, 2.15f, -0.0f},
+		{-0.90f, 2.20f, -0.0f},
+		{-0.80f, 2.15f, -0.0f},
+		{-0.72f, 2.12f, -0.0f},
+		{-0.98f, 2.00f, -0.0f}
+	},
+	{
+		{-1.10f, 2.50f, -0.0f},
+		{-1.00f, 2.50f, -0.0f},
+		{-0.90f, 2.50f, -0.0f},
+		{-0.98f, 2.35f, -0.0f},
+		{-0.98f, 0.25f, -3.0f},
+		{-0.98f, 0.00f, -3.0f},
+		{-0.90f, 2.20f, -0.0f},
+		{-0.80f, 2.15f, -0.0f},
+		{-0.72f, 2.12f, -0.0f},
+		{-0.98f, 2.00f, -0.0f}
+	},
+	{
+		{-1.10f, 2.50f, -0.0f},
+		{-1.00f, 2.50f, -0.0f},
+		{-0.90f, 2.50f, -0.0f},
+		{-0.98f, 2.35f, -0.0f},
+		{-2.98f, 0.25f, -8.0f},
+		{-2.98f, 0.00f, -8.0f},
+		{-0.90f, 2.20f, -0.0f},
+		{-0.80f, 2.15f, -0.0f},
+		{-0.72f, 2.12f, -0.0f},
+		{-0.98f, 2.00f, -0.0f}
+	},
+	{
+		{-1.10f, 2.50f, -0.0f},
+		{-1.00f, 2.50f, -0.0f},
+		{-0.90f, 2.50f, -0.0f},
+		{-2.28f, 0.0f, -0.0f},
+		{-2.18f, 0.0f, -0.0f},
+		{-2.08f, 0.0f, -0.0f},
+		{-0.90f, 2.20f, -0.0f},
+		{-0.80f, 2.15f, -0.0f},
+		{-0.72f, 2.12f, -0.0f},
+		{-0.98f, 2.00f, -0.0f}
+	},
+	{
+		{-1.10f, 2.50f, -0.0f},
+		{-1.00f, 2.50f, -0.0f},
+		{-0.90f, 2.50f, -0.0f},
+		{-0.98f, 2.35f, -0.0f},
+		{-0.98f, 2.25f, -0.0f},
+		{-0.98f, 2.15f, -0.0f},
+		{9.90f, 2.20f, -0.0f},
+		{-0.80f, 2.15f, -0.0f},
+		{-0.72f, 2.12f, -0.0f},
+		{9.98f, 2.00f, -0.0f}
+	},
 };
 
-const int SCREENSAVER_NUM_SCENES = 1000;
-const Scene *sceneList[SCREENSAVER_NUM_SCENES];
+float powerLines[NUM_POWER_SCENES][NUM_POWER_LINES][3];
+float mastLines[NUM_POWER_SCENES][2][3];
 
 // -------------------------------------------------------------------
 //                          Code:
 // -------------------------------------------------------------------
+
+unsigned int seed = 0;
+float frand()
+{
+	unsigned long a = 214013;
+	unsigned long c = 2531011;
+	unsigned long m = 4294967296-1;
+	seed = (seed * a + c) % m;
+	//return (seed >> 8) % 65535;
+	return (float)((seed>>8)%65535) * (1.0f/65536.0f);
+}
 
 void compileShaders(void)
 {
@@ -547,12 +326,29 @@ void intro_init( void )
 
 	// Create the path for the screensaver:
 	int lastNumLines = 5;
-	for (int i = 0; i < SCREENSAVER_NUM_SCENES; i++)
+	float side = 1.0f;
+	for (int i = 0; i < NUM_POWER_SCENES; i++)
 	{
-		int numScenes = numScenesInNode[lastNumLines];
-		int sceneID = (rand() >> 8) % numScenes;
-		sceneList[i] = &(sceneGraph[lastNumLines][sceneID]);
-		lastNumLines = sceneList[i]->outputNumLines;
+		int sceneID = (rand()>>8) % NUM_CORE_POWER_SCENES;
+		float xDisplace = (frand() - 0.5f) * 0.5f;
+		float yDisplace = (frand() - 0.5f) * 0.5f;
+		float zDisplace = (frand() - 0.5f) * 0.5f;
+
+		if ((rand() % 10000) < 1500) side = -side;
+
+		for (int j = 0; j < NUM_POWER_LINES; j++)
+		{
+			powerLines[i][j][0] = side * (corePowerLines[sceneID][j][0] + xDisplace + (frand() - 0.5f) * 0.05f);
+			powerLines[i][j][1] = corePowerLines[sceneID][j][1] + yDisplace + (frand() - 0.5f) * 0.05f;
+			powerLines[i][j][2] = corePowerLines[sceneID][j][2] + zDisplace + (frand() - 0.5f) * 0.01f;
+		}
+
+		for (int j = 0; j < 2; j++)
+		{
+			mastLines[i][j][0] = side * (coreMastLine[j][0] + xDisplace);
+			mastLines[i][j][1] = coreMastLine[j][1] + yDisplace;
+			mastLines[i][j][2] = coreMastLine[j][2] + zDisplace;
+		}
 	}
 
 	// create openGL functions
@@ -981,66 +777,91 @@ void screensaverScene(float ftime)
 	distance -= sceneIndex * MAST_DISTANCE;
 
 	// Draw all the lines in the current scene
-	int sceneID[3];
-	sceneID[0] = sceneIndex % SCREENSAVER_NUM_SCENES;
-	sceneID[1] = (sceneIndex+1) % SCREENSAVER_NUM_SCENES;
-	sceneID[2] = (sceneIndex+2) % SCREENSAVER_NUM_SCENES;
-	float tmpV[3];
+	int sceneID[5];
+	sceneID[0] = sceneIndex % NUM_POWER_SCENES;
+	sceneID[1] = (sceneIndex+1) % NUM_POWER_SCENES;
+	sceneID[2] = (sceneIndex+2) % NUM_POWER_SCENES;
+	sceneID[3] = (sceneIndex+3) % NUM_POWER_SCENES;
+	sceneID[4] = (sceneIndex+4) % NUM_POWER_SCENES;
 
 	// Get the direction after rotation
+	float tmpV[3];
 	float up[3] = {0.0f, 1.0f, 0.0f};
-	rotateY(tmpV, up, -0.1f);
+	rotateY(tmpV, up, -0.2f);
 	rotateX(up, tmpV, 1.0f);
 	const float screenVector[3] = {0.0f, 0.0f, 1.0f};
 	float normalVector[3];
 	crossProduct(normalVector, up, screenVector);
 	normalize(normalVector);
 
-	for (int drawings = 2; drawings >= 0; drawings--)
+	for (int drawings = 3; drawings >= 0; drawings--)
 	{
-		const Scene *scene = sceneList[sceneID[drawings]];
+		float transStart[3];
+		float transEnd[3];
 
-		for (int i = 0; i < scene->numLines; i++)
+		// Draw the first round of stuff
+		for (int j = 0; j < 3; j++)
 		{
-			const Line *line = &(scene->lines[i]);
-			float transStart[3];
-			float transEnd[3];
-
 			// Translate (and copy...)
 			for (int i = 0; i < 3; i++)
 			{
-				transStart[i] = line->start[i];
-				transEnd[i] = line->end[i];
+				transStart[i] = powerLines[sceneID[drawings]][j][i];
+				transEnd[i] = powerLines[sceneID[drawings+1]][j][i];
 			}
-			transStart[2] -= distance - drawings * MAST_DISTANCE;
-			transEnd[2] -= distance - drawings * MAST_DISTANCE;
+			transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
+			transEnd[2] -= distance - (drawings) * MAST_DISTANCE;
 
 			// Move the lines
-			rotateY(tmpV, transStart, -0.1f);
+			rotateY(tmpV, transStart, -0.2f);
 			rotateX(transStart, tmpV, 1.0f);
-			rotateY(tmpV, transEnd, -0.1f);
+			rotateY(tmpV, transEnd, -0.2f);
 			rotateX(transEnd, tmpV, 1.0f);
 
-			// transpose after rotate
-			//transStart[0] += line->xTranspose * up[1];
-			//transStart[1] += line->xTranspose * up[0];
-			//transEnd[0] += line->xTranspose * up[1];
-			//transEnd[1] += line->xTranspose * up[0];
+			// draw
+			const float color[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+			drawMultiLine(transStart, transEnd, POWER_LINE_WIDTH, "thin_line_small.tga", color, 0.5f);
+		}
+
+		// Draw the mast
+		for (int i = 0; i < 3; i++)
+		{
+			transStart[i] = mastLines[sceneID[drawings]][0][i];
+			transEnd[i] = mastLines[sceneID[drawings]][1][i];
+		}
+		transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
+		transEnd[2] -= distance - (drawings-1) * MAST_DISTANCE;
+
+		// Move the lines
+		rotateY(tmpV, transStart, -0.2f);
+		rotateX(transStart, tmpV, 1.0f);
+		rotateY(tmpV, transEnd, -0.2f);
+		rotateX(transEnd, tmpV, 1.0f);
+
+		// draw
+		const float color[4] = {0.8f, 0.8f, 0.8f, 1.0f};
+		drawLine(transStart, transEnd, MAST_LINE_WIDTH, "brown_mast_1.tga", color);
+
+		// Draw the second round of stuff
+		for (int j = 3; j < NUM_POWER_LINES; j++)
+		{
+			// Translate (and copy...)
 			for (int i = 0; i < 3; i++)
 			{
-				transStart[i] += line->xTranspose * normalVector[i];
-				transEnd[i] += line->xTranspose * normalVector[i];
+				transStart[i] = powerLines[sceneID[drawings]][j][i];
+				transEnd[i] = powerLines[sceneID[drawings+1]][j][i];
 			}
+			transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
+			transEnd[2] -= distance - (drawings) * MAST_DISTANCE;
+
+			// Move the lines
+			rotateY(tmpV, transStart, -0.2f);
+			rotateX(transStart, tmpV, 1.0f);
+			rotateY(tmpV, transEnd, -0.2f);
+			rotateX(transEnd, tmpV, 1.0f);
 
 			// draw
-			if (line->multipartLine)
-			{
-				drawMultiLine(transStart, transEnd, line->width, line->texName, line->color, line->hangThrough);
-			}
-			else
-			{
-				drawLine(transStart, transEnd, line->width, line->texName, line->color);
-			}
+			const float color[4] = {0.1f, 0.1f, 0.1f, 1.0f};
+			drawMultiLine(transStart, transEnd, POWER_LINE_WIDTH, "thin_line_small.tga", color, 0.3f);
 		}
 	}
 
