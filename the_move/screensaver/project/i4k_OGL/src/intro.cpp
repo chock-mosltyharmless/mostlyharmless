@@ -636,7 +636,7 @@ void desktopScene(float ftime, int itime)
 			exit(1);
 		}
 		glBindTexture(GL_TEXTURE_2D, texID);
-		textureManager.drawQuad(xp-0.01f, yp + 0.22f, xp+0.095f, yp - 0.01f, 1.0f);
+		textureManager.drawQuad(xp-0.01f, yp + 0.165f*ASPECT_RATIO, xp+0.095f, yp - 0.01f*ASPECT_RATIO, 1.0f);
 
 		glBindTexture(GL_TEXTURE_2D, 0);
 		for (int balken = 0; balken < 3; balken++)
@@ -1145,8 +1145,8 @@ void intro_left_click(float xpos, float ypos, int itime)
 	{
 		// Arrow is no longer.
 		isArrow = false;
-		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
-		return;
+		//PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
+		//return;
 	}
 
 	if (isSubMenu)
@@ -1179,21 +1179,12 @@ void intro_left_click(float xpos, float ypos, int itime)
 						arrowY = 0.4f;
 						if ((subMenuIndex % 2) == 1) arrowY = -0.2f;
 						isDoubleClick = true;
+						PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
+						return;
 					}
 				}
 			}
 		}
-
-		if (isDoubleClick)
-		{
-			PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
-		}
-		else
-		{
-			PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
-		}
-		
-		return;
 	}
 
 	// No sub menu, click
@@ -1240,8 +1231,8 @@ void intro_right_click(float xpos, float ypos, int itime)
 	{
 		// Arrow was shown, show nothing now
 		isArrow = false;
-		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
-		return;
+		//PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
+		//return;
 	}
 
 	if (isSubMenu)
@@ -1249,8 +1240,8 @@ void intro_right_click(float xpos, float ypos, int itime)
 		// Rightclick gets out of submenu
 		isSubMenu = false;
 		subMenuAlpha = 0.0f;
-		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
-		return;
+		//PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
+		//return;
 	}
 
 	// No sub menu, check...
