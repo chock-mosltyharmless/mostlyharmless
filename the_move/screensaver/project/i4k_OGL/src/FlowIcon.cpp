@@ -58,10 +58,12 @@ void FlowIcon::drawAlarming(float time)
 	GLuint texID;
 	char errorString[MAX_ERROR_LENGTH];
 
-	float alarmAmount = (sin(time * 1.5f) + 0.8f) / 1.8f;
+	float alarmAmount = (sin(time * 2.5f) + 0.8f) / 1.8f;
 	if (alarmAmount < 0.0f) alarmAmount = 0.0f;
 	alarmAmount = sqrtf(alarmAmount);
 	alarmAmount = sqrtf(alarmAmount);
+
+	if ((time * 2.5f) > 5.0f) alarmAmount = 0.0f;
 
 	// set texture
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

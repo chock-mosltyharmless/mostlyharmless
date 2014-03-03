@@ -155,23 +155,23 @@ SubCategory subCategories[NUM_ICONS] =
 	// Music
 	{1, 3, {{"herz.tga", "platte.tga", "magic.tga"}}},
 	// Alarm
-	{1, 2, {{"euro.tga", "spritze.tga"}}},
+	{1, 3, {{"euro.tga", "spritze.tga", "Waesche.tga"}}},
 	// Weather
 	{1, 4, {{"feuerloescher.tga", "schirm.tga", "banane.tga", "thermometer.tga"}}},
 	// Dusche
-	{1, 4, {{"bett.tga", "birne.tga", "fisch.tga", "stift.tga"}}},
+	{1, 4, {{"bett.tga", "birne.tga", "sanitaetskasten.tga", "stift.tga"}}},
 	// Lampe
-	{1, 4, {{"Tischdecke01.tga", "pfeffer.tga", "trauben.tga", "kinderwagen.tga"}}},
+	{1, 3, {{"Tischdecke01.tga", "pfeffer.tga", "trauben.tga"}}},
 	// Freezer
 	{2, 5, {{"bein.tga", "ananas.tga", "bier.tga", "eingelegtes.tga", "Kaese.tga"}, {"Milch.tga", "pfeffer.tga", "pilz.tga", "Kavier.tga", "zitrone.tga"}}},
 	// Teppich
-	{1, 2, {{"werkzeug.tga", "sanitaetskasten.tga"}}},
+	{1, 2, {{"werkzeug.tga", "karotte.tga"}}},
 	// Komode
-	{2, 5, {{"apfel.tga", "besteck.tga", "radiergummi.tga", "ordner.tga", "medizin.tga"}, {"tasse.tga", "schere.tga", "waescheleine.tga", "Zeitung.tga", "vase.tga"}}},
+	{2, 5, {{"apfel.tga", "tischdecke02.tga", "radiergummi.tga", "ordner.tga", "medizin.tga"}, {"Streichholz.tga", "schere.tga", "waescheleine.tga", "vase.tga", "Hausschuhe.tga"}}},
 	// Garderobe
-	{2, 5, {{"tischdecke02.tga", "topf.tga", "Waesche.tga", "werkzeug.tga", "weinglas.tga"}, {"aubergine.tga", "kanne.tga", "tischdecke03.tga", "hamburger.tga", "Waesche.tga"}}},
+	{2, 5, {{"besteck.tga", "topf.tga", "Zeitung.tga", "werkzeug.tga", "weinglas.tga"}, {"aubergine.tga", "kanne.tga", "tischdecke03.tga", "hamburger.tga", "tasse.tga"}}},
 	// Sofa
-	{1, 1, {{"euro.tga"}}},
+	{1, 2, {{"euro.tga", "kinderwagen.tga"}}},
 	// Tisch
 	{0, 0}, // Done directly!!!
 	// Chair
@@ -506,8 +506,14 @@ void desktopScene(float ftime, int itime)
 		bgTex = "blue_watercolor.tga";
 		break;
 	case 3:
-	default:
 		bgTex = "green_watercolor.tga";
+		break;
+	case 4:
+		bgTex = "black_watercolor.tga";
+		break;
+	case 5:
+	default:
+		bgTex = "red_watercolor.tga";
 		break;
 	}
 
@@ -852,7 +858,7 @@ void screensaverScene(float ftime)
 	gluPerspective(FOV, ASPECT_RATIO, 0.1f, 1000.0f);
 
 	// Calculate where we are in the world
-	float distance = ftime * 2.0f;
+	float distance = ftime * 1.25f;
 	int sceneIndex = (int)(distance / MAST_DISTANCE);
 	distance -= sceneIndex * MAST_DISTANCE;
 
@@ -1099,10 +1105,13 @@ void intro_cursor(float xpos, float ypos)
 
 void intro_left_click(float xpos, float ypos, int itime)
 {
+	bool isDoubleClick = false;
+
 	if (isArrow)
 	{
 		// Arrow is no longer.
 		isArrow = false;
+		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
 		return;
 	}
 
@@ -1121,6 +1130,7 @@ void intro_left_click(float xpos, float ypos, int itime)
 					if ((subMenuIndex % 5) < 3) arrowX = -0.8f;
 					arrowY = 0.4f;
 					if ((subMenuIndex % 2) == 1) arrowY = -0.2f;
+					isDoubleClick = true;
 				}
 			}
 		}
@@ -1128,6 +1138,16 @@ void intro_left_click(float xpos, float ypos, int itime)
 		// The submenu is removed, possibly something is shinied:
 		isSubMenu = false;
 		subMenuAlpha = 0.0f;
+
+		if (isDoubleClick)
+		{
+			PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
+		}
+		else
+		{
+			PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
+		}
+		
 		return;
 	}
 
@@ -1144,8 +1164,18 @@ void intro_left_click(float xpos, float ypos, int itime)
 				arrowStartTime = itime;
 				arrowX = 0.0f;
 				arrowY = -0.5f;
+				isDoubleClick = true;
 			}			
 		}
+	}
+
+	if (isDoubleClick)
+	{
+		PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
+	}
+	else
+	{
+		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
 	}
 }
 
@@ -1155,6 +1185,7 @@ void intro_right_click(float xpos, float ypos, int itime)
 	{
 		// Arrow was shown, show nothing now
 		isArrow = false;
+		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
 		return;
 	}
 
@@ -1163,6 +1194,7 @@ void intro_right_click(float xpos, float ypos, int itime)
 		// Rightclick gets out of submenu
 		isSubMenu = false;
 		subMenuAlpha = 0.0f;
+		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
 		return;
 	}
 
@@ -1181,4 +1213,6 @@ void intro_right_click(float xpos, float ypos, int itime)
 			}
 		}
 	}
+
+	PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
 }

@@ -5,7 +5,7 @@ varying vec3 objectPosition;
 
 vec2 getFog(vec2 relPos)
 {
-	float time = parameters[0][0];
+	float time = parameters[0][0] * 0.5;
 
     vec4 swirl = texture2D(Texture0, relPos * 0.11);
     swirl = 0.5 * swirl + 0.5 * texture2D(Texture0, relPos*0.63 + swirl.rg);
