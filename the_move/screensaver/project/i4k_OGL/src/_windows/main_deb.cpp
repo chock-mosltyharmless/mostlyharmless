@@ -101,12 +101,21 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			isScreenSaverRunning = !isScreenSaverRunning;
 			ShowCursor(!isScreenSaverRunning);
 			screenSaverStartTime = timeGetTime();
+			if (isScreenSaverRunning)
+			{
+				PlaySound("sounds/kaze_no_kaori.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+			}
+			else
+			{
+				PlaySound(NULL, NULL, 0);
+			}
 			break;
 
 		case 'm':
 		case 'M':
-			isAlarmRinging = !isAlarmRinging;
+			isAlarmRinging = true;
 			alarmStartTime = timeGetTime();
+			PlaySound("sounds/alarm.wav", NULL, SND_FILENAME | SND_ASYNC);
 			break;
 
 		case 'd':
