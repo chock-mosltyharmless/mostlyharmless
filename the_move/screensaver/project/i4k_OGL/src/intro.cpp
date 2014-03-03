@@ -38,6 +38,8 @@ bool isArrow = false;
 int arrowStartTime = 0;
 float arrowX = 0;
 float arrowY = 0;
+bool isMusicPlaying = false;
+int musicPlayStartTime = 0;
 
 const float FOV = 40;
 
@@ -477,6 +479,11 @@ void desktopScene(float ftime, int itime)
 	lastTime = ftime;
 	GLuint texID;
 
+	if (itime - musicPlayStartTime > 295000)
+	{
+		isMusicPlaying = false;
+	}
+
 	char errorString[MAX_ERROR_LENGTH+1];
 
 	glDisable(GL_BLEND);
@@ -615,6 +622,32 @@ void desktopScene(float ftime, int itime)
 		glBindTexture(GL_TEXTURE_2D, texID);
 		textureManager.drawQuad(arrowX-2.0f, arrowY-2.0f*ASPECT_RATIO,
 			arrowX + 2.0f, arrowY + 2.0f*ASPECT_RATIO, 0.7f * amount);
+	}
+
+	// Show that music is playing
+	if (isMusicPlaying)
+	{
+		float xp = icon[2].getGLX() + 0.175f;
+		float yp = icon[2].getGLY() - 0.1f * ASPECT_RATIO;
+
+		if (textureManager.getTextureID("white_1x1.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		textureManager.drawQuad(xp-0.01f, yp + 0.22f, xp+0.095f, yp - 0.01f, 1.0f);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+		for (int balken = 0; balken < 3; balken++)
+		{
+			float xpb = xp + balken * 0.03f;
+			float height = sin(ftime*1.546f*(balken+1.3f) + balken);
+			height += 0.5f * sin(ftime*2.7376f*(balken+2.1f) + balken*0.5f);
+			height += 0.25f * sin(ftime*4.3124f*(balken+0.3f) + balken*0.2f);
+			height = (height + 2.0f) * 0.04f;
+			textureManager.drawQuad(xpb, yp, xpb+0.025f, yp + height*ASPECT_RATIO, 1.0f);
+		}
 	}
 	
 	glDisable(GL_BLEND);
@@ -1106,6 +1139,7 @@ void intro_cursor(float xpos, float ypos)
 void intro_left_click(float xpos, float ypos, int itime)
 {
 	bool isDoubleClick = false;
+	isMusicPlaying = false;
 
 	if (isArrow)
 	{
@@ -1117,6 +1151,10 @@ void intro_left_click(float xpos, float ypos, int itime)
 
 	if (isSubMenu)
 	{
+		// The submenu is removed, possibly something is shinied:
+		isSubMenu = false;
+		subMenuAlpha = 0.0f;
+
 		for (int x = 0; x < subCategories[subMenuIndex].width; x++)
 		{
 			for (int y = 0; y < subCategories[subMenuIndex].height; y++)
@@ -1124,20 +1162,27 @@ void intro_left_click(float xpos, float ypos, int itime)
 				subCategories[subMenuIndex].icons[x][y].setMousePosition(xpos, ypos);
 				if (subCategories[subMenuIndex].icons[x][y].clickMouse())
 				{
-					isArrow = true;
-					arrowStartTime = itime;
-					arrowX = 0.8f;
-					if ((subMenuIndex % 5) < 3) arrowX = -0.8f;
-					arrowY = 0.4f;
-					if ((subMenuIndex % 2) == 1) arrowY = -0.2f;
-					isDoubleClick = true;
+					if (subMenuIndex == 2 && x == 0 && y == 1)
+					{
+						isMusicPlaying = true;
+						PlaySound("sounds/tsuki_no_sabaku.wav", NULL, SND_FILENAME | SND_ASYNC);
+						musicPlayStartTime = itime;
+						// Avoid clicking sounds!
+						return;
+					}
+					else
+					{
+						isArrow = true;
+						arrowStartTime = itime;
+						arrowX = 0.8f;
+						if ((subMenuIndex % 5) < 3) arrowX = -0.8f;
+						arrowY = 0.4f;
+						if ((subMenuIndex % 2) == 1) arrowY = -0.2f;
+						isDoubleClick = true;
+					}
 				}
 			}
 		}
-
-		// The submenu is removed, possibly something is shinied:
-		isSubMenu = false;
-		subMenuAlpha = 0.0f;
 
 		if (isDoubleClick)
 		{
@@ -1157,7 +1202,15 @@ void intro_left_click(float xpos, float ypos, int itime)
 		icon[i].setMousePosition(xpos, ypos);
 		if (icon[i].clickMouse())
 		{
-			//if (subCategories[i].width == 0)
+			if (i == 2)
+			{
+				isMusicPlaying = true;
+				PlaySound("sounds/tsuki_no_sabaku.wav", NULL, SND_FILENAME | SND_ASYNC);
+				musicPlayStartTime = itime;
+				// Avoid clicking sounds!
+				return;
+			}
+			else
 			{
 				// Instead do the thing directly			
 				isArrow = true;
@@ -1181,6 +1234,8 @@ void intro_left_click(float xpos, float ypos, int itime)
 
 void intro_right_click(float xpos, float ypos, int itime)
 {
+	isMusicPlaying = false;
+
 	if (isArrow)
 	{
 		// Arrow was shown, show nothing now
