@@ -12,10 +12,12 @@
 //#define CLEANEXIT
 //#define XRES        (1280)
 //#define YRES        (1080 * 1280 / 1920)
-#define XRES        1200
+#define XRES        1024
 //#define YRES        (1080 * XRES / 1920)
 #define YRES        (480 * XRES / 640)
-#define ASPECT_RATIO ((float)realXRes / (float)realYRes)
+//#define ASPECT_RATIO ((float)realXRes / (float)realYRes)
+// 5x4 boxes and the lower border which is about 50/1600
+#define ASPECT_RATIO (5.0f / (4.0f + (50.0f/1600.0f*5.0f)))
 #define OFFSCREEN_WIDTH XRES
 #define OFFSCREEN_HEIGHT YRES
 #define HIGHLIGHT_WIDTH 200

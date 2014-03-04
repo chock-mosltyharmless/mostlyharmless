@@ -21,6 +21,11 @@
 
 float frand();
 
+float screenLeft;
+float screenRight;
+float screenBottom;
+float screenTop;
+
 extern int realXRes;
 extern int realYRes;
 extern int demoStartTime;
@@ -31,8 +36,8 @@ extern bool isAlarmRinging;
 extern int alarmStartTime;
 extern int numberOfTheDead;
 
-const float iconDistance = 2.0f / 7.0f;
-const float iconBorderWidth = 0.02f;
+const float iconDistance = 2.0f / 5.0f;
+const float iconBorderWidth = 0.04f;
 
 bool isArrow = false;
 int arrowStartTime = 0;
@@ -41,7 +46,7 @@ float arrowY = 0;
 bool isMusicPlaying = false;
 int musicPlayStartTime = 0;
 
-const float FOV = 40;
+const float FOV = 45;
 
 /* Number of names of the used shaders */
 #define NUM_SHADERS 10
@@ -431,13 +436,15 @@ void intro_init( void )
 	{
 		for (int x = 0; x < 5; x++)
 		{
-			icon[index].init(iconFileName[index], (x+1) * iconDistance - 1.0f,
+			icon[index].init(iconFileName[index], x * iconDistance - 1.0f,
 						     1.0f - (y+1) * iconDistance * ASPECT_RATIO, iconDistance, iconBorderWidth);
 			
 			// Create the subcategories:
-			float xpos = (x+1)*iconDistance+0.15f - 1.0f;
-			float ypos = 1.0f - (y+1)*iconDistance*ASPECT_RATIO - 0.1f*ASPECT_RATIO;
-			if (index == 10) ypos += 0.2f;
+			float xpos = (x+0.6f)*iconDistance - 1.0f;
+			float ypos = 1.0f - (y+1.2f)*iconDistance*ASPECT_RATIO;
+			if (index == 10) ypos += 0.9f*iconDistance*ASPECT_RATIO;
+			if (index == 9) xpos -= 0.7f*iconDistance;
+			if (index == 14) ypos += 0.25f*iconDistance*ASPECT_RATIO;
 			subCategories[index].xPos = xpos;
 			subCategories[index].yPos = ypos;
 
@@ -455,19 +462,19 @@ void intro_init( void )
 			index++;
 		}
 	}
-	deadIcon[0].init("man.tga", 5 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
-	deadIcon[1].init("woman.tga", 4 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
-	deadIcon[2].init("baby.tga", 3 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
+	deadIcon[0].init("man.tga", 4 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
+	deadIcon[1].init("woman.tga", 3 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
+	deadIcon[2].init("baby.tga", 2 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
 
 	// Set the texture locations in the relevant shaders:
 	// Set texture locations
 	glUseProgram(shaderPrograms[OTONE_SHADER]);
 	int my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[OTONE_SHADER], "Texture0");
-	glActiveTexture(GL_TEXTURE0);
-	glUniform1i(my_sampler_uniform_location, 0);
-	my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[OTONE_SHADER], "Texture1");
 	glActiveTexture(GL_TEXTURE1);
 	glUniform1i(my_sampler_uniform_location, 1);
+	my_sampler_uniform_location = glGetUniformLocation(shaderPrograms[OTONE_SHADER], "Texture1");
+	glActiveTexture(GL_TEXTURE0);
+	glUniform1i(my_sampler_uniform_location, 0);
 	glActiveTexture(GL_TEXTURE0);
 }
 
@@ -478,6 +485,8 @@ void desktopScene(float ftime, int itime)
 	float deltaTime = ftime - lastTime;
 	lastTime = ftime;
 	GLuint texID;
+
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 
 	if (itime - musicPlayStartTime > 295000)
 	{
@@ -539,6 +548,7 @@ void desktopScene(float ftime, int itime)
 		exit(1);
 	}
 	glBindTexture(GL_TEXTURE_2D, texID);
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, -1.0f + 2.0f * 47.0f / 1600.0f * ASPECT_RATIO, 1.0f);
 
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
@@ -833,6 +843,43 @@ void screensaverScene(float ftime)
 	GLuint offscreenTexID;
 	GLUquadric* quad = gluNewQuadric();
 
+	// draw background:
+	glMatrixMode(GL_MODELVIEW);	
+
+	//parameterMatrix[0] = sqrt(ftime) * 3.0f; // time
+	parameterMatrix[0] = ftime; // time
+	//parameterMatrix[3] = sqrtf(ftime * 0.1f); // time
+	//if (parameterMatrix[3] > 1.0f) parameterMatrix[3] = 1.0f;
+	//2:0.23(29) 3:0.57(73) 4:0.54(69) 5:0.00(0) 
+	parameterMatrix[2] = params.getParam(2, 0.2f);
+	parameterMatrix[1] = params.getParam(3, 0.59f);	
+	parameterMatrix[3] = params.getParam(4, 0.84f);
+	parameterMatrix[6] = params.getParam(5, 0.65f);
+	// translation
+	float rotSpeed = 0.02f;//0.3f;
+	float rotAmount = 0.5f;//1.6f;
+	float moveSpeed = 0.02f;//0.25f;
+	float posX = rotAmount * sin(ftime * rotSpeed);
+	float posY = rotAmount * cos(ftime * rotSpeed) - moveSpeed * ftime;
+	float deltaX = rotAmount * rotSpeed * cos(ftime * rotSpeed);
+	float deltaY = -moveSpeed - rotAmount * rotSpeed * sin(ftime * rotSpeed);
+	float len = sqrtf(deltaX*deltaX + deltaY*deltaY);
+	if (len > 0.0001f)
+	{
+		deltaX /= len;
+		deltaY /= len;
+	}
+	else
+	{
+		deltaX = 1.0f;
+		deltaY = 0.0f;
+	}
+	parameterMatrix[8] = posX;
+	parameterMatrix[9] = posY;
+	parameterMatrix[12] = deltaX;
+	parameterMatrix[13] = deltaY;
+	glLoadMatrixf(parameterMatrix);
+
 	// Draw the background image
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
     //desktopScene(ftime);
@@ -845,10 +892,9 @@ void screensaverScene(float ftime)
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	textureManager.drawQuad(-4.0f - 3.0f * cos(ftime*0.007f), -1.0f, 4.0f - 3.0f * cos(ftime*0.007f), 1.0f, 1.0f);
 
-
 	// copy the video to texture for later rendering
 	GLuint noiseTexID;
-	glViewport(0, 0, realXRes, realYRes);
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	textureManager.getTextureID("renderTarget", &offscreenTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
@@ -859,32 +905,15 @@ void screensaverScene(float ftime)
 	glUseProgram(shaderPrograms[OTONE_SHADER]);
 	// Set texture0 (noise texture)
 	textureManager.getTextureID("noise2D", &noiseTexID, errorString);
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, noiseTexID);
 	// Set texture1 (the original scene)
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	glActiveTexture(GL_TEXTURE0);
 
 	// Draw it
 	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
-
-	// copy to front
-	glViewport(0, 0, realXRes, realYRes);
-	textureManager.getTextureID("renderTarget", &offscreenTexID, errorString);
-	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
-	glUseProgram(shaderCopyProgram);	
-	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
-#endif
-
-	// Draw a simple line
-#if 0
-	float color[4] = {0.8f, 0.7f, 0.6f, 1.0f};
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
-	drawLine(0.2f, 0.2f, 0.8f, 0.8f, 0.05f, 0.15f, "line_16x1.tga", color);
-	glDisable(GL_BLEND);
 #endif
 
 	glEnable(GL_BLEND);
@@ -989,48 +1018,6 @@ void screensaverScene(float ftime)
 			drawMultiLine(transStart, transEnd, POWER_LINE_WIDTH, "thin_line_small.tga", color, 0.3f);
 		}
 	}
-
-	// Reset the GL settings
-	glDisable(GL_BLEND);
-	glMatrixMode(GL_PROJECTION);	
-	glLoadIdentity();
-
-	// draw background:
-	glMatrixMode(GL_MODELVIEW);	
-
-	//parameterMatrix[0] = sqrt(ftime) * 3.0f; // time
-	parameterMatrix[0] = ftime; // time
-	//parameterMatrix[3] = sqrtf(ftime * 0.1f); // time
-	//if (parameterMatrix[3] > 1.0f) parameterMatrix[3] = 1.0f;
-	//2:0.23(29) 3:0.57(73) 4:0.54(69) 5:0.00(0) 
-	parameterMatrix[2] = params.getParam(2, 0.23f);
-	parameterMatrix[1] = params.getParam(3, 0.57f);	
-	parameterMatrix[3] = params.getParam(4, 0.54f);
-	parameterMatrix[6] = params.getParam(5, 0.0f);
-	// translation
-	float rotSpeed = 0.02f;//0.3f;
-	float rotAmount = 0.5f;//1.6f;
-	float moveSpeed = 0.02f;//0.25f;
-	float posX = rotAmount * sin(ftime * rotSpeed);
-	float posY = rotAmount * cos(ftime * rotSpeed) - moveSpeed * ftime;
-	float deltaX = rotAmount * rotSpeed * cos(ftime * rotSpeed);
-	float deltaY = -moveSpeed - rotAmount * rotSpeed * sin(ftime * rotSpeed);
-	float len = sqrtf(deltaX*deltaX + deltaY*deltaY);
-	if (len > 0.0001f)
-	{
-		deltaX /= len;
-		deltaY /= len;
-	}
-	else
-	{
-		deltaX = 1.0f;
-		deltaY = 0.0f;
-	}
-	parameterMatrix[8] = posX;
-	parameterMatrix[9] = posY;
-	parameterMatrix[12] = deltaX;
-	parameterMatrix[13] = deltaY;
-	glLoadMatrixf(parameterMatrix);
 }
 
 
@@ -1058,7 +1045,7 @@ void nothingScene(float ftime)
 	gluSphere(quad, 2.0f, 16, 16);
 
 	// copy to front
-	glViewport(0, 0, realXRes, realYRes);
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	textureManager.getTextureID("renderTarget", &offscreenTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
@@ -1113,10 +1100,67 @@ void intro_do( long itime )
 		float ftime = 0.001f * (float)(itime - demoStartTime);
 		desktopScene(ftime, itime);
 	}
+
+	// Reset the GL settings
+	glDisable(GL_BLEND);
+	glMatrixMode(GL_PROJECTION);	
+	glLoadIdentity();
+
+#if 1
+	char errorString[MAX_ERROR_LENGTH+1];
+	GLuint offscreenTexID;
+
+	// Bezel:
+	glEnable(GL_BLEND);
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	textureManager.getTextureID("bezel.tga", &offscreenTexID, errorString);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
+	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 0.7f);
+
+	// Parametric transwhatever stuff:
+	// draw background:
+	glMatrixMode(GL_MODELVIEW);	
+	parameterMatrix[0] = 0.001f * (itime - screenSaverStartTime); // time
+	glLoadMatrixf(parameterMatrix);
+
+	glDisable(GL_BLEND);
+	glViewport(0, 0, realXRes, realYRes);
+	textureManager.getTextureID("renderTarget", &offscreenTexID, errorString);
+	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
+	glUseProgram(shaderCopyProgram);	
+	
+	glClear(GL_COLOR_BUFFER_BIT);
+	screenLeft = params.getParam(14, 0.0f);
+	screenRight = params.getParam(15, 1.0f);
+	screenTop = params.getParam(16, 0.0f);
+	screenBottom = params.getParam(17, 1.0f);
+
+	float left = screenLeft * 2 - 1;
+	float right = screenRight * 2 - 1;
+	float top = 1 - screenTop * 2;
+	float bottom = 1 - screenBottom * 2;
+
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.001f, 0.999f);
+	glVertex3f(left, top, 0.5f);
+	glTexCoord2f(0.999f, 0.999f);
+	glVertex3f(right, top, 0.5f);
+	glTexCoord2f(0.999f, 0.001f);
+	glVertex3f(right, bottom, 0.5f);
+	glTexCoord2f(0.001f, 0.001f);
+	glVertex3f(left, bottom, 0.5f);
+	glEnd();
+#endif
 }
 
 void intro_cursor(float xpos, float ypos)
 {
+	// Adjust according to left and right
+	xpos = (xpos - screenLeft) / (screenRight - screenLeft);
+	ypos = (ypos - screenTop) / (screenBottom - screenTop);
+
 	if (isSubMenu)
 	{
 		// Also inside all subcategories:
@@ -1144,6 +1188,12 @@ void intro_cursor(float xpos, float ypos)
 
 void intro_left_click(float xpos, float ypos, int itime)
 {
+	// Adjust according to left and right
+	xpos = (xpos - screenLeft) / (screenRight - screenLeft);
+	ypos = (ypos - screenTop) / (screenBottom - screenTop);
+
+	if (isScreenSaverRunning) return;
+
 	bool isDoubleClick = false;
 	if (isMusicPlaying)
 	{
@@ -1167,7 +1217,7 @@ void intro_left_click(float xpos, float ypos, int itime)
 					if (subMenuIndex == 2 && x == 0 && y == 1)
 					{
 						isMusicPlaying = true;
-						PlaySound("sounds/tsuki_no_sabaku.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+						//PlaySound("sounds/tsuki_no_sabaku.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
 						musicPlayStartTime = itime;
 						// Avoid clicking sounds!
 						return;
@@ -1197,7 +1247,7 @@ void intro_left_click(float xpos, float ypos, int itime)
 			if (i == 2)
 			{
 				isMusicPlaying = true;
-				PlaySound("sounds/tsuki_no_sabaku.wav", NULL, SND_FILENAME | SND_ASYNC);
+				//PlaySound("sounds/tsuki_no_sabaku.wav", NULL, SND_FILENAME | SND_ASYNC);
 				musicPlayStartTime = itime;
 				// Avoid clicking sounds!
 				return;
@@ -1227,6 +1277,12 @@ void intro_left_click(float xpos, float ypos, int itime)
 
 void intro_right_click(float xpos, float ypos, int itime)
 {
+	// Adjust according to left and right
+	xpos = (xpos - screenLeft) / (screenRight - screenLeft);
+	ypos = (ypos - screenTop) / (screenBottom - screenTop);
+
+	if (isScreenSaverRunning) return;
+
 	if (isMusicPlaying)
 	{
 		isMusicPlaying = false;
