@@ -614,6 +614,12 @@ void desktopScene(float ftime, int itime)
 
 		float amount = arrowTime * 2.0f;
 		if (amount > 1.0f) amount = 1.0f;
+		if (arrowTime > 3.0f) amount = 1.0f - (arrowTime - 2.0f) * (arrowTime - 2.0f) * 0.02f;
+		if (amount < 0.0f)
+		{
+			amount = 0.0f;
+		}
+
 		if (textureManager.getTextureID("select_mask.tga", &texID, errorString))
 		{
 			MessageBox(hWnd, errorString, "texture not found", MB_OK);
@@ -642,10 +648,10 @@ void desktopScene(float ftime, int itime)
 		for (int balken = 0; balken < 3; balken++)
 		{
 			float xpb = xp + balken * 0.03f;
-			float height = sin(ftime*1.546f*(balken+1.3f) + balken);
-			height += 0.5f * sin(ftime*2.7376f*(balken+2.1f) + balken*0.5f);
-			height += 0.25f * sin(ftime*4.3124f*(balken+0.3f) + balken*0.2f);
-			height = (height + 2.0f) * 0.04f;
+			float height = sin(ftime*0.546f*(balken+1.3f) + balken);
+			height += 0.5f * sin(ftime*1.7376f*(balken+2.1f) + balken*0.5f);
+			height += 0.25f * sin(ftime*1.3124f*(balken+0.3f) + balken*0.2f);
+			height = (height + 4.0f) * 0.02f;
 			textureManager.drawQuad(xpb, yp, xpb+0.025f, yp + height*ASPECT_RATIO, 1.0f);
 		}
 	}
@@ -1139,14 +1145,10 @@ void intro_cursor(float xpos, float ypos)
 void intro_left_click(float xpos, float ypos, int itime)
 {
 	bool isDoubleClick = false;
-	isMusicPlaying = false;
-
-	if (isArrow)
+	if (isMusicPlaying)
 	{
-		// Arrow is no longer.
-		isArrow = false;
-		//PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
-		//return;
+		isMusicPlaying = false;
+		return; // no click sound on stopping!
 	}
 
 	if (isSubMenu)
@@ -1165,7 +1167,7 @@ void intro_left_click(float xpos, float ypos, int itime)
 					if (subMenuIndex == 2 && x == 0 && y == 1)
 					{
 						isMusicPlaying = true;
-						PlaySound("sounds/tsuki_no_sabaku.wav", NULL, SND_FILENAME | SND_ASYNC);
+						PlaySound("sounds/tsuki_no_sabaku.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
 						musicPlayStartTime = itime;
 						// Avoid clicking sounds!
 						return;
@@ -1174,10 +1176,9 @@ void intro_left_click(float xpos, float ypos, int itime)
 					{
 						isArrow = true;
 						arrowStartTime = itime;
-						arrowX = 0.8f;
-						if ((subMenuIndex % 5) < 3) arrowX = -0.8f;
-						arrowY = 0.4f;
-						if ((subMenuIndex % 2) == 1) arrowY = -0.2f;
+						int iconIdx = rand() % NUM_ICONS;
+						arrowX = icon[iconIdx].getGLX() + iconDistance * 0.5f;
+						arrowY = icon[iconIdx].getGLY() - iconDistance * 0.5f * ASPECT_RATIO;
 						isDoubleClick = true;
 						PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
 						return;
@@ -1203,11 +1204,12 @@ void intro_left_click(float xpos, float ypos, int itime)
 			}
 			else
 			{
-				// Instead do the thing directly			
+				// Instead do the thing directly	
 				isArrow = true;
 				arrowStartTime = itime;
-				arrowX = 0.0f;
-				arrowY = -0.5f;
+				int iconIdx = rand() % NUM_ICONS;
+				arrowX = icon[iconIdx].getGLX() + iconDistance * 0.5f;
+				arrowY = icon[iconIdx].getGLY() - iconDistance * 0.5f * ASPECT_RATIO;
 				isDoubleClick = true;
 			}			
 		}
@@ -1225,14 +1227,10 @@ void intro_left_click(float xpos, float ypos, int itime)
 
 void intro_right_click(float xpos, float ypos, int itime)
 {
-	isMusicPlaying = false;
-
-	if (isArrow)
+	if (isMusicPlaying)
 	{
-		// Arrow was shown, show nothing now
-		isArrow = false;
-		//PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
-		//return;
+		isMusicPlaying = false;
+		return; // no clicking!
 	}
 
 	if (isSubMenu)
