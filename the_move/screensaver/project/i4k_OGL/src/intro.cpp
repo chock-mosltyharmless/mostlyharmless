@@ -38,7 +38,7 @@ extern int screenSaverID;
 const int numIconsX = 5;
 const int numIconsY = 4;
 const float iconDistance = 2.0f / 5.0f;
-const float iconBorderWidth = 0.04f;
+const float iconBorderWidth = 0.06f;
 bool iconBlackout[numIconsY][numIconsX] =
 {
 	{false, false, false, false},
@@ -1032,6 +1032,68 @@ void screensaverScene(float ftime)
 			drawMultiLine(transStart, transEnd, POWER_LINE_WIDTH, "thin_line_small.tga", color, 0.3f);
 		}
 	}
+
+	// Delete the icons in the final scene
+	glMatrixMode(GL_PROJECTION);	
+	glLoadIdentity();
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
+	glEnable(GL_BLEND);
+	if (screenSaverID == 5)
+	{
+		for (int i = NUM_ICONS - 1; i >= 0; i--)
+		{
+			float toDelete[2];
+			toDelete[0] = icon[0].getGLX() - icon[i].getGLX();
+			toDelete[1] = icon[0].getGLY() - icon[i].getGLY();
+
+			float moveTime = (ftime - ((i * 3487639) % 29) - 10.0f) * 0.3f;
+			if (moveTime < 0.0f) moveTime = 0.0f;
+			if (moveTime > 1.0f) moveTime = 1.0f;
+			float moveAmount = 0.5f - cos(moveTime * 3.141592f) * 0.5f;
+
+			float detour[2] = {0.0f, 0.0f};
+			if (i != 0)
+			{
+				detour[0] = 0.3f * (sin((float)i + 0.3f) - 0.7f);
+				detour[1] = -0.3f * (sin((float)i*3 + 1.5f) - 1.5f);
+			}
+			float detourAmount = moveTime * sin(moveTime * 3.141592f);
+
+			float munchAmount = 0.0f;
+			if (i == 0)
+			{
+				float munchTime = (ftime - 15.0f) * 0.035f;
+				if (munchTime < 0.0f) munchTime = 0.0f;
+				if (munchTime > 1.0f) munchTime = 1.0f;
+				munchAmount = sqrtf(sin(munchTime * 3.141592f)) * 4.0f;
+			}
+
+			if (i == 0 || moveTime < 1.0f)
+			{
+				icon[i].drawAmount(munchAmount, ftime,
+					               toDelete[0]*moveAmount + detour[0]*detourAmount,
+								   toDelete[1]*moveAmount + detour[1]*detourAmount);
+			}
+		}
+	}
+
+	// Blackout of complete screen
+	glBindTexture(GL_TEXTURE_2D, 0);
+	float blackAmount = -1.0f;
+	if (screenSaverID == 0)
+	{
+		blackAmount = 1.0f - ftime * 0.2f;	
+		blackAmount *= blackAmount * blackAmount;
+	}
+	if (screenSaverID == 5)
+	{
+		blackAmount = (ftime - 72.f) * 0.2f;
+		if (blackAmount > 1.0f) blackAmount = 1.0f;
+	}
+	if (blackAmount > 0.0f)
+	{
+		textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, blackAmount);
+	}
 }
 
 
@@ -1039,32 +1101,7 @@ void screensaverScene(float ftime)
 
 void nothingScene(float ftime)
 {
-	char errorString[MAX_ERROR_LENGTH+1];
-	GLuint offscreenTexID;
-	GLUquadric* quad = gluNewQuadric();
-
-	glDisable(GL_BLEND);
-
-	// draw background:
-	glMatrixMode(GL_MODELVIEW);
-
-	parameterMatrix[0] = ftime; // time	
-	glLoadMatrixf(parameterMatrix);
-
-	// draw offscreen
-	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	//glBindTexture(GL_TEXTURE_2D, offscreenTexture);
-	glUseProgram(shaderPrograms[1]);
-	//glBindTexture(GL_TEXTURE_2D, noiseTexture);
-	gluSphere(quad, 2.0f, 16, 16);
-
-	// copy to front
-	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
-	textureManager.getTextureID("renderTarget", &offscreenTexID, errorString);
-	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
-	glUseProgram(shaderCopyProgram);	
-	gluSphere(quad, 2.0f, 16, 16);
+	glClear(GL_COLOR_BUFFER_BIT);
 }
 
 void intro_do( long itime )
@@ -1106,8 +1143,15 @@ void intro_do( long itime )
 	
 	if (isScreenSaverRunning)
 	{
-		float ftime = 0.001f * (float)(itime - screenSaverStartTime);
-		screensaverScene(ftime);
+		if (screenSaverID >= 0)
+		{
+			float ftime = 0.001f * (float)(itime - screenSaverStartTime);
+			screensaverScene(ftime);
+		}
+		else
+		{
+			nothingScene(0.0f);
+		}
 	}
 	else
 	{
