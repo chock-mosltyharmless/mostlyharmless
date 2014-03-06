@@ -56,7 +56,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,1,
+static WININFO wininfo = {  0,0,0,0,0,
 							{'i','q','_',0}
                             };
 
@@ -119,6 +119,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			intro_blackout(false);
 			break;
 
+		case '0':
 		case '1':
 		case '2':
 		case '3':
@@ -126,9 +127,24 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case '5':
 		case '6':
 			ShowCursor(false);
-			PlaySound("sounds/kaze_no_kaori.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
 			isScreenSaverRunning = true;
+			screenSaverStartTime = timeGetTime();
 			screenSaverID = wParam - '1';
+			if (screenSaverID >= 0)
+			{
+				if (screenSaverID < 5)
+				{
+					PlaySound("sounds/kaze_no_kaori.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+				}
+				else
+				{
+					PlaySound("sounds/kaze_no_kaori.wav", NULL, SND_FILENAME | SND_ASYNC);
+				}
+			}
+			else
+			{
+				PlaySound(NULL, NULL, 0);
+			}
 			break;
 
 		default:

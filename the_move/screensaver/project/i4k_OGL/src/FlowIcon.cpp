@@ -138,12 +138,39 @@ void FlowIcon::drawSubCategory(float time)
 }
 
 
+void FlowIcon::drawAmount(float mouseOverAmount, float time, float xDelta, float yDelta)
+{
+	GLuint texID;
+	char errorString[MAX_ERROR_LENGTH];
+
+	// set texture
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (textureManager.getTextureID(texName, &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "vMainObject shader error", MB_OK);
+		exit(1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	// Core drawing?
+	float xp = getGLX() + xDelta;
+	float yp = getGLY() + yDelta;
+	float relClickTime = (time - clickTime) * 1.5f;
+	if (relClickTime > 1.0f) relClickTime = 1.0f;
+	if (relClickTime < 0.0f) relClickTime = 0.0f;
+	relClickTime = sqrtf(relClickTime);
+	float bw = borderWidth + 0.03f * (1.0f - relClickTime);
+	float bwx = bw + 0.002f * mouseOverAmount * (sin(8.3f * time + 5.2f) + sin(7.2f * time + 3.5f));
+	float bwy = bw + 0.002f * mouseOverAmount * (sin(3.2f * time + 2.2f) + sin(9.1f * time + 1.1f));
+	textureManager.drawQuad(xp + bwx, yp - (distance - bwy) * ASPECT_RATIO,
+		                    xp + distance - bwx, yp - bwy*ASPECT_RATIO,
+							1.0f);
+	lastDrawTime = time;
+}
 
 void FlowIcon::draw(float time)
 {
 	curTime = time;
-	GLuint texID;
-	char errorString[MAX_ERROR_LENGTH];
 	
 	if (mouseIsOver)
 	{
@@ -156,79 +183,7 @@ void FlowIcon::draw(float time)
 		mouseOverAmount *= decay;
 	}
 
-	// Draw the highlight
-#if 0
-	if (mouseOverAmount > 0.03f)
-	{
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		if (textureManager.getTextureID("highlight.tga", &texID, errorString))
-		{
-			MessageBox(hWnd, errorString, "vMainObject shader error", MB_OK);
-			exit(1);
-		}
-		glBindTexture(GL_TEXTURE_2D, texID);
-
-		float xp = getGLX();
-		float yp = getGLY();
-		for (int i = 0; i < 8; i++)
-		{
-			float bw = -0.03f - 0.03f * mouseOverAmount + 0.015f * sin(i*4.2f + 1.4f);
-			float rotation = time * sin(i * 1.4f + 4.2f);
-			textureManager.drawQuad(xp + bw, yp - (distance - bw) * ASPECT_RATIO,
-									xp + distance - bw, yp - bw*ASPECT_RATIO,
-									mouseOverAmount * 0.15f, rotation);
-		}
-	}
-#endif
-
-	// set texture
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if (textureManager.getTextureID(texName, &texID, errorString))
-	{
-		MessageBox(hWnd, errorString, "vMainObject shader error", MB_OK);
-		exit(1);
-	}
-	glBindTexture(GL_TEXTURE_2D, texID);
-
-	// Core drawing?
-	float xp = getGLX();
-	float yp = getGLY();
-	float relClickTime = (time - clickTime) * 1.5f;
-	if (relClickTime > 1.0f) relClickTime = 1.0f;
-	if (relClickTime < 0.0f) relClickTime = 0.0f;
-	relClickTime = sqrtf(relClickTime);
-	float bw = borderWidth + 0.03f * (1.0f - relClickTime);
-	float bwx = bw + 0.002f * mouseOverAmount * (sin(8.3f * time + 5.2f) + sin(7.2f * time + 3.5f));
-	float bwy = bw + 0.002f * mouseOverAmount * (sin(3.2f * time + 2.2f) + sin(9.1f * time + 1.1f));
-	textureManager.drawQuad(xp + bwx, yp - (distance - bwy) * ASPECT_RATIO,
-		                    xp + distance - bwx, yp - bwy*ASPECT_RATIO,
-							1.0f);
-	lastDrawTime = time;
-
-	// Draw the highlight
-#if 0
-	if (mouseOverAmount > 0.03f)
-	{
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-		if (textureManager.getTextureID("highlight.tga", &texID, errorString))
-		{
-			MessageBox(hWnd, errorString, "texture not found", MB_OK);
-			exit(1);
-		}
-		glBindTexture(GL_TEXTURE_2D, texID);
-
-		float xp = getGLX();
-		float yp = getGLY();
-		for (int i = 0; i < 2; i++)
-		{
-			float bw = -0.00f - 0.03f * mouseOverAmount + 0.01f * sin(i*4.2f + 1.4f);
-			float rotation = time * sin(i * 1.4f + 4.2f);
-			textureManager.drawQuad(xp + bw, yp - (distance - bw) * ASPECT_RATIO,
-									xp + distance - bw, yp - bw*ASPECT_RATIO,
-									mouseOverAmount * 0.1f, rotation);
-		}
-	}
-#endif
+	drawAmount(mouseOverAmount, time);
 }
 
 void FlowIcon::setMousePosition(float xpos, float ypos)
