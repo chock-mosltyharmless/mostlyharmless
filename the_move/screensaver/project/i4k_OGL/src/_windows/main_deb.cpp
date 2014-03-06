@@ -21,11 +21,10 @@ int realYRes;
 
 bool isScreenSaverRunning = true;
 int screenSaverStartTime = 0;
-int backgroundImage = 1;
+int screenSaverID = 0;
 bool isAlarmRinging = false;
 int alarmStartTime = 0;
 int demoStartTime = 0;
-int numberOfTheDead = 1;
 
 typedef struct
 {
@@ -98,17 +97,9 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 		case 'q':
 		case 'Q':
-			isScreenSaverRunning = !isScreenSaverRunning;
-			ShowCursor(!isScreenSaverRunning);
-			screenSaverStartTime = timeGetTime();
-			if (isScreenSaverRunning)
-			{
-				PlaySound("sounds/kaze_no_kaori.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
-			}
-			else
-			{
-				PlaySound(NULL, NULL, 0);
-			}
+			isScreenSaverRunning = false;
+			ShowCursor(true);
+			PlaySound(NULL, NULL, 0);
 			break;
 
 		case 'm':
@@ -118,16 +109,14 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			PlaySound("sounds/alarm.wav", NULL, SND_FILENAME | SND_ASYNC);
 			break;
 
-		case 'd':
-		case 'D':
-			numberOfTheDead++;
-			if (numberOfTheDead > 3) numberOfTheDead = 3;
+		case 'b':
+		case 'B':
+			intro_blackout(true);
 			break;
-		
-		case 's':
-		case 'S':
-			numberOfTheDead--;
-			if (numberOfTheDead < 1) numberOfTheDead = 1;
+
+		case 'v':
+		case 'V':
+			intro_blackout(false);
 			break;
 
 		case '1':
@@ -135,7 +124,11 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case '3':
 		case '4':
 		case '5':
-			backgroundImage = wParam - '1' + 1;
+		case '6':
+			ShowCursor(false);
+			PlaySound("sounds/kaze_no_kaori.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+			isScreenSaverRunning = true;
+			screenSaverID = wParam - '1';
 			break;
 
 		default:

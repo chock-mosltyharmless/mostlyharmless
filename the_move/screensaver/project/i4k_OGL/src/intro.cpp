@@ -31,13 +31,21 @@ extern int realYRes;
 extern int demoStartTime;
 extern bool isScreenSaverRunning;
 extern int screenSaverStartTime;
-extern int backgroundImage;
 extern bool isAlarmRinging;
 extern int alarmStartTime;
-extern int numberOfTheDead;
+extern int screenSaverID;
 
+const int numIconsX = 5;
+const int numIconsY = 4;
 const float iconDistance = 2.0f / 5.0f;
 const float iconBorderWidth = 0.04f;
+bool iconBlackout[numIconsY][numIconsX] =
+{
+	{false, false, false, false},
+	{false, false, false, false},
+	{false, false, false, false},
+	{false, false, false, false},
+};
 
 bool isArrow = false;
 int arrowStartTime = 0;
@@ -45,6 +53,9 @@ float arrowX = 0;
 float arrowY = 0;
 bool isMusicPlaying = false;
 int musicPlayStartTime = 0;
+
+float mouseXPos = 0.0f;
+float mouseYPos = 0.0f;
 
 const float FOV = 45;
 
@@ -513,21 +524,21 @@ void desktopScene(float ftime, int itime)
 
 	const char *bgTex;
 
-	switch(backgroundImage)
+	switch(screenSaverID)
 	{
-	case 1:
+	case 0:
 		bgTex = "yellow_watercolor.tga";
 		break;
-	case 2:
+	case 1:
 		bgTex = "blue_watercolor.tga";
 		break;
-	case 3:
+	case 2:
 		bgTex = "green_watercolor.tga";
 		break;
-	case 4:
+	case 3:
 		bgTex = "black_watercolor.tga";
 		break;
-	case 5:
+	case 4:
 	default:
 		bgTex = "red_watercolor.tga";
 		break;
@@ -556,6 +567,9 @@ void desktopScene(float ftime, int itime)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
 	// Draw the icons
+	int numberOfTheDead = 1;
+	if (screenSaverID > 2) numberOfTheDead = 2;
+	if (screenSaverID > 3) numberOfTheDead = 3;
 	for (int i = 0; i < numberOfTheDead; i++)
 	{
 		deadIcon[i].draw(ftime);
@@ -1102,13 +1116,36 @@ void intro_do( long itime )
 	}
 
 	// Reset the GL settings
-	glDisable(GL_BLEND);
+	glEnable(GL_BLEND);
 	glMatrixMode(GL_PROJECTION);	
 	glLoadIdentity();
 
 #if 1
 	char errorString[MAX_ERROR_LENGTH+1];
 	GLuint offscreenTexID;
+
+	// Blackout of the icons due to removed boxes
+	if (textureManager.getTextureID("blackout.tga", &offscreenTexID, errorString))
+	{
+		MessageBox(hWnd, errorString, "texture not found", MB_OK);
+		exit(1);
+	}
+	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
+	for (int y = 0; y < numIconsY; y++)
+	{
+		for (int x = 0; x < numIconsX; x++)
+		{
+			if (iconBlackout[y][x])
+			{
+				float xpos = 2.0f * (float)x / (float)numIconsX - 1.0f;
+				float ypos = 1.0f - 2.0f * (float)y / (float)numIconsY;
+				textureManager.drawQuad(xpos - 0.02f, ypos + 0.02f,
+										xpos + 2.0f / numIconsX + 0.02f, ypos - 2.0f / numIconsY - 0.02f, 1.0f);
+			}
+		}
+	}
+
+	glDisable(GL_BLEND);
 
 	// Bezel:
 	glEnable(GL_BLEND);
@@ -1131,9 +1168,9 @@ void intro_do( long itime )
 	glUseProgram(shaderCopyProgram);	
 	
 	glClear(GL_COLOR_BUFFER_BIT);
-	screenLeft = params.getParam(14, 0.0f);
-	screenRight = params.getParam(15, 1.0f);
-	screenTop = params.getParam(16, 0.0f);
+	screenLeft = params.getParam(14, 0.1f);
+	screenRight = params.getParam(15, 0.9f);
+	screenTop = params.getParam(16, 0.2f);
 	screenBottom = params.getParam(17, 1.0f);
 
 	float left = screenLeft * 2 - 1;
@@ -1160,6 +1197,8 @@ void intro_cursor(float xpos, float ypos)
 	// Adjust according to left and right
 	xpos = (xpos - screenLeft) / (screenRight - screenLeft);
 	ypos = (ypos - screenTop) / (screenBottom - screenTop);
+	mouseXPos = xpos;
+	mouseYPos = ypos;
 
 	if (isSubMenu)
 	{
@@ -1184,6 +1223,14 @@ void intro_cursor(float xpos, float ypos)
 			icon[i].setMousePosition(xpos, ypos);
 		}
 	}
+}
+
+void intro_blackout(bool becomesBlack)
+{
+	int x = (int)(mouseXPos * numIconsX);
+	int y = (int)(mouseYPos * numIconsY);
+
+	iconBlackout[y][x] = becomesBlack;
 }
 
 void intro_left_click(float xpos, float ypos, int itime)
