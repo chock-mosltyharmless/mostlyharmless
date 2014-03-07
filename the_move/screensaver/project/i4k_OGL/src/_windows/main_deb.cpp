@@ -56,7 +56,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,1,
+static WININFO wininfo = {  0,0,0,0,0,
 							{'i','q','_',0}
                             };
 

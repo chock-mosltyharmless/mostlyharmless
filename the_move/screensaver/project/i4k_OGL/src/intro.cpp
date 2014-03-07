@@ -132,6 +132,15 @@ float subMenuAlpha = 0.0f;
 #define NUM_ICONS 15
 FlowIcon icon[NUM_ICONS];
 FlowIcon deadIcon[3];
+const int NUM_BOXES = 20;
+const float boxPosition[NUM_BOXES][2] =
+{
+	{-1.0f, 1.0f}, {-0.6f, 1.0f}, {-0.2f, 1.0f}, {.2f, 1.0f}, {.6f, 1.0f},
+	{-1.0f, 0.5f}, {-0.6f, 0.5f}, {-0.2f, 0.5f}, {.2f, 0.5f}, {.6f, 0.5f},
+	{-1.0f, 0.f}, {-0.6f, 0.f}, {-0.2f, 0.f}, {.2f, 0.f}, {.6f, 0.f},
+	{-1.0f, -0.5f}, {-0.6f, -0.5f}, {-0.2f, -0.5f}, {.2f, -0.5f}, {.6f, -0.5f},
+};
+
 char iconFileName[NUM_ICONS][1024] = 
 {
 	"garbage_icon.tga",
@@ -149,6 +158,16 @@ char iconFileName[NUM_ICONS][1024] =
 	"tisch_icon.tga",
 	"chair_icon.tga",
 	"plant_icon.tga",
+};
+const int iconBoxID[NUM_ICONS] =
+{
+	15, 6, 7, 8, 9,
+	10, 11, 12, 13, 14,
+	5, 16, 17, 18, 19
+};
+const int deadIconBoxID[3] =
+{
+	4, 3, 2
 };
 
 // icon subcategories
@@ -447,13 +466,17 @@ void intro_init( void )
 	{
 		for (int x = 0; x < 5; x++)
 		{
-			icon[index].init(iconFileName[index], x * iconDistance - 1.0f,
-						     1.0f - (y+1) * iconDistance * ASPECT_RATIO, iconDistance, iconBorderWidth);
+			//icon[index].init(iconFileName[index], x * iconDistance - 1.0f,
+			//			     1.0f - (y+1) * iconDistance * ASPECT_RATIO, iconDistance, iconBorderWidth);
+			int boxID = iconBoxID[index];
+			float xpos = boxPosition[boxID][0];
+			float ypos = boxPosition[boxID][1];
+			icon[index].init(iconFileName[index], xpos, ypos, iconDistance, iconBorderWidth);
 			
 			// Create the subcategories:
-			float xpos = (x+0.6f)*iconDistance - 1.0f;
-			float ypos = 1.0f - (y+1.2f)*iconDistance*ASPECT_RATIO;
-			if (index == 10) ypos += 0.9f*iconDistance*ASPECT_RATIO;
+			xpos += 0.6f*iconDistance;
+			ypos -= 0.2f*iconDistance*ASPECT_RATIO;
+			//if (index == 10) ypos += 0.9f*iconDistance*ASPECT_RATIO;
 			if (index == 9) xpos -= 0.7f*iconDistance;
 			if (index == 14) ypos += 0.25f*iconDistance*ASPECT_RATIO;
 			subCategories[index].xPos = xpos;
@@ -473,9 +496,9 @@ void intro_init( void )
 			index++;
 		}
 	}
-	deadIcon[0].init("man.tga", 4 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
-	deadIcon[1].init("woman.tga", 3 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
-	deadIcon[2].init("baby.tga", 2 * iconDistance - 1.0f, 1.0f, iconDistance, iconBorderWidth);
+	deadIcon[0].init("man.tga", boxPosition[deadIconBoxID[0]][0], boxPosition[deadIconBoxID[0]][1], iconDistance, iconBorderWidth);
+	deadIcon[1].init("woman.tga", boxPosition[deadIconBoxID[1]][0], boxPosition[deadIconBoxID[1]][1], iconDistance, iconBorderWidth);
+	deadIcon[2].init("baby.tga", boxPosition[deadIconBoxID[2]][0], boxPosition[deadIconBoxID[2]][1], iconDistance, iconBorderWidth);
 
 	// Set the texture locations in the relevant shaders:
 	// Set texture locations
