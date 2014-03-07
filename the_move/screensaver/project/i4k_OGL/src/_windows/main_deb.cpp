@@ -98,7 +98,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case 'q':
 		case 'Q':
 			isScreenSaverRunning = false;
-			ShowCursor(true);
+			//ShowCursor(true);
 			PlaySound(NULL, NULL, 0);
 			break;
 
@@ -126,7 +126,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case '4':
 		case '5':
 		case '6':
-			ShowCursor(false);
+			//ShowCursor(false);
 			isScreenSaverRunning = true;
 			screenSaverStartTime = timeGetTime();
 			screenSaverID = wParam - '1';
@@ -318,7 +318,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     //long to=timeGetTime();
 	isScreenSaverRunning = false;
-	if (isScreenSaverRunning) ShowCursor(false);
+	ShowCursor(false);
 	screenSaverStartTime = timeGetTime();
 	demoStartTime = timeGetTime();
     while( !done )
