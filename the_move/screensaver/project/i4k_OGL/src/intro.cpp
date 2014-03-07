@@ -1040,6 +1040,11 @@ void screensaverScene(float ftime)
 	glEnable(GL_BLEND);
 	if (screenSaverID == 5)
 	{
+		for (int i = 0; i < 3; i++)
+		{
+			deadIcon[i].draw(ftime);
+		}
+
 		for (int i = NUM_ICONS - 1; i >= 0; i--)
 		{
 			float toDelete[2];
@@ -1210,12 +1215,12 @@ void intro_do( long itime )
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);   //Copy back buffer to texture
 	glUseProgram(shaderCopyProgram);	
-	
+
 	glClear(GL_COLOR_BUFFER_BIT);
-	screenLeft = params.getParam(14, 0.1f);
-	screenRight = params.getParam(15, 0.9f);
-	screenTop = params.getParam(16, 0.2f);
-	screenBottom = params.getParam(17, 1.0f);
+	screenLeft = params.getParam(14, 0.29f);
+	screenRight = params.getParam(15, 0.86f);
+	screenTop = params.getParam(16, 0.07f);
+	screenBottom = params.getParam(17, 0.72f);
 
 	float left = screenLeft * 2 - 1;
 	float right = screenRight * 2 - 1;
@@ -1317,7 +1322,8 @@ void intro_left_click(float xpos, float ypos, int itime)
 					{
 						isArrow = true;
 						arrowStartTime = itime;
-						int iconIdx = rand() % NUM_ICONS;
+						//int iconIdx = rand() % NUM_ICONS;
+						int iconIdx = subMenuIndex;
 						arrowX = icon[iconIdx].getGLX() + iconDistance * 0.5f;
 						arrowY = icon[iconIdx].getGLY() - iconDistance * 0.5f * ASPECT_RATIO;
 						isDoubleClick = true;
@@ -1348,7 +1354,8 @@ void intro_left_click(float xpos, float ypos, int itime)
 				// Instead do the thing directly	
 				isArrow = true;
 				arrowStartTime = itime;
-				int iconIdx = rand() % NUM_ICONS;
+				//int iconIdx = rand() % NUM_ICONS;
+				int iconIdx = i;
 				arrowX = icon[iconIdx].getGLX() + iconDistance * 0.5f;
 				arrowY = icon[iconIdx].getGLY() - iconDistance * 0.5f * ASPECT_RATIO;
 				isDoubleClick = true;
