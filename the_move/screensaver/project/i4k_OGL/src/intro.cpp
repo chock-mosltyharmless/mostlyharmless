@@ -57,6 +57,9 @@ int musicPlayStartTime = 0;
 float mouseXPos = 0.0f;
 float mouseYPos = 0.0f;
 
+const float mouseCursorWidth = 0.063f;
+const float mouseCursorHeight = 0.1f;
+
 const float FOV = 45;
 
 /* Number of names of the used shaders */
@@ -703,6 +706,18 @@ void desktopScene(float ftime, int itime)
 		}
 	}
 	
+	// Draw the cursor
+	if (textureManager.getTextureID("cursor_arrow.tga", &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "texture not found", MB_OK);
+		exit(1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+	float mxp = 2.0f * mouseXPos - 1.0f;
+	float myp = 1.0f - 2.0f * mouseYPos;
+	textureManager.drawQuad(mxp, myp - mouseCursorHeight*ASPECT_RATIO, mxp + mouseCursorWidth, myp, 1.0f);
+
+
 	glDisable(GL_BLEND);
 }
 
@@ -1267,8 +1282,8 @@ void intro_do( long itime )
 void intro_cursor(float xpos, float ypos)
 {
 	// Adjust according to left and right
-	xpos = (xpos - screenLeft) / (screenRight - screenLeft);
-	ypos = (ypos - screenTop) / (screenBottom - screenTop);
+	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
+	//ypos = (ypos - screenTop) / (screenBottom - screenTop);
 	mouseXPos = xpos;
 	mouseYPos = ypos;
 
@@ -1308,8 +1323,8 @@ void intro_blackout(bool becomesBlack)
 void intro_left_click(float xpos, float ypos, int itime)
 {
 	// Adjust according to left and right
-	xpos = (xpos - screenLeft) / (screenRight - screenLeft);
-	ypos = (ypos - screenTop) / (screenBottom - screenTop);
+	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
+	//ypos = (ypos - screenTop) / (screenBottom - screenTop);
 
 	if (isScreenSaverRunning) return;
 
@@ -1399,8 +1414,8 @@ void intro_left_click(float xpos, float ypos, int itime)
 void intro_right_click(float xpos, float ypos, int itime)
 {
 	// Adjust according to left and right
-	xpos = (xpos - screenLeft) / (screenRight - screenLeft);
-	ypos = (ypos - screenTop) / (screenBottom - screenTop);
+	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
+	//ypos = (ypos - screenTop) / (screenBottom - screenTop);
 
 	if (isScreenSaverRunning) return;
 
