@@ -60,7 +60,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,1,
+static WININFO wininfo = {  0,0,0,0,0,
 							{'i','q','_',0}
                             };
 
@@ -156,7 +156,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			isScreenSaverRunning = true;
 			screenSaverStartTime = timeGetTime();
 			screenSaverID = wParam - '1';
-			if (screenSaverID >= 0)
+			if (screenSaverID >= 0 && false)
 			{
 				if (screenSaverID < 5)
 				{
