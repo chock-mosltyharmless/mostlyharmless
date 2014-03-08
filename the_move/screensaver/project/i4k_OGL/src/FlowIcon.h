@@ -9,7 +9,7 @@ public:
 	// Distance is 2*width + 2*borderWidth
 	void init(const char *texName, float xpos, float ypos, float distance, float borderWidth);
 	void draw(float time);
-	void drawAmount(float mouseOverAmount, float time, float xDelta = 0.0f, float yDelta = 0.0f);
+	void drawAmount(float mouseOverAmount, float relClickTime, float time, float xDelta = 0.0f, float yDelta = 0.0f);
 	void drawAlarming(float time);
 	void drawSubCategory(float time);
 	void setMousePosition(float xpos, float ypos);

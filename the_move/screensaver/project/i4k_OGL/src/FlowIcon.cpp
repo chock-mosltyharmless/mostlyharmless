@@ -138,7 +138,7 @@ void FlowIcon::drawSubCategory(float time)
 }
 
 
-void FlowIcon::drawAmount(float mouseOverAmount, float time, float xDelta, float yDelta)
+void FlowIcon::drawAmount(float mouseOverAmount, float relClickTime, float time, float xDelta, float yDelta)
 {
 	GLuint texID;
 	char errorString[MAX_ERROR_LENGTH];
@@ -155,10 +155,6 @@ void FlowIcon::drawAmount(float mouseOverAmount, float time, float xDelta, float
 	// Core drawing?
 	float xp = getGLX() + xDelta;
 	float yp = getGLY() + yDelta;
-	float relClickTime = (time - clickTime) * 1.5f;
-	if (relClickTime > 1.0f) relClickTime = 1.0f;
-	if (relClickTime < 0.0f) relClickTime = 0.0f;
-	relClickTime = sqrtf(relClickTime);
 	float bw = borderWidth + 0.03f * (1.0f - relClickTime);
 	float bwx = bw + 0.002f * mouseOverAmount * (sin(8.3f * time + 5.2f) + sin(7.2f * time + 3.5f));
 	float bwy = bw + 0.002f * mouseOverAmount * (sin(3.2f * time + 2.2f) + sin(9.1f * time + 1.1f));
@@ -183,7 +179,12 @@ void FlowIcon::draw(float time)
 		mouseOverAmount *= decay;
 	}
 
-	drawAmount(mouseOverAmount, time);
+	float relClickTime = (time - clickTime) * 1.5f;
+	if (relClickTime > 1.0f) relClickTime = 1.0f;
+	if (relClickTime < 0.0f) relClickTime = 0.0f;
+	relClickTime = sqrtf(relClickTime);
+
+	drawAmount(mouseOverAmount, relClickTime, time);
 }
 
 void FlowIcon::setMousePosition(float xpos, float ypos)
