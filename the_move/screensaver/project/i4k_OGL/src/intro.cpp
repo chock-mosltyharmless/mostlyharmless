@@ -34,6 +34,7 @@ extern int screenSaverStartTime;
 extern bool isAlarmRinging;
 extern int alarmStartTime;
 extern int screenSaverID;
+extern int itemDeleteStartTime;
 
 const int numIconsX = 5;
 const int numIconsY = 4;
@@ -61,6 +62,13 @@ const float mouseCursorWidth = 0.063f;
 const float mouseCursorHeight = 0.1f;
 
 const float FOV = 45;
+
+// Flickering of the screen
+extern bool isFlickering;
+extern int flickerStartTime;
+int nextFlickerTime = -1;
+float flickerAmount = 0.0f;
+float flickerPosition = 0.5f;
 
 /* Number of names of the used shaders */
 #define NUM_SHADERS 10
@@ -170,7 +178,7 @@ const int iconBoxID[NUM_ICONS] =
 };
 const int deadIconBoxID[3] =
 {
-	4, 3, 2
+	3, 2, 1
 };
 
 // icon subcategories
@@ -889,7 +897,7 @@ void drawMultiLine(float start[3], float end[3],
 	}
 }
 
-void screensaverScene(float ftime)
+void screensaverScene(float ftime, int itime)
 {
 	char errorString[MAX_ERROR_LENGTH+1];
 	GLuint offscreenTexID;
@@ -1080,7 +1088,7 @@ void screensaverScene(float ftime)
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			deadIcon[i].draw(ftime);
+			deadIcon[i].drawAmount(0.0f, 1.0f, ftime);
 		}
 
 		for (int i = NUM_ICONS - 1; i >= 0; i--)
@@ -1089,7 +1097,8 @@ void screensaverScene(float ftime)
 			toDelete[0] = icon[0].getGLX() - icon[i].getGLX();
 			toDelete[1] = icon[0].getGLY() - icon[i].getGLY();
 
-			float moveTime = (ftime - ((i * 3487639) % 29) - 10.0f) * 0.3f;
+			//float moveTime = (ftime - ((i * 3487639) % 29) - 10.0f) * 0.3f;
+			float moveTime = 0.001f * (float)(itime - itemDeleteStartTime - ((i * 3487639) % 29000)) * 0.3f;
 			if (moveTime < 0.0f) moveTime = 0.0f;
 			if (moveTime > 1.0f) moveTime = 1.0f;
 			float moveAmount = 0.5f - cos(moveTime * 3.141592f) * 0.5f;
@@ -1105,7 +1114,7 @@ void screensaverScene(float ftime)
 			float munchAmount = 0.0f;
 			if (i == 0)
 			{
-				float munchTime = (ftime - 15.0f) * 0.035f;
+				float munchTime = (itime - itemDeleteStartTime - 4700) * 0.001f * 0.035f;
 				if (munchTime < 0.0f) munchTime = 0.0f;
 				if (munchTime > 1.0f) munchTime = 1.0f;
 				munchAmount = sqrtf(sin(munchTime * 3.141592f)) * 4.0f;
@@ -1113,7 +1122,7 @@ void screensaverScene(float ftime)
 
 			if (i == 0 || moveTime < 1.0f)
 			{
-				icon[i].drawAmount(munchAmount, ftime,
+				icon[i].drawAmount(munchAmount, 1.0f, ftime,
 					               toDelete[0]*moveAmount + detour[0]*detourAmount,
 								   toDelete[1]*moveAmount + detour[1]*detourAmount);
 			}
@@ -1123,6 +1132,7 @@ void screensaverScene(float ftime)
 	// Blackout of complete screen
 	glBindTexture(GL_TEXTURE_2D, 0);
 	float blackAmount = -1.0f;
+
 	if (screenSaverID == 0)
 	{
 		blackAmount = 1.0f - ftime * 0.2f;	
@@ -1189,7 +1199,7 @@ void intro_do( long itime )
 		if (screenSaverID >= 0)
 		{
 			float ftime = 0.001f * (float)(itime - screenSaverStartTime);
-			screensaverScene(ftime);
+			screensaverScene(ftime, itime);
 		}
 		else
 		{
@@ -1241,6 +1251,45 @@ void intro_do( long itime )
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
 	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 0.7f);
 
+	// Flickering
+	flickerAmount -= 0.25f;
+	if (flickerAmount < 0.0f) flickerAmount = 0.0f;
+	parameterMatrix[10] = flickerAmount; // No flicker
+	parameterMatrix[11] = flickerPosition;
+	if (isFlickering)
+	{
+		if (false &&
+			itime > flickerStartTime + 6000 &&
+			itime < flickerStartTime + 8000)
+		{
+			glDisable(GL_BLEND);
+			textureManager.getTextureID("programming.tga", &offscreenTexID, errorString);
+			glBindTexture(GL_TEXTURE_2D, offscreenTexID);
+			textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
+			glEnable(GL_BLEND);
+			if (itime < flickerStartTime + 6100 ||
+				itime > flickerStartTime + 7700)
+			{
+				glClear(GL_COLOR_BUFFER_BIT);
+			}
+		}
+		else if (itime > nextFlickerTime)
+		{
+			//glClear(GL_COLOR_BUFFER_BIT);
+			flickerAmount = 1.0f;
+			flickerPosition = (float)(rand() % 1000) * 0.001f;
+			parameterMatrix[10] = flickerAmount; // does flicker
+			parameterMatrix[11] = flickerPosition;
+			// Flacki Flacko
+
+			float timeSinceFlickerStart = 0.001f * (float)(itime - flickerStartTime);
+			float flickerMeanTime = timeSinceFlickerStart * timeSinceFlickerStart + 3.0f;
+			if (flickerMeanTime > 25.0f) flickerMeanTime = 15.0f;
+			int randi = rand();
+			nextFlickerTime = itime + (int)(((randi*randi) % 1000) * flickerMeanTime);
+		}
+	}
+
 	// Parametric transwhatever stuff:
 	// draw background:
 	glMatrixMode(GL_MODELVIEW);	
@@ -1255,10 +1304,10 @@ void intro_do( long itime )
 	glUseProgram(shaderCopyProgram);	
 
 	glClear(GL_COLOR_BUFFER_BIT);
-	screenLeft = params.getParam(14, 0.29f);
-	screenRight = params.getParam(15, 0.86f);
-	screenTop = params.getParam(16, 0.07f);
-	screenBottom = params.getParam(17, 0.72f);
+	screenLeft = params.getParam(14, 0.17f);
+	screenRight = params.getParam(15, 0.74f);
+	screenTop = params.getParam(16, 0.23f);
+	screenBottom = params.getParam(17, 0.86f);
 
 	float left = screenLeft * 2 - 1;
 	float right = screenRight * 2 - 1;
@@ -1320,7 +1369,7 @@ void intro_blackout(bool becomesBlack)
 	iconBlackout[y][x] = becomesBlack;
 }
 
-void intro_left_click(float xpos, float ypos, int itime)
+void intro_left_click(float xpos, float ypos, int itime, int sound)
 {
 	// Adjust according to left and right
 	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
@@ -1365,7 +1414,10 @@ void intro_left_click(float xpos, float ypos, int itime)
 						arrowX = icon[iconIdx].getGLX() + iconDistance * 0.5f;
 						arrowY = icon[iconIdx].getGLY() - iconDistance * 0.5f * ASPECT_RATIO;
 						isDoubleClick = true;
-						PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
+						if (sound)
+						{
+							PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
+						}
 						return;
 					}
 				}
@@ -1401,17 +1453,20 @@ void intro_left_click(float xpos, float ypos, int itime)
 		}
 	}
 
-	if (isDoubleClick)
+	if (sound)
 	{
-		PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
-	}
-	else
-	{
-		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
+		if (isDoubleClick)
+		{
+			PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
+		}
+		else
+		{
+			PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
+		}
 	}
 }
 
-void intro_right_click(float xpos, float ypos, int itime)
+void intro_right_click(float xpos, float ypos, int itime, int sound)
 {
 	// Adjust according to left and right
 	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
@@ -1450,5 +1505,8 @@ void intro_right_click(float xpos, float ypos, int itime)
 		}
 	}
 
-	PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
+	if (sound)
+	{
+		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
+	}
 }

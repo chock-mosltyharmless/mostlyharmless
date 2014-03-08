@@ -25,6 +25,10 @@ int screenSaverID = 0;
 bool isAlarmRinging = false;
 int alarmStartTime = 0;
 int demoStartTime = 0;
+int itemDeleteStartTime = (1<<28);
+
+bool isFlickering;
+int flickerStartTime;
 
 typedef struct
 {
@@ -56,7 +60,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,0,
+static WININFO wininfo = {  0,0,0,0,1,
 							{'i','q','_',0}
                             };
 
@@ -119,6 +123,27 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			intro_blackout(false);
 			break;
 
+		case 'x':
+		case 'X':
+			isFlickering = true;
+			flickerStartTime = timeGetTime();
+			break;
+
+		case 'z':
+		case 'Z':
+			isFlickering = false;
+			break;
+			
+		case 'd':
+		case 'D':
+			itemDeleteStartTime = timeGetTime();
+			break;
+
+		case 's':
+		case 'S':
+			itemDeleteStartTime = (1<<28);
+			break;
+
 		case '0':
 		case '1':
 		case '2':
@@ -126,6 +151,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case '4':
 		case '5':
 		case '6':
+			itemDeleteStartTime = (1<<28);
 			//ShowCursor(false);
 			isScreenSaverRunning = true;
 			screenSaverStartTime = timeGetTime();
@@ -159,7 +185,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		int yPos = lParam >> 16;
 		float relXPos = (float)xPos / float(rec.right - rec.left);
 		float relYPos = (float)yPos / float(rec.bottom - rec.top);
-		intro_left_click(relXPos, relYPos, timeGetTime());
+		intro_left_click(relXPos, relYPos, timeGetTime(), wParam & MK_CONTROL);
 		return 1;
 	}
 
@@ -169,7 +195,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		int yPos = lParam >> 16;
 		float relXPos = (float)xPos / float(rec.right - rec.left);
 		float relYPos = (float)yPos / float(rec.bottom - rec.top);
-		intro_right_click(relXPos, relYPos, timeGetTime());
+		intro_right_click(relXPos, relYPos, timeGetTime(), wParam & MK_CONTROL);
 		return 1;
 	}
 
