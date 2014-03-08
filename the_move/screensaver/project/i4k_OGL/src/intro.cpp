@@ -61,7 +61,8 @@ float mouseYPos = 0.0f;
 const float mouseCursorWidth = 0.063f;
 const float mouseCursorHeight = 0.1f;
 
-const float FOV = 45;
+//const float FOV = 45;
+const float FOV = 42;
 
 // Flickering of the screen
 extern bool isFlickering;
@@ -239,10 +240,13 @@ const float MAST_LINE_WIDTH = 0.07f;
 const float MAST_DISTANCE = 10.0f;
 const int NUM_CORE_POWER_SCENES = 7;
 
-float coreMastLine[2][3] =
+const float coreMastLine[2][3] =
 {
 	{-1.0f, 2.52f, 0.0f}, {-1.0f, 0.5f, 0.0f}
 };
+const float MAST_STUFF_TOP = 0.15f;
+const float MAST_STUFF_HEIGHT = 0.3f;
+const float MAST_STUFF_WIDTH = 0.5f;
 
 const float corePowerLines[NUM_CORE_POWER_SCENES][NUM_POWER_LINES][3] =
 {
@@ -332,8 +336,22 @@ const float corePowerLines[NUM_CORE_POWER_SCENES][NUM_POWER_LINES][3] =
 	},
 };
 
+const int NUM_MAST_STUFF_TEXTURES = 5;
+const char *mastStuffTextures[NUM_MAST_STUFF_TEXTURES] =
+{
+	"brown_combined_1.tga",
+	"brown_combined_2.tga",
+	"brown_combined_3.tga",
+	"brown_combined_4.tga",
+	"brown_combined_5.tga"
+};
+
 float powerLines[NUM_POWER_SCENES][NUM_POWER_LINES][3];
-float mastLines[NUM_POWER_SCENES][2][3];
+//float mastLines[NUM_POWER_SCENES][2][3];
+float mastDisplacement[NUM_POWER_SCENES][3];
+float mastSide[NUM_POWER_SCENES];
+const char *mastTextures[NUM_POWER_SCENES];
+int mastStuffID[NUM_POWER_SCENES][4];
 
 // -------------------------------------------------------------------
 //                          Code:
@@ -445,11 +463,26 @@ void intro_init( void )
 			powerLines[i][j][2] = corePowerLines[sceneID][j][2] + zDisplace + (frand() - 0.5f) * 0.01f;
 		}
 
+#if 0
 		for (int j = 0; j < 2; j++)
 		{
 			mastLines[i][j][0] = side * (coreMastLine[j][0] + xDisplace);
 			mastLines[i][j][1] = coreMastLine[j][1] + yDisplace;
 			mastLines[i][j][2] = coreMastLine[j][2] + zDisplace;
+		}
+#else
+		mastDisplacement[i][0] = xDisplace;
+		mastDisplacement[i][1] = yDisplace;
+		mastDisplacement[i][2] = zDisplace;
+		mastSide[i] = side;
+#endif
+
+		if ((rand() % 1000) > 600) mastTextures[i] = "brown_mast_2.tga";
+		else mastTextures[i] = "brown_mast_1.tga";
+
+		for (int j = 0; j < 4; j++)
+		{
+			mastStuffID[i][j] = (rand() % (NUM_MAST_STUFF_TEXTURES + 1)) - 1;
 		}
 	}
 
@@ -781,7 +814,8 @@ void project(float dest[3], const float source[3])
 // Ignores ASPECT RATIO... I have to think about it.
 void drawLine(float start[3], float end[3],
 	          float width, const char *texName,
-			  const float color[4])
+			  const float color[4],
+			  float side = 1.0f)
 {
 	GLuint texID;
 	char errorString[MAX_ERROR_LENGTH+1];
@@ -811,14 +845,46 @@ void drawLine(float start[3], float end[3],
 	normalize(normalVector);
 
 	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 1.0f);
+	glTexCoord2f(0.5f - 0.5f*side, 1.0f);
 	glVertex3f(start[0] - normalVector[0]*width, start[1] - normalVector[1]*width, -start[2]);
-	glTexCoord2f(0.0f, 0.0f);
+	glTexCoord2f(0.5f - 0.5f*side, 0.0f);
 	glVertex3f(end[0] - normalVector[0]*width, end[1] - normalVector[1]*width, -end[2]);
-	glTexCoord2f(1.0f, 0.0f);
+	glTexCoord2f(0.5f + 0.5f*side, 0.0f);
 	glVertex3f(end[0] + normalVector[0]*width, end[1] + normalVector[1]*width, -end[2]);
-	glTexCoord2f(1.0, 1.0f);
+	glTexCoord2f(0.5f + 0.5f*side, 1.0f);
 	glVertex3f(start[0] + normalVector[0]*width, start[1] + normalVector[1]*width, -start[2]);
+	glEnd();
+}
+
+void drawLineHorizontal(float start[3], float end[3],
+	                    float width, const char *texName,
+			            const float color[4],
+						float side,
+						float normalVector[3])
+{
+	GLuint texID;
+	char errorString[MAX_ERROR_LENGTH+1];
+	if (textureManager.getTextureID(texName, &texID, errorString) < 0)
+	{
+		MessageBox(hWnd, errorString, "Texture load error", MB_OK);
+		exit(-1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+
+	// I have to set the color differently...
+	glColor4f(color[0], color[1], color[2], color[3]);
+
+	//float normalVector[3] = {1.0f, 0.0f, 0.0f};
+
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.5f - 0.5f*side, 1.0f);
+	glVertex3f(start[0] - normalVector[0]*width, start[1] - normalVector[1]*width, -start[2] - normalVector[2]);
+	glTexCoord2f(0.5f - 0.5f*side, 0.0f);
+	glVertex3f(end[0] - normalVector[0]*width, end[1] - normalVector[1]*width, -end[2] - normalVector[2]);
+	glTexCoord2f(0.5f + 0.5f*side, 0.0f);
+	glVertex3f(end[0] + normalVector[0]*width, end[1] + normalVector[1]*width, -end[2] + normalVector[2]);
+	glTexCoord2f(0.5f + 0.5f*side, 1.0f);
+	glVertex3f(start[0] + normalVector[0]*width, start[1] + normalVector[1]*width, -start[2] + normalVector[2]);
 	glEnd();
 }
 
@@ -1001,6 +1067,7 @@ void screensaverScene(float ftime, int itime)
 	// Get the direction after rotation
 	float tmpV[3];
 	float up[3] = {0.0f, 1.0f, 0.0f};
+	const float X_ROTATE_ALPHA = 0.9f;
 	rotateY(tmpV, up, -0.2f);
 	rotateX(up, tmpV, 1.0f);
 	const float screenVector[3] = {0.0f, 0.0f, 1.0f};
@@ -1027,9 +1094,9 @@ void screensaverScene(float ftime, int itime)
 
 			// Move the lines
 			rotateY(tmpV, transStart, -0.2f);
-			rotateX(transStart, tmpV, 1.0f);
+			rotateX(transStart, tmpV, X_ROTATE_ALPHA);
 			rotateY(tmpV, transEnd, -0.2f);
-			rotateX(transEnd, tmpV, 1.0f);
+			rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
 
 			// draw
 			const float color[4] = {0.1f, 0.1f, 0.1f, 1.0f};
@@ -1037,23 +1104,71 @@ void screensaverScene(float ftime, int itime)
 		}
 
 		// Draw the mast
-		for (int i = 0; i < 3; i++)
-		{
-			transStart[i] = mastLines[sceneID[drawings]][0][i];
-			transEnd[i] = mastLines[sceneID[drawings]][1][i];
-		}
+		const float color[4] = {0.9f, 0.9f, 0.9f, 1.0f};
+		float normalVector[3];
+
+		// Mast left stuff
+		transStart[0] = mastSide[sceneID[drawings]] * (coreMastLine[0][0] + mastDisplacement[sceneID[drawings]][0]);
+		transStart[1] = coreMastLine[0][1] + mastDisplacement[sceneID[drawings]][1] - MAST_STUFF_TOP;
+		transStart[2] = coreMastLine[0][2] + mastDisplacement[sceneID[drawings]][2];
+		transEnd[0] = transStart[0];
+		transEnd[1] = transStart[1] - MAST_STUFF_HEIGHT;
+		transEnd[2] = transStart[2];
 		transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
 		transEnd[2] -= distance - (drawings-1) * MAST_DISTANCE;
-
 		// Move the lines
 		rotateY(tmpV, transStart, -0.2f);
-		rotateX(transStart, tmpV, 1.0f);
+		rotateX(transStart, tmpV, X_ROTATE_ALPHA);
 		rotateY(tmpV, transEnd, -0.2f);
-		rotateX(transEnd, tmpV, 1.0f);
-
+		rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
+		normalVector[0] = 1.0f;
+		normalVector[1] = 0.0f;
+		normalVector[2] = 0.0f;
 		// draw
-		const float color[4] = {0.8f, 0.8f, 0.8f, 1.0f};
-		drawLine(transStart, transEnd, MAST_LINE_WIDTH, "brown_mast_1.tga", color);
+		if (mastStuffID[sceneID[drawings]][1] >= 0)
+		{
+			drawLineHorizontal(transStart, transEnd, MAST_STUFF_WIDTH, mastStuffTextures[mastStuffID[sceneID[drawings]][1]], color, -mastSide[sceneID[drawings]], normalVector);
+		}
+
+		// Core mast
+		transStart[0] = mastSide[sceneID[drawings]] * (coreMastLine[0][0] + mastDisplacement[sceneID[drawings]][0]);
+		transStart[1] = coreMastLine[0][1] + mastDisplacement[sceneID[drawings]][1];
+		transStart[2] = coreMastLine[0][2] + mastDisplacement[sceneID[drawings]][2];
+		transEnd[0] = mastSide[sceneID[drawings]] * (coreMastLine[1][0] + mastDisplacement[sceneID[drawings]][0]);
+		transEnd[1] = coreMastLine[1][1] + mastDisplacement[sceneID[drawings]][1];
+		transEnd[2] = coreMastLine[1][2] + mastDisplacement[sceneID[drawings]][2];
+		transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
+		transEnd[2] -= distance - (drawings-1) * MAST_DISTANCE;
+		// Move the lines
+		rotateY(tmpV, transStart, -0.2f);
+		rotateX(transStart, tmpV, X_ROTATE_ALPHA);
+		rotateY(tmpV, transEnd, -0.2f);
+		rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
+		// draw
+		drawLine(transStart, transEnd, MAST_LINE_WIDTH, mastTextures[sceneID[drawings]], color);
+
+		// Mast right stuff
+		transStart[0] = mastSide[sceneID[drawings]] * (coreMastLine[0][0] + mastDisplacement[sceneID[drawings]][0]);
+		transStart[1] = coreMastLine[0][1] + mastDisplacement[sceneID[drawings]][1] - MAST_STUFF_TOP;
+		transStart[2] = coreMastLine[0][2] + mastDisplacement[sceneID[drawings]][2];
+		transEnd[0] = transStart[0];
+		transEnd[1] = transStart[1] - MAST_STUFF_HEIGHT;
+		transEnd[2] = transStart[2];
+		transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
+		transEnd[2] -= distance - (drawings-1) * MAST_DISTANCE;
+		// Move the lines
+		rotateY(tmpV, transStart, -0.2f);
+		rotateX(transStart, tmpV, X_ROTATE_ALPHA);
+		rotateY(tmpV, transEnd, -0.2f);
+		rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
+		normalVector[0] = 1.0f;
+		normalVector[1] = 0.0f;
+		normalVector[2] = 0.0f;
+		// draw
+		if (mastStuffID[sceneID[drawings]][3] >= 0)
+		{
+			drawLineHorizontal(transStart, transEnd, MAST_STUFF_WIDTH, mastStuffTextures[mastStuffID[sceneID[drawings]][3]], color, mastSide[sceneID[drawings]], normalVector);
+		}
 
 		// Draw the second round of stuff
 		for (int j = 3; j < NUM_POWER_LINES; j++)
@@ -1069,9 +1184,9 @@ void screensaverScene(float ftime, int itime)
 
 			// Move the lines
 			rotateY(tmpV, transStart, -0.2f);
-			rotateX(transStart, tmpV, 1.0f);
+			rotateX(transStart, tmpV, X_ROTATE_ALPHA);
 			rotateY(tmpV, transEnd, -0.2f);
-			rotateX(transEnd, tmpV, 1.0f);
+			rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
 
 			// draw
 			const float color[4] = {0.1f, 0.1f, 0.1f, 1.0f};
@@ -1304,10 +1419,10 @@ void intro_do( long itime )
 	glUseProgram(shaderCopyProgram);	
 
 	glClear(GL_COLOR_BUFFER_BIT);
-	screenLeft = params.getParam(14, 0.17f);
-	screenRight = params.getParam(15, 0.74f);
-	screenTop = params.getParam(16, 0.23f);
-	screenBottom = params.getParam(17, 0.86f);
+	screenLeft = params.getParam(14, 0.f);
+	screenRight = params.getParam(15, 1.f);
+	screenTop = params.getParam(16, 0.f);
+	screenBottom = params.getParam(17, 1.f);
 
 	float left = screenLeft * 2 - 1;
 	float right = screenRight * 2 - 1;
