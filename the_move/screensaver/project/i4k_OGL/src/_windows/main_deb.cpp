@@ -26,6 +26,8 @@ bool isAlarmRinging = false;
 int alarmStartTime = 0;
 int demoStartTime = 0;
 int itemDeleteStartTime = (1<<28);
+bool isEndScene = false;
+int endSceneStartTime = 0;
 
 bool isFlickering;
 int flickerStartTime;
@@ -60,7 +62,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,0,
+static WININFO wininfo = {  0,0,0,0,1,
 							{'i','q','_',0}
                             };
 
@@ -98,6 +100,21 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			compileShaders();
 			break;
 #endif
+
+		case 'l':
+		case 'L':
+			isEndScene = !isEndScene;
+			endSceneStartTime = timeGetTime();
+			if (isEndScene)
+			{
+				PlaySound("sounds/swoosh.wav", NULL, SND_FILENAME | SND_ASYNC);
+			}
+			else
+			{
+				PlaySound(NULL, NULL, 0);
+			}
+			isFlickering = false;
+			break;
 
 		case 'q':
 		case 'Q':
