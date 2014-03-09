@@ -197,36 +197,37 @@ struct SubCategory
 };
 SubCategory subCategories[NUM_ICONS] = 
 {
-	// kuerbis.tga
-	// marmelade.tga
-	// pinsel.tga
-	// salz.tga
-	// schloss.tga
 	// schluessel.tga
 	// tee.tga
 
 	// Mülleimer
 	{0, 0, },
 	// Television
-	{2, 5, {{"cracker.tga", "yen.tga", "zwiebel.tga", "affe.tga", "gluehbirne.tga"}, {"fisch.tga", "Zucker.tga", "breze.tga", "platte.tga", "magic.tga"}}},
+	{2, 5, {{"cracker.tga", "yen.tga", "zwiebel.tga", "affe.tga", "gluehbirne.tga"},
+	        {"fisch.tga", "Zucker.tga", "breze.tga", "platte.tga", "magic.tga"}}},
 	// Music
 	{0, 0, },
 	// Alarm
 	{0, 0, },
 	// Weather
-	{1, 5, {{"feuerloescher.tga", "schirm.tga", "banane.tga", "thermometer.tga", "herz.tga"}}},
+	{2, 5, {{"feuerloescher.tga", "schirm.tga", "banane.tga", "thermometer.tga", "herz.tga"},
+	        {"marmelade.tga", "kuerbis.tga", "pinsel.tga", "salz.tga", "schloss.tga"}}},
 	// Dusche
-	{1, 5, {{"bett.tga", "birne.tga", "sanitaetskasten.tga", "stift.tga", "euro.tga"}}},
+	{2, 5, {{"bett.tga", "birne.tga", "sanitaetskasten.tga", "stift.tga", "euro.tga"},
+	        {"schluessel.tga", "tee.tga", "hut.tga","kohl.tga", "spritze.tga"}}},
 	// Lampe
 	{1, 5, {{"Tischdecke01.tga", "trauben.tga", "croissant.tga", "ananas.tga", "erdbeere.tga"}}},
 	// Freezer
-	{2, 5, {{"bein.tga", "eis.tga", "bier.tga", "eingelegtes.tga", "Kaese.tga"}, {"Milch.tga", "pfeffer.tga", "pilz.tga", "Kavier.tga", "zitrone.tga"}}},
+	{2, 5, {{"bein.tga", "eis.tga", "bier.tga", "eingelegtes.tga", "Kaese.tga"},
+	        {"Milch.tga", "pfeffer.tga", "pilz.tga", "Kavier.tga", "zitrone.tga"}}},
 	// Teppich
-	{1, 5, {{"kohl.tga", "werkzeug.tga", "karotte.tga", "spritze.tga", "Waesche.tga"}}},
+	{1, 3, {{"werkzeug.tga", "karotte.tga", "Waesche.tga"}}},
 	// Komode
-	{2, 5, {{"apfel.tga", "tischdecke02.tga", "radiergummi.tga", "ordner.tga", "medizin.tga"}, {"Streichholz.tga", "schere.tga", "waescheleine.tga", "vase.tga", "Hausschuhe.tga"}}},
+	{2, 5, {{"apfel.tga", "tischdecke02.tga", "radiergummi.tga", "ordner.tga", "medizin.tga"},
+	        {"Streichholz.tga", "schere.tga", "waescheleine.tga", "vase.tga", "Hausschuhe.tga"}}},
 	// Garderobe
-	{2, 5, {{"besteck.tga", "topf.tga", "Zeitung.tga", "brokkoli.tga", "weinglas.tga"}, {"aubergine.tga", "kanne.tga", "tischdecke03.tga", "hamburger.tga", "tasse.tga"}}},
+	{2, 5, {{"besteck.tga", "topf.tga", "Zeitung.tga", "brokkoli.tga", "weinglas.tga"},
+	        {"aubergine.tga", "kanne.tga", "tischdecke03.tga", "hamburger.tga", "tasse.tga"}}},
 	// Sofa
 	{1, 5, {{"kaffee.tga", "gift.tga", "buch.tga", "kinderwagen.tga", "eingemachtes.tga"}}},
 	// Tisch
@@ -519,9 +520,11 @@ void intro_init( void )
 			// Create the subcategories:
 			xpos += 0.6f*iconDistance;
 			ypos -= 0.2f*iconDistance*ASPECT_RATIO;
-			//if (index == 10) ypos += 0.9f*iconDistance*ASPECT_RATIO;
+			if (index == 4) xpos -= 0.7f * iconDistance;
 			if (index == 9) xpos -= 0.7f*iconDistance;
-			if (index == 14) ypos += 0.25f*iconDistance*ASPECT_RATIO;
+			if (index > 4 && index < 10 && index != 8) ypos += 0.15f * iconDistance * ASPECT_RATIO;
+			if (index > 10) ypos += 1.2f*iconDistance*ASPECT_RATIO;
+			if (index == 14) xpos -= 0.1f * iconDistance;
 			subCategories[index].xPos = xpos;
 			subCategories[index].yPos = ypos;
 
