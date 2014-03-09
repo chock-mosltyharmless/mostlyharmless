@@ -39,7 +39,7 @@ extern int itemDeleteStartTime;
 const int numIconsX = 5;
 const int numIconsY = 4;
 const float iconDistance = 2.0f / 5.0f;
-const float iconBorderWidth = 0.06f;
+const float iconBorderWidth = 0.08f;
 bool iconBlackout[numIconsY][numIconsX] =
 {
 	{false, false, false, false},
@@ -185,7 +185,7 @@ const int deadIconBoxID[3] =
 // icon subcategories
 const int MAX_X_SUBCATEGORIES = 2;
 const int MAX_Y_SUBCATEGORIES = 5;
-const float SUB_ICON_DISTANCE = 0.125f;
+const float SUB_ICON_DISTANCE = 0.14f;
 const float SUB_ICON_BORDER_WIDTH = 0.01f;
 
 struct SubCategory
@@ -197,36 +197,44 @@ struct SubCategory
 };
 SubCategory subCategories[NUM_ICONS] = 
 {
+	// kuerbis.tga
+	// marmelade.tga
+	// pinsel.tga
+	// salz.tga
+	// schloss.tga
+	// schluessel.tga
+	// tee.tga
+
 	// Mülleimer
-	{1, 5, {{"affe.tga", "fisch.tga", "Zucker.tga", "pilz.tga", "gluehbirne.tga"}}},
+	{0, 0, },
 	// Television
-	{1, 3, {{"cracker.tga", "yen.tga", "zwiebel.tga"}}},
+	{2, 5, {{"cracker.tga", "yen.tga", "zwiebel.tga", "affe.tga", "gluehbirne.tga"}, {"fisch.tga", "Zucker.tga", "breze.tga", "platte.tga", "magic.tga"}}},
 	// Music
-	{1, 3, {{"herz.tga", "platte.tga", "magic.tga"}}},
+	{0, 0, },
 	// Alarm
-	{1, 3, {{"euro.tga", "spritze.tga", "Waesche.tga"}}},
+	{0, 0, },
 	// Weather
-	{1, 4, {{"feuerloescher.tga", "schirm.tga", "banane.tga", "thermometer.tga"}}},
+	{1, 5, {{"feuerloescher.tga", "schirm.tga", "banane.tga", "thermometer.tga", "herz.tga"}}},
 	// Dusche
-	{1, 4, {{"bett.tga", "birne.tga", "sanitaetskasten.tga", "stift.tga"}}},
+	{1, 5, {{"bett.tga", "birne.tga", "sanitaetskasten.tga", "stift.tga", "euro.tga"}}},
 	// Lampe
-	{1, 3, {{"Tischdecke01.tga", "pfeffer.tga", "trauben.tga"}}},
+	{1, 5, {{"Tischdecke01.tga", "trauben.tga", "croissant.tga", "ananas.tga", "erdbeere.tga"}}},
 	// Freezer
-	{2, 5, {{"bein.tga", "ananas.tga", "bier.tga", "eingelegtes.tga", "Kaese.tga"}, {"Milch.tga", "pfeffer.tga", "pilz.tga", "Kavier.tga", "zitrone.tga"}}},
+	{2, 5, {{"bein.tga", "eis.tga", "bier.tga", "eingelegtes.tga", "Kaese.tga"}, {"Milch.tga", "pfeffer.tga", "pilz.tga", "Kavier.tga", "zitrone.tga"}}},
 	// Teppich
-	{1, 2, {{"werkzeug.tga", "karotte.tga"}}},
+	{1, 5, {{"kohl.tga", "werkzeug.tga", "karotte.tga", "spritze.tga", "Waesche.tga"}}},
 	// Komode
 	{2, 5, {{"apfel.tga", "tischdecke02.tga", "radiergummi.tga", "ordner.tga", "medizin.tga"}, {"Streichholz.tga", "schere.tga", "waescheleine.tga", "vase.tga", "Hausschuhe.tga"}}},
 	// Garderobe
-	{2, 5, {{"besteck.tga", "topf.tga", "Zeitung.tga", "werkzeug.tga", "weinglas.tga"}, {"aubergine.tga", "kanne.tga", "tischdecke03.tga", "hamburger.tga", "tasse.tga"}}},
+	{2, 5, {{"besteck.tga", "topf.tga", "Zeitung.tga", "brokkoli.tga", "weinglas.tga"}, {"aubergine.tga", "kanne.tga", "tischdecke03.tga", "hamburger.tga", "tasse.tga"}}},
 	// Sofa
-	{1, 2, {{"euro.tga", "kinderwagen.tga"}}},
+	{1, 5, {{"kaffee.tga", "gift.tga", "buch.tga", "kinderwagen.tga", "eingemachtes.tga"}}},
 	// Tisch
 	{0, 0}, // Done directly!!!
 	// Chair
 	{0, 0}, // Done directly!!!
 	// Flower:
-	{1, 3, {{"sushi.tga", "bonbon.tga", "Eimer.tga"}}}
+	{1, 5, {{"sushi.tga", "bonbon.tga", "Eimer.tga", "cake.tga", "eingelegtes.tga"}}}
 };
 
 // -------------------------------------------------------------------
