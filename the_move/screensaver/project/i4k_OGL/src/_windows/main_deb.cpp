@@ -141,7 +141,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
 		case 's':
 		case 'S':
-			itemDeleteStartTime = (1<<28);
+			itemDeleteStartTime = timeGetTime() + 1000 * 1000;
 			break;
 
 		case '0':
@@ -151,12 +151,12 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case '4':
 		case '5':
 		case '6':
-			itemDeleteStartTime = (1<<28);
+			itemDeleteStartTime = timeGetTime() + 1000 * 1000;
 			//ShowCursor(false);
 			isScreenSaverRunning = true;
 			screenSaverStartTime = timeGetTime();
 			screenSaverID = wParam - '1';
-			if (screenSaverID >= 0 && false)
+			if (screenSaverID >= 0)
 			{
 				if (screenSaverID < 5)
 				{
