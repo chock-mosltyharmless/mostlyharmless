@@ -62,7 +62,7 @@ const float mouseCursorWidth = 0.063f;
 const float mouseCursorHeight = 0.1f;
 
 //const float FOV = 45;
-const float FOV = 42;
+const float FOV = 40;
 
 // Flickering of the screen
 extern bool isFlickering;
@@ -463,19 +463,10 @@ void intro_init( void )
 			powerLines[i][j][2] = corePowerLines[sceneID][j][2] + zDisplace + (frand() - 0.5f) * 0.01f;
 		}
 
-#if 0
-		for (int j = 0; j < 2; j++)
-		{
-			mastLines[i][j][0] = side * (coreMastLine[j][0] + xDisplace);
-			mastLines[i][j][1] = coreMastLine[j][1] + yDisplace;
-			mastLines[i][j][2] = coreMastLine[j][2] + zDisplace;
-		}
-#else
 		mastDisplacement[i][0] = xDisplace;
 		mastDisplacement[i][1] = yDisplace;
 		mastDisplacement[i][2] = zDisplace;
 		mastSide[i] = side;
-#endif
 
 		if ((rand() % 1000) > 600) mastTextures[i] = "brown_mast_2.tga";
 		else mastTextures[i] = "brown_mast_1.tga";
@@ -965,6 +956,9 @@ void drawMultiLine(float start[3], float end[3],
 
 void screensaverScene(float ftime, int itime)
 {
+	const float X_ROTATE_ALPHA = 0.9f;
+	const float Y_ROTATE_ALPHA = -0.15f;
+
 	char errorString[MAX_ERROR_LENGTH+1];
 	GLuint offscreenTexID;
 	GLUquadric* quad = gluNewQuadric();
@@ -1016,7 +1010,8 @@ void screensaverScene(float ftime, int itime)
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 	textureManager.getTextureID("wolken2.tga", &offscreenTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
-	textureManager.drawQuad(-4.0f - 3.0f * cos(ftime*0.007f), -1.0f, 4.0f - 3.0f * cos(ftime*0.007f), 1.0f, 1.0f);
+	textureManager.drawQuad(-4.0f - 3.0f * cos(ftime*0.007f+screenSaverID*0.5f), -1.0f,
+						     4.0f - 3.0f * cos(ftime*0.007f+screenSaverID*0.5f), 1.0f, 1.0f);
 
 	// copy the video to texture for later rendering
 	GLuint noiseTexID;
@@ -1052,7 +1047,7 @@ void screensaverScene(float ftime, int itime)
 	gluPerspective(FOV, ASPECT_RATIO, 0.1f, 1000.0f);
 
 	// Calculate where we are in the world
-	float distance = ftime * 1.25f;
+	float distance = ftime * 1.25f + 50.0f * screenSaverID;
 	int sceneIndex = (int)(distance / MAST_DISTANCE);
 	distance -= sceneIndex * MAST_DISTANCE;
 
@@ -1067,19 +1062,60 @@ void screensaverScene(float ftime, int itime)
 	// Get the direction after rotation
 	float tmpV[3];
 	float up[3] = {0.0f, 1.0f, 0.0f};
-	const float X_ROTATE_ALPHA = 0.9f;
-	rotateY(tmpV, up, -0.2f);
-	rotateX(up, tmpV, 1.0f);
+	rotateY(tmpV, up, Y_ROTATE_ALPHA);
+	rotateX(up, tmpV, X_ROTATE_ALPHA);
 	const float screenVector[3] = {0.0f, 0.0f, 1.0f};
 	float normalVector[3];
 	crossProduct(normalVector, up, screenVector);
 	normalize(normalVector);
 
+	float transStart[3];
+	float transEnd[3];
+	// Draw the mast
+	const float color[4] = {0.9f, 0.9f, 0.9f, 1.0f};
+
+	// Draw the eagle
+	float eagleRotation = ftime * 0.3f;
+	transStart[0] = 2.0f - 6.0f * cos(eagleRotation) - screenSaverID * 5.0f;
+	transStart[1] = 13.f;
+	transStart[2] = 80.0f - 6.0f * sin(eagleRotation);
+	transEnd[0] = transStart[0] - 0.75f * sin(eagleRotation);
+	transEnd[1] = transStart[1];
+	transEnd[2] = transStart[2] + 0.75f * cos(eagleRotation);
+	transStart[2] -= distance + sceneIndex * MAST_DISTANCE;
+	transEnd[2] -= distance + sceneIndex * MAST_DISTANCE;
+	// Move Lines
+	rotateY(tmpV, transStart, Y_ROTATE_ALPHA);
+	rotateX(transStart, tmpV, X_ROTATE_ALPHA);
+	rotateY(tmpV, transEnd, Y_ROTATE_ALPHA);
+	rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
+	normalVector[0] = 1.5f * cos(eagleRotation);
+	normalVector[1] = 0.0f;
+	normalVector[2] = 1.5f * sin(eagleRotation);
+	rotateY(tmpV, normalVector, Y_ROTATE_ALPHA);
+	rotateX(normalVector, tmpV, X_ROTATE_ALPHA);
+	// draw
+	drawLineHorizontal(transStart, transEnd, 0.5f, "eagle.tga", color, 1.0f, normalVector);
+
+	// Draw the tree
+	transStart[0] = -5.2f + 2.0f * screenSaverID;
+	transStart[1] = 2.0f;
+	transStart[2] = 155.0f;
+	transEnd[0] = -5.2f + 2.0f * screenSaverID;
+	transEnd[1] = 0.6f;
+	transEnd[2] = 155.0f;
+	transStart[2] -= distance + sceneIndex * MAST_DISTANCE;
+	transEnd[2] -= distance + sceneIndex * MAST_DISTANCE;
+	// Move the lines
+	rotateY(tmpV, transStart, Y_ROTATE_ALPHA);
+	rotateX(transStart, tmpV, X_ROTATE_ALPHA);
+	rotateY(tmpV, transEnd, Y_ROTATE_ALPHA);
+	rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
+	// draw
+	drawLine(transStart, transEnd, 0.4f, "tree.tga", color);
+
 	for (int drawings = 3; drawings >= 0; drawings--)
 	{
-		float transStart[3];
-		float transEnd[3];
-
 		// Draw the first round of stuff
 		for (int j = 0; j < 3; j++)
 		{
@@ -1093,19 +1129,15 @@ void screensaverScene(float ftime, int itime)
 			transEnd[2] -= distance - (drawings) * MAST_DISTANCE;
 
 			// Move the lines
-			rotateY(tmpV, transStart, -0.2f);
+			rotateY(tmpV, transStart, Y_ROTATE_ALPHA);
 			rotateX(transStart, tmpV, X_ROTATE_ALPHA);
-			rotateY(tmpV, transEnd, -0.2f);
+			rotateY(tmpV, transEnd, Y_ROTATE_ALPHA);
 			rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
 
 			// draw
 			const float color[4] = {0.1f, 0.1f, 0.1f, 1.0f};
 			drawMultiLine(transStart, transEnd, POWER_LINE_WIDTH, "thin_line_small.tga", color, 0.5f);
 		}
-
-		// Draw the mast
-		const float color[4] = {0.9f, 0.9f, 0.9f, 1.0f};
-		float normalVector[3];
 
 		// Mast left stuff
 		transStart[0] = mastSide[sceneID[drawings]] * (coreMastLine[0][0] + mastDisplacement[sceneID[drawings]][0]);
@@ -1117,13 +1149,15 @@ void screensaverScene(float ftime, int itime)
 		transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
 		transEnd[2] -= distance - (drawings-1) * MAST_DISTANCE;
 		// Move the lines
-		rotateY(tmpV, transStart, -0.2f);
+		rotateY(tmpV, transStart, Y_ROTATE_ALPHA);
 		rotateX(transStart, tmpV, X_ROTATE_ALPHA);
-		rotateY(tmpV, transEnd, -0.2f);
+		rotateY(tmpV, transEnd, Y_ROTATE_ALPHA);
 		rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
 		normalVector[0] = 1.0f;
 		normalVector[1] = 0.0f;
 		normalVector[2] = 0.0f;
+		rotateY(tmpV, normalVector, Y_ROTATE_ALPHA);
+		rotateX(normalVector, tmpV, X_ROTATE_ALPHA);
 		// draw
 		if (mastStuffID[sceneID[drawings]][1] >= 0)
 		{
@@ -1140,9 +1174,9 @@ void screensaverScene(float ftime, int itime)
 		transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
 		transEnd[2] -= distance - (drawings-1) * MAST_DISTANCE;
 		// Move the lines
-		rotateY(tmpV, transStart, -0.2f);
+		rotateY(tmpV, transStart, Y_ROTATE_ALPHA);
 		rotateX(transStart, tmpV, X_ROTATE_ALPHA);
-		rotateY(tmpV, transEnd, -0.2f);
+		rotateY(tmpV, transEnd, Y_ROTATE_ALPHA);
 		rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
 		// draw
 		drawLine(transStart, transEnd, MAST_LINE_WIDTH, mastTextures[sceneID[drawings]], color);
@@ -1157,13 +1191,15 @@ void screensaverScene(float ftime, int itime)
 		transStart[2] -= distance - (drawings-1) * MAST_DISTANCE;
 		transEnd[2] -= distance - (drawings-1) * MAST_DISTANCE;
 		// Move the lines
-		rotateY(tmpV, transStart, -0.2f);
+		rotateY(tmpV, transStart, Y_ROTATE_ALPHA);
 		rotateX(transStart, tmpV, X_ROTATE_ALPHA);
-		rotateY(tmpV, transEnd, -0.2f);
+		rotateY(tmpV, transEnd, Y_ROTATE_ALPHA);
 		rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
 		normalVector[0] = 1.0f;
 		normalVector[1] = 0.0f;
 		normalVector[2] = 0.0f;
+		rotateY(tmpV, normalVector, Y_ROTATE_ALPHA);
+		rotateX(normalVector, tmpV, X_ROTATE_ALPHA);
 		// draw
 		if (mastStuffID[sceneID[drawings]][3] >= 0)
 		{
@@ -1183,9 +1219,9 @@ void screensaverScene(float ftime, int itime)
 			transEnd[2] -= distance - (drawings) * MAST_DISTANCE;
 
 			// Move the lines
-			rotateY(tmpV, transStart, -0.2f);
+			rotateY(tmpV, transStart, Y_ROTATE_ALPHA);
 			rotateX(transStart, tmpV, X_ROTATE_ALPHA);
-			rotateY(tmpV, transEnd, -0.2f);
+			rotateY(tmpV, transEnd, Y_ROTATE_ALPHA);
 			rotateX(transEnd, tmpV, X_ROTATE_ALPHA);
 
 			// draw
