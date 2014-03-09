@@ -35,6 +35,8 @@ extern bool isAlarmRinging;
 extern int alarmStartTime;
 extern int screenSaverID;
 extern int itemDeleteStartTime;
+extern bool isEndScene;
+extern int endSceneStartTime;
 
 const int numIconsX = 5;
 const int numIconsY = 4;
@@ -88,6 +90,7 @@ const GLchar shaderFileName[NUM_SHADERS][128] =
 };
 #define OTONE_SHADER 7
 #define SIMPLE_TEX_SHADER 8
+#define ENGAWA_ICON_HIGHLIGHT_SHADER 1
 /* Location where the loaded shader is stored */
 #define MAX_SHADER_LENGTH 200000
 GLchar fragmentMainBackground[MAX_SHADER_LENGTH];
@@ -143,6 +146,7 @@ float subMenuAlpha = 0.0f;
 // The Icons globally here
 #define NUM_ICONS 15
 FlowIcon icon[NUM_ICONS];
+FlowIcon engawaIcon[2]; // The second one is for the highlight...
 FlowIcon deadIcon[3];
 const int NUM_BOXES = 20;
 const float boxPosition[NUM_BOXES][2] =
@@ -504,7 +508,13 @@ void intro_init( void )
 	// RLY?
 	//glEnable(GL_CULL_FACE);
 
-	// Create the icons
+	// create the engawa icon
+	float xpos = boxPosition[6][0];
+	float ypos = boxPosition[6][1];
+	engawaIcon[0].init("engawa_icon.tga", xpos, ypos, iconDistance, 0.04f);
+	engawaIcon[1].init("engawa_icon_overlay.tga", xpos, ypos, iconDistance, 0.04f);
+
+	// Create the desktop icons
 	int index = 0;
 	for (int y = 0; y < 3; y++)
 	{
@@ -568,6 +578,7 @@ void desktopScene(float ftime, int itime)
 
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 
+	//if (itime - musicPlayStartTime > 295000)
 	if (itime - musicPlayStartTime > 295000)
 	{
 		isMusicPlaying = false;
@@ -1311,8 +1322,91 @@ void screensaverScene(float ftime, int itime)
 	}
 }
 
+void endScene(float ftime, int itime)
+{
+	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
+	glClear(GL_COLOR_BUFFER_BIT);
+	float iconTime = 0.001f * (itime - demoStartTime);
 
+	// draw background:
+	glMatrixMode(GL_MODELVIEW);	
+	parameterMatrix[0] = ftime; // time
+	glLoadMatrixf(parameterMatrix);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
+	// normal rendering shader
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
+	engawaIcon[0].draw(iconTime);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);	
+	// First highlight
+	glUseProgram(shaderPrograms[ENGAWA_ICON_HIGHLIGHT_SHADER]);
+	engawaIcon[1].draw(iconTime);
+
+	// Second highlight
+	GLuint texID;
+	char errorString[MAX_ERROR_LENGTH+1];
+	if (textureManager.getTextureID("highlight.tga", &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "Loading texture failed", MB_OK);
+		exit(-1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
+	float duration = 0.75f;
+	float centerX = engawaIcon[0].getGLX() + iconDistance * (0.25f + 0.5f * ftime / duration);
+	float centerY = engawaIcon[0].getGLY() + iconDistance * ASPECT_RATIO * (1.0f*ftime / duration - 1.0f);
+	float amount = 0.0f;
+	if (ftime < duration) amount = sin(ftime / duration * 3.1415f);
+	float width = iconDistance * (2.0f + 0.5f*amount);
+	textureManager.drawQuad(centerX - width, centerY - width * ASPECT_RATIO,
+		                    centerX + width, centerY + width*ASPECT_RATIO,
+							amount * 0.65f);
+
+	// draw some sparkles if applicable
+	if (textureManager.getTextureID("sparkle.tga", &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "Loading texture failed", MB_OK);
+		exit(-1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+	float sparkleTime = ftime - duration * 0.4f;
+	for (int i = 0; i < 8; i++)
+	{
+		float sparkleDuration = 1.3f + 0.4f * sin(i*2.4f+2.3f);
+		if (sparkleTime > 0.0f && sparkleTime < sparkleDuration)
+		{
+			amount = sqrtf(sin(sparkleTime / sparkleDuration * 3.1415f));
+			centerX = engawaIcon[0].getGLX() + iconDistance * (0.55f + 0.25f * sin(i*2.1f + 7.3f));
+			centerX += (0.6f+0.1f*sin(i*1.4f+8.3f)) * iconDistance / sparkleDuration * sparkleTime -
+					   0.1f * sparkleTime*sparkleTime/sparkleDuration/sparkleDuration;
+			centerY = engawaIcon[0].getGLY() + iconDistance * ASPECT_RATIO * (0.8f + 0.1f * sin(i*4.6f + 2.9f) - 1.0f);
+			centerY += (0.5f+0.1f*sin(i*6.8f+3.0f)) * iconDistance / sparkleDuration * sparkleTime * ASPECT_RATIO -
+					   0.2f * sparkleTime*sparkleTime/sparkleDuration/sparkleDuration;
+			width = iconDistance * 0.25f;
+			textureManager.drawQuad(centerX - width, centerY - width * ASPECT_RATIO,
+									centerX + width, centerY + width * ASPECT_RATIO,
+									amount);
+		}
+	}
+
+	// Wait until you draw the cursor...
+	if (ftime < duration * 2.0f) return;
+
+	// Draw the cursor
+	if (textureManager.getTextureID("cursor_arrow.tga", &texID, errorString))
+	{
+		MessageBox(hWnd, errorString, "texture not found", MB_OK);
+		exit(1);
+	}
+	glBindTexture(GL_TEXTURE_2D, texID);
+	float mxp = 2.0f * mouseXPos - 1.0f;
+	float myp = 1.0f - 2.0f * mouseYPos;
+	textureManager.drawQuad(mxp, myp - mouseCursorHeight*ASPECT_RATIO, mxp + mouseCursorWidth, myp, 1.0f);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+}
 
 void nothingScene(float ftime)
 {
@@ -1356,28 +1450,37 @@ void intro_do( long itime )
 		parameterMatrix[i] = 0.0f;
 	}
 	
-	if (isScreenSaverRunning)
+	if (isEndScene)
 	{
-		if (screenSaverID >= 0)
-		{
-			float ftime = 0.001f * (float)(itime - screenSaverStartTime);
-			screensaverScene(ftime, itime);
-		}
-		else
-		{
-			nothingScene(0.0f);
-		}
+		float ftime = 0.001f * (float)(itime - endSceneStartTime);
+		endScene(ftime, itime);
 	}
 	else
 	{
-		float ftime = 0.001f * (float)(itime - demoStartTime);
-		desktopScene(ftime, itime);
+		if (isScreenSaverRunning)
+		{
+			if (screenSaverID >= 0)
+			{
+				float ftime = 0.001f * (float)(itime - screenSaverStartTime);
+				screensaverScene(ftime, itime);
+			}
+			else
+			{
+				nothingScene(0.0f);
+			}
+		}
+		else
+		{
+			float ftime = 0.001f * (float)(itime - demoStartTime);
+			desktopScene(ftime, itime);
+		}
 	}
 
 	// Reset the GL settings
 	glEnable(GL_BLEND);
 	glMatrixMode(GL_PROJECTION);	
 	glLoadIdentity();
+	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 
 #if 1
 	char errorString[MAX_ERROR_LENGTH+1];
@@ -1497,6 +1600,9 @@ void intro_cursor(float xpos, float ypos)
 	//ypos = (ypos - screenTop) / (screenBottom - screenTop);
 	mouseXPos = xpos;
 	mouseYPos = ypos;
+
+	// click on engawa button...
+	engawaIcon[0].setMousePosition(xpos, ypos);
 
 	if (isSubMenu)
 	{
@@ -1633,6 +1739,10 @@ void intro_right_click(float xpos, float ypos, int itime, int sound)
 	// Adjust according to left and right
 	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
 	//ypos = (ypos - screenTop) / (screenBottom - screenTop);
+
+	// click on engawa button...
+	engawaIcon[0].setMousePosition(xpos, ypos);
+	engawaIcon[0].clickMouse();
 
 	if (isScreenSaverRunning) return;
 
