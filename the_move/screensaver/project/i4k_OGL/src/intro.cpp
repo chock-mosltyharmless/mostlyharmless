@@ -1355,14 +1355,14 @@ void endScene(float ftime, int itime)
 	glBindTexture(GL_TEXTURE_2D, texID);
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 	float duration = 0.75f;
-	float centerX = engawaIcon[0].getGLX() + iconDistance * (0.25f + 0.5f * ftime / duration);
+	float centerX = engawaIcon[0].getGLX() + iconDistance * (0.35f + 0.5f * ftime / duration);
 	float centerY = engawaIcon[0].getGLY() + iconDistance * ASPECT_RATIO * (1.0f*ftime / duration - 1.0f);
 	float amount = 0.0f;
 	if (ftime < duration) amount = sin(ftime / duration * 3.1415f);
-	float width = iconDistance * (2.0f + 0.5f*amount);
+	float width = iconDistance * (2.25f + 0.5f*amount);
 	textureManager.drawQuad(centerX - width, centerY - width * ASPECT_RATIO,
-		                    centerX + width, centerY + width*ASPECT_RATIO,
-							amount * 0.65f);
+		                    centerX + width, centerY + width * ASPECT_RATIO,
+							amount * 0.75f);
 
 	// draw some sparkles if applicable
 	if (textureManager.getTextureID("sparkle.tga", &texID, errorString))
