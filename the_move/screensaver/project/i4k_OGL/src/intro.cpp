@@ -38,6 +38,8 @@ extern int itemDeleteStartTime;
 extern bool isEndScene;
 extern int endSceneStartTime;
 
+bool areCreditsShown = false;
+
 const int numIconsX = 5;
 const int numIconsY = 4;
 const float iconDistance = 2.0f / 5.0f;
@@ -1418,6 +1420,24 @@ void endScene(float ftime, int itime)
 		}
 	}
 
+	// show credits if applicable
+	if (ftime < duration) areCreditsShown = false;
+	if (areCreditsShown)
+	{
+		if (textureManager.getTextureID("credits.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		float left = engawaIcon[0].getGLX() + 0.8f * iconDistance;
+		float width = 0.4f;
+		float right = left + 0.5f;
+		float top = engawaIcon[0].getGLY() - 0.3f * iconDistance * ASPECT_RATIO;
+		float bottom = top - width * 245.0f / 130.0f * ASPECT_RATIO;
+		textureManager.drawQuad(left, bottom, right, top, 1.0f);
+	}
+
 	// Wait until you draw the cursor...
 	if (ftime < duration * 2.0f) return;
 
@@ -1769,7 +1789,10 @@ void intro_right_click(float xpos, float ypos, int itime, int sound)
 
 	// click on engawa button...
 	engawaIcon[0].setMousePosition(xpos, ypos);
-	engawaIcon[0].clickMouse();
+	if (engawaIcon[0].clickMouse())
+	{
+		areCreditsShown = true;
+	}
 
 	if (isScreenSaverRunning) return;
 

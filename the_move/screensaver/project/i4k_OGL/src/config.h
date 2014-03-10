@@ -18,6 +18,7 @@
 //#define ASPECT_RATIO ((float)realXRes / (float)realYRes)
 // 5x4 boxes and the lower border which is about 50/1600
 #define ASPECT_RATIO (5.0f / (4.0f + (50.0f/1600.0f*5.0f)))
+//#define ASPECT_RATIO (4.0f/3.0f)
 #define OFFSCREEN_WIDTH XRES
 #define OFFSCREEN_HEIGHT YRES
 #define HIGHLIGHT_WIDTH 200
