@@ -246,12 +246,12 @@ SubCategory subCategories[NUM_ICONS] =
 //        ALL the stuff that I need to represent scenes
 // -------------------------------------------------------------------
 
-const int NUM_POWER_LINES = 10;
+const int NUM_POWER_LINES = 14;
 const int NUM_POWER_SCENES = 1000;
 const float POWER_LINE_WIDTH = 0.005f;
 const float MAST_LINE_WIDTH = 0.07f;
 const float MAST_DISTANCE = 10.0f;
-const int NUM_CORE_POWER_SCENES = 7;
+const int NUM_CORE_POWER_SCENES = 5;
 
 const float coreMastLine[2][3] =
 {
@@ -263,89 +263,110 @@ const float MAST_STUFF_WIDTH = 0.5f;
 
 const float corePowerLines[NUM_CORE_POWER_SCENES][NUM_POWER_LINES][3] =
 {
-	{
-		{-1.10f, 2.50f, -0.0f},
-		{-1.00f, 2.50f, -0.0f},
-		{-0.90f, 2.50f, -0.0f},
-		{-0.98f, 2.35f, -0.0f},
-		{-0.98f, 2.25f, -0.0f},
-		{-0.98f, 2.15f, -0.0f},
-		{-0.90f, 2.20f, -0.0f},
-		{-0.80f, 2.15f, -0.0f},
-		{-0.72f, 2.12f, -0.0f},
-		{-0.98f, 2.00f, -0.0f}
+	{ // STANDARD
+		// Top two lines
+		{-1.05f, 2.50f, -0.0f},
+		{-0.95f, 2.50f, -0.0f},
+		// Left top
+		{-1.25f, 2.25f, -0.0f},
+		{-1.3f, 2.15f, -0.0f},
+		{-1.35f, 2.25f, -0.0f},
+		// Left bottom
+		{-1.35f, 2.1f, -0.0f},
+		{-1.3f, 2.0f, -0.0f},
+		{-1.35f, 2.1f, -0.0f},
+		// Right top
+		{-0.75f, 2.25f, -0.0f},
+		{-0.7f, 2.15f, -0.0f},
+		{-0.65f, 2.25f, -0.0f},
+		// Right bottom
+		{-0.75f, 2.1f, -0.0f},
+		{-0.7f, 2.0f, -0.0f},
+		{-0.65f, 2.1f, -0.0f},
 	},
-	{
-		{-7.10f, 2.50f, 4.0f},
-		{-7.00f, 2.50f, 4.0f},
-		{-6.90f, 2.50f, 4.0f},
-		{-0.98f, 2.35f, -0.0f},
-		{-0.98f, 2.25f, -0.0f},
-		{-0.98f, 2.15f, -0.0f},
-		{-0.90f, 2.20f, -0.0f},
-		{-0.80f, 2.15f, -0.0f},
-		{-0.72f, 2.12f, -0.0f},
-		{-0.98f, 2.00f, -0.0f}
+	{ // LEFT_TOP_LEFT
+		// Top two lines
+		{-1.05f, 2.50f, -0.0f},
+		{-0.95f, 2.50f, -0.0f},
+		// Left top
+		{-10.25f, 2.25f, -0.0f},
+		{-10.3f, 2.15f, -0.0f},
+		{-1.35f, 2.25f, -0.0f},
+		// Left bottom
+		{-1.35f, 2.1f, -0.0f},
+		{-1.3f, 2.0f, -0.0f},
+		{-1.35f, 2.1f, -0.0f},
+		// Right top
+		{-0.75f, 2.25f, -0.0f},
+		{-0.7f, 2.15f, -0.0f},
+		{-0.65f, 2.25f, -0.0f},
+		// Right bottom
+		{-0.75f, 2.1f, -0.0f},
+		{-0.7f, 2.0f, -0.0f},
+		{-0.65f, 2.1f, -0.0f},
 	},
-	{
-		{6.90f, 2.50f, -3.0f},
-		{7.00f, 2.50f, -3.0f},
-		{7.10f, 2.50f, -3.0f},
-		{-0.98f, 2.35f, -0.0f},
-		{-0.98f, 2.25f, -0.0f},
-		{-0.98f, 2.15f, -0.0f},
-		{-0.90f, 2.20f, -0.0f},
-		{-0.80f, 2.15f, -0.0f},
-		{-0.72f, 2.12f, -0.0f},
-		{-0.98f, 2.00f, -0.0f}
+	{ // RIGHT TOP RIGHT
+		// Top two lines
+		{-1.05f, 2.50f, -0.0f},
+		{-0.95f, 2.50f, -0.0f},
+		// Left top
+		{-10.25f, 2.25f, -0.0f},
+		{-10.3f, 2.15f, -0.0f},
+		{-10.35f, 2.25f, -0.0f},
+		// Left bottom
+		{-1.35f, 2.1f, -0.0f},
+		{-1.3f, 2.0f, -0.0f},
+		{-1.35f, 2.1f, -0.0f},
+		// Right top
+		{10.75f, 2.25f, -0.0f},
+		{10.7f, 2.15f, -0.0f},
+		{10.65f, 2.25f, -0.0f},
+		// Right bottom
+		{-0.75f, 2.1f, -0.0f},
+		{-0.7f, 2.0f, -0.0f},
+		{-0.65f, 2.1f, -0.0f},
 	},
-	{
-		{-1.10f, 2.50f, -0.0f},
-		{-1.00f, 2.50f, -0.0f},
-		{-0.90f, 2.50f, -0.0f},
-		{-0.98f, 2.35f, -0.0f},
-		{-0.98f, 0.25f, -3.0f},
-		{-0.98f, 0.00f, -3.0f},
-		{-0.90f, 2.20f, -0.0f},
-		{-0.80f, 2.15f, -0.0f},
-		{-0.72f, 2.12f, -0.0f},
-		{-0.98f, 2.00f, -0.0f}
+	{ // LEFT_BOTTOM_DOWN
+		// Top two lines
+		{-1.05f, 2.50f, -0.0f},
+		{-0.95f, 2.50f, -0.0f},
+		// Left top
+		{-1.25f, 2.25f, -0.0f},
+		{-1.3f, 2.15f, -0.0f},
+		{-1.35f, 2.25f, -0.0f},
+		// Left bottom
+		{-1.35f, 0.1f, 3.0f},
+		{-1.3f, 0.0f, 3.0f},
+		{-1.35f, 2.1f, -0.0f},
+		// Right top
+		{-0.75f, 2.25f, -0.0f},
+		{-0.7f, 2.15f, -0.0f},
+		{-0.65f, 2.25f, -0.0f},
+		// Right bottom
+		{-0.75f, 2.1f, -0.0f},
+		{-0.7f, 2.0f, -0.0f},
+		{-0.65f, 2.1f, -0.0f},
 	},
-	{
-		{-1.10f, 2.50f, -0.0f},
-		{-1.00f, 2.50f, -0.0f},
-		{-0.90f, 2.50f, -0.0f},
-		{-0.98f, 2.35f, -0.0f},
-		{-2.98f, 0.25f, -8.0f},
-		{-2.98f, 0.00f, -8.0f},
-		{-0.90f, 2.20f, -0.0f},
-		{-0.80f, 2.15f, -0.0f},
-		{-0.72f, 2.12f, -0.0f},
-		{-0.98f, 2.00f, -0.0f}
-	},
-	{
-		{-1.10f, 2.50f, -0.0f},
-		{-1.00f, 2.50f, -0.0f},
-		{-0.90f, 2.50f, -0.0f},
-		{-2.28f, 0.0f, -0.0f},
-		{-2.18f, 0.0f, -0.0f},
-		{-2.08f, 0.0f, -0.0f},
-		{-0.90f, 2.20f, -0.0f},
-		{-0.80f, 2.15f, -0.0f},
-		{-0.72f, 2.12f, -0.0f},
-		{-0.98f, 2.00f, -0.0f}
-	},
-	{
-		{-1.10f, 2.50f, -0.0f},
-		{-1.00f, 2.50f, -0.0f},
-		{-0.90f, 2.50f, -0.0f},
-		{-0.98f, 2.35f, -0.0f},
-		{-0.98f, 2.25f, -0.0f},
-		{-0.98f, 2.15f, -0.0f},
-		{9.90f, 2.20f, -0.0f},
-		{-0.80f, 2.15f, -0.0f},
-		{-0.72f, 2.12f, -0.0f},
-		{9.98f, 2.00f, -0.0f}
+	{ // RIGHT_BOTTOM_DOWN
+		// Top two lines
+		{-1.05f, 2.50f, -0.0f},
+		{-0.95f, 2.50f, -0.0f},
+		// Left top
+		{-1.25f, 2.25f, -0.0f},
+		{-1.3f, 2.15f, -0.0f},
+		{-1.35f, 2.25f, -0.0f},
+		// Left bottom
+		{-1.35f, 2.1f, -0.0f},
+		{-1.3f, 2.0f, -0.0f},
+		{-1.35f, 2.1f, -0.0f},
+		// Right top
+		{-0.75f, 2.25f, -0.0f},
+		{-0.7f, 2.15f, -0.0f},
+		{-0.65f, 2.25f, -0.0f},
+		// Right bottom
+		{-0.75f, 0.1f, 3.0f},
+		{-0.7f, 0.0f, 3.0f},
+		{-0.65f, 2.1f, -0.0f},
 	},
 };
 
@@ -467,7 +488,7 @@ void intro_init( void )
 		float yDisplace = (frand() - 0.5f) * 0.5f;
 		float zDisplace = (frand() - 0.5f) * 0.5f;
 
-		if ((rand() % 10000) < 1500) side = -side;
+		if ((rand() % 10000) > 8500) side = -side;
 
 		for (int j = 0; j < NUM_POWER_LINES; j++)
 		{
@@ -1139,8 +1160,11 @@ void screensaverScene(float ftime, int itime)
 	for (int drawings = 3; drawings >= 0; drawings--)
 	{
 		// Draw the first round of stuff
-		for (int j = 0; j < 3; j++)
+		for (int j = 0; j < 8; j++)
 		{
+			// Do not show some lines if we are in a later saver
+			if (j % (15 / (screenSaverID+1)) == (15 / (screenSaverID+1) - 1)) continue;
+
 			// Translate (and copy...)
 			for (int i = 0; i < 3; i++)
 			{
@@ -1229,8 +1253,11 @@ void screensaverScene(float ftime, int itime)
 		}
 
 		// Draw the second round of stuff
-		for (int j = 3; j < NUM_POWER_LINES; j++)
+		for (int j = 8; j < NUM_POWER_LINES; j++)
 		{
+			// Do not show some lines if we are in a later saver
+			if (j % (15 / (screenSaverID+1)) == (15 / (screenSaverID+1) - 1)) continue;
+
 			// Translate (and copy...)
 			for (int i = 0; i < 3; i++)
 			{
