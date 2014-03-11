@@ -28,15 +28,20 @@ float screenTop;
 
 extern int realXRes;
 extern int realYRes;
-extern int demoStartTime;
+extern DWORD demoStartTime;
 extern bool isScreenSaverRunning;
-extern int screenSaverStartTime;
+extern DWORD screenSaverStartTime;
 extern bool isAlarmRinging;
-extern int alarmStartTime;
+extern DWORD alarmStartTime;
 extern int screenSaverID;
-extern int itemDeleteStartTime;
+extern DWORD itemDeleteStartTime;
 extern bool isEndScene;
-extern int endSceneStartTime;
+extern DWORD creditStartTime;
+extern int creditID;
+extern DWORD endSceneStartTime;
+extern DWORD iconsMoveStartTime;
+
+float iconsXDelta = 0.0f;
 
 bool areCreditsShown = false;
 
@@ -52,12 +57,13 @@ bool iconBlackout[numIconsY][numIconsX] =
 	{false, false, false, false},
 };
 
-bool isArrow = false;
-int arrowStartTime = 0;
+DWORD cursorLastActiveTime;
+
+DWORD arrowStartTime = 0;
 float arrowX = 0;
 float arrowY = 0;
-bool isMusicPlaying = false;
-int musicPlayStartTime = 0;
+extern bool isMusicPlaying;
+DWORD musicPlayStartTime = 0;
 
 float mouseXPos = 0.0f;
 float mouseYPos = 0.0f;
@@ -70,8 +76,8 @@ const float FOV = 40;
 
 // Flickering of the screen
 extern bool isFlickering;
-extern int flickerStartTime;
-int nextFlickerTime = -1;
+extern DWORD flickerStartTime;
+DWORD nextFlickerTime = 0;
 float flickerAmount = 0.0f;
 float flickerPosition = 0.5f;
 
@@ -509,7 +515,7 @@ void intro_init( void )
 
 		for (int j = 0; j < 4; j++)
 		{
-			mastStuffID[i][j] = (rand() % (NUM_MAST_STUFF_TEXTURES + 1)) - 1;
+			mastStuffID[i][j] = (rand() % (NUM_MAST_STUFF_TEXTURES + 0)) - 0;
 		}
 	}
 
@@ -534,8 +540,8 @@ void intro_init( void )
 	// create the engawa icon
 	float xpos = boxPosition[6][0];
 	float ypos = boxPosition[6][1];
-	engawaIcon[0].init("engawa_icon.tga", xpos, ypos, iconDistance, 0.04f);
-	engawaIcon[1].init("engawa_icon_overlay.tga", xpos, ypos, iconDistance, 0.04f);
+	engawaIcon[0].init("engawa_icon.tga", xpos, ypos, iconDistance, 0.02f);
+	engawaIcon[1].init("engawa_icon_overlay.tga", xpos, ypos, iconDistance, 0.02f);
 
 	// Create the desktop icons
 	int index = 0;
@@ -592,7 +598,7 @@ void intro_init( void )
 }
 
 
-void desktopScene(float ftime, int itime)
+void desktopScene(float ftime, DWORD itime)
 {
 	static float lastTime = 0.0f;
 	float deltaTime = ftime - lastTime;
@@ -601,11 +607,13 @@ void desktopScene(float ftime, int itime)
 
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 
+#if 0
 	//if (itime - musicPlayStartTime > 295000)
 	if (itime - musicPlayStartTime > 295000)
 	{
 		isMusicPlaying = false;
 	}
+#endif
 
 	char errorString[MAX_ERROR_LENGTH+1];
 
@@ -670,12 +678,29 @@ void desktopScene(float ftime, int itime)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
 	// Draw the icons
+	if (screenSaverID != 2)
+	{
+		iconsXDelta = 0.0f;
+	}
+	else
+	{
+		if (itime > iconsMoveStartTime)
+		{
+			iconsXDelta = 2.0f - 2.0f * sqrtf(sqrtf(0.0025f * (float)(itime - iconsMoveStartTime)));
+			if (iconsXDelta < 0.0f) iconsXDelta = 0.0f;
+		}
+		else
+		{
+			iconsXDelta = 2.0f;
+		}
+	}
+
 	int numberOfTheDead = 1;
 	if (screenSaverID > 2) numberOfTheDead = 2;
 	if (screenSaverID > 3) numberOfTheDead = 3;
 	for (int i = 0; i < numberOfTheDead; i++)
 	{
-		deadIcon[i].draw(ftime);
+		deadIcon[i].draw(ftime, iconsXDelta);
 	}
 	for (int i = 0; i < NUM_ICONS; i++)
 	{
@@ -686,12 +711,12 @@ void desktopScene(float ftime, int itime)
 		}
 		else
 		{
-			icon[i].draw(ftime);
+			icon[i].draw(ftime, iconsXDelta);
 		}
 	}
 	if (isAlarmRinging)
 	{
-		icon[3].drawAlarming(0.001f * (float)(itime - alarmStartTime));
+		icon[3].drawAlarming(0.001f * (float)(itime - alarmStartTime), iconsXDelta);
 	}
 
 	// Draw the menu if present
@@ -729,8 +754,34 @@ void desktopScene(float ftime, int itime)
 		}
 	}
 
+	// Show that music is playing
+	if (isMusicPlaying)
+	{
+		float xp = icon[2].getGLX() + 0.7f * iconDistance;
+		float yp = icon[2].getGLY() - 0.3f * ASPECT_RATIO;
+
+		if (textureManager.getTextureID("white_1x1.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		textureManager.drawQuad(xp-0.01f, yp + 0.205f*ASPECT_RATIO, xp+0.095f, yp - 0.01f*ASPECT_RATIO, 1.0f);
+
+		glBindTexture(GL_TEXTURE_2D, 0);
+		for (int balken = 0; balken < 3; balken++)
+		{
+			float xpb = xp + balken * 0.03f;
+			float height = sin(ftime*0.346f*(balken+1.3f) + balken);
+			height += 0.5f * sin(ftime*0.8376f*(balken+2.1f) + balken*0.5f);
+			height += 0.25f * sin(ftime*0.6124f*(balken+0.3f) + balken*0.2f);
+			height = (height + 4.0f) * 0.025f;
+			textureManager.drawQuad(xpb, yp, xpb+0.025f, yp + height*ASPECT_RATIO, 1.0f);
+		}
+	}
+
 	// Draw an error if present
-	if (isArrow)
+	if (true)
 	{
 		float arrowTime = 0.003f * (float)(itime - arrowStartTime);
 		// Global:?
@@ -742,58 +793,32 @@ void desktopScene(float ftime, int itime)
 		float amount = arrowTime * 2.0f;
 		if (amount > 1.0f) amount = 1.0f;
 		if (arrowTime > 3.0f) amount = 1.0f - (arrowTime - 2.0f) * (arrowTime - 2.0f) * 0.02f;
-		if (amount < 0.0f)
+		if (amount > 0.0f)
 		{
-			amount = 0.0f;
-		}
-
-		if (textureManager.getTextureID("select_mask.tga", &texID, errorString))
-		{
-			MessageBox(hWnd, errorString, "texture not found", MB_OK);
-			exit(1);
-		}
-		glBindTexture(GL_TEXTURE_2D, texID);
-		textureManager.drawQuad(arrowX-2.0f, arrowY-2.0f*ASPECT_RATIO,
-			arrowX + 2.0f, arrowY + 2.0f*ASPECT_RATIO, 0.7f * amount);
-	}
-
-	// Show that music is playing
-	if (isMusicPlaying)
-	{
-		float xp = icon[2].getGLX() + 0.175f;
-		float yp = icon[2].getGLY() - 0.1f * ASPECT_RATIO;
-
-		if (textureManager.getTextureID("white_1x1.tga", &texID, errorString))
-		{
-			MessageBox(hWnd, errorString, "texture not found", MB_OK);
-			exit(1);
-		}
-		glBindTexture(GL_TEXTURE_2D, texID);
-		textureManager.drawQuad(xp-0.01f, yp + 0.165f*ASPECT_RATIO, xp+0.095f, yp - 0.01f*ASPECT_RATIO, 1.0f);
-
-		glBindTexture(GL_TEXTURE_2D, 0);
-		for (int balken = 0; balken < 3; balken++)
-		{
-			float xpb = xp + balken * 0.03f;
-			float height = sin(ftime*0.546f*(balken+1.3f) + balken);
-			height += 0.5f * sin(ftime*1.7376f*(balken+2.1f) + balken*0.5f);
-			height += 0.25f * sin(ftime*1.3124f*(balken+0.3f) + balken*0.2f);
-			height = (height + 4.0f) * 0.02f;
-			textureManager.drawQuad(xpb, yp, xpb+0.025f, yp + height*ASPECT_RATIO, 1.0f);
+			if (textureManager.getTextureID("select_mask.tga", &texID, errorString))
+			{
+				MessageBox(hWnd, errorString, "texture not found", MB_OK);
+				exit(1);
+			}
+			glBindTexture(GL_TEXTURE_2D, texID);
+			textureManager.drawQuad(arrowX-2.0f, arrowY-2.0f*ASPECT_RATIO,
+				arrowX + 2.0f, arrowY + 2.0f*ASPECT_RATIO, 0.7f * amount);
 		}
 	}
 	
 	// Draw the cursor
-	if (textureManager.getTextureID("cursor_arrow.tga", &texID, errorString))
+	if (itime - cursorLastActiveTime < 3000)
 	{
-		MessageBox(hWnd, errorString, "texture not found", MB_OK);
-		exit(1);
+		if (textureManager.getTextureID("cursor_arrow.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		float mxp = 2.0f * mouseXPos - 1.0f;
+		float myp = 1.0f - 2.0f * mouseYPos;
+		textureManager.drawQuad(mxp, myp - mouseCursorHeight*ASPECT_RATIO, mxp + mouseCursorWidth, myp, 1.0f);
 	}
-	glBindTexture(GL_TEXTURE_2D, texID);
-	float mxp = 2.0f * mouseXPos - 1.0f;
-	float myp = 1.0f - 2.0f * mouseYPos;
-	textureManager.drawQuad(mxp, myp - mouseCursorHeight*ASPECT_RATIO, mxp + mouseCursorWidth, myp, 1.0f);
-
 
 	glDisable(GL_BLEND);
 }
@@ -999,7 +1024,7 @@ void drawMultiLine(float start[3], float end[3],
 	}
 }
 
-void screensaverScene(float ftime, int itime)
+void screensaverScene(float ftime, DWORD itime)
 {
 	const float X_ROTATE_ALPHA = 0.9f;
 	const float Y_ROTATE_ALPHA = -0.15f;
@@ -1300,7 +1325,7 @@ void screensaverScene(float ftime, int itime)
 			toDelete[1] = icon[0].getGLY() - icon[i].getGLY();
 
 			//float moveTime = (ftime - ((i * 3487639) % 29) - 10.0f) * 0.3f;
-			float moveTime = 0.001f * (float)(itime - itemDeleteStartTime - ((i * 3487639) % 29000)) * 0.3f;
+			float moveTime = 0.001f * (float)((int)itime - (int)itemDeleteStartTime - ((i * 3487639) % 13000)) * 0.3f;
 			if (moveTime < 0.0f) moveTime = 0.0f;
 			if (moveTime > 1.0f) moveTime = 1.0f;
 			float moveAmount = 0.5f - cos(moveTime * 3.141592f) * 0.5f;
@@ -1316,7 +1341,7 @@ void screensaverScene(float ftime, int itime)
 			float munchAmount = 0.0f;
 			if (i == 0)
 			{
-				float munchTime = (itime - itemDeleteStartTime - 4700) * 0.001f * 0.035f;
+				float munchTime = ((int)itime - (int)itemDeleteStartTime - 4500) * 0.001f * 0.08f;
 				if (munchTime < 0.0f) munchTime = 0.0f;
 				if (munchTime > 1.0f) munchTime = 1.0f;
 				munchAmount = sqrtf(sin(munchTime * 3.141592f)) * 4.0f;
@@ -1351,8 +1376,11 @@ void screensaverScene(float ftime, int itime)
 	}
 }
 
-void endScene(float ftime, int itime)
+void endScene(float ftime, DWORD itime)
 {
+	GLuint texID;
+	char errorString[MAX_ERROR_LENGTH+1];
+
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	glClear(GL_COLOR_BUFFER_BIT);
 	float iconTime = 0.001f * (itime - demoStartTime);
@@ -1364,6 +1392,49 @@ void endScene(float ftime, int itime)
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 
+	// Super-credit
+#if 0
+	if (creditID > 0 && creditID < 5)
+	{
+		const char *texName = "masako.tga";
+		switch(creditID)
+		{
+		case 1:
+			texName = "pascale.tga";
+			break;
+		case 2:
+			texName = "maiko.tga";
+			break;
+		case 3:
+			texName = "anja.tga";
+			break;
+		case 4:
+		default:
+			texName = "masako.tga";
+			break;
+		}
+		glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
+
+		if (textureManager.getTextureID(texName, &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "Loading texture failed", MB_OK);
+			exit(-1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		float creditTime = 0.25f * 0.001f * (float)(itime - creditStartTime);
+		if (creditTime < 1.0f)
+		{
+			float amount = sin(creditTime*3.141592f);
+			amount *= amount;
+			float left = -0.5f - 0.1f * cos(creditTime * 3.141592f);
+			float right = left + 1.0f;
+			float top = 0.98f - 0.02f * cos(creditTime * 3.141592f);
+			float bottom = top - 0.5f * ASPECT_RATIO;
+			textureManager.drawQuad(left, bottom, right, top, amount);
+		}
+	}
+#endif
+
 	// normal rendering shader
 	glUseProgram(shaderPrograms[SIMPLE_TEX_SHADER]);
 	engawaIcon[0].draw(iconTime);
@@ -1374,8 +1445,6 @@ void endScene(float ftime, int itime)
 	engawaIcon[1].draw(iconTime);
 
 	// Second highlight
-	GLuint texID;
-	char errorString[MAX_ERROR_LENGTH+1];
 	if (textureManager.getTextureID("highlight.tga", &texID, errorString))
 	{
 		MessageBox(hWnd, errorString, "Loading texture failed", MB_OK);
@@ -1430,10 +1499,10 @@ void endScene(float ftime, int itime)
 			exit(1);
 		}
 		glBindTexture(GL_TEXTURE_2D, texID);
-		float left = engawaIcon[0].getGLX() + 0.8f * iconDistance;
-		float width = 0.4f;
-		float right = left + 0.5f;
-		float top = engawaIcon[0].getGLY() - 0.3f * iconDistance * ASPECT_RATIO;
+		float left = engawaIcon[0].getGLX() + 1.0f * iconDistance;
+		float width = iconDistance * 1.94f;
+		float right = left + width;
+		float top = engawaIcon[0].getGLY() + 0.6f * iconDistance * ASPECT_RATIO;
 		float bottom = top - width * 245.0f / 130.0f * ASPECT_RATIO;
 		textureManager.drawQuad(left, bottom, right, top, 1.0f);
 	}
@@ -1441,16 +1510,19 @@ void endScene(float ftime, int itime)
 	// Wait until you draw the cursor...
 	if (ftime < duration * 2.0f) return;
 
-	// Draw the cursor
-	if (textureManager.getTextureID("cursor_arrow.tga", &texID, errorString))
+	if (itime - cursorLastActiveTime < 3000)
 	{
-		MessageBox(hWnd, errorString, "texture not found", MB_OK);
-		exit(1);
+		// Draw the cursor
+		if (textureManager.getTextureID("cursor_arrow.tga", &texID, errorString))
+		{
+			MessageBox(hWnd, errorString, "texture not found", MB_OK);
+			exit(1);
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		float mxp = 2.0f * mouseXPos - 1.0f;
+		float myp = 1.0f - 2.0f * mouseYPos;
+		textureManager.drawQuad(mxp, myp - mouseCursorHeight*ASPECT_RATIO, mxp + mouseCursorWidth, myp, 1.0f);
 	}
-	glBindTexture(GL_TEXTURE_2D, texID);
-	float mxp = 2.0f * mouseXPos - 1.0f;
-	float myp = 1.0f - 2.0f * mouseYPos;
-	textureManager.drawQuad(mxp, myp - mouseCursorHeight*ASPECT_RATIO, mxp + mouseCursorWidth, myp, 1.0f);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
 }
@@ -1460,7 +1532,7 @@ void nothingScene(float ftime)
 	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void intro_do( long itime )
+void intro_do( DWORD itime )
 {
 #if 0
 	static int oldTimes[5] = {0, 0, 0, 0, 0};
@@ -1598,7 +1670,7 @@ void intro_do( long itime )
 			float flickerMeanTime = timeSinceFlickerStart * timeSinceFlickerStart + 3.0f;
 			if (flickerMeanTime > 25.0f) flickerMeanTime = 15.0f;
 			int randi = rand();
-			nextFlickerTime = itime + (int)(((randi*randi) % 1000) * flickerMeanTime);
+			nextFlickerTime = itime + (DWORD)(((randi*randi) % 1000) * flickerMeanTime);
 		}
 	}
 
@@ -1640,8 +1712,9 @@ void intro_do( long itime )
 #endif
 }
 
-void intro_cursor(float xpos, float ypos)
+void intro_cursor(float xpos, float ypos, DWORD itime)
 {
+	cursorLastActiveTime = itime;
 	// Adjust according to left and right
 	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
 	//ypos = (ypos - screenTop) / (screenBottom - screenTop);
@@ -1684,8 +1757,22 @@ void intro_blackout(bool becomesBlack)
 	iconBlackout[y][x] = becomesBlack;
 }
 
-void intro_left_click(float xpos, float ypos, int itime, int sound)
+void setArrowLocation(int iconIdx, DWORD itime)
 {
+	arrowStartTime = itime;
+	arrowX = icon[iconIdx].getGLX() + iconDistance * 0.5f;
+	arrowY = icon[iconIdx].getGLY() - iconDistance * 0.5f * ASPECT_RATIO;
+}
+
+void music(DWORD itime)
+{
+	isMusicPlaying = !isMusicPlaying;
+	musicPlayStartTime = itime;
+}
+
+void intro_left_click(float xpos, float ypos, DWORD itime, int noSound)
+{
+	cursorLastActiveTime = itime;
 	// Adjust according to left and right
 	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
 	//ypos = (ypos - screenTop) / (screenBottom - screenTop);
@@ -1693,11 +1780,13 @@ void intro_left_click(float xpos, float ypos, int itime, int sound)
 	if (isScreenSaverRunning) return;
 
 	bool isDoubleClick = false;
+#if 0
 	if (isMusicPlaying)
 	{
 		isMusicPlaying = false;
 		return; // no click sound on stopping!
 	}
+#endif
 
 	if (isSubMenu)
 	{
@@ -1722,14 +1811,9 @@ void intro_left_click(float xpos, float ypos, int itime, int sound)
 					}
 					else
 					{
-						isArrow = true;
-						arrowStartTime = itime;
-						//int iconIdx = rand() % NUM_ICONS;
-						int iconIdx = subMenuIndex;
-						arrowX = icon[iconIdx].getGLX() + iconDistance * 0.5f;
-						arrowY = icon[iconIdx].getGLY() - iconDistance * 0.5f * ASPECT_RATIO;
+						setArrowLocation(subMenuIndex, itime);
 						isDoubleClick = true;
-						if (sound)
+						if (!noSound)
 						{
 							PlaySound("sounds/doppelclick.wav", NULL, SND_FILENAME | SND_ASYNC);
 						}
@@ -1756,19 +1840,14 @@ void intro_left_click(float xpos, float ypos, int itime, int sound)
 			}
 			else
 			{
-				// Instead do the thing directly	
-				isArrow = true;
-				arrowStartTime = itime;
-				//int iconIdx = rand() % NUM_ICONS;
-				int iconIdx = i;
-				arrowX = icon[iconIdx].getGLX() + iconDistance * 0.5f;
-				arrowY = icon[iconIdx].getGLY() - iconDistance * 0.5f * ASPECT_RATIO;
+				// Instead do the thing directly
+				setArrowLocation(i, itime);
 				isDoubleClick = true;
 			}			
 		}
 	}
 
-	if (sound)
+	if (!noSound)
 	{
 		if (isDoubleClick)
 		{
@@ -1781,8 +1860,10 @@ void intro_left_click(float xpos, float ypos, int itime, int sound)
 	}
 }
 
-void intro_right_click(float xpos, float ypos, int itime, int sound)
+void intro_right_click(float xpos, float ypos, DWORD itime, int noSound)
 {
+	cursorLastActiveTime = itime;
+
 	// Adjust according to left and right
 	//xpos = (xpos - screenLeft) / (screenRight - screenLeft);
 	//ypos = (ypos - screenTop) / (screenBottom - screenTop);
@@ -1796,11 +1877,13 @@ void intro_right_click(float xpos, float ypos, int itime, int sound)
 
 	if (isScreenSaverRunning) return;
 
+#if 0
 	if (isMusicPlaying)
 	{
 		isMusicPlaying = false;
 		return; // no clicking!
 	}
+#endif
 
 	if (isSubMenu)
 	{
@@ -1827,7 +1910,7 @@ void intro_right_click(float xpos, float ypos, int itime, int sound)
 		}
 	}
 
-	if (sound)
+	if (!noSound)
 	{
 		PlaySound("sounds/click_right.wav", NULL, SND_FILENAME | SND_ASYNC);
 	}

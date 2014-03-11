@@ -53,7 +53,7 @@ float FlowIcon::getGLY()
 	return posY;
 }
 
-void FlowIcon::drawAlarming(float time)
+void FlowIcon::drawAlarming(float time, float xDelta)
 {
 	GLuint texID;
 	char errorString[MAX_ERROR_LENGTH];
@@ -75,7 +75,7 @@ void FlowIcon::drawAlarming(float time)
 	glBindTexture(GL_TEXTURE_2D, texID);
 
 	// Core drawing?
-	float xp = getGLX();
+	float xp = getGLX() + xDelta;
 	float yp = getGLY();
 	yp += alarmAmount * 0.1f + 0.05f * alarmAmount*cos(time*33.0f);
 	float bw = borderWidth;
@@ -164,14 +164,19 @@ void FlowIcon::drawAmount(float mouseOverAmount, float relClickTime, float time,
 	lastDrawTime = time;
 }
 
-void FlowIcon::draw(float time)
+void FlowIcon::draw(float time, float xDelta)
 {
 	curTime = time;
 	
 	if (mouseIsOver)
 	{
-		mouseOverAmount += (time-lastDrawTime)*(1.0f - mouseOverAmount)*6.0f;
-		if (mouseOverAmount > 1.0f) mouseOverAmount = 1.0f;
+		mouseOverAmount += (time-lastDrawTime)*(1.02f - mouseOverAmount)*6.0f;
+		if (mouseOverAmount > 1.0f)
+		{
+			// The mouse was over a long time, ignore any more until it's over again
+			mouseIsOver = false;
+			mouseOverAmount = 1.0f;
+		};
 	}
 	else
 	{
@@ -184,7 +189,7 @@ void FlowIcon::draw(float time)
 	if (relClickTime < 0.0f) relClickTime = 0.0f;
 	relClickTime = sqrtf(relClickTime);
 
-	drawAmount(mouseOverAmount, relClickTime, time);
+	drawAmount(mouseOverAmount, relClickTime, time, xDelta);
 }
 
 void FlowIcon::setMousePosition(float xpos, float ypos)
