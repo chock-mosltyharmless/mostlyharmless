@@ -11,12 +11,14 @@
 
 void compileShaders(void);
 void intro_init(void);
-void intro_do(long time);
+void intro_do(DWORD time);
 void intro_end(void);
-void intro_left_click(float xpos, float ypos, int itime, int sound);
-void intro_right_click(float xpos, float ypos, int itime, int sound);
-void intro_cursor(float xpos, float ypos);
+void intro_left_click(float xpos, float ypos, DWORD itime, int sound);
+void intro_right_click(float xpos, float ypos, DWORD itime, int sound);
+void intro_cursor(float xpos, float ypos, DWORD itime);
 void intro_blackout(bool becomesBlack);
+void setArrowLocation(int iconIdx, DWORD itime);
+void music(DWORD itime);
 
 extern HWND hWnd;
 

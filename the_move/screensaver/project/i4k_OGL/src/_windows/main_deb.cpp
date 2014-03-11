@@ -19,18 +19,24 @@
 int realXRes;
 int realYRes;
 
+bool isMusicPlaying = false;
+
 bool isScreenSaverRunning = true;
-int screenSaverStartTime = 0;
+DWORD screenSaverStartTime = 0;
 int screenSaverID = 0;
 bool isAlarmRinging = false;
-int alarmStartTime = 0;
-int demoStartTime = 0;
-int itemDeleteStartTime = (1<<28);
+DWORD alarmStartTime = 0;
+DWORD demoStartTime = 0;
+DWORD itemDeleteStartTime = (1<<28);
+DWORD iconsMoveStartTime = 0;
+
+int creditID = 0;
+DWORD creditStartTime;
 bool isEndScene = false;
-int endSceneStartTime = 0;
+DWORD endSceneStartTime = 0;
 
 bool isFlickering;
-int flickerStartTime;
+DWORD flickerStartTime;
 
 typedef struct
 {
@@ -62,7 +68,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,0,
+static WININFO wininfo = {  0,0,0,0,1,
 							{'i','q','_',0}
                             };
 
@@ -100,12 +106,13 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			compileShaders();
 			break;
 #endif
-
 		case 'l':
 		case 'L':
 			isEndScene = !isEndScene;
 			endSceneStartTime = timeGetTime();
-			if (isEndScene)
+			creditStartTime = timeGetTime();
+			creditID = 0;
+			if (isEndScene && false)
 			{
 				PlaySound("sounds/swoosh.wav", NULL, SND_FILENAME | SND_ASYNC);
 			}
@@ -115,16 +122,39 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			}
 			isFlickering = false;
 			break;
+		case 'e':
+		case 'E':
+			creditID--;
+			if (creditID < 0) creditID = 0;
+			creditStartTime = timeGetTime();
+			break;
+		case 'r':
+		case 'R':
+			creditID++;
+			if (creditID > 5) creditID = 5;
+			creditStartTime = timeGetTime();
+			break;
+
+		case 'p':
+		case 'P':
+			music(timeGetTime());
+			break;
 
 		case 'q':
 		case 'Q':
 			isScreenSaverRunning = false;
+			iconsMoveStartTime = timeGetTime() + 1000*1000;
 			//ShowCursor(true);
 			PlaySound(NULL, NULL, 0);
 			break;
 
-		case 'm':
-		case 'M':
+		case 'w':
+		case 'W':
+			iconsMoveStartTime = timeGetTime();
+			break;
+
+		case 'a':
+		case 'A':
 			isAlarmRinging = true;
 			alarmStartTime = timeGetTime();
 			PlaySound("sounds/alarm.wav", NULL, SND_FILENAME | SND_ASYNC);
@@ -168,6 +198,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case '4':
 		case '5':
 		case '6':
+			isMusicPlaying = false;
 			itemDeleteStartTime = timeGetTime() + 1000 * 1000;
 			//ShowCursor(false);
 			isScreenSaverRunning = true;
@@ -177,7 +208,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			{
 				if (screenSaverID < 5)
 				{
-					PlaySound("sounds/kaze_no_kaori.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+					PlaySound("sounds/kaze_no_kaori_loop.wav", NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
 				}
 				else
 				{
@@ -189,6 +220,37 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				PlaySound(NULL, NULL, 0);
 			}
 			break;
+
+		// arrows:
+		case 'y':
+		case 'Y':
+			setArrowLocation(10, timeGetTime());
+			break;
+		case 'u':
+		case 'U':
+			setArrowLocation(1, timeGetTime());
+			break;
+		case 'h':
+		case 'H':
+			setArrowLocation(5, timeGetTime());
+			break;
+		case 'j':
+		case 'J':
+			setArrowLocation(9, timeGetTime());
+			break;
+		case 'k':
+		case 'K':
+			setArrowLocation(11, timeGetTime());
+			break;
+		case 'n':
+		case 'N':
+			setArrowLocation(12, timeGetTime());
+			break;
+		case 'm':
+		case 'M':
+			setArrowLocation(13, timeGetTime());
+			break;
+
 
 		default:
 			break;
@@ -222,7 +284,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		int yPos = lParam >> 16;
 		float relXPos = (float)xPos / float(rec.right - rec.left);
 		float relYPos = (float)yPos / float(rec.bottom - rec.top);
-		intro_cursor(relXPos, relYPos);
+		intro_cursor(relXPos, relYPos, timeGetTime());
 		return 1;
 	}
 
