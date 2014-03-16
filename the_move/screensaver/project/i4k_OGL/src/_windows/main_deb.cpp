@@ -201,9 +201,9 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			isMusicPlaying = false;
 			itemDeleteStartTime = timeGetTime() + 1000 * 1000;
 			//ShowCursor(false);
-			isScreenSaverRunning = true;
 			screenSaverStartTime = timeGetTime();
 			screenSaverID = wParam - '1';
+			isScreenSaverRunning = true;
 			if (screenSaverID >= 0)
 			{
 				if (screenSaverID < 5)
@@ -212,7 +212,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				}
 				else
 				{
-					PlaySound("sounds/kaze_no_kaori.wav", NULL, SND_FILENAME | SND_ASYNC);
+					PlaySound("sounds/kaze_no_kaori_short3.wav", NULL, SND_FILENAME | SND_ASYNC);
 				}
 			}
 			else
