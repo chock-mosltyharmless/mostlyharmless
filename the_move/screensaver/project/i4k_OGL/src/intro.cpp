@@ -538,8 +538,8 @@ void intro_init( void )
 	//glEnable(GL_CULL_FACE);
 
 	// create the engawa icon
-	float xpos = boxPosition[6][0];
-	float ypos = boxPosition[6][1];
+	float xpos = boxPosition[6][0]+0.01f;
+	float ypos = boxPosition[6][1]-0.05f;
 	engawaIcon[0].init("engawa_icon.tga", xpos, ypos, iconDistance, 0.02f);
 	engawaIcon[1].init("engawa_icon_overlay.tga", xpos, ypos, iconDistance, 0.02f);
 
@@ -1029,6 +1029,9 @@ void screensaverScene(float ftime, DWORD itime)
 	const float X_ROTATE_ALPHA = 0.9f;
 	const float Y_ROTATE_ALPHA = -0.15f;
 
+	if (ftime < 0.01f) ftime = 0.01f;
+	if (ftime > 10000.0f) ftime = 0.01f;
+
 	char errorString[MAX_ERROR_LENGTH+1];
 	GLuint offscreenTexID;
 	GLUquadric* quad = gluNewQuadric();
@@ -1041,10 +1044,10 @@ void screensaverScene(float ftime, DWORD itime)
 	//parameterMatrix[3] = sqrtf(ftime * 0.1f); // time
 	//if (parameterMatrix[3] > 1.0f) parameterMatrix[3] = 1.0f;
 	//2:0.23(29) 3:0.57(73) 4:0.54(69) 5:0.00(0) 
-	parameterMatrix[2] = params.getParam(2, 0.2f);
-	parameterMatrix[1] = params.getParam(3, 0.59f);	
-	parameterMatrix[3] = params.getParam(4, 0.84f);
-	parameterMatrix[6] = params.getParam(5, 0.65f);
+	parameterMatrix[2] = 0.2f;//params.getParam(2, 0.2f);
+	parameterMatrix[1] = 0.59f;//params.getParam(3, 0.59f);	
+	parameterMatrix[3] = 0.84f;//params.getParam(4, 0.84f);
+	parameterMatrix[6] = 0.65f;//params.getParam(5, 0.65f);
 	// translation
 	float rotSpeed = 0.02f;//0.3f;
 	float rotAmount = 0.5f;//1.6f;
@@ -1325,7 +1328,7 @@ void screensaverScene(float ftime, DWORD itime)
 			toDelete[1] = icon[0].getGLY() - icon[i].getGLY();
 
 			//float moveTime = (ftime - ((i * 3487639) % 29) - 10.0f) * 0.3f;
-			float moveTime = 0.001f * (float)((int)itime - (int)itemDeleteStartTime - ((i * 3487639) % 13000)) * 0.3f;
+			float moveTime = 0.001f * (float)((int)itime - (int)itemDeleteStartTime - ((i * 3488769) % 13000)) * 0.3f;
 			if (moveTime < 0.0f) moveTime = 0.0f;
 			if (moveTime > 1.0f) moveTime = 1.0f;
 			float moveAmount = 0.5f - cos(moveTime * 3.141592f) * 0.5f;
@@ -1367,7 +1370,8 @@ void screensaverScene(float ftime, DWORD itime)
 	}
 	if (screenSaverID == 5)
 	{
-		blackAmount = (ftime - 72.f) * 0.2f;
+		//blackAmount = (ftime - 72.f) * 0.2f;
+		blackAmount = (ftime - 39.f) * 0.2f;
 		if (blackAmount > 1.0f) blackAmount = 1.0f;
 	}
 	if (blackAmount > 0.0f)
@@ -1571,7 +1575,7 @@ void intro_do( DWORD itime )
 	
 	if (isEndScene)
 	{
-		float ftime = 0.001f * (float)(itime - endSceneStartTime);
+		float ftime = 0.001f * (float)((int)itime - (int)endSceneStartTime);
 		endScene(ftime, itime);
 	}
 	else
@@ -1580,7 +1584,7 @@ void intro_do( DWORD itime )
 		{
 			if (screenSaverID >= 0)
 			{
-				float ftime = 0.001f * (float)(itime - screenSaverStartTime);
+				float ftime = 0.001f * (float)((int)itime - (int)screenSaverStartTime);
 				screensaverScene(ftime, itime);
 			}
 			else
@@ -1590,7 +1594,7 @@ void intro_do( DWORD itime )
 		}
 		else
 		{
-			float ftime = 0.001f * (float)(itime - demoStartTime);
+			float ftime = 0.001f * (float)((int)itime - (int)demoStartTime);
 			desktopScene(ftime, itime);
 		}
 	}
@@ -1633,7 +1637,19 @@ void intro_do( DWORD itime )
 	glViewport(0, 0, OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT);
 	textureManager.getTextureID("bezel.tga", &offscreenTexID, errorString);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexID);
-	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 0.7f);
+	textureManager.drawQuad(-1.0f, -1.0f, 1.0f, 1.0f, 1.0f);
+
+	// GAMMA CORRECTION 2:0.46(59) 3:0.46(58) 4:0.46(58) 
+	parameterMatrix[15] = params.getParam(2, 0.46f) * 1.25f;
+	parameterMatrix[14] = params.getParam(3, 0.46f) * 2.0f - 1.0f;
+	parameterMatrix[13] = params.getParam(4, 0.46f) * 2.0f;
+	parameterMatrix[7] = params.getParam(5, 0.2f) * 5.0f;
+	parameterMatrix[6] = params.getParam(6, 0.5f) * 2.0f - 1.0f;
+	parameterMatrix[5] = params.getParam(8, 0.5f) * 2.0f;
+	parameterMatrix[3] = params.getParam(9, 0.2f) * 5.0f;
+	parameterMatrix[2] = params.getParam(12, 0.5f) * 2.0f - 1.0f;
+	parameterMatrix[1] = params.getParam(13, 0.5f) * 2.0f;
+
 
 	// Flickering
 	flickerAmount -= 0.25f;
@@ -1688,10 +1704,11 @@ void intro_do( DWORD itime )
 	glUseProgram(shaderCopyProgram);	
 
 	glClear(GL_COLOR_BUFFER_BIT);
-	screenLeft = params.getParam(14, 0.f);
-	screenRight = params.getParam(15, 1.f);
-	screenTop = params.getParam(16, 0.f);
-	screenBottom = params.getParam(17, 1.f);
+	//14:0.63(80) 15:0.72(91) 16:0.51(65) 17:0.76(96) 
+	screenLeft = params.getParam(14, 0.64f)*0.4f;
+	screenRight = params.getParam(15, 0.71f)*0.4f + 0.6f;
+	screenTop = params.getParam(16, 0.51f) * 0.4f;
+	screenBottom = params.getParam(17, 0.74f) * 0.4f + 0.6f;
 
 	float left = screenLeft * 2 - 1;
 	float right = screenRight * 2 - 1;

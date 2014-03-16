@@ -8,6 +8,7 @@ void main(void)
    float fTime0_X = parameters[0][0];
    vec3 noisePos = objectPosition + fTime0_X;
    vec2 noiseVal;
+   float gamma = parameters[3][3];
    
    float flickerAmount = parameters[2][2];
    float flickerPosition = parameters[2][3];
@@ -49,6 +50,19 @@ void main(void)
    //gl_FragColor = (1.0 - 0.2 * vignette) * gl_FragColor;
 
    if (texCoord.x > 1.0 || texCoord.x < -1.0) gl_FragColor = vec4(0.0);
+
+   // gamma correction
+   /*
+   gl_FragColor.r *= parameters[3][1];
+   gl_FragColor.r += parameters[3][2];
+   gl_FragColor.r = pow(gl_FragColor.r, parameters[3][3]);
+   gl_FragColor.g *= parameters[3][1];
+   gl_FragColor.g += parameters[3][2];
+   gl_FragColor.g = pow(gl_FragColor.g, parameters[3][3]);
+   gl_FragColor.b *= parameters[3][1];
+   gl_FragColor.b += parameters[3][2];
+   gl_FragColor.b = pow(gl_FragColor.b, parameters[3][3]);
+   */
 
    //gl_FragColor *= 1.0f - flickerAmount;
 }
