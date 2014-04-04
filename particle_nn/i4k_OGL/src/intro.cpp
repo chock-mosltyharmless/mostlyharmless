@@ -98,7 +98,7 @@ o=mix(c,b,0.4);\
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define NUM_INNER_PARTICLES 4096
+#define NUM_INNER_PARTICLES 2048
 float innerParticlePos[NUM_INNER_PARTICLES][3];
 float innerParticleColor[NUM_INNER_PARTICLES][4];
 
@@ -211,7 +211,7 @@ void intro_init( void )
 		for (int dim = 0; dim < 3; dim++)
 		{
 			particlePos[i][dim] = frand(&frandSeed) - 0.5f;
-			particleMovement[i][dim] = 0.1f * (frand(&frandSeed) - 0.5f);
+			particleMovement[i][dim] = 0.00001f * (frand(&frandSeed) - 0.5f);
 		}
 
 		float quaternion[4];
@@ -418,9 +418,57 @@ void generateOGLTransforms(float ftime)
 	}
 }
 
+// This function moves the particles
+void moveParticles(long itime)
+{
+	static long lastTime = 0;
+	static bool firstCall = true;
+	if (firstCall)
+	{
+		lastTime = itime;
+		firstCall = false;
+	}
+
+	// Go in 5 ms steps
+	while (lastTime < itime)
+	{
+		// move particles along their direction
+		for (int i = 0; i < NUM_PARTICLES; i++)
+		{
+			for (int dim = 0; dim < 3; dim++)
+			{
+				particlePos[i][dim] += particleMovement[i][dim];
+			}
+		}
+
+		// Slow down particles
+		for (int i = 0; i < NUM_PARTICLES; i++)
+		{
+			for (int dim = 0; dim < 3; dim++)
+			{
+				particleMovement[i][dim] *= 0.99998f;
+			}
+		}
+
+		// Gravitate to the center
+		for (int i = 0; i < NUM_PARTICLES; i++)
+		{
+			for (int dim = 0; dim < 3; dim++)
+			{
+				particleMovement[i][dim] -= particlePos[i][dim] * 0.000000001f;
+			}
+		}
+
+		lastTime += 5; // 5 ms steps
+	}
+}
+
 // This function is finding the right thing to do based on the time that we are in
 void doTheScripting(long itime)
 {	
+	// Update of positions and stuff
+	moveParticles(itime);
+
 	// Create the stuff based on the current timing thing
 	generateParticles();
 	generateOGLTransforms(0.0f);
