@@ -102,12 +102,23 @@ o=mix(c,b,0.4);\
 float innerParticlePos[NUM_INNER_PARTICLES][3];
 float innerParticleColor[NUM_INNER_PARTICLES][4];
 
-#define NUM_PARTICLES 1024
+#define NUM_PARTICLES 512
 float particlePos[NUM_PARTICLES][3];
 float particleMovement[NUM_PARTICLES][3];
 float particleColor[NUM_PARTICLES][4];
 // This one is probably constant...
 float particleOrientation[NUM_PARTICLES][4][4];
+// This is the linked list for nearby particles
+int particleNextGridParticle[NUM_PARTICLES];
+// This is the index into the grid (unwinded)
+int particleGridIndex[NUM_PARTICLES];
+
+#define NUM_GRID_ELEMENTS 64
+#define GRID_SIZE 2.0f
+#define GRID_STEP_SIZE (NUM_GRID_ELEMENTS / (2.0f * GRID_SIZE))
+// This is the speed up buffer to get closeby particles quickly
+// The grid contains IDs of particles
+int grid[NUM_GRID_ELEMENTS][NUM_GRID_ELEMENTS][NUM_GRID_ELEMENTS];
 
 // This is only used if SHADER_DEBUG is on, but I will leave it for now.
 HWND hWnd;
@@ -203,6 +214,18 @@ void intro_init( void )
 		}
 
 		innerParticleColor[i][3] = frand(&frandSeed);
+	}
+
+	// Clear the grid
+	for (int i = 0; i < NUM_GRID_ELEMENTS; i++)
+	{
+		for (int j = 0; j < NUM_GRID_ELEMENTS; j++)
+		{
+			for (int k = 0; k < NUM_GRID_ELEMENTS; k++)
+			{
+				grid[i][j][k] = -1;
+			}
+		}
 	}
 
 	// Create the particle start data
@@ -429,7 +452,7 @@ void moveParticles(long itime)
 		firstCall = false;
 	}
 
-	// Go in 5 ms steps
+	// Go in 10 ms steps
 	while (lastTime < itime)
 	{
 		// move particles along their direction
@@ -440,6 +463,79 @@ void moveParticles(long itime)
 				particlePos[i][dim] += particleMovement[i][dim];
 			}
 		}
+
+		// Clear the grid info
+		for (int i = 0; i < NUM_PARTICLES; i++)
+		{
+			grid[0][0][particleGridIndex[i]] = -1;
+			particleNextGridParticle[i] = -1;
+		}
+
+		// Set the grid info
+		for (int i = 0; i < NUM_PARTICLES; i++)
+		{
+			int gridIndex[3];
+			gridIndex[0] = (int)(particlePos[i][0] * GRID_STEP_SIZE) + NUM_GRID_ELEMENTS/2;
+			gridIndex[1] = (int)(particlePos[i][1] * GRID_STEP_SIZE) + NUM_GRID_ELEMENTS/2;
+			gridIndex[2] = (int)(particlePos[i][2] * GRID_STEP_SIZE) + NUM_GRID_ELEMENTS/2;
+
+			// Only put one next to border
+			if (((unsigned int)(gridIndex[0]-1) < (NUM_GRID_ELEMENTS-2)) &&
+				((unsigned int)(gridIndex[1]-1) < (NUM_GRID_ELEMENTS-2)) &&
+				((unsigned int)(gridIndex[2]-1) < (NUM_GRID_ELEMENTS-2)))
+			{
+				int gridI = gridIndex[0] + gridIndex[1]*NUM_GRID_ELEMENTS + gridIndex[2]*NUM_GRID_ELEMENTS*NUM_GRID_ELEMENTS;
+				particleNextGridParticle[i] = grid[0][0][gridI];
+				grid[0][0][gridI] = i;
+				particleGridIndex[i] = gridI;
+			}
+		}
+
+		// Do everything relative to other particles
+#if 1
+		for (int i = 0; i < NUM_PARTICLES; i++)
+		{
+			for (int dz = -1; dz < 2; dz++)
+			{
+				for (int dy = -1; dy < 2; dy++)
+				{
+					for (int dx = -1; dx < 2; dx++)
+					{
+						int gridI = particleGridIndex[i] +
+							dx +
+							dy*NUM_GRID_ELEMENTS +
+							dz*NUM_GRID_ELEMENTS*NUM_GRID_ELEMENTS;
+						int nextParticle = grid[0][0][gridI];
+						while (nextParticle >= 0)
+						{
+							if (nextParticle != i)
+							{
+								float dPos[3];
+								dPos[0] = particlePos[i][0] - particlePos[nextParticle][0];
+								dPos[1] = particlePos[i][1] - particlePos[nextParticle][1];
+								dPos[2] = particlePos[i][2] - particlePos[nextParticle][2];
+								float sqrDist = (dPos[0] * dPos[0]) + (dPos[1] * dPos[1]) + (dPos[2] * dPos[2]);
+								//float invDist = 1.0f / sqrt(sqrDist);
+								//dPos[0] *= invDist;
+								//dPos[1] *= invDist;
+								//dPos[2] *= invDist;
+								//float amount = 1e-10f / (sqrDist + 1e-4f);
+								float amount = 1e-10f * cos(sqrDist * 50.0f) / (sqrDist + 1e-6f);
+								//particleMovement[nextParticle][0] = amount * dPos[0] + (1.0f - amount) * particleMovement[nextParticle][0];
+								//particleMovement[nextParticle][1] = amount * dPos[1] + (1.0f - amount) * particleMovement[nextParticle][1];
+								//particleMovement[nextParticle][2] = amount * dPos[2] + (1.0f - amount) * particleMovement[nextParticle][2];
+								particleMovement[i][0] += amount * dPos[0];
+								particleMovement[i][1] += amount * dPos[1];
+								particleMovement[i][2] += amount * dPos[2];
+							}
+
+							nextParticle = particleNextGridParticle[nextParticle];
+						}
+					}
+				}
+			}
+		}
+#endif
 
 		// Slow down particles
 		for (int i = 0; i < NUM_PARTICLES; i++)
@@ -459,14 +555,14 @@ void moveParticles(long itime)
 			}
 		}
 
-		lastTime += 5; // 5 ms steps
+		lastTime += 10; // 5 ms steps
 	}
 }
 
 // This function is finding the right thing to do based on the time that we are in
 void doTheScripting(long itime)
 {	
-	// Update of positions and stuff
+	// Update of positions and all the other goodness
 	moveParticles(itime);
 
 	// Create the stuff based on the current timing thing
