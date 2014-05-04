@@ -44,6 +44,7 @@
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">.\Release/vstxynth\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</GenerateManifest>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -54,22 +55,22 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
-      <PrecompiledHeaderOutputFile>.\Debug/vstxsynth/vstxsynth.pch</PrecompiledHeaderOutputFile>
-      <AssemblerListingLocation>.\Debug/vstxsynth/</AssemblerListingLocation>
-      <ObjectFileName>.\Debug/vstxsynth/</ObjectFileName>
-      <ProgramDataBaseFileName>.\Debug/vstxsynth/</ProgramDataBaseFileName>
+      <PrecompiledHeaderOutputFile>.\Debug/gornplay/gornplay.pch</PrecompiledHeaderOutputFile>
+      <AssemblerListingLocation>.\Debug/gornplay/</AssemblerListingLocation>
+      <ObjectFileName>.\Debug/gornplay/</ObjectFileName>
+      <ProgramDataBaseFileName>.\Debug/gornplay/</ProgramDataBaseFileName>
       <WarningLevel>Level3</WarningLevel>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <CompileAs>Default</CompileAs>
     </ClCompile>
     <Link>
-      <OutputFile>.\Debug/vstxsynth.dll</OutputFile>
+      <OutputFile>Debug/gornplay.dll</OutputFile>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <ModuleDefinitionFile>..\win\vstplug.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <ProgramDatabaseFile>.\Debug/vstxsynth.pdb</ProgramDatabaseFile>
-      <ImportLibrary>.\Debug/vstxsynth.lib</ImportLibrary>
+      <ProgramDatabaseFile>Debug/vstxsynth.pdb</ProgramDatabaseFile>
+      <ImportLibrary>Debug/gornplay.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <Midl>
@@ -186,7 +187,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\win\vstplug.def" />
-    <None Include="..\vstxsynth\resource\vstxsynth.vstxml" />
+    <None Include="..\vstxsynth\resource\vstxsynth.vstxml">
+      <SubType>Designer</SubType>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\vstxsynth\resource\vstxsynth.rc">
