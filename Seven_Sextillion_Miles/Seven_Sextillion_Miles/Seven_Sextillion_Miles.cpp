@@ -3,6 +3,7 @@
 
 #include "stdafx.h"
 #include "Seven_Sextillion_Miles.h"
+#include "GLGraphics.h"
 
 #define MAX_LOADSTRING 100
 
@@ -29,15 +30,18 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	MSG msg;
 
 	// Globale Zeichenfolgen initialisieren
-	LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-	LoadString(hInstance, IDC_SEVEN_SEXTILLION_MILES, szWindowClass, MAX_LOADSTRING);
-	MyRegisterClass(hInstance);
+	//LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
+	//LoadString(hInstance, IDC_SEVEN_SEXTILLION_MILES, szWindowClass, MAX_LOADSTRING);
+	//MyRegisterClass(hInstance);
 
 	// Anwendungsinitialisierung ausführen:
-	if (!InitInstance (hInstance, nCmdShow))
-	{
-		return FALSE;
-	}
+	//if (!InitInstance (hInstance, nCmdShow))
+	//{
+		//return FALSE;
+	//}
+
+	GLGraphics graphics;
+	graphics.init(640, 480, WndProc);
 
 	// Hauptnachrichtenschleife:
 	while (GetMessage(&msg, NULL, 0, 0))
@@ -139,9 +143,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		// Menüauswahl bearbeiten:
 		switch (wmId)
 		{
-		case IDM_ABOUT:
-			DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
 			break;
@@ -161,24 +162,4 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
 	return 0;
-}
-
-// Meldungshandler für Infofeld.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(lParam);
-	switch (message)
-	{
-	case WM_INITDIALOG:
-		return (INT_PTR)TRUE;
-
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-		{
-			EndDialog(hDlg, LOWORD(wParam));
-			return (INT_PTR)TRUE;
-		}
-		break;
-	}
-	return (INT_PTR)FALSE;
 }

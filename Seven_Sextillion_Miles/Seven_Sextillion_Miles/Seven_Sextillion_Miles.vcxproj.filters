@@ -36,12 +36,18 @@
     <ClInclude Include="Seven_Sextillion_Miles.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="GLGraphics.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Seven_Sextillion_Miles.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="GLGraphics.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
