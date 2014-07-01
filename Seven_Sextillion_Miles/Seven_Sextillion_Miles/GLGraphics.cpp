@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "GLGraphics.h"
-
+#include "wglext.h"
 
 GLGraphics::GLGraphics(void)
 {
@@ -9,6 +9,24 @@ GLGraphics::GLGraphics(void)
 
 GLGraphics::~GLGraphics(void)
 {
+}
+
+bool GLGraphics::wglExtensionSupported(const char *extension_name)
+{
+    // this is pointer to function which returns pointer to string with list of all wgl extensions
+    PFNWGLGETEXTENSIONSSTRINGEXTPROC _wglGetExtensionsStringEXT = NULL;
+
+    // determine pointer to wglGetExtensionsStringEXT function
+    _wglGetExtensionsStringEXT = (PFNWGLGETEXTENSIONSSTRINGEXTPROC)wglGetProcAddress("wglGetExtensionsStringEXT");
+
+    if (strstr(_wglGetExtensionsStringEXT(), extension_name) == NULL)
+    {
+        // string was not found
+        return false;
+    }
+
+    // extension is supported
+    return true;
 }
 
 int GLGraphics::init(int width, int height, WNDPROC WndProc)
@@ -124,10 +142,46 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 		return GL_MAKE_CURRENT_FAILED;
 	}
 
+	// Try to change the swap control
+	PFNWGLSWAPINTERVALEXTPROC       wglSwapIntervalEXT = NULL;
+	PFNWGLGETSWAPINTERVALEXTPROC    wglGetSwapIntervalEXT = NULL;
+
+	if (wglExtensionSupported("WGL_EXT_swap_control"))
+	{
+		// Extension is supported, init pointers.
+		wglSwapIntervalEXT = (PFNWGLSWAPINTERVALEXTPROC)wglGetProcAddress("wglSwapIntervalEXT");
+		// this is another function from WGL_EXT_swap_control extension
+		wglGetSwapIntervalEXT = (PFNWGLGETSWAPINTERVALEXTPROC)wglGetProcAddress("wglGetSwapIntervalEXT");
+
+		// Set VSync to 1
+		wglSwapIntervalEXT(1);
+	}
+
 	ShowWindow(hWnd, SW_SHOW);						// Show The Window
 	SetForegroundWindow(hWnd);						// Slightly Higher Priority
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
-	//resize(width, height);						// Set Up Our Perspective GL Screen
+	resize(width, height);							// Set Up Our Perspective GL Screen
+
+	return 0;
+}
+
+int GLGraphics::resize(int width, int height)
+{
+	glViewport(0, 0, width, height);				// Reset The Current Viewport
+
+	return 0;
+}
+
+int GLGraphics::clear(void)
+{
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	return 0;
+}
+
+int GLGraphics::swap(void)
+{
+	SwapBuffers(hDC);
 
 	return 0;
 }

@@ -29,7 +29,19 @@ public:
 	// Problem: Window management is windows dependent -> no problem?
 	int init(int width, int height, WNDPROC WndProc);
 
+	// Resize the window. May return some negative error
+	int resize(int width, int height);
+
+	// Swap double buffer screens
+	// May return negative error values
+	int swap(void);
+
+	// Clears screen with black. May return negative error values
+	int clear(void);
+
 private:
+	bool wglExtensionSupported(const char *extension_name);
+
 	HDC hDC;		// Private GDI Device Context
 	HGLRC hRC;		// Permanent Rendering Context
 	HWND hWnd;		// Holds Our Window Handle
