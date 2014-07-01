@@ -34,20 +34,32 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	//LoadString(hInstance, IDC_SEVEN_SEXTILLION_MILES, szWindowClass, MAX_LOADSTRING);
 	//MyRegisterClass(hInstance);
 
-	// Anwendungsinitialisierung ausführen:
-	//if (!InitInstance (hInstance, nCmdShow))
-	//{
-		//return FALSE;
-	//}
-
 	GLGraphics graphics;
-	graphics.init(640, 480, WndProc);
+	if (graphics.init(640, 480, WndProc) < 0)
+	{
+		exit(-1);
+	}
 
 	// Hauptnachrichtenschleife:
-	while (GetMessage(&msg, NULL, 0, 0))
+	bool exitGame = false;
+
+	while (!exitGame)
 	{
-		TranslateMessage(&msg);
-		DispatchMessage(&msg);
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			if (msg.message == WM_QUIT) exitGame = true;
+
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		// Do physics
+
+		// Render
+		graphics.clear();
+
+		// Swap for next frame
+		graphics.swap();
 	}
 
 	return (int) msg.wParam;
@@ -90,36 +102,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 }
 
 //
-//   FUNKTION: InitInstance(HINSTANCE, int)
-//
-//   ZWECK: Speichert das Instanzenhandle und erstellt das Hauptfenster.
-//
-//   KOMMENTARE:
-//
-//        In dieser Funktion wird das Instanzenhandle in einer globalen Variablen gespeichert, und das
-//        Hauptprogrammfenster wird erstellt und angezeigt.
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
-{
-   HWND hWnd;
-
-   hInst = hInstance; // Instanzenhandle in der globalen Variablen speichern
-
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
-
-   if (!hWnd)
-   {
-      return FALSE;
-   }
-
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
-}
-
-//
 //  FUNKTION: WndProc(HWND, UINT, WPARAM, LPARAM)
 //
 //  ZWECK:  Verarbeitet Meldungen vom Hauptfenster.
@@ -132,8 +114,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
-	PAINTSTRUCT ps;
-	HDC hdc;
 
 	switch (message)
 	{
@@ -150,11 +130,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
+#if 0
 	case WM_PAINT:
-		hdc = BeginPaint(hWnd, &ps);
-		// TODO: Hier den Zeichnungscode hinzufügen.
-		EndPaint(hWnd, &ps);
-		break;
+		{
+			PAINTSTRUCT ps;
+			HDC hdc;
+			hdc = BeginPaint(hWnd, &ps);
+			// TODO: Hier den Zeichnungscode hinzufügen.
+			EndPaint(hWnd, &ps);
+			break;
+		}
+#endif
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
