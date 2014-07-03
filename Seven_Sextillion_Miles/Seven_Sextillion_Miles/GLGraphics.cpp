@@ -42,11 +42,11 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 	wc.hCursor			= LoadCursor(NULL, IDC_ARROW);			// Load The Arrow Pointer
 	wc.hbrBackground	= NULL;									// No Background Required For GL
 	wc.lpszMenuName		= NULL;									// We Don't Want A Menu
-	wc.lpszClassName	= L"SevenSextillionMiles";				// Set The Class Name
+	wc.lpszClassName	= "SevenSextillionMiles";				// Set The Class Name
 
 	if (!RegisterClass(&wc))
 	{
-		MessageBox(NULL, L"Failed To Register The Window Class.", L"OpenGL ERROR",
+		MessageBox(NULL, "Failed To Register The Window Class.", "OpenGL ERROR",
 			       MB_OK | MB_ICONEXCLAMATION);
 		return GL_REGISTER_CLASS_FAILED;
 	}
@@ -63,7 +63,7 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 
 	// Create The Window
 	if (!(hWnd=CreateWindowEx(dwExStyle,
-						      L"SevenSextillionMiles",				// Class Name
+						      "SevenSextillionMiles",				// Class Name
 							  GL_WINDOW_TITLE,					    // Window Title
 							  dwStyle |							    // Defined Window Style
 							  WS_CLIPSIBLINGS |	WS_CLIPCHILDREN,	// Required Window Style
@@ -76,7 +76,7 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 						      NULL)))								// Dont Pass Anything To WM_CREATE
 	{
 		//KillGLWindow();								// Reset The Display
-		MessageBox(NULL, L"Window Creation Error.", L"OpenGL ERROR",
+		MessageBox(NULL, "Window Creation Error.", "OpenGL ERROR",
 			       MB_OK | MB_ICONEXCLAMATION);
 		return GL_CREATE_WINDOW_FAILED;
 	}
@@ -104,7 +104,7 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 	if (!(hDC = GetDC(hWnd)))
 	{
 		//KillGLWindow();								// Reset The Display
-		MessageBox(NULL, L"Can't Create A GL Device Context.", L"OpenGL ERROR",
+		MessageBox(NULL, "Can't Create A GL Device Context.", "OpenGL ERROR",
 				   MB_OK | MB_ICONEXCLAMATION);
 		return GL_GET_DC_FAILED;
 	}
@@ -113,7 +113,7 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 	if (!(pixelFormat = ChoosePixelFormat(hDC, &pfd)))
 	{
 		//KillGLWindow();								// Reset The Display
-		MessageBox(NULL, L"Can't Find A Suitable PixelFormat.", L"OpenGL ERROR",
+		MessageBox(NULL, "Can't Find A Suitable PixelFormat.", "OpenGL ERROR",
 			       MB_OK | MB_ICONEXCLAMATION);
 		return GL_CHOOSE_PIXEL_FORMAT_FAILED;
 	}
@@ -121,7 +121,7 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 	if(!SetPixelFormat(hDC, pixelFormat, &pfd))
 	{
 		//KillGLWindow();								// Reset The Display
-		MessageBox(NULL, L"Can't Set The PixelFormat.", L"OpenGL ERROR",
+		MessageBox(NULL, "Can't Set The PixelFormat.", "OpenGL ERROR",
 			       MB_OK | MB_ICONEXCLAMATION);
 		return GL_SET_PIXEL_FORMAT_FAILED;
 	}
@@ -129,7 +129,7 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 	if (!(hRC = wglCreateContext(hDC)))
 	{
 		//KillGLWindow();								// Reset The Display
-		MessageBox(NULL, L"Can't Create A GL Rendering Context.", L"OpenGL ERROR",
+		MessageBox(NULL, "Can't Create A GL Rendering Context.", "OpenGL ERROR",
 			       MB_OK | MB_ICONEXCLAMATION);
 		return GL_CREATE_CONTEXT_FAILED;
 	}
@@ -137,7 +137,7 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 	if(!wglMakeCurrent(hDC, hRC))
 	{
 		//KillGLWindow();								// Reset The Display
-		MessageBox(NULL, L"Can't Activate The GL Rendering Context.", L"OpenGL ERROR",
+		MessageBox(NULL, "Can't Activate The GL Rendering Context.", "OpenGL ERROR",
 			       MB_OK | MB_ICONEXCLAMATION);
 		return GL_MAKE_CURRENT_FAILED;
 	}

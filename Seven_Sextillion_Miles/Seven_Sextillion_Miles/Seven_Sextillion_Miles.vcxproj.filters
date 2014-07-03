@@ -39,6 +39,18 @@
     <ClInclude Include="GLGraphics.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="lodepng.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="GLTextures.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="wglext.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="global.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -48,6 +60,12 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="GLGraphics.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="lodepng.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="GLTextures.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
