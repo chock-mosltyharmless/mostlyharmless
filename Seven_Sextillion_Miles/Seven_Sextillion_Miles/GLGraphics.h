@@ -5,7 +5,7 @@
 #include <GL/GL.h>
 
 // Global strings (better in a resource file?)
-#define GL_WINDOW_TITLE L"Seven Sextillion Miles from Home"
+#define GL_WINDOW_TITLE "Seven Sextillion Miles"
 
 // Global error values
 #define GL_REGISTER_CLASS_FAILED -1

@@ -16,6 +16,7 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+#include <stdio.h>
 
 
 // TODO: Hier auf zusätzliche Header, die das Programm erfordert, verweisen.
