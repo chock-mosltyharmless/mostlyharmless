@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "GLGraphics.h"
 #include "wglext.h"
+#include "global.h"
 
 GLGraphics::GLGraphics(void)
 {
@@ -10,6 +11,75 @@ GLGraphics::GLGraphics(void)
 GLGraphics::~GLGraphics(void)
 {
 }
+
+void GLGraphics::drawSprite(int xOrigin, int yOrigin, float xPos, float yPos,
+							float width, float height, float rotation)
+{
+	// I could save those in the class if I really wanted:
+	float xScale = 1.0f;
+	float yScale = 1.0f;
+
+	if (viewportWidth < viewportHeight)
+	{
+		yScale = (float)viewportWidth / (float)viewportHeight;
+	}
+	else
+	{
+		xScale = (float)viewportHeight / (float)viewportWidth;
+	}
+
+	float centerX, centerY;
+
+	switch(xOrigin)
+	{
+	case -1:
+		centerX = xPos * xScale - 1.0f;
+		break;
+	case 0:
+		centerX = xPos * xScale;
+		break;
+	case 1:
+		centerX = 1.0f - xPos * xScale;
+		break;
+	default:
+		centerX = 0.0f;
+		break;
+	}
+
+	switch(yOrigin)
+	{
+	case -1:
+		centerY = yPos * yScale - 1.0f;
+		break;
+	case 0:
+		centerY = yPos * yScale;
+		break;
+	case 1:
+		centerY = 1.0f - yPos * yScale;
+		break;
+	default:
+		centerY = 0.0f;
+		break;
+	}
+
+	for (int y = 0; y < 2; y++)
+	{
+		for (int x = 0; x < 2; x++)
+		{
+			float xMod = (float)x;
+			float yMod = (float)y;
+			if (y == 1) xMod = 1.0f - xMod;
+
+			float xd = ((float)xMod - 0.5f) * width * 2.0f;
+			float yd = ((float)yMod - 0.5f) * height * 2.0f;
+
+			glTexCoord2d(xMod, 1.0f - yMod);
+			glVertex2f(centerX + xScale * (cos(rotation)*xd - sin(rotation) * yd),
+				       centerY + yScale * (sin(rotation)*xd + cos(rotation) * yd));
+		}
+	}
+}
+
 
 bool GLGraphics::wglExtensionSupported(const char *extension_name)
 {
@@ -161,13 +231,29 @@ int GLGraphics::init(int width, int height, WNDPROC WndProc)
 	SetForegroundWindow(hWnd);						// Slightly Higher Priority
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
 	resize(width, height);							// Set Up Our Perspective GL Screen
+	char errorString[MAX_ERROR_LENGTH + 1];
+	glEnable(GL_TEXTURE_2D);
+	if (textures.init(errorString) != 0)
+	{
+		MessageBox(NULL, errorString, "Texture Load error",
+			       MB_OK | MB_ICONEXCLAMATION);
+		return GL_LOAD_TEXTURES_FAILED;
+	}
 
 	return 0;
+}
+
+void GLGraphics::handleError(const char *errorString)
+{
+	MessageBox(NULL, errorString, "ERROR",
+			    MB_OK | MB_ICONEXCLAMATION);
 }
 
 int GLGraphics::resize(int width, int height)
 {
 	glViewport(0, 0, width, height);				// Reset The Current Viewport
+	viewportWidth = width;
+	viewportHeight = height;
 
 	return 0;
 }
@@ -176,11 +262,18 @@ int GLGraphics::clear(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	// Standard transparency
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glBegin(GL_QUADS);
+	
 	return 0;
 }
 
 int GLGraphics::swap(void)
 {
+	glEnd();
 	SwapBuffers(hDC);
 
 	return 0;

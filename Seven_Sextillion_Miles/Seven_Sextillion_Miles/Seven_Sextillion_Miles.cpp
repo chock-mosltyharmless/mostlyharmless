@@ -4,19 +4,15 @@
 #include "stdafx.h"
 #include "Seven_Sextillion_Miles.h"
 #include "GLGraphics.h"
+#include "global.h"
 
 #define MAX_LOADSTRING 100
 
-// Globale Variablen:
-HINSTANCE hInst;								// Aktuelle Instanz
-TCHAR szTitle[MAX_LOADSTRING];					// Titelleistentext
-TCHAR szWindowClass[MAX_LOADSTRING];			// Klassenname des Hauptfensters
-
 // Vorwärtsdeklarationen der in diesem Codemodul enthaltenen Funktionen:
-ATOM				MyRegisterClass(HINSTANCE hInstance);
-BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+
+// Very evil global variable to be able to access graphics...
+GLGraphics *graphicsPtr;
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -39,16 +35,19 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	{
 		exit(-1);
 	}
+	graphicsPtr = &graphics;
 
 	// Hauptnachrichtenschleife:
 	bool exitGame = false;
 
 	while (!exitGame)
 	{
+		char errorString[MAX_ERROR_LENGTH + 1];
+
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT) exitGame = true;
-
+			
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
 		}
@@ -57,48 +56,21 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 		// Render
 		graphics.clear();
+		if (graphics.setTexture("arrow.png", errorString) != 0)
+		{
+			graphics.handleError(errorString);
+			exit(-1);
+		}
+		graphics.drawSprite(0, 0, 0.4f, 0.1f, 0.1f, 0.1f, 0.7f);
 
 		// Swap for next frame
 		graphics.swap();
 	}
+	graphicsPtr = NULL;
+
+	// De-initilialize Graphics: (TODO: Shall I???)
 
 	return (int) msg.wParam;
-}
-
-
-
-//
-//  FUNKTION: MyRegisterClass()
-//
-//  ZWECK: Registriert die Fensterklasse.
-//
-//  KOMMENTARE:
-//
-//    Sie müssen die Funktion verwenden,  wenn Sie möchten, dass der Code
-//    mit Win32-Systemen kompatibel ist, bevor die RegisterClassEx-Funktion
-//    zu Windows 95 hinzugefügt wurde. Der Aufruf der Funktion ist wichtig,
-//    damit die kleinen Symbole, die mit der Anwendung verknüpft sind,
-//    richtig formatiert werden.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
-{
-	WNDCLASSEX wcex;
-
-	wcex.cbSize = sizeof(WNDCLASSEX);
-
-	wcex.style			= CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc	= WndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_SEVEN_SEXTILLION_MILES));
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= 0;
-	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-	return RegisterClassEx(&wcex);
 }
 
 //
@@ -130,20 +102,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			return DefWindowProc(hWnd, message, wParam, lParam);
 		}
 		break;
-#if 0
-	case WM_PAINT:
+
+	case WM_SIZE:
+		if (graphicsPtr)
 		{
-			PAINTSTRUCT ps;
-			HDC hdc;
-			hdc = BeginPaint(hWnd, &ps);
-			// TODO: Hier den Zeichnungscode hinzufügen.
-			EndPaint(hWnd, &ps);
-			break;
+			int width = LOWORD(lParam);
+			int height = HIWORD(lParam);
+			graphicsPtr->resize(width, height);
 		}
-#endif
+		break;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;
+
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}

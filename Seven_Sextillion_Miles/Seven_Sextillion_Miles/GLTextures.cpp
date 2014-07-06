@@ -94,8 +94,7 @@ int GLTextures::init(char *errorString)
 	do
 	{		
 		// Note that the number of textures is increased automatically
-		//int retVal = loadTGA(ffd.cFileName, errorString);
-		int retVal = 1;
+		int retVal = loadTGA(ffd.cFileName, errorString);
 		if (retVal) return retVal;
 	} while (FindNextFile(hFind, &ffd));
 
@@ -116,5 +115,5 @@ int GLTextures::getTextureID(const char *name, GLuint *id, char *errorString)
 	// Got here without finding a texture, return error.
 	sprintf_s(errorString, MAX_ERROR_LENGTH,
 			  "Could not find texture '%s'", name);
-	return 0;
+	return -1;
 }
