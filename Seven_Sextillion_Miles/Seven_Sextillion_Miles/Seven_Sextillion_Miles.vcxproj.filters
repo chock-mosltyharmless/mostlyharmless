@@ -51,6 +51,9 @@
     <ClInclude Include="global.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="LargeInt.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

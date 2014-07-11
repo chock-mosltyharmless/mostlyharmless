@@ -82,6 +82,7 @@
     <ClInclude Include="GLGraphics.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="GLTextures.h" />
+    <ClInclude Include="LargeInt.h" />
     <ClInclude Include="lodepng.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Seven_Sextillion_Miles.h" />
