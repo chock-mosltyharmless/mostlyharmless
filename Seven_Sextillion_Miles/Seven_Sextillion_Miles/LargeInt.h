@@ -34,6 +34,27 @@ public:
 			data[i] = sign31;
 		}
 	}
+	
+	// Construct from floating point
+	LargeInt(float base)
+	{
+		bool negate = false;
+		if (base < 0)
+		{
+			base = -base;
+			negate = true;
+		}
+
+		float multiplier = 1.0f;
+		base += 0.5f; // adjust for rounding... Maybe this is not a smart idea?
+		for (int i = 0; i < LI_NUM_INTEGERS; i++)
+		{
+			data[i] = (unsigned int)(base * multiplier) & 0x7FFFFFFF;
+			multiplier /= (float)(1 << 31);
+		}
+
+		if (negate) neg();
+	}
 
 	~LargeInt(void)
 	{
@@ -66,7 +87,7 @@ public:
 		unsigned int carry = 0;
 		for (int i = 0; i < LI_NUM_INTEGERS; i++)
 		{
-			data[i] = -data[i] - carry;
+			data[i] = -(int)data[i] - carry;
 			carry = data[i] >> 31;
 			data[i] &= 0x7fffffff;
 		}

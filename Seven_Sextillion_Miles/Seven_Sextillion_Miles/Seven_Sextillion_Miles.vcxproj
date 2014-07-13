@@ -83,6 +83,7 @@
     <ClInclude Include="global.h" />
     <ClInclude Include="GLTextures.h" />
     <ClInclude Include="LargeInt.h" />
+    <ClInclude Include="Location.h" />
     <ClInclude Include="lodepng.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Seven_Sextillion_Miles.h" />
@@ -93,6 +94,7 @@
   <ItemGroup>
     <ClCompile Include="GLGraphics.cpp" />
     <ClCompile Include="GLTextures.cpp" />
+    <ClCompile Include="Location.cpp" />
     <ClCompile Include="lodepng.cpp" />
     <ClCompile Include="Seven_Sextillion_Miles.cpp" />
     <ClCompile Include="stdafx.cpp">
