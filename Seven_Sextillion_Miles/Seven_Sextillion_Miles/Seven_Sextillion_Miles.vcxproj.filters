@@ -54,6 +54,9 @@
     <ClInclude Include="LargeInt.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Location.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -69,6 +72,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="GLTextures.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Location.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
