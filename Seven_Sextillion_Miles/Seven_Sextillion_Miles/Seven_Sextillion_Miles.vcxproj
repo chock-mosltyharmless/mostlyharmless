@@ -79,12 +79,14 @@
     <None Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="GLGraphics.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="GLTextures.h" />
     <ClInclude Include="LargeInt.h" />
     <ClInclude Include="Location.h" />
     <ClInclude Include="lodepng.h" />
+    <ClInclude Include="PlayerShip.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Seven_Sextillion_Miles.h" />
     <ClInclude Include="stdafx.h" />
@@ -92,10 +94,12 @@
     <ClInclude Include="wglext.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GLGraphics.cpp" />
     <ClCompile Include="GLTextures.cpp" />
     <ClCompile Include="Location.cpp" />
     <ClCompile Include="lodepng.cpp" />
+    <ClCompile Include="PlayerShip.cpp" />
     <ClCompile Include="Seven_Sextillion_Miles.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
