@@ -125,6 +125,8 @@ public:
 		}
 
 		if (needsNegation) neg();
+
+		return result;
 	}
 
 private:

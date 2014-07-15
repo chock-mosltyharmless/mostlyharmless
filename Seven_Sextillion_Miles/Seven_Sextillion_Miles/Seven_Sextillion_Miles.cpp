@@ -5,6 +5,8 @@
 #include "Seven_Sextillion_Miles.h"
 #include "GLGraphics.h"
 #include "global.h"
+#include "PlayerShip.h"
+#include "Camera.h"
 
 #define MAX_LOADSTRING 100
 
@@ -40,6 +42,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// Hauptnachrichtenschleife:
 	bool exitGame = false;
 
+	// The in-game objects, will probably put them into a game object of
+	// some sort in the future
+	Camera camera;
+	PlayerShip playerShip;
+
 	while (!exitGame)
 	{
 		char errorString[MAX_ERROR_LENGTH + 1];
@@ -56,12 +63,20 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 		// Render
 		graphics.clear();
-		if (graphics.setTexture("arrow.png", errorString) != 0)
+
+		playerShip.setPos(LargeInt(182000), LargeInt(535100));
+		camera.setPos(LargeInt(180000), LargeInt(530000));
+		//playerShip.setRot(0.3f);
+		//void setSpeed(float x, float y) { loc.setSpeed(x, y); }
+		//playerShip.setRotSpeed(0.01f);
+		playerShip.setAcceleration(-10.0f);
+		playerShip.timeStep();
+
+		if (playerShip.draw(&graphics, &camera, errorString) != 0)
 		{
 			graphics.handleError(errorString);
 			exit(-1);
 		}
-		graphics.drawSprite(0, 0, 0.4f, 0.1f, 0.1f, 0.1f, 0.7f);
 
 		// Swap for next frame
 		graphics.swap();
