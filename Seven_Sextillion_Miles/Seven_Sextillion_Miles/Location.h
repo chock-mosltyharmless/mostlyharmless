@@ -37,7 +37,7 @@ public:
 		rotation += rotationSpeed;
 		
 		// update speed depending on current acceleration
-		speedX += sin(rotation) * acceleration;
+		speedX += -sin(rotation) * acceleration;
 		speedY += cos(rotation) * acceleration;
 		speedX *= LOC_SPEED_DILATION;
 		speedY *= LOC_SPEED_DILATION;
