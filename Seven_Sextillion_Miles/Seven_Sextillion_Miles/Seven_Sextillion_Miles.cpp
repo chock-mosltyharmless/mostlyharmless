@@ -47,7 +47,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// some sort in the future
 	Camera camera;
 	PlayerShip playerShip;
-	playerShip.setPos(LargeInt(182000), LargeInt(535100));
+	playerShip.setPos(LargeInt(182000), LargeInt(525000));
 	GameClock clock;
 
 	float simulationTime = 0.0f; // Time that has yet to be calculated
@@ -71,9 +71,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		float timeStepSize = 1.0f / 180.0f;
 		while (simulationTime > TIME_STEP_SIZE)
 		{
-			playerShip.setAcceleration(-0.1f);
+			playerShip.setAcceleration(0.1f);
 			playerShip.timeStep();
 			simulationTime -= TIME_STEP_SIZE;
+			playerShip.setRotAcc(0.0001f);
+			//playerShip.setRot(1.6f);
 		}
 
 		// Render
@@ -82,7 +84,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		camera.setPos(LargeInt(180000), LargeInt(530000));
 		//playerShip.setRot(0.3f);
 		//void setSpeed(float x, float y) { loc.setSpeed(x, y); }
-		//playerShip.setRotSpeed(0.01f);
 
 		if (playerShip.draw(&graphics, &camera, errorString) != 0)
 		{
