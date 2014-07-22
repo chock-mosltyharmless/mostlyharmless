@@ -3,8 +3,8 @@
 #include "LargeInt.h"
 
 // Multiplier of the speed on each time step
-#define LOC_SPEED_DILATION 1.0f
-#define LOC_ROT_SPEED_DILATION 0.99f
+#define LOC_SPEED_DILATION 0.99999f
+#define LOC_ROT_SPEED_DILATION 0.998f
 // Multiplier of the acceleration at each time step (acceleration gone immediately?)
 #define LOC_ACC_DILATION 0.0f
 #define LOC_ROT_ACC_DILATION 0.0f
