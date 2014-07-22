@@ -8,6 +8,7 @@
 #include "PlayerShip.h"
 #include "Camera.h"
 #include "GameClock.h"
+#include "Keyboard.h"
 
 #define MAX_LOADSTRING 100
 
@@ -45,6 +46,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	// The in-game objects, will probably put them into a game object of
 	// some sort in the future
+	Keyboard keyboard;
 	Camera camera;
 	PlayerShip playerShip;
 	playerShip.setPos(LargeInt(182000), LargeInt(525000));
@@ -64,17 +66,21 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 			DispatchMessage(&msg);
 		}
 
-		// Do physics
+		// Keyboard input preparation
+		keyboard.prepare();
 
+		// Do physics
 		simulationTime += clock.getDeltaTime();
 		// 1/180 ms time steps???
 		float timeStepSize = 1.0f / 180.0f;
 		while (simulationTime > TIME_STEP_SIZE)
 		{
-			playerShip.setAcceleration(0.1f);
+			if (keyboard.keyDown(Keyboard::UP)) playerShip.setAcceleration(0.1f);
+			if (keyboard.keyDown(Keyboard::DOWN)) playerShip.setAcceleration(-0.05f);
+			if (keyboard.keyDown(Keyboard::LEFT)) playerShip.setRotAcc(0.0001f);
+			if (keyboard.keyDown(Keyboard::RIGHT)) playerShip.setRotAcc(-0.0001f);
 			playerShip.timeStep();
 			simulationTime -= TIME_STEP_SIZE;
-			playerShip.setRotAcc(0.0001f);
 			//playerShip.setRot(1.6f);
 		}
 

@@ -84,6 +84,7 @@
     <ClInclude Include="GLGraphics.h" />
     <ClInclude Include="global.h" />
     <ClInclude Include="GLTextures.h" />
+    <ClInclude Include="Keyboard.h" />
     <ClInclude Include="LargeInt.h" />
     <ClInclude Include="Location.h" />
     <ClInclude Include="lodepng.h" />
@@ -99,6 +100,7 @@
     <ClCompile Include="GameClock.cpp" />
     <ClCompile Include="GLGraphics.cpp" />
     <ClCompile Include="GLTextures.cpp" />
+    <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="Location.cpp" />
     <ClCompile Include="lodepng.cpp" />
     <ClCompile Include="PlayerShip.cpp" />

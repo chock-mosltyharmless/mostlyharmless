@@ -66,6 +66,9 @@
     <ClInclude Include="GameClock.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Keyboard.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -93,6 +96,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="GameClock.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Keyboard.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
