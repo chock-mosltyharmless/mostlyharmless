@@ -42,6 +42,13 @@ public:
 	// This also initializes rendering (glBegin(GL_QUADS));
 	int clear(void);
 
+	/// Call this to begin the rendering process of one "state"
+	/// E.g. one texture/material/rendering type thingie
+	void beginRendering(void) { glBegin(GL_QUADS); }
+
+	/// Call this at the end of a rendering process (see beginRendering)
+	void endRendering(void) { glEnd(); }
+
 	// Get the texture ID from a named texture
 	// That might either be a .png or any of the special textures
 	// Returns 0 if successful, -1 otherwise
