@@ -22,6 +22,10 @@ public:
 	void setSpeed(float x, float y) { loc.setSpeed(x, y); }
 	void setRotSpeed(float s) { loc.setRotSpeed(s); }
 
+	LargeInt getXPos(void) { return loc.getXPos(); }
+	LargeInt getYPos(void) { return loc.getYPos(); }
+	float getRotation(void) { return loc.getRotation(); }
+
 	/// Set the acceleration at every frame before doing physics
 	void setAcceleration(float a) { loc.setAcceleration(a); }
 	/// Set the rotation acceleration at every frame before doing physics

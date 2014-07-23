@@ -34,7 +34,9 @@ int PlayerShip::draw(GLGraphics *renderer, Camera *camera, char *errorString)
 	float zoomFactor = camera->getZoomFactor();
 
 	// draw relative to center
+	renderer->beginRendering();
 	renderer->drawSprite(0, 0, transX, transY, 1000.0f * zoomFactor, 1000.0f * zoomFactor, rot);
+	renderer->endRendering();
 
 	return 0;
 }
