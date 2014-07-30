@@ -129,6 +129,8 @@ public:
 		return result;
 	}
 
+	unsigned int getLowInt(void) { return data[0]; }
+
 private:
 	// Data is really signed, I just call it unsigned so that I can shift it...
 	unsigned int data[LI_NUM_INTEGERS];

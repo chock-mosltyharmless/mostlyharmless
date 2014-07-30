@@ -4,6 +4,12 @@
 #include "Galaxy.h"
 #include "PlayerShip.h"
 
+#define U_SMALL_STAR_TEXTURE "SmallStar.png"
+#define U_SMALL_STAR_SPAWN_RADIUS 8192.0f
+#define U_SMALL_STAR_STEP_SIZE 2048
+// How far to left/right I go...
+#define U_SMALL_STAR_RADIUS 15
+
 class Universe
 {
 public:
