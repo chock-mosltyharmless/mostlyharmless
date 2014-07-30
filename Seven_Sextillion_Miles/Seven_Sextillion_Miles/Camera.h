@@ -13,6 +13,7 @@ public:
 
 	void setPos(LargeInt x, LargeInt y) { loc.setPos(x, y); }
 	void setRot(float r) { loc.setRot(r); }
+	float getRotation(void) { return loc.getRotation(); }
 	float getZoomFactor(void) { return zoomFactor; }
 
 	void transform(LargeInt x, LargeInt y, float rot,

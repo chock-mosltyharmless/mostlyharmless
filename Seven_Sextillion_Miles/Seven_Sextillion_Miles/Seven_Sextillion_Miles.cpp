@@ -77,8 +77,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		{
 			if (keyboard.keyDown(Keyboard::UP)) playerShip->setAcceleration(0.1f);
 			if (keyboard.keyDown(Keyboard::DOWN)) playerShip->setAcceleration(-0.05f);
-			if (keyboard.keyDown(Keyboard::LEFT)) playerShip->setRotAcc(0.0001f);
-			if (keyboard.keyDown(Keyboard::RIGHT)) playerShip->setRotAcc(-0.0001f);
+			if (keyboard.keyDown(Keyboard::LEFT)) playerShip->setRotAcc(0.00002f);
+			if (keyboard.keyDown(Keyboard::RIGHT)) playerShip->setRotAcc(-0.00002f);
 			universe.timeStep();
 			simulationTime -= TIME_STEP_SIZE;
 		}

@@ -28,7 +28,7 @@ int PlayerShip::draw(GLGraphics *renderer, Camera *camera, char *errorString)
 	// Transform to camera location
 	LargeInt xp = loc.getXPos();
 	LargeInt yp = loc.getYPos();
-	float rot = loc.getRotation();
+	float rot = loc.getRotation() - camera->getRotation();
 	float transX, transY, transRot; // transformed coordinates
 	camera->transform(xp, yp, rot, &transX, &transY, &transRot);
 	float zoomFactor = camera->getZoomFactor();

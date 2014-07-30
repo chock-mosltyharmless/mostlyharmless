@@ -28,3 +28,4 @@ void Camera::transform(LargeInt x, LargeInt y, float rot,
 	*transX = x.getFloat() * zoomFactor;
 	*transY = y.getFloat() * zoomFactor;
 }
+
