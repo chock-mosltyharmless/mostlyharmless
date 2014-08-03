@@ -6,6 +6,9 @@
 
 #define PS_SHIP_TEXTURE "arrow.png"
 
+/// Forward reference of a universe. Needed to do proper updating
+class Universe;
+
 /**
  * Location and status in the world map of the player ship.
  * This also includes what the ship looks like, what it carries and so on.
@@ -39,5 +42,7 @@ public:
 
 private:
 	Location loc;
-};
 
+	/// Pointer to the universe the player is in
+	Universe *universe;
+};

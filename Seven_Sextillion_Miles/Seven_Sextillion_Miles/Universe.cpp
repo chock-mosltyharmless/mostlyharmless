@@ -1,7 +1,7 @@
 #include "StdAfx.h"
 #include "Universe.h"
 #include "Camera.h"
-
+#include "global.h"
 
 Universe::Universe(void)
 {
@@ -14,10 +14,66 @@ Universe::~Universe(void)
 	player = NULL;
 }
 
-void Universe::init(void)
+int Universe::init(char *errorString)
 {
-	player = new PlayerShip(); // TODO: may crash?
+	player = new PlayerShip();
+	if (!player)
+	{
+		sprintf_s(errorString, MAX_ERROR_LENGTH, "Out of memory");
+		return ERROR_OUT_OF_MEMORY;
+	}
 	player->setPos(LargeInt(182000), LargeInt(525000));
+	playerGalaxyID = 0;
+	playerStarID = 0;
+
+	// Allocate memory for galaxies in the universe
+	numGalaxies = 0;
+	numAllocatedGalaxies = U_NUM_INITIAL_GALAXIES;
+	galaxyList = new Galaxy[numAllocatedGalaxies];
+	if (!galaxyList)
+	{
+		sprintf_s(errorString, MAX_ERROR_LENGTH, "Out of memory");
+		return ERROR_OUT_OF_MEMORY;
+	}
+
+	// Create a single Galaxy
+	Location galaxyLocation;
+	galaxyLocation.setPos(LargeInt(182000), LargeInt(525000));
+	galaxyLocation.setRot(0.0f);
+	galaxyLocation.setSpeed(0.0f, 0.0f);
+	galaxyLocation.setRotSpeed(0.0f);
+	int returnValue = addGalaxy(&galaxyLocation, errorString);
+	if (returnValue != 0)
+	{
+		return returnValue;
+	}
+
+	return 0;
+}
+
+int Universe::addGalaxy(Location *loc, char *errorString)
+{
+	if (numGalaxies == numAllocatedGalaxies)
+	{
+		// Have to reallocate
+		Galaxy *newList = new Galaxy[numAllocatedGalaxies * 2];
+		if (!newList)
+		{
+			sprintf_s(errorString, MAX_ERROR_LENGTH, "Out of memory");
+			return ERROR_OUT_OF_MEMORY;
+		}
+		// Copy old list to new list
+		for (int i = 0; i < numAllocatedGalaxies; i++)
+		{
+			newList[i] = galaxyList[i];
+		}
+		numAllocatedGalaxies *= 2;
+		delete [] galaxyList;
+		galaxyList = newList;
+	}
+
+	numGalaxies++;
+	return galaxyList[numGalaxies-1].init(*loc, errorString);
 }
 
 void Universe::timeStep(void)
@@ -66,6 +122,10 @@ int Universe::draw(GLGraphics *renderer, char *errorString)
 		}
 	}
 	renderer->endRendering();
+
+	// Draw the galaxies, stars and planets
+	returnVal = galaxyList[playerGalaxyID].draw(renderer, &camera, playerStarID, errorString);
+	if (returnVal != 0) return returnVal;
 
 	returnVal = player->draw(renderer, &camera, errorString);
 	if (returnVal != 0) return returnVal;

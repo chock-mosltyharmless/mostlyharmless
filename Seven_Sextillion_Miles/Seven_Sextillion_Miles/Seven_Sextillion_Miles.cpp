@@ -26,8 +26,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
- 	// TODO: Hier Code einfügen.
 	MSG msg;
+	char errorString[MAX_ERROR_LENGTH + 1];
 
 	// Globale Zeichenfolgen initialisieren
 	//LoadString(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
@@ -48,7 +48,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	// some sort in the future
 	Keyboard keyboard;
 	Universe universe;
-	universe.init();
+	if (universe.init(errorString) != 0)
+	{
+			graphics.handleError(errorString);
+			exit(-1);
+	}
 	PlayerShip *playerShip = universe.getPlayerShip();
 	GameClock clock;
 
@@ -56,8 +60,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 
 	while (!exitGame)
 	{
-		char errorString[MAX_ERROR_LENGTH + 1];
-
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			if (msg.message == WM_QUIT) exitGame = true;
