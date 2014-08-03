@@ -25,7 +25,10 @@ void Camera::transform(LargeInt x, LargeInt y, float rot,
 	x.sub(&loc.getXPos());
 	y.sub(&loc.getYPos());
 
-	*transX = x.getFloat() * zoomFactor;
-	*transY = y.getFloat() * zoomFactor;
+	float xp = x.getFloat();
+	float yp = y.getFloat();
+
+	*transX = (cos(rot) * xp - sin(rot) * yp) * zoomFactor;
+	*transY = (sin(rot) * xp + cos(rot) * yp) * zoomFactor;
 }
 
