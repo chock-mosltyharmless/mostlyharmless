@@ -22,6 +22,7 @@
     <None Include="Seven_Sextillion_Miles.ico">
       <Filter>Ressourcendateien</Filter>
     </None>
+    <None Include="KnownBugs.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

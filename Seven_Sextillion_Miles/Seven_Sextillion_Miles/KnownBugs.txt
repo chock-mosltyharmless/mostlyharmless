@@ -1,0 +1,9 @@
+- When moving faw away from the center of the universe, the stars
+  in the background show a pattern.
+  --> The random number generator in the star pattern generation has
+      numerical issues
+
+- Animations are stuttering.
+  --> The discrete time in the location update
+  --> Store a sub-time amount that is added to the position and the rotation
+      of locations (and other things that may move).

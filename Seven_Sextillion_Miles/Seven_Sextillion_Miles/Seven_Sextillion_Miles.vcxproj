@@ -74,6 +74,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="KnownBugs.txt" />
     <None Include="ReadMe.txt" />
     <None Include="Seven_Sextillion_Miles.ico" />
     <None Include="small.ico" />
