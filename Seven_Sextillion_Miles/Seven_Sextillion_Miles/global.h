@@ -1,5 +1,4 @@
 // Contains global constants and variables
-
 #pragma once
 
 #define MAX_ERROR_LENGTH 4096
@@ -7,3 +6,6 @@
 
 // Global error definitions
 #define ERROR_OUT_OF_MEMORY -1
+
+// create new random unsigned int seed value
+unsigned int blr_rand(unsigned int seed);

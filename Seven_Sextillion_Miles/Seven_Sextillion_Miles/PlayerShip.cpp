@@ -28,14 +28,14 @@ int PlayerShip::draw(GLGraphics *renderer, Camera *camera, char *errorString)
 	// Transform to camera location
 	LargeInt xp = loc.getXPos();
 	LargeInt yp = loc.getYPos();
-	float rot = loc.getRotation() - camera->getRotation();
+	float rot = loc.getRotation();
 	float transX, transY, transRot; // transformed coordinates
 	camera->transform(xp, yp, rot, &transX, &transY, &transRot);
 	float zoomFactor = camera->getZoomFactor();
 
 	// draw relative to center
-	renderer->beginRendering();
-	renderer->drawSprite(0, 0, transX, transY, 1000.0f * zoomFactor, 1000.0f * zoomFactor, rot);
+	renderer->beginQuadRendering();
+	renderer->drawSprite(0, 0, transX, transY, 1000.0f * zoomFactor, 1000.0f * zoomFactor, transRot);
 	renderer->endRendering();
 
 	return 0;

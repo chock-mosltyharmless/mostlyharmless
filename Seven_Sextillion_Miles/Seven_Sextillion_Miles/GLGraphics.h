@@ -44,7 +44,8 @@ public:
 
 	/// Call this to begin the rendering process of one "state"
 	/// E.g. one texture/material/rendering type thingie
-	void beginRendering(void) { glBegin(GL_QUADS); }
+	void beginQuadRendering(void) { glBegin(GL_QUADS); }
+	void beginTriRendering(void) { glBegin(GL_TRIANGLES); }
 
 	/// Call this at the end of a rendering process (see beginRendering)
 	void endRendering(void) { glEnd(); }
@@ -57,10 +58,16 @@ public:
 	int setTexture(const char *name, char *errorString) {
 		unsigned int texID;
 		if (textures.getTextureID(name, &texID, errorString) == 0) {
+			glEnable(GL_TEXTURE_2D);
 			glBindTexture(GL_TEXTURE_2D, texID);
 			return 0;
 		}
 		else return -1;
+	}
+
+	// Disable texturing. No texture is active
+	void disableTexturing(void) {
+		glDisable(GL_TEXTURE_2D);
 	}
 
 	// xOrigin is -1 for left, 0 for center, 1 for right
@@ -69,6 +76,11 @@ public:
 	// ?Pos, width and height are relative to the shorter length of the viewport.
 	void drawSprite(int xOrigin, int yOrigin, float xPos, float yPos,
 					float width, float height, float rotation);
+
+	// Draw colored triangle without texture
+	// pos is always relative to center.
+	void drawColorTri(float pos1[2], float pos2[2], float pos3[2],
+		              float col1[4], float col2[4], float col3[4]);
 
 	// Display an error and wait for user to acknowledge it
 	void handleError(const char *errorString);

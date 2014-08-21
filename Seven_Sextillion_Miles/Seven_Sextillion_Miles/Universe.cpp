@@ -94,7 +94,7 @@ int Universe::draw(GLGraphics *renderer, char *errorString)
 		return -1;
 	}
 
-	renderer->beginRendering();
+	renderer->beginQuadRendering();
 	float rot = camera.getRotation();
 	unsigned int xPosLo = player->getXPos().getLowInt();
 	int xPosInner = (int)(xPosLo & (U_SMALL_STAR_STEP_SIZE - 1));
