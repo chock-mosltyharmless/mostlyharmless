@@ -21,7 +21,8 @@ Camera::~Camera(void)
 void Camera::transform(LargeInt x, LargeInt y, float rot,
 		               float *transX, float *transY, float *transRot)
 {
-	*transRot = rot - loc.getRotation();
+	rot -= loc.getRotation();
+	*transRot = rot;
 	x.sub(&loc.getXPos());
 	y.sub(&loc.getYPos());
 

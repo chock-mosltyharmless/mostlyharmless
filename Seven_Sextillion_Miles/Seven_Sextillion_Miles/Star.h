@@ -4,6 +4,7 @@
 #include "GLGraphics.h"
 #include "Location.h"
 #include "Camera.h"
+#include "SpaceBody.h"
 
 class Star
 {
@@ -21,8 +22,10 @@ private:
 	Location sunLocation;
 	
 	// Texture name of the central sun to render
-	char *sunTextureName;
-	float sunRadius;
+	//char *sunTextureName;
+	//float sunRadius;
+
+	SpaceBody body;
 
 	// Array of Planets (fixed size, there are no more)
 	int numPlanets;

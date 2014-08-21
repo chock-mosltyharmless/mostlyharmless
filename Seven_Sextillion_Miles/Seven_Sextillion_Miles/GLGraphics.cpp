@@ -12,6 +12,30 @@ GLGraphics::~GLGraphics(void)
 {
 }
 
+void GLGraphics::drawColorTri(float pos1[2], float pos2[2], float pos3[2],
+	                          float col1[4], float col2[4], float col3[4])
+{
+	// I could save those in the class if I really wanted:
+	float xScale = 1.0f;
+	float yScale = 1.0f;
+
+	if (viewportWidth < viewportHeight)
+	{
+		yScale = (float)viewportWidth / (float)viewportHeight;
+	}
+	else
+	{
+		xScale = (float)viewportHeight / (float)viewportWidth;
+	}
+
+	glColor4fv(col1);
+	glVertex2f(pos1[0] * xScale, pos1[1] * yScale);
+	glColor4fv(col2);
+	glVertex2f(pos2[0] * xScale, pos2[1] * yScale);
+	glColor4fv(col3);
+	glVertex2f(pos3[0] * xScale, pos3[1] * yScale);
+}
+
 void GLGraphics::drawSprite(int xOrigin, int yOrigin, float xPos, float yPos,
 							float width, float height, float rotation)
 {
@@ -62,6 +86,7 @@ void GLGraphics::drawSprite(int xOrigin, int yOrigin, float xPos, float yPos,
 		break;
 	}
 
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	for (int y = 0; y < 2; y++)
 	{
 		for (int x = 0; x < 2; x++)

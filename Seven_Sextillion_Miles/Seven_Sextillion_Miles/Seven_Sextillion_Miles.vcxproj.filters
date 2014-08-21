@@ -82,6 +82,9 @@
     <ClInclude Include="Planet.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="SpaceBody.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -124,6 +127,12 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Planet.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="SpaceBody.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="global.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

@@ -9,6 +9,7 @@
 #define LOC_ACC_DILATION 0.0f
 #define LOC_ROT_ACC_DILATION 0.0f
 
+// Locations are saved in mile/1024 (approximately). Nothing is up to scale
 class Location
 {
 public:
