@@ -1,0 +1,44 @@
+void main(void) {                                                     
+vec3 color = vec3(0.);                                                
+                                                                      
+vec3 rayPos = vec3(0.,0.,-6. + 5.*vnoise1(vec3(time)*0.07));          
+vec3 rayDir = normalize(vec3(ppos, 2.));                              
+vec3 totalColor = vec3(0.);                                           
+float totalDensity = 0.;                                              
+                                                                      
+rayDir.xz = rotate(rayDir.xz, time);                                  
+rayDir.xy = rotate(rayDir.xy, time);                                  
+rayPos.xz = rotate(rayPos.xz, time);                                  
+rayPos.xy = rotate(rayPos.xy, time);                                  
+float ang = vnoise1(vec3(time)*0.1).x;                                
+rayPos.yz = rotate(rayPos.yz, ang);                                   
+                                                                      
+for (int i = 0; i < 100 && length(rayPos)<12. &&                      
+totalDensity < 0.98; i++) {                                           
+float implicit = length(rayPos +                                      
+6.*vnoise3(rayPos*0.01 + vec3(time*0.03), 0.8).xyz)                   
+-2.;                                                                  
+                                                                      
+float amounter =                                                      
+pow(vnoise3(rayPos*0.01 + vec3(time)*0.01, 0.8).x, 1.5) *             
+sin(time*3.) * 9.0;                                                   
+implicit += vnoise3(rayPos*0.15 - vec3(time)*0.01, 0.7).x             
+* amounter * max(0.0, (1.0 - abs(implicit)));                         
+                                                                      
+float density = smoothstep(0.,-0.3,implicit);                         
+totalDensity += (1.-totalDensity)*density;                            
+totalDensity += 0.01;                                                 
+totalColor += mix(vec3(0.1, 0.07, 0.03),                              
+vec3(0.04, 0.03, 0.02),                                               
+min(1.0,max(0.0,length(rayPos+vec3(1.5))-1.5)));                      
+totalColor -= 1./(1. + abs(amounter)) * vec3(.05, 0.05, 0.03)         
+* (sin(time*.5)+0.) + (sin(rayPos.z*5.)+1.) *.02;                     
+                                                                      
+rayPos += rayDir * max(0.03, abs(implicit)*0.6*.5);                   
+}                                                                     
+                                                                      
+color = mix(color,totalColor,totalDensity);                           
+                                                                      
+gl_FragColor = vec4(color, 1.0);                                      
+}                                                                     
+                                                                      

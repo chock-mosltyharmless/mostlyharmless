@@ -1,0 +1,20 @@
+void main(void) {                                                     
+vec3 color = vec3(0.0);                                               
+vec4 baseNoise = vnoise3(                                             
+vec3(ppos*0.05, length(ppos)*0.06 - time*0.02), 0.7);                 
+vec4 moveNoise = vnoise3(                                             
+vec3(ppos*0.04, ppos.y *0.03 - time*0.04), 0.8);                      
+                                                                      
+float amount = smoothstep(0.0, 0.3, 0.3 - abs(baseNoise.r)) *         
+(moveNoise.r + 0.2);                                                  
+color.rgb = mix(vec3(1.0, 0.7, 0.3), vec3(0.3, 0.4, 1.0),             
+baseNoise.g + 0.5);                                                   
+color.rgb *= vec3(amount)*2.;                                         
+                                                                      
+float highlight = smoothstep(0.0, 0.08,                               
+0.1 - abs(baseNoise.r + 0.05)) * moveNoise.g;                         
+color.rgb += vec3(highlight)*2.;                                      
+                                                                      
+gl_FragColor = vec4(color, 1.0);                                      
+}                                                                     
+                                                                      
