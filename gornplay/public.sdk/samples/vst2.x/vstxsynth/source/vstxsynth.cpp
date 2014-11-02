@@ -33,15 +33,6 @@ AudioEffect* createEffectInstance (audioMasterCallback audioMaster)
 //-----------------------------------------------------------------------------------------
 VstXSynthProgram::VstXSynthProgram ()
 {
-	// Default Program Values
-	fWaveform1 = 0.f;	// saw
-	fFreq1     =.0f;
-	fVolume1   = .33f;
-
-	fWaveform2 = 1.f;	// pulse
-	fFreq2     = .05f;	// slightly higher
-	fVolume2   = .33f;
-	
 	fVolume    = .9f;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
 }
@@ -89,14 +80,6 @@ void VstXSynth::setProgram (VstInt32 program)
 	VstXSynthProgram *ap = &programs[program];
 	curProgram = program;
 	
-	fWaveform1 = ap->fWaveform1;
-	fFreq1     = ap->fFreq1;
-	fVolume1   = ap->fVolume1;
-
-	fWaveform2 = ap->fWaveform2;
-	fFreq2     = ap->fFreq2;
-	fVolume2   = ap->fVolume2;
-	
 	fVolume    = ap->fVolume;
 }
 
@@ -117,18 +100,6 @@ void VstXSynth::getParameterLabel (VstInt32 index, char* label)
 {
 	switch (index)
 	{
-		case kWaveform1:
-		case kWaveform2:
-			vst_strncpy (label, "Shape", kVstMaxParamStrLen);
-			break;
-
-		case kFreq1:
-		case kFreq2:
-			vst_strncpy (label, "Hz", kVstMaxParamStrLen);
-			break;
-
-		case kVolume1:
-		case kVolume2:
 		case kVolume:
 			vst_strncpy (label, "dB", kVstMaxParamStrLen);
 			break;
@@ -141,25 +112,6 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 	text[0] = 0;
 	switch (index)
 	{
-		case kWaveform1:
-			if (fWaveform1 < .5)
-				vst_strncpy (text, "Sawtooth", kVstMaxParamStrLen);
-			else
-				vst_strncpy (text, "Pulse", kVstMaxParamStrLen);
-			break;
-
-		case kFreq1:		float2string (fFreq1, text, kVstMaxParamStrLen);	break;
-		case kVolume1:		dB2string (fVolume1, text, kVstMaxParamStrLen);	break;
-		
-		case kWaveform2:
-			if (fWaveform2 < .5)
-				vst_strncpy (text, "Sawtooth", kVstMaxParamStrLen);
-			else
-				vst_strncpy (text, "Pulse", kVstMaxParamStrLen);
-			break;
-
-		case kFreq2:		float2string (fFreq2, text, kVstMaxParamStrLen);	break;
-		case kVolume2:		dB2string (fVolume2, text, kVstMaxParamStrLen);	break;
 		case kVolume:		dB2string (fVolume, text, kVstMaxParamStrLen);	break;
 	}
 }
@@ -169,12 +121,6 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 {
 	switch (index)
 	{
-		case kWaveform1:	vst_strncpy (label, "Wave 1", kVstMaxParamStrLen);	break;
-		case kFreq1:		vst_strncpy (label, "Freq 1", kVstMaxParamStrLen);	break;
-		case kVolume1:		vst_strncpy (label, "Levl 1", kVstMaxParamStrLen);	break;
-		case kWaveform2:	vst_strncpy (label, "Wave 2", kVstMaxParamStrLen);	break;
-		case kFreq2:		vst_strncpy (label, "Freq 2", kVstMaxParamStrLen);	break;
-		case kVolume2:		vst_strncpy (label, "Levl 2", kVstMaxParamStrLen);	break;
 		case kVolume:		vst_strncpy (label, "Volume", kVstMaxParamStrLen);	break;
 	}
 }
@@ -185,12 +131,6 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 	VstXSynthProgram *ap = &programs[curProgram];
 	switch (index)
 	{
-		case kWaveform1:	fWaveform1	= ap->fWaveform1	= value;	break;
-		case kFreq1:		fFreq1 		= ap->fFreq1		= value;	break;
-		case kVolume1:		fVolume1	= ap->fVolume1		= value;	break;
-		case kWaveform2:	fWaveform2	= ap->fWaveform2	= value;	break;
-		case kFreq2:		fFreq2		= ap->fFreq2		= value;	break;
-		case kVolume2:		fVolume2	= ap->fVolume2		= value;	break;
 		case kVolume:		fVolume		= ap->fVolume		= value;	break;
 	}
 }
@@ -201,12 +141,6 @@ float VstXSynth::getParameter (VstInt32 index)
 	float value = 0;
 	switch (index)
 	{
-		case kWaveform1:	value = fWaveform1;	break;
-		case kFreq1:		value = fFreq1;		break;
-		case kVolume1:		value = fVolume1;	break;
-		case kWaveform2:	value = fWaveform2;	break;
-		case kFreq2:		value = fFreq2;		break;
-		case kVolume2:		value = fVolume2;	break;
 		case kVolume:		value = fVolume;	break;
 	}
 	return value;

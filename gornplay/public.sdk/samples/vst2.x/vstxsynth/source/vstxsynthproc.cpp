@@ -19,17 +19,15 @@
 // © 2006, Steinberg Media Technologies, All Rights Reserved
 //-------------------------------------------------------------------------------------------------------
 
+#include <math.h>
 #include "vstxsynth.h"
 
 enum
 {
 	kNumFrequencies = 128,	// 128 midi notes
-	kWaveSize = 4096		// samples (must be power of 2 here)
 };
 
 const double midiScaler = (1. / 127.);
-static float sawtooth[kWaveSize];
-static float pulse[kWaveSize];
 static float freqtab[kNumFrequencies];
 
 //-----------------------------------------------------------------------------------------
@@ -38,7 +36,7 @@ static float freqtab[kNumFrequencies];
 void VstXSynth::setSampleRate (float sampleRate)
 {
 	AudioEffectX::setSampleRate (sampleRate);
-	fScaler = (float)((double)kWaveSize / (double)sampleRate);
+	fScaler = (float)((double)2*PI / (double)sampleRate);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -51,19 +49,11 @@ void VstXSynth::setBlockSize (VstInt32 blockSize)
 //-----------------------------------------------------------------------------------------
 void VstXSynth::initProcess ()
 {
-	fPhase1 = fPhase2 = 0.f;
-	fScaler = (float)((double)kWaveSize / 44100.);	// we don't know the sample rate yet
+	fPhase = 0.f;
+	fScaler = (float)((double)PI / 44100.);	// we don't know the sample rate yet
 	noteIsOn = false;
 	currentDelta = currentNote = currentDelta = 0;
 	VstInt32 i;
-
-	// make waveforms
-	VstInt32 wh = kWaveSize / 4;	// 1:3 pulse
-	for (i = 0; i < kWaveSize; i++)
-	{
-		sawtooth[i] = (float)(-1. + (2. * ((double)i / (double)kWaveSize)));
-		pulse[i] = (i < wh) ? -1.f : 1.f;
-	}
 
 	// make frequency (Hz) table
 	double k = 1.059463094359;	// 12th root of 2
@@ -87,19 +77,15 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 	if (noteIsOn)
 	{
 		float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
-		float freq1 = baseFreq + fFreq1;	// not really linear...
-		float freq2 = baseFreq + fFreq2;
-		float* wave1 = (fWaveform1 < .5) ? sawtooth : pulse;
-		float* wave2 = (fWaveform2 < .5) ? sawtooth : pulse;
-		float wsf = (float)kWaveSize;
 		float vol = (float)(fVolume * (double)currentVelocity * midiScaler);
-		VstInt32 mask = kWaveSize - 1;
 		
 		if (currentDelta > 0)
 		{
 			if (currentDelta >= sampleFrames)	// future
 			{
 				currentDelta -= sampleFrames;
+				memset(out1, 0, sampleFrames * sizeof (float));
+				memset(out2, 0, sampleFrames * sizeof (float));
 				return;
 			}
 			memset (out1, 0, currentDelta * sizeof (float));
@@ -116,10 +102,9 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			// this is all very raw, there is no means of interpolation,
 			// and we will certainly get aliasing due to non-bandlimited
 			// waveforms. don't use this for serious projects...
-			(*out1++) = wave1[(VstInt32)fPhase1 & mask] * fVolume1 * vol;
-			(*out2++) = wave2[(VstInt32)fPhase2 & mask] * fVolume2 * vol;
-			fPhase1 += freq1;
-			fPhase2 += freq2;
+			(*out1++) = sin(fPhase) * vol;
+			(*out2++) = sin(fPhase) * vol;
+			fPhase += baseFreq;
 		}
 	}						
 	else
@@ -168,7 +153,7 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta)
 	currentVelocity = velocity;
 	currentDelta = delta;
 	noteIsOn = true;
-	fPhase1 = fPhase2 = 0;
+	fPhase = 0;
 }
 
 //-----------------------------------------------------------------------------------------

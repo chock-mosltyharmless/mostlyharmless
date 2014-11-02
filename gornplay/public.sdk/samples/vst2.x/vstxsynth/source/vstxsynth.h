@@ -24,6 +24,10 @@
 
 #include "public.sdk/source/vst2.x/audioeffectx.h"
 
+#ifndef PI
+#define PI 3.1415926
+#endif
+
 //------------------------------------------------------------------------------------------
 enum
 {
@@ -31,16 +35,7 @@ enum
 	kNumPrograms = 50,
 	kNumOutputs = 2,
 
-	// Parameters Tags
-	kWaveform1 = 0,
-	kFreq1,
-	kVolume1,
-
-	kWaveform2,
-	kFreq2,
-	kVolume2,
-
-	kVolume,
+	kVolume = 0,
 	
 	kNumParams
 };
@@ -56,29 +51,16 @@ public:
 	~VstXSynthProgram () {}
 
 private:
-	float fWaveform1;
-	float fFreq1;
-	float fVolume1;
-
-	float fWaveform2;
-	float fFreq2;
-	float fVolume2;
-
 	float fVolume;
 	char name[kVstMaxProgNameLen+1];
 };
 
+#if 1
 // ChannelInformation holds all the information of a current playing channel,
 // That is, which frequency it is playing at, where the phase is, the position in the
 // ADSR envelope and so on.
 struct ChannelInformation
 {
-		float fWaveform1;
-	float fFreq1;
-	float fVolume1;
-	float fWaveform2;
-	float fFreq2;
-	float fVolume2;
 	float fVolume;	
 	float fPhase1, fPhase2;
 	VstInt32 currentNote;
@@ -86,6 +68,7 @@ struct ChannelInformation
 	VstInt32 currentDelta;
 	bool noteIsOn;
 };
+#endif
 
 //------------------------------------------------------------------------------------------
 // VstXSynth
@@ -131,22 +114,16 @@ public:
 	virtual bool getMidiKeyName (VstInt32 channel, MidiKeyName* keyName);
 
 private:
-	float fWaveform1;
-	float fFreq1;
-	float fVolume1;
-	float fWaveform2;
-	float fFreq2;
-	float fVolume2;
-	float fVolume;	
-	float fPhase1, fPhase2;
-	float fScaler;
+	float fVolume; // Overall volume of the instrument exluding midi velocity
+	float fPhase; // Phase of the instrument
+	float fScaler; // 2pi / sampleRate
 
 	VstXSynthProgram* programs;
 	VstInt32 channelPrograms[16];
 
 	VstInt32 currentNote;
-	VstInt32 currentVelocity;
-	VstInt32 currentDelta;
+	VstInt32 currentVelocity; // That is the midi volume
+	VstInt32 currentDelta; // The time in samples until the note shall be played
 	bool noteIsOn;
 
 	void initProcess ();
