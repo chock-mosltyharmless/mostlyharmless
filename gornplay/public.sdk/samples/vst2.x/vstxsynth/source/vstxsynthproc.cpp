@@ -27,6 +27,12 @@ enum
 	kNumFrequencies = 128,	// 128 midi notes
 };
 
+// Constants for sound stuff
+#define NUM_OVERTONES 12
+#define SAMPLE_TICK_DURATION (1.0f / 32768.0f)
+#define REMAIN_DC_FALLOFF 0.99f
+
+// Midi-relevant constants
 const double midiScaler = (1. / 127.);
 static float freqtab[kNumFrequencies];
 
@@ -37,6 +43,17 @@ void VstXSynth::setSampleRate (float sampleRate)
 {
 	AudioEffectX::setSampleRate (sampleRate);
 	fScaler = (float)((double)2*PI / (double)sampleRate);
+}
+
+// Returns a value in the range [0;1[
+float VstXSynth::frand(void)
+{
+	unsigned long a = 214013;
+	unsigned long c = 2531011;
+	unsigned long m = 4294967296-1;
+	seed = (seed * a + c) % m;
+	//return (seed >> 8) % 65535;
+	return (float)((seed>>8)&65535) * (1.0f/65536.0f);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -66,6 +83,14 @@ void VstXSynth::initProcess ()
 		freqtab[i] = (float)a;
 		a *= k;
 	}
+
+	// Make table with random number
+	seed = 1;
+	for (int i = 0; i < RANDOM_BUFFER_SIZE; i++)
+	{
+		randomBuffer[i] = frand();
+		expRandomBuffer[i] = (float)exp(4.0f * (randomBuffer[i] - 1));
+	}
 }
 
 //-----------------------------------------------------------------------------------------
@@ -94,17 +119,48 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			out2 += currentDelta;
 			sampleFrames -= currentDelta;
 			currentDelta = 0;
+			fLastOutput[0] = 0.0f;
+			fLastOutput[1] = 0.0f;
 		}
 
 		// loop
 		while (--sampleFrames >= 0)
 		{
-			// this is all very raw, there is no means of interpolation,
-			// and we will certainly get aliasing due to non-bandlimited
-			// waveforms. don't use this for serious projects...
-			(*out1++) = sin(fPhase) * vol;
-			(*out2++) = sin(fPhase) * vol;
+			// The relative time point from instrument start to instrument end
+			float relTimePoint = fTimePoint / (fDuration + 1.0f / 256.0f);
+
+			float outAmplitude = 0.0f;
+
+			int maxOvertones = (int)(3.0f / baseFreq);
+			float overtoneLoudness = 1.0f;
+			float overallLoudness = 0.0f;
+			for (int i = 0; i < NUM_OVERTONES; i++)
+			{
+				if (i < maxOvertones)
+				{
+					float soundShapeStart = randomBuffer[i + iSoundShapeStart*NUM_OVERTONES];
+					float soundShapeEnd = randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES];
+					float soundShape = relTimePoint * soundShapeEnd + (1.0f - relTimePoint) * soundShapeStart;
+					outAmplitude += sin(fPhase * (i+1)) * overtoneLoudness * soundShape;
+				}
+				overallLoudness += overtoneLoudness;
+				float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
+				overtoneLoudness *= quakiness * 2.0f;
+			}
+			outAmplitude /= overallLoudness;
+
+			fRemainDC[0] *= REMAIN_DC_FALLOFF;
+			fRemainDC[1] *= REMAIN_DC_FALLOFF;
+			*out1 = outAmplitude * vol + fRemainDC[0];
+			*out2 = outAmplitude * vol + fRemainDC[1];
+			fLastOutput[0] = *out1;
+			fLastOutput[1] = *out2;
+			*out1++;
+			*out2++;
 			fPhase += baseFreq;
+			fTimePoint += SAMPLE_TICK_DURATION;
+			if (fTimePoint > fDuration) fTimePoint = fDuration;
+			while (fPhase > 2.0f * PI) fPhase -= 2.0f * PI;
 		}
 	}						
 	else
@@ -154,10 +210,16 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta)
 	currentDelta = delta;
 	noteIsOn = true;
 	fPhase = 0;
+	fTimePoint = 0.0f;
+
+	fRemainDC[0] = fLastOutput[0];
+	fRemainDC[1] = fLastOutput[1];
 }
 
 //-----------------------------------------------------------------------------------------
 void VstXSynth::noteOff ()
 {
 	noteIsOn = false;
+	fRemainDC[0] = fLastOutput[0];
+	fRemainDC[1] = fLastOutput[1];
 }

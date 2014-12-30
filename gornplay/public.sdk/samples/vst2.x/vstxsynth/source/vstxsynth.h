@@ -24,6 +24,9 @@
 
 #include "public.sdk/source/vst2.x/audioeffectx.h"
 
+// Size of a buffer with random numbers
+#define RANDOM_BUFFER_SIZE 65536
+
 #ifndef PI
 #define PI 3.1415926
 #endif
@@ -36,7 +39,12 @@ enum
 	kNumOutputs = 2,
 
 	kVolume = 0,
-	
+	kDuration,
+	kQuakinessStart, // Volume of the overtones
+	kQuakinessEnd,
+	kSoundShapeStart, // Which random numbers to take for spectral shape
+	kSoundShapeEnd,
+
 	kNumParams
 };
 
@@ -52,6 +60,11 @@ public:
 
 private:
 	float fVolume;
+	float fDuration;
+	float fQuakinessStart;
+	float fQuakinessEnd;
+	int iSoundShapeStart;
+	int iSoundShapeEnd;
 	char name[kVstMaxProgNameLen+1];
 };
 
@@ -61,7 +74,12 @@ private:
 // ADSR envelope and so on.
 struct ChannelInformation
 {
-	float fVolume;	
+	float fVolume;
+	float fDuration;
+	float fQuakinessStart; // Volume of the overtones
+	float fQuakinessEnd;
+	int	iSoundShapeStart;
+	int iSoundShapeEnd;
 	float fPhase1, fPhase2;
 	VstInt32 currentNote;
 	VstInt32 currentVelocity;
@@ -115,8 +133,23 @@ public:
 
 private:
 	float fVolume; // Overall volume of the instrument exluding midi velocity
+	float fDuration;
+	float fQuakinessStart; // Loudness of the overtones
+	float fQuakinessEnd;
+	int iSoundShapeStart; // Which random numbers to take for overtones
+	int iSoundShapeEnd;
 	float fPhase; // Phase of the instrument
+	float fTimePoint; // Time point relative to fDuration;
+	float fLastOutput[2]; // Last output value
+	float fRemainDC[2]; // To avoid clicking, this value contains the last output before start/stop
 	float fScaler; // 2pi / sampleRate
+
+	// Random number generator
+	float frand(void);
+	unsigned long seed;
+	float randomBuffer[RANDOM_BUFFER_SIZE];
+	// The same as random Buffer, but contains exp(4*(randomBuffer-1))
+	float expRandomBuffer[RANDOM_BUFFER_SIZE];
 
 	VstXSynthProgram* programs;
 	VstInt32 channelPrograms[16];

@@ -34,6 +34,11 @@ AudioEffect* createEffectInstance (audioMasterCallback audioMaster)
 VstXSynthProgram::VstXSynthProgram ()
 {
 	fVolume    = .9f;
+	fDuration = 0.2f;
+	fQuakinessStart = .5f;
+	fQuakinessEnd = 0.2f;
+	iSoundShapeStart = 0;
+	iSoundShapeEnd = 1;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
 }
 
@@ -60,6 +65,12 @@ VstXSynth::VstXSynth (audioMasterCallback audioMaster)
 		setUniqueID ('nceG');			// <<<! *must* change this!!!!
 	}
 
+	// Set some initial value
+	fLastOutput[0] = 0.0f;
+	fLastOutput[1] = 0.0f;
+	fRemainDC[0] = 0.0f;
+	fRemainDC[1] = 0.0f;
+
 	initProcess ();
 	suspend ();
 }
@@ -81,6 +92,11 @@ void VstXSynth::setProgram (VstInt32 program)
 	curProgram = program;
 	
 	fVolume    = ap->fVolume;
+	fDuration = ap->fDuration;
+	fQuakinessStart = ap->fQuakinessStart;
+	fQuakinessEnd = ap->fQuakinessEnd;
+	iSoundShapeStart = ap->iSoundShapeStart;
+	iSoundShapeEnd = ap->iSoundShapeEnd;
 }
 
 //-----------------------------------------------------------------------------------------
@@ -103,6 +119,13 @@ void VstXSynth::getParameterLabel (VstInt32 index, char* label)
 		case kVolume:
 			vst_strncpy (label, "dB", kVstMaxParamStrLen);
 			break;
+		case kQuakinessStart:
+		case kQuakinessEnd:
+			vst_strncpy (label, "dB", kVstMaxParamStrLen);
+			break;
+		default: // No label
+			label[0] = 0;
+			break;
 	}
 }
 
@@ -113,6 +136,11 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 	switch (index)
 	{
 		case kVolume:		dB2string (fVolume, text, kVstMaxParamStrLen);	break;
+		case kDuration:		float2string (fDuration, text, kVstMaxParamStrLen); break;
+		case kQuakinessStart: dB2string (fQuakinessStart * 2.0f, text, kVstMaxParamStrLen); break;
+		case kQuakinessEnd: dB2string (fQuakinessEnd * 2.0f, text, kVstMaxParamStrLen); break;
+		case kSoundShapeStart:   int2string (iSoundShapeStart, text, kVstMaxParamStrLen); break;
+		case kSoundShapeEnd: int2string (iSoundShapeEnd, text, kVstMaxParamStrLen); break;
 	}
 }
 
@@ -121,7 +149,12 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 {
 	switch (index)
 	{
-		case kVolume:		vst_strncpy (label, "Volume", kVstMaxParamStrLen);	break;
+		case kVolume: vst_strncpy (label, "Volume", kVstMaxParamStrLen);	break;
+		case kDuration: vst_strncpy(label, "Duration", kVstMaxParamStrLen); break;
+		case kQuakinessStart: vst_strncpy (label, "QuakinessStart", kVstMaxParamStrLen);	break;
+		case kQuakinessEnd: vst_strncpy(label, "QuakinessEnd", kVstMaxParamStrLen); break;
+		case kSoundShapeStart: vst_strncpy (label, "SoundShapeStart", kVstMaxParamStrLen);	break;
+		case kSoundShapeEnd: vst_strncpy(label, "SoundShapeEnd", kVstMaxParamStrLen); break;
 	}
 }
 
@@ -132,6 +165,11 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 	switch (index)
 	{
 		case kVolume:		fVolume		= ap->fVolume		= value;	break;
+		case kDuration: fDuration = ap->fDuration = value; break;
+		case kQuakinessStart: fQuakinessStart = ap->fQuakinessStart = value;	break;
+		case kQuakinessEnd: fQuakinessEnd = ap->fQuakinessEnd = value; break;
+		case kSoundShapeStart: iSoundShapeStart = ap->iSoundShapeStart = (int)(value * 128.0f + 0.5f);	break;
+		case kSoundShapeEnd: iSoundShapeEnd = ap->iSoundShapeEnd = (int)(value * 128.0f + 0.5f); break;
 	}
 }
 
@@ -142,6 +180,11 @@ float VstXSynth::getParameter (VstInt32 index)
 	switch (index)
 	{
 		case kVolume:		value = fVolume;	break;
+		case kDuration: value = fDuration; break;
+		case kQuakinessStart:	value = fQuakinessStart;	break;
+		case kQuakinessEnd: value = fQuakinessEnd; break;
+		case kSoundShapeStart:	value = (float)iSoundShapeStart / 128.0f; break;
+		case kSoundShapeEnd: value = (float)iSoundShapeEnd / 128.0f; break;
 	}
 	return value;
 }
