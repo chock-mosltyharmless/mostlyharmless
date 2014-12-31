@@ -67,10 +67,13 @@ void VstXSynth::setBlockSize (VstInt32 blockSize)
 void VstXSynth::initProcess ()
 {
 	fPhase = 0.f;
+	iADSR = 0;
+	fADSRVal = 0.0f;
 	fScaler = (float)((double)PI / 44100.);	// we don't know the sample rate yet
-	noteIsOn = false;
+	currentVelocity = 0;
 	currentDelta = currentNote = currentDelta = 0;
 	VstInt32 i;
+	noteOn (0, 0, 0);
 
 	// make frequency (Hz) table
 	double k = 1.059463094359;	// 12th root of 2
@@ -99,74 +102,84 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 	float* out1 = outputs[0];
 	float* out2 = outputs[1];
 
-	if (noteIsOn)
-	{
-		float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
-		float vol = (float)(fVolume * (double)currentVelocity * midiScaler);
+	float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
+	float vol = (float)(fVolume * (double)currentVelocity * midiScaler) * 4.0f;
 		
-		if (currentDelta > 0)
-		{
-			if (currentDelta >= sampleFrames)	// future
-			{
-				currentDelta -= sampleFrames;
-				memset(out1, 0, sampleFrames * sizeof (float));
-				memset(out2, 0, sampleFrames * sizeof (float));
-				return;
-			}
-			memset (out1, 0, currentDelta * sizeof (float));
-			memset (out2, 0, currentDelta * sizeof (float));
-			out1 += currentDelta;
-			out2 += currentDelta;
-			sampleFrames -= currentDelta;
-			currentDelta = 0;
-			fLastOutput[0] = 0.0f;
-			fLastOutput[1] = 0.0f;
-		}
-
-		// loop
-		while (--sampleFrames >= 0)
-		{
-			// The relative time point from instrument start to instrument end
-			float relTimePoint = fTimePoint / (fDuration + 1.0f / 256.0f);
-
-			float outAmplitude = 0.0f;
-
-			int maxOvertones = (int)(3.0f / baseFreq);
-			float overtoneLoudness = 1.0f;
-			float overallLoudness = 0.0f;
-			for (int i = 0; i < NUM_OVERTONES; i++)
-			{
-				if (i < maxOvertones)
-				{
-					float soundShapeStart = randomBuffer[i + iSoundShapeStart*NUM_OVERTONES];
-					float soundShapeEnd = randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES];
-					float soundShape = relTimePoint * soundShapeEnd + (1.0f - relTimePoint) * soundShapeStart;
-					outAmplitude += sin(fPhase * (i+1)) * overtoneLoudness * soundShape;
-				}
-				overallLoudness += overtoneLoudness;
-				float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
-				overtoneLoudness *= quakiness * 2.0f;
-			}
-			outAmplitude /= overallLoudness;
-
-			fRemainDC[0] *= REMAIN_DC_FALLOFF;
-			fRemainDC[1] *= REMAIN_DC_FALLOFF;
-			*out1 = outAmplitude * vol + fRemainDC[0];
-			*out2 = outAmplitude * vol + fRemainDC[1];
-			fLastOutput[0] = *out1;
-			fLastOutput[1] = *out2;
-			*out1++;
-			*out2++;
-			fPhase += baseFreq;
-			fTimePoint += SAMPLE_TICK_DURATION;
-			if (fTimePoint > fDuration) fTimePoint = fDuration;
-			while (fPhase > 2.0f * PI) fPhase -= 2.0f * PI;
-		}
-	}						
-	else
+	if (currentDelta > 0)
 	{
-		memset (out1, 0, sampleFrames * sizeof (float));
-		memset (out2, 0, sampleFrames * sizeof (float));
+		if (currentDelta >= sampleFrames)	// future
+		{
+			currentDelta -= sampleFrames;
+			memset(out1, 0, sampleFrames * sizeof (float));
+			memset(out2, 0, sampleFrames * sizeof (float));
+			return;
+		}
+		memset (out1, 0, currentDelta * sizeof (float));
+		memset (out2, 0, currentDelta * sizeof (float));
+		out1 += currentDelta;
+		out2 += currentDelta;
+		sampleFrames -= currentDelta;
+		currentDelta = 0;
+		fLastOutput[0] = 0.0f;
+		fLastOutput[1] = 0.0f;
+	}
+
+	// loop
+	while (--sampleFrames >= 0)
+	{
+		// Process ADSR envelope
+		switch (iADSR)
+		{
+		case 0:
+			fADSRVal += fAttack / 512.0f;
+			if (fADSRVal > 1.0f)
+			{
+				iADSR = 1;
+				fADSRVal = 1.0f;
+			}
+			break;
+		case 2:
+			fADSRVal *= (1.0f - fRelease / 2048.0f);
+			break;
+		default:
+			break;
+		}
+
+		// The relative time point from instrument start to instrument end
+		float relTimePoint = fTimePoint / (fDuration + 1.0f / 256.0f);
+
+		float outAmplitude = 0.0f;
+
+		int maxOvertones = (int)(3.0f / baseFreq);
+		float overtoneLoudness = 1.0f;
+		float overallLoudness = 0.0f;
+		for (int i = 0; i < NUM_OVERTONES; i++)
+		{
+			if (i < maxOvertones)
+			{
+				float soundShapeStart = randomBuffer[i + iSoundShapeStart*NUM_OVERTONES];
+				float soundShapeEnd = randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES];
+				float soundShape = relTimePoint * soundShapeEnd + (1.0f - relTimePoint) * soundShapeStart;
+				outAmplitude += sin(fPhase * (i+1)) * overtoneLoudness * soundShape;
+			}
+			overallLoudness += overtoneLoudness;
+			float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
+			overtoneLoudness *= quakiness * 2.0f;
+		}
+		outAmplitude /= overallLoudness;
+
+		fRemainDC[0] *= REMAIN_DC_FALLOFF;
+		fRemainDC[1] *= REMAIN_DC_FALLOFF;
+		*out1 = outAmplitude * vol * fADSRVal + fRemainDC[0];
+		*out2 = outAmplitude * vol * fADSRVal+ fRemainDC[1];
+		fLastOutput[0] = *out1;
+		fLastOutput[1] = *out2;
+		*out1++;
+		*out2++;
+		fPhase += baseFreq;
+		fTimePoint += SAMPLE_TICK_DURATION;
+		if (fTimePoint > fDuration) fTimePoint = fDuration;
+		while (fPhase > 2.0f * PI) fPhase -= 2.0f * (float)PI;
 	}
 }
 
@@ -208,8 +221,9 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta)
 	currentNote = note;
 	currentVelocity = velocity;
 	currentDelta = delta;
-	noteIsOn = true;
 	fPhase = 0;
+	iADSR = 0;
+	fADSRVal = 0.0f;
 	fTimePoint = 0.0f;
 
 	fRemainDC[0] = fLastOutput[0];
@@ -219,7 +233,9 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta)
 //-----------------------------------------------------------------------------------------
 void VstXSynth::noteOff ()
 {
-	noteIsOn = false;
-	fRemainDC[0] = fLastOutput[0];
-	fRemainDC[1] = fLastOutput[1];
+	//currentVelocity = 0;
+	iADSR = 2;
+	// This must be done when a new note is started only!
+	//fRemainDC[0] = fLastOutput[0];
+	//fRemainDC[1] = fLastOutput[1];
 }

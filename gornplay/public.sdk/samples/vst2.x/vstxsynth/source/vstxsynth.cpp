@@ -33,8 +33,10 @@ AudioEffect* createEffectInstance (audioMasterCallback audioMaster)
 //-----------------------------------------------------------------------------------------
 VstXSynthProgram::VstXSynthProgram ()
 {
-	fVolume    = .9f;
+	fVolume    = .25f;
 	fDuration = 0.2f;
+	fAttack = 0.3f;
+	fRelease = 0.2f;
 	fQuakinessStart = .5f;
 	fQuakinessEnd = 0.2f;
 	iSoundShapeStart = 0;
@@ -93,6 +95,8 @@ void VstXSynth::setProgram (VstInt32 program)
 	
 	fVolume    = ap->fVolume;
 	fDuration = ap->fDuration;
+	fAttack = ap->fAttack;
+	fRelease = ap->fRelease;
 	fQuakinessStart = ap->fQuakinessStart;
 	fQuakinessEnd = ap->fQuakinessEnd;
 	iSoundShapeStart = ap->iSoundShapeStart;
@@ -137,6 +141,8 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 	{
 		case kVolume:		dB2string (fVolume, text, kVstMaxParamStrLen);	break;
 		case kDuration:		float2string (fDuration, text, kVstMaxParamStrLen); break;
+		case kAttack:		float2string (fAttack, text, kVstMaxParamStrLen); break;
+		case kRelease:		float2string (fRelease, text, kVstMaxParamStrLen); break;
 		case kQuakinessStart: dB2string (fQuakinessStart * 2.0f, text, kVstMaxParamStrLen); break;
 		case kQuakinessEnd: dB2string (fQuakinessEnd * 2.0f, text, kVstMaxParamStrLen); break;
 		case kSoundShapeStart:   int2string (iSoundShapeStart, text, kVstMaxParamStrLen); break;
@@ -151,6 +157,8 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 	{
 		case kVolume: vst_strncpy (label, "Volume", kVstMaxParamStrLen);	break;
 		case kDuration: vst_strncpy(label, "Duration", kVstMaxParamStrLen); break;
+		case kAttack: vst_strncpy(label, "Attack", kVstMaxParamStrLen); break;
+		case kRelease: vst_strncpy(label, "Release", kVstMaxParamStrLen); break;
 		case kQuakinessStart: vst_strncpy (label, "QuakinessStart", kVstMaxParamStrLen);	break;
 		case kQuakinessEnd: vst_strncpy(label, "QuakinessEnd", kVstMaxParamStrLen); break;
 		case kSoundShapeStart: vst_strncpy (label, "SoundShapeStart", kVstMaxParamStrLen);	break;
@@ -166,6 +174,8 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 	{
 		case kVolume:		fVolume		= ap->fVolume		= value;	break;
 		case kDuration: fDuration = ap->fDuration = value; break;
+		case kAttack: fAttack = ap->fAttack = value; break;
+		case kRelease: fRelease = ap->fRelease = value; break;
 		case kQuakinessStart: fQuakinessStart = ap->fQuakinessStart = value;	break;
 		case kQuakinessEnd: fQuakinessEnd = ap->fQuakinessEnd = value; break;
 		case kSoundShapeStart: iSoundShapeStart = ap->iSoundShapeStart = (int)(value * 128.0f + 0.5f);	break;
@@ -181,6 +191,8 @@ float VstXSynth::getParameter (VstInt32 index)
 	{
 		case kVolume:		value = fVolume;	break;
 		case kDuration: value = fDuration; break;
+		case kAttack: value = fAttack; break;
+		case kRelease: value = fRelease; break;
 		case kQuakinessStart:	value = fQuakinessStart;	break;
 		case kQuakinessEnd: value = fQuakinessEnd; break;
 		case kSoundShapeStart:	value = (float)iSoundShapeStart / 128.0f; break;

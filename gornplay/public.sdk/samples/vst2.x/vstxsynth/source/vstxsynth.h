@@ -40,6 +40,8 @@ enum
 
 	kVolume = 0,
 	kDuration,
+	kAttack,
+	kRelease,
 	kQuakinessStart, // Volume of the overtones
 	kQuakinessEnd,
 	kSoundShapeStart, // Which random numbers to take for spectral shape
@@ -61,6 +63,8 @@ public:
 private:
 	float fVolume;
 	float fDuration;
+	float fAttack;
+	float fRelease;
 	float fQuakinessStart;
 	float fQuakinessEnd;
 	int iSoundShapeStart;
@@ -68,7 +72,7 @@ private:
 	char name[kVstMaxProgNameLen+1];
 };
 
-#if 1
+#if 0
 // ChannelInformation holds all the information of a current playing channel,
 // That is, which frequency it is playing at, where the phase is, the position in the
 // ADSR envelope and so on.
@@ -76,11 +80,12 @@ struct ChannelInformation
 {
 	float fVolume;
 	float fDuration;
+	float fAttack;
+	float fRelease;
 	float fQuakinessStart; // Volume of the overtones
 	float fQuakinessEnd;
 	int	iSoundShapeStart;
 	int iSoundShapeEnd;
-	float fPhase1, fPhase2;
 	VstInt32 currentNote;
 	VstInt32 currentVelocity;
 	VstInt32 currentDelta;
@@ -134,10 +139,14 @@ public:
 private:
 	float fVolume; // Overall volume of the instrument exluding midi velocity
 	float fDuration;
+	float fAttack;
+	float fRelease;
 	float fQuakinessStart; // Loudness of the overtones
 	float fQuakinessEnd;
 	int iSoundShapeStart; // Which random numbers to take for overtones
 	int iSoundShapeEnd;
+	int iADSR; // 0: Attack, 1: SUSTAIN, 2: Release
+	float fADSRVal; // Volume from ADSR envelope
 	float fPhase; // Phase of the instrument
 	float fTimePoint; // Time point relative to fDuration;
 	float fLastOutput[2]; // Last output value
@@ -157,7 +166,6 @@ private:
 	VstInt32 currentNote;
 	VstInt32 currentVelocity; // That is the midi volume
 	VstInt32 currentDelta; // The time in samples until the note shall be played
-	bool noteIsOn;
 
 	void initProcess ();
 	void noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta);
