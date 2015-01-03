@@ -28,7 +28,7 @@ enum
 };
 
 // Constants for sound stuff
-#define NUM_OVERTONES 12
+#define NUM_OVERTONES 16
 #define SAMPLE_TICK_DURATION (1.0f / 32768.0f)
 #define REMAIN_DC_FALLOFF 0.99f
 
@@ -36,9 +36,77 @@ enum
 const double midiScaler = (1. / 127.);
 static float freqtab[kNumFrequencies];
 
+// Moog x-pass from musicdsp.org:
+#if 0
+	// Moog 24 dB/oct resonant lowpass VCF
+	// References: CSound source code, Stilson/Smith CCRMA paper.
+	// Modified by paul.kellett@maxim.abel.co.uk July 2000
+
+	  float f, p, q;             //filter coefficients
+	  float b0, b1, b2, b3, b4;  //filter buffers (beware denormals!)
+	  float t1, t2;              //temporary buffers
+
+	// Set coefficients given frequency & resonance [0.0...1.0]
+
+	  q = 1.0f - frequency;
+	  p = frequency + 0.8f * frequency * q;
+	  f = p + p - 1.0f;
+	  q = resonance * (1.0f + 0.5f * q * (1.0f - q + 5.6f * q * q));
+
+	// Filter (in [-1.0...+1.0])
+
+	  in -= q * b4;                          //feedback
+	  t1 = b1;  b1 = (in + b0) * p - b1 * f;
+	  t2 = b2;  b2 = (b1 + t1) * p - b2 * f;
+	  t1 = b3;  b3 = (b2 + t2) * p - b3 * f;
+				b4 = (b3 + t1) * p - b4 * f;
+	  b4 = b4 - b4 * b4 * b4 * 0.166667f;    //clipping
+	  b0 = in;
+
+	// Lowpass  output:  b4
+	// Highpass output:  in - b4;
+	// Bandpass output:  3.0f * (b3 - b4);
+#endif
+
 //-----------------------------------------------------------------------------------------
 // VstXSynth
 //-----------------------------------------------------------------------------------------
+
+float VstXSynth::moogFilter(float frequency, float resonance, float in)
+{
+	in *= 100.0f;
+
+	float t1, t2;
+	float q = 1.0f - frequency;
+	float p = frequency + 0.8f * frequency * q;
+	float f = p + p - 1.0f;
+	q = resonance * (1.0f + 0.5f * q * (1.0f - q + 5.6f * q * q));
+
+	// I should check this... Maybe this is not so cool?
+	if (in > 1.414f) in = 1.414f;
+	if (in < -1.414f) in = -1.414f;
+	in = in - in * in * in * 0.166667f;    //clipping
+
+	in -= q * b4; // feedback
+	t1 = b1;  b1 = (in + b0) * p - b1 * f;
+	t2 = b2;  b2 = (b1 + t1) * p - b2 * f;
+	t1 = b3;  b3 = (b2 + t2) * p - b3 * f;
+	b4 = (b3 + t1) * p - b4 * f;
+	
+	b0 = in;
+
+	// Check for denormals
+#if 0
+	if (fabsf(b0) < 1.0f / 1024.0f / 1024.0f) b0 = 0.0f;
+	if (fabsf(b1) < 1.0f / 1024.0f / 1024.0f) b1 = 0.0f;
+	if (fabsf(b2) < 1.0f / 1024.0f / 1024.0f) b2 = 0.0f;
+	if (fabsf(b3) < 1.0f / 1024.0f / 1024.0f) b3 = 0.0f;
+	if (fabsf(b4) < 1.0f / 1024.0f / 1024.0f) b4 = 0.0f;
+#endif
+
+	return b4; // low-pass
+}
+
 void VstXSynth::setSampleRate (float sampleRate)
 {
 	AudioEffectX::setSampleRate (sampleRate);
@@ -67,6 +135,7 @@ void VstXSynth::setBlockSize (VstInt32 blockSize)
 void VstXSynth::initProcess ()
 {
 	fPhase = 0.f;
+	fModulationPhase = 0.f;
 	iADSR = 0;
 	fADSRVal = 0.0f;
 	fScaler = (float)((double)PI / 44100.);	// we don't know the sample rate yet
@@ -74,6 +143,9 @@ void VstXSynth::initProcess ()
 	currentDelta = currentNote = currentDelta = 0;
 	VstInt32 i;
 	noteOn (0, 0, 0);
+
+	// Initialize moog filter parameters
+	b0 = b1 = b2 = b3 = b4 = 0.0f;
 
 	// make frequency (Hz) table
 	double k = 1.059463094359;	// 12th root of 2
@@ -110,18 +182,33 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		if (currentDelta >= sampleFrames)	// future
 		{
 			currentDelta -= sampleFrames;
-			memset(out1, 0, sampleFrames * sizeof (float));
-			memset(out2, 0, sampleFrames * sizeof (float));
+			for (int i = 0; i < sampleFrames; i++)
+			{
+				fRemainDC[0] *= REMAIN_DC_FALLOFF;
+				fRemainDC[1] *= REMAIN_DC_FALLOFF;
+				*out1 = fRemainDC[0];
+				*out2 = fRemainDC[1];
+				fLastOutput[0] = *out1;
+				fLastOutput[1] = *out2;
+				out1++;
+				out2++;
+			}
 			return;
 		}
-		memset (out1, 0, currentDelta * sizeof (float));
-		memset (out2, 0, currentDelta * sizeof (float));
-		out1 += currentDelta;
-		out2 += currentDelta;
+
+		for (int i = 0; i < currentDelta; i++)
+		{
+			fRemainDC[0] *= REMAIN_DC_FALLOFF;
+			fRemainDC[1] *= REMAIN_DC_FALLOFF;
+			*out1 = fRemainDC[0];
+			*out2 = fRemainDC[1];
+			fLastOutput[0] = *out1;
+			fLastOutput[1] = *out2;
+			out1++;
+			out2++;
+		}
 		sampleFrames -= currentDelta;
 		currentDelta = 0;
-		fLastOutput[0] = 0.0f;
-		fLastOutput[1] = 0.0f;
 	}
 
 	// loop
@@ -147,6 +234,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 
 		// The relative time point from instrument start to instrument end
 		float relTimePoint = fTimePoint / (fDuration + 1.0f / 256.0f);
+		float modT = fModulationPhase - (float)(int)(fModulationPhase);
 
 		float outAmplitude = 0.0f;
 
@@ -155,18 +243,32 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		float overallLoudness = 0.0f;
 		for (int i = 0; i < NUM_OVERTONES; i++)
 		{
+			float soundShape = 1.0f;
+			if (i != 0 || true)
+			{
+				float soundShapeStart = expRandomBuffer[i + iSoundShapeStart*NUM_OVERTONES];
+				float soundShapeEnd = expRandomBuffer[i + iSoundShapeEnd*NUM_OVERTONES];
+				soundShape = relTimePoint * soundShapeEnd + (1.0f - relTimePoint) * soundShapeStart;
+			}
+
 			if (i < maxOvertones)
 			{
-				float soundShapeStart = randomBuffer[i + iSoundShapeStart*NUM_OVERTONES];
-				float soundShapeEnd = randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES];
-				float soundShape = relTimePoint * soundShapeEnd + (1.0f - relTimePoint) * soundShapeStart;
-				outAmplitude += sin(fPhase * (i+1)) * overtoneLoudness * soundShape;
+				// Modulation:
+				float startMod = expRandomBuffer[i + (int)(fModulationPhase)*NUM_OVERTONES];
+				float endMod = expRandomBuffer[i + (int)(fModulationPhase)*NUM_OVERTONES + NUM_OVERTONES];
+				float modulation = modT * endMod + (1.0f - modT) * startMod;
+				modulation = .5f + (modulation - 0.5f) * fModulationAmount;
+
+				outAmplitude += sin(fPhase * (i+1)) * overtoneLoudness * soundShape * modulation;
 			}
-			overallLoudness += overtoneLoudness;
+			overallLoudness += overtoneLoudness * soundShape;
 			float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
 			overtoneLoudness *= quakiness * 2.0f;
 		}
 		outAmplitude /= overallLoudness;
+
+		// Apply moog filter
+		//outAmplitude = moogFilter(fFilterStart, fResoStart, outAmplitude);
 
 		fRemainDC[0] *= REMAIN_DC_FALLOFF;
 		fRemainDC[1] *= REMAIN_DC_FALLOFF;
@@ -177,9 +279,11 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		*out1++;
 		*out2++;
 		fPhase += baseFreq;
+		fModulationPhase += fModulationSpeed / 256.0f;
 		fTimePoint += SAMPLE_TICK_DURATION;
 		if (fTimePoint > fDuration) fTimePoint = fDuration;
 		while (fPhase > 2.0f * PI) fPhase -= 2.0f * (float)PI;
+		while (fModulationPhase > RANDOM_BUFFER_SIZE/2/NUM_OVERTONES) fModulationPhase -= RANDOM_BUFFER_SIZE/2/NUM_OVERTONES;
 	}
 }
 

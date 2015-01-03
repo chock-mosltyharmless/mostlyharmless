@@ -46,6 +46,12 @@ enum
 	kQuakinessEnd,
 	kSoundShapeStart, // Which random numbers to take for spectral shape
 	kSoundShapeEnd,
+	kModulationAmount, // Amount of Waveshape modulation
+	kModulationSpeed, // Speed of the waveshape modulation
+	kFilterStart, // low-pass filter start frequency
+	kFilterEnd,
+	kResoStart, // Resonance at the start
+	kResoEnd,
 
 	kNumParams
 };
@@ -69,29 +75,14 @@ private:
 	float fQuakinessEnd;
 	int iSoundShapeStart;
 	int iSoundShapeEnd;
+	float fModulationAmount;
+	float fModulationSpeed;
+	float fFilterStart;
+	float fFilterEnd;
+	float fResoStart;
+	float fResoEnd;
 	char name[kVstMaxProgNameLen+1];
 };
-
-#if 0
-// ChannelInformation holds all the information of a current playing channel,
-// That is, which frequency it is playing at, where the phase is, the position in the
-// ADSR envelope and so on.
-struct ChannelInformation
-{
-	float fVolume;
-	float fDuration;
-	float fAttack;
-	float fRelease;
-	float fQuakinessStart; // Volume of the overtones
-	float fQuakinessEnd;
-	int	iSoundShapeStart;
-	int iSoundShapeEnd;
-	VstInt32 currentNote;
-	VstInt32 currentVelocity;
-	VstInt32 currentDelta;
-	bool noteIsOn;
-};
-#endif
 
 //------------------------------------------------------------------------------------------
 // VstXSynth
@@ -137,6 +128,9 @@ public:
 	virtual bool getMidiKeyName (VstInt32 channel, MidiKeyName* keyName);
 
 private:
+	float moogFilter(float frequency, float resonance, float in);
+	float b0, b1, b2, b3, b4; // moog filter parameters
+
 	float fVolume; // Overall volume of the instrument exluding midi velocity
 	float fDuration;
 	float fAttack;
@@ -145,9 +139,16 @@ private:
 	float fQuakinessEnd;
 	int iSoundShapeStart; // Which random numbers to take for overtones
 	int iSoundShapeEnd;
+	float fFilterStart;
+	float fFilterEnd;
+	float fModulationAmount;
+	float fModulationSpeed;
+	float fResoStart;
+	float fResoEnd;
 	int iADSR; // 0: Attack, 1: SUSTAIN, 2: Release
 	float fADSRVal; // Volume from ADSR envelope
 	float fPhase; // Phase of the instrument
+	float fModulationPhase; // Phase of the modulation
 	float fTimePoint; // Time point relative to fDuration;
 	float fLastOutput[2]; // Last output value
 	float fRemainDC[2]; // To avoid clicking, this value contains the last output before start/stop
