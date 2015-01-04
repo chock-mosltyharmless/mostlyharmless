@@ -43,6 +43,7 @@ VstXSynthProgram::VstXSynthProgram ()
 	iSoundShapeEnd = 1;
 	fModulationAmount = 0.1f;
 	fModulationSpeed = 0.3f;
+	fDetune = 0.0f;
 	fFilterStart = 0.1f;
 	fFilterEnd = 0.1f;
 	fResoStart = 0.0f;
@@ -109,6 +110,7 @@ void VstXSynth::setProgram (VstInt32 program)
 	iSoundShapeEnd = ap->iSoundShapeEnd;
 	fModulationAmount = ap->fModulationAmount;
 	fModulationSpeed = ap->fModulationSpeed;
+	fDetune = ap->fDetune;
 	fFilterStart = ap->fFilterStart;
 	fFilterEnd = ap->fFilterEnd;
 	fResoStart = ap->fResoStart;
@@ -164,6 +166,7 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 		case kSoundShapeEnd: int2string (iSoundShapeEnd, text, kVstMaxParamStrLen); break;
 		case kModulationAmount: dB2string (fModulationAmount, text, kVstMaxParamStrLen); break;
 		case kModulationSpeed: float2string (fModulationSpeed, text, kVstMaxParamStrLen); break;
+		case kDetune: float2string(fDetune, text, kVstMaxParamStrLen); break;
 		case kFilterStart: float2string(fFilterStart, text, kVstMaxParamStrLen); break;
 		case kFilterEnd: float2string(fFilterEnd, text, kVstMaxParamStrLen); break;
 		case kResoStart: float2string(fResoStart, text, kVstMaxParamStrLen); break;
@@ -186,6 +189,7 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 		case kSoundShapeEnd: vst_strncpy(label, "SoundShapeEnd", kVstMaxParamStrLen); break;
 		case kModulationAmount: vst_strncpy(label, "Mod. Amount", kVstMaxParamStrLen); break;
 		case kModulationSpeed: vst_strncpy(label, "Mod. Speed", kVstMaxParamStrLen); break;
+		case kDetune: vst_strncpy(label, "Detune", kVstMaxParamStrLen); break;
 		case kFilterStart: vst_strncpy(label, "FilterStart", kVstMaxParamStrLen); break;
 		case kFilterEnd: vst_strncpy(label, "FilterEnd", kVstMaxParamStrLen); break;
 		case kResoStart: vst_strncpy(label, "ResoStart", kVstMaxParamStrLen); break;
@@ -209,6 +213,7 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kSoundShapeEnd: iSoundShapeEnd = ap->iSoundShapeEnd = (int)(value * 128.0f + 0.5f); break;
 		case kModulationAmount: fModulationAmount = ap->fModulationAmount = value; break;
 		case kModulationSpeed: fModulationSpeed = ap->fModulationSpeed = value; break;
+		case kDetune: fDetune = ap->fDetune = value; break;
 		case kFilterStart: fFilterStart = ap->fFilterStart = value; break;
 		case kFilterEnd: fFilterEnd = ap->fFilterEnd = value; break;
 		case kResoStart: fResoStart = ap->fResoStart = value; break;
@@ -232,6 +237,7 @@ float VstXSynth::getParameter (VstInt32 index)
 		case kSoundShapeEnd: value = (float)iSoundShapeEnd / 128.0f; break;
 		case kModulationAmount: value = (float)fModulationAmount; break;
 		case kModulationSpeed: value = (float)fModulationSpeed; break;
+		case kDetune: value = fDetune; break;
 		case kFilterStart: value = fFilterStart; break;
 		case kFilterEnd: value = fFilterEnd; break;
 		case kResoStart: value = fResoStart; break;

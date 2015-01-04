@@ -28,7 +28,6 @@ enum
 };
 
 // Constants for sound stuff
-#define NUM_OVERTONES 16
 #define SAMPLE_TICK_DURATION (1.0f / 32768.0f)
 #define REMAIN_DC_FALLOFF 0.99f
 
@@ -134,7 +133,10 @@ void VstXSynth::setBlockSize (VstInt32 blockSize)
 //-----------------------------------------------------------------------------------------
 void VstXSynth::initProcess ()
 {
-	fPhase = 0.f;
+	for (int i = 0; i < NUM_OVERTONES; i++)
+	{
+		fPhase[i] = 0.f;
+	}
 	fModulationPhase = 0.f;
 	iADSR = 0;
 	fADSRVal = 0.0f;
@@ -259,7 +261,10 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 				float modulation = modT * endMod + (1.0f - modT) * startMod;
 				modulation = .5f + (modulation - 0.5f) * fModulationAmount;
 
-				outAmplitude += sin(fPhase * (i+1)) * overtoneLoudness * soundShape * modulation;
+				outAmplitude += sin(fPhase[i]) * overtoneLoudness * soundShape * modulation;
+
+				fPhase[i] += baseFreq * (i+1) * (1.0f + fDetune * (randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES] - 0.5f));
+				while (fPhase[i] > 2.0f * PI) fPhase[i] -= 2.0f * (float)PI;
 			}
 			overallLoudness += overtoneLoudness * soundShape;
 			float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
@@ -278,11 +283,9 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		fLastOutput[1] = *out2;
 		*out1++;
 		*out2++;
-		fPhase += baseFreq;
 		fModulationPhase += fModulationSpeed / 256.0f;
 		fTimePoint += SAMPLE_TICK_DURATION;
 		if (fTimePoint > fDuration) fTimePoint = fDuration;
-		while (fPhase > 2.0f * PI) fPhase -= 2.0f * (float)PI;
 		while (fModulationPhase > RANDOM_BUFFER_SIZE/2/NUM_OVERTONES) fModulationPhase -= RANDOM_BUFFER_SIZE/2/NUM_OVERTONES;
 	}
 }
@@ -325,7 +328,10 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta)
 	currentNote = note;
 	currentVelocity = velocity;
 	currentDelta = delta;
-	fPhase = 0;
+	for (int i = 0; i < NUM_OVERTONES; i++)
+	{
+		fPhase[i] = 0;
+	}
 	iADSR = 0;
 	fADSRVal = 0.0f;
 	fTimePoint = 0.0f;

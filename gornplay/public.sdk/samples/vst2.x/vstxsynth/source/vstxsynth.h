@@ -27,6 +27,9 @@
 // Size of a buffer with random numbers
 #define RANDOM_BUFFER_SIZE 65536
 
+// Number of additive overtones
+#define NUM_OVERTONES 16
+
 #ifndef PI
 #define PI 3.1415926
 #endif
@@ -48,6 +51,7 @@ enum
 	kSoundShapeEnd,
 	kModulationAmount, // Amount of Waveshape modulation
 	kModulationSpeed, // Speed of the waveshape modulation
+	kDetune, // Detuning of overtones
 	kFilterStart, // low-pass filter start frequency
 	kFilterEnd,
 	kResoStart, // Resonance at the start
@@ -77,6 +81,7 @@ private:
 	int iSoundShapeEnd;
 	float fModulationAmount;
 	float fModulationSpeed;
+	float fDetune;
 	float fFilterStart;
 	float fFilterEnd;
 	float fResoStart;
@@ -143,11 +148,12 @@ private:
 	float fFilterEnd;
 	float fModulationAmount;
 	float fModulationSpeed;
+	float fDetune;
 	float fResoStart;
 	float fResoEnd;
 	int iADSR; // 0: Attack, 1: SUSTAIN, 2: Release
 	float fADSRVal; // Volume from ADSR envelope
-	float fPhase; // Phase of the instrument
+	float fPhase[NUM_OVERTONES]; // Phase of the instrument
 	float fModulationPhase; // Phase of the modulation
 	float fTimePoint; // Time point relative to fDuration;
 	float fLastOutput[2]; // Last output value
