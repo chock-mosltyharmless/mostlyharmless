@@ -29,6 +29,7 @@
 
 // Number of additive overtones
 #define NUM_OVERTONES 16
+#define NUM_Stereo_VOICES 4
 
 #ifndef PI
 #define PI 3.1415926
@@ -52,6 +53,7 @@ enum
 	kModulationAmount, // Amount of Waveshape modulation
 	kModulationSpeed, // Speed of the waveshape modulation
 	kDetune, // Detuning of overtones
+	kStereo, // Strength of Stereo (detune)
 	kFilterStart, // low-pass filter start frequency
 	kFilterEnd,
 	kResoStart, // Resonance at the start
@@ -82,6 +84,7 @@ private:
 	float fModulationAmount;
 	float fModulationSpeed;
 	float fDetune;
+	float fStereo;
 	float fFilterStart;
 	float fFilterEnd;
 	float fResoStart;
@@ -149,11 +152,12 @@ private:
 	float fModulationAmount;
 	float fModulationSpeed;
 	float fDetune;
+	float fStereo;
 	float fResoStart;
 	float fResoEnd;
 	int iADSR; // 0: Attack, 1: SUSTAIN, 2: Release
 	float fADSRVal; // Volume from ADSR envelope
-	float fPhase[NUM_OVERTONES]; // Phase of the instrument
+	float fPhase[NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
 	float fModulationPhase; // Phase of the modulation
 	float fTimePoint; // Time point relative to fDuration;
 	float fLastOutput[2]; // Last output value

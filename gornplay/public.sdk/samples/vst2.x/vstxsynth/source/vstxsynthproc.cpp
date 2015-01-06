@@ -73,8 +73,6 @@ static float freqtab[kNumFrequencies];
 
 float VstXSynth::moogFilter(float frequency, float resonance, float in)
 {
-	in *= 100.0f;
-
 	float t1, t2;
 	float q = 1.0f - frequency;
 	float p = frequency + 0.8f * frequency * q;
@@ -135,7 +133,10 @@ void VstXSynth::initProcess ()
 {
 	for (int i = 0; i < NUM_OVERTONES; i++)
 	{
-		fPhase[i] = 0.f;
+		for (int j = 0; j < NUM_Stereo_VOICES; j++)
+		{
+			fPhase[i][j] = 0.f;
+		}
 	}
 	fModulationPhase = 0.f;
 	iADSR = 0;
@@ -238,7 +239,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		float relTimePoint = fTimePoint / (fDuration + 1.0f / 256.0f);
 		float modT = fModulationPhase - (float)(int)(fModulationPhase);
 
-		float outAmplitude = 0.0f;
+		float outAmplitude[NUM_Stereo_VOICES] = {0};
 
 		int maxOvertones = (int)(3.0f / baseFreq);
 		float overtoneLoudness = 1.0f;
@@ -261,24 +262,43 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 				float modulation = modT * endMod + (1.0f - modT) * startMod;
 				modulation = .5f + (modulation - 0.5f) * fModulationAmount;
 
-				outAmplitude += sin(fPhase[i]) * overtoneLoudness * soundShape * modulation;
+				for (int j = 0; j < NUM_Stereo_VOICES; j++)
+				{
+					outAmplitude[j] += sin(fPhase[i][j] + fStereo * (2 * PI * randomBuffer[i*NUM_Stereo_VOICES + j])) *
+						overtoneLoudness * soundShape * modulation;
 
-				fPhase[i] += baseFreq * (i+1) * (1.0f + fDetune * (randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES] - 0.5f));
-				while (fPhase[i] > 2.0f * PI) fPhase[i] -= 2.0f * (float)PI;
+					fPhase[i][j] += baseFreq * (i+1) * (1.0f + fStereo/64.0f * (randomBuffer[i] - 0.5f)) *
+					//fPhase[i][j] += baseFreq * (i+1) *
+						 (1.0f + fDetune * (randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES] - 0.5f));
+					while (fPhase[i][j] > 2.0f * PI) fPhase[i][j] -= 2.0f * (float)PI;
+				}
 			}
 			overallLoudness += overtoneLoudness * soundShape;
 			float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
 			overtoneLoudness *= quakiness * 2.0f;
 		}
-		outAmplitude /= overallLoudness;
-
-		// Apply moog filter
-		//outAmplitude = moogFilter(fFilterStart, fResoStart, outAmplitude);
+		for (int j = 0; j < NUM_Stereo_VOICES; j++)
+		{
+			outAmplitude[j] /= overallLoudness;
+		}
 
 		fRemainDC[0] *= REMAIN_DC_FALLOFF;
 		fRemainDC[1] *= REMAIN_DC_FALLOFF;
-		*out1 = outAmplitude * vol * fADSRVal + fRemainDC[0];
-		*out2 = outAmplitude * vol * fADSRVal+ fRemainDC[1];
+		*out1 = 0;
+		*out2 = 0;
+		for (int j = 0; j < NUM_Stereo_VOICES/2; j++)
+		{
+			*out1 += outAmplitude[j];
+			*out2 += outAmplitude[j + NUM_Stereo_VOICES/2];
+		}
+
+		// Apply moog filter
+		//float filterFreq = (float)exp(fFilterStart * 6.0f - 6.0f);
+		//*out1 = moogFilter(filterFreq, fResoStart, *out1);
+		//*out2 = moogFilter(filterFreq, fResoStart, *out2);
+
+		*out1 = *out1 * vol * fADSRVal + fRemainDC[0];
+		*out2 = *out2 * vol * fADSRVal + fRemainDC[1];
 		fLastOutput[0] = *out1;
 		fLastOutput[1] = *out2;
 		*out1++;
@@ -330,7 +350,10 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta)
 	currentDelta = delta;
 	for (int i = 0; i < NUM_OVERTONES; i++)
 	{
-		fPhase[i] = 0;
+		for (int j = 0; j < NUM_Stereo_VOICES; j++)
+		{
+			fPhase[i][j] = 0;
+		}
 	}
 	iADSR = 0;
 	fADSRVal = 0.0f;
