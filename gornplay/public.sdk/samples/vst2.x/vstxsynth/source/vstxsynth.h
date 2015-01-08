@@ -54,8 +54,8 @@ enum
 	kModulationSpeed, // Speed of the waveshape modulation
 	kDetune, // Detuning of overtones
 	kStereo, // Strength of Stereo (detune)
-	kFilterStart, // low-pass filter start frequency
-	kFilterEnd,
+	kNoiseStart, // low-pass filter start frequency
+	kNoiseEnd,
 	kResoStart, // Resonance at the start
 	kResoEnd,
 
@@ -85,8 +85,8 @@ private:
 	float fModulationSpeed;
 	float fDetune;
 	float fStereo;
-	float fFilterStart;
-	float fFilterEnd;
+	float fNoiseStart;
+	float fNoiseEnd;
 	float fResoStart;
 	float fResoEnd;
 	char name[kVstMaxProgNameLen+1];
@@ -147,8 +147,8 @@ private:
 	float fQuakinessEnd;
 	int iSoundShapeStart; // Which random numbers to take for overtones
 	int iSoundShapeEnd;
-	float fFilterStart;
-	float fFilterEnd;
+	float fNoiseStart;
+	float fNoiseEnd;
 	float fModulationAmount;
 	float fModulationSpeed;
 	float fDetune;
@@ -163,11 +163,13 @@ private:
 	float fLastOutput[2]; // Last output value
 	float fRemainDC[2]; // To avoid clicking, this value contains the last output before start/stop
 	float fScaler; // 2pi / sampleRate
+	int sampleID; // ID of the processed sample
 
 	// Random number generator
 	float frand(void);
 	unsigned long seed;
 	float randomBuffer[RANDOM_BUFFER_SIZE];
+	float lowNoise[RANDOM_BUFFER_SIZE];
 	// The same as random Buffer, but contains exp(4*(randomBuffer-1))
 	float expRandomBuffer[RANDOM_BUFFER_SIZE];
 

@@ -146,6 +146,7 @@ void VstXSynth::initProcess ()
 	currentDelta = currentNote = currentDelta = 0;
 	VstInt32 i;
 	noteOn (0, 0, 0);
+	sampleID = 0;
 
 	// Initialize moog filter parameters
 	b0 = b1 = b2 = b3 = b4 = 0.0f;
@@ -168,6 +169,16 @@ void VstXSynth::initProcess ()
 	{
 		randomBuffer[i] = frand();
 		expRandomBuffer[i] = (float)exp(4.0f * (randomBuffer[i] - 1));
+		lowNoise[i] = 16.0f * (randomBuffer[i] - 0.5f);
+	}
+
+	// Ring-low-pass-filtering of lowPass
+	// Use a one-pole
+	float oldVal = 0.0f;
+	for (int i = 0; i < RANDOM_BUFFER_SIZE * 8; i++)
+	{
+		lowNoise[i % RANDOM_BUFFER_SIZE] = 1.0f / 8.0f * lowNoise[i % RANDOM_BUFFER_SIZE] + (1.0f - 1.0f / 8.0f) * oldVal;
+		oldVal = lowNoise[i % RANDOM_BUFFER_SIZE];
 	}
 }
 
@@ -277,9 +288,15 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
 			overtoneLoudness *= quakiness * 2.0f;
 		}
+		
+		float noiseAmount = relTimePoint * fNoiseEnd + (1.0f - relTimePoint) * fNoiseStart;
 		for (int j = 0; j < NUM_Stereo_VOICES; j++)
 		{
+			// Adjust volume
 			outAmplitude[j] /= overallLoudness;
+
+			// Ring modulation with noise
+			outAmplitude[j] *= 1.0f + (lowNoise[sampleID % RANDOM_BUFFER_SIZE] - 1.0f) * noiseAmount;
 		}
 
 		fRemainDC[0] *= REMAIN_DC_FALLOFF;
@@ -307,6 +324,8 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		fTimePoint += SAMPLE_TICK_DURATION;
 		if (fTimePoint > fDuration) fTimePoint = fDuration;
 		while (fModulationPhase > RANDOM_BUFFER_SIZE/2/NUM_OVERTONES) fModulationPhase -= RANDOM_BUFFER_SIZE/2/NUM_OVERTONES;
+
+		sampleID++;
 	}
 }
 

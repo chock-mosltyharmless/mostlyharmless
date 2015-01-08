@@ -45,8 +45,8 @@ VstXSynthProgram::VstXSynthProgram ()
 	fModulationSpeed = 0.3f;
 	fDetune = 0.0f;
 	fStereo = 0.0f;
-	fFilterStart = 0.1f;
-	fFilterEnd = 0.1f;
+	fNoiseStart = 0.0f;
+	fNoiseEnd = 0.0f;
 	fResoStart = 0.0f;
 	fResoEnd = 0.0f;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
@@ -113,8 +113,8 @@ void VstXSynth::setProgram (VstInt32 program)
 	fModulationSpeed = ap->fModulationSpeed;
 	fDetune = ap->fDetune;
 	fStereo = ap->fStereo;
-	fFilterStart = ap->fFilterStart;
-	fFilterEnd = ap->fFilterEnd;
+	fNoiseStart = ap->fNoiseStart;
+	fNoiseEnd = ap->fNoiseEnd;
 	fResoStart = ap->fResoStart;
 	fResoEnd = ap->fResoEnd;
 }
@@ -170,8 +170,8 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 		case kModulationSpeed: float2string (fModulationSpeed, text, kVstMaxParamStrLen); break;
 		case kDetune: float2string(fDetune, text, kVstMaxParamStrLen); break;
 		case kStereo: float2string(fStereo, text, kVstMaxParamStrLen); break;
-		case kFilterStart: float2string(fFilterStart, text, kVstMaxParamStrLen); break;
-		case kFilterEnd: float2string(fFilterEnd, text, kVstMaxParamStrLen); break;
+		case kNoiseStart: float2string(fNoiseStart, text, kVstMaxParamStrLen); break;
+		case kNoiseEnd: float2string(fNoiseEnd, text, kVstMaxParamStrLen); break;
 		case kResoStart: float2string(fResoStart, text, kVstMaxParamStrLen); break;
 		case kResoEnd: float2string(fResoEnd, text, kVstMaxParamStrLen); break;
 	}
@@ -194,8 +194,8 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 		case kModulationSpeed: vst_strncpy(label, "Mod. Speed", kVstMaxParamStrLen); break;
 		case kDetune: vst_strncpy(label, "Detune", kVstMaxParamStrLen); break;
 		case kStereo: vst_strncpy(label, "Stereo", kVstMaxParamStrLen); break;
-		case kFilterStart: vst_strncpy(label, "FilterStart", kVstMaxParamStrLen); break;
-		case kFilterEnd: vst_strncpy(label, "FilterEnd", kVstMaxParamStrLen); break;
+		case kNoiseStart: vst_strncpy(label, "NoiseStart", kVstMaxParamStrLen); break;
+		case kNoiseEnd: vst_strncpy(label, "NoiseEnd", kVstMaxParamStrLen); break;
 		case kResoStart: vst_strncpy(label, "ResoStart", kVstMaxParamStrLen); break;
 		case kResoEnd: vst_strncpy(label, "ResoEnd", kVstMaxParamStrLen); break;
 	}
@@ -219,8 +219,8 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kModulationSpeed: fModulationSpeed = ap->fModulationSpeed = value; break;
 		case kDetune: fDetune = ap->fDetune = value; break;
 		case kStereo: fStereo = ap->fStereo = value; break;
-		case kFilterStart: fFilterStart = ap->fFilterStart = value; break;
-		case kFilterEnd: fFilterEnd = ap->fFilterEnd = value; break;
+		case kNoiseStart: fNoiseStart = ap->fNoiseStart = value; break;
+		case kNoiseEnd: fNoiseEnd = ap->fNoiseEnd = value; break;
 		case kResoStart: fResoStart = ap->fResoStart = value; break;
 		case kResoEnd: fResoEnd = ap->fResoEnd = value; break;
 	}
@@ -244,8 +244,8 @@ float VstXSynth::getParameter (VstInt32 index)
 		case kModulationSpeed: value = (float)fModulationSpeed; break;
 		case kDetune: value = fDetune; break;
 		case kStereo: value = fStereo; break;
-		case kFilterStart: value = fFilterStart; break;
-		case kFilterEnd: value = fFilterEnd; break;
+		case kNoiseStart: value = fNoiseStart; break;
+		case kNoiseEnd: value = fNoiseEnd; break;
 		case kResoStart: value = fResoStart; break;
 		case kResoEnd: value = fResoEnd; break;
 	}
