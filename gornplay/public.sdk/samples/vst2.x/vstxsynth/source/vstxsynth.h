@@ -26,6 +26,8 @@
 
 // Size of a buffer with random numbers
 #define RANDOM_BUFFER_SIZE 65536
+#define DELAY_MULTIPLICATOR 256
+#define MAX_DELAY_LENGTH (DELAY_MULTIPLICATOR * 130) // Some safety for miscalculation stuff...
 
 // Number of additive overtones
 #define NUM_OVERTONES 16
@@ -56,8 +58,8 @@ enum
 	kStereo, // Strength of Stereo (detune)
 	kNoiseStart, // low-pass filter start frequency
 	kNoiseEnd,
-	kResoStart, // Resonance at the start
-	kResoEnd,
+	kDelayFeed, // Resonance at the start
+	kDelayLength,
 
 	kNumParams
 };
@@ -87,8 +89,8 @@ private:
 	float fStereo;
 	float fNoiseStart;
 	float fNoiseEnd;
-	float fResoStart;
-	float fResoEnd;
+	float fDelayFeed;
+	int iDelayLength;
 	char name[kVstMaxProgNameLen+1];
 };
 
@@ -153,15 +155,15 @@ private:
 	float fModulationSpeed;
 	float fDetune;
 	float fStereo;
-	float fResoStart;
-	float fResoEnd;
+	float fDelayFeed;
+	int iDelayLength;
 	int iADSR; // 0: Attack, 1: SUSTAIN, 2: Release
 	float fADSRVal; // Volume from ADSR envelope
 	float fPhase[NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
 	float fModulationPhase; // Phase of the modulation
 	float fTimePoint; // Time point relative to fDuration;
-	float fLastOutput[2]; // Last output value
-	float fRemainDC[2]; // To avoid clicking, this value contains the last output before start/stop
+	float fLastOutput[NUM_Stereo_VOICES]; // Last output value
+	float fRemainDC[NUM_Stereo_VOICES]; // To avoid clicking, this value contains the last output before start/stop
 	float fScaler; // 2pi / sampleRate
 	int sampleID; // ID of the processed sample
 
@@ -172,6 +174,8 @@ private:
 	float lowNoise[RANDOM_BUFFER_SIZE];
 	// The same as random Buffer, but contains exp(4*(randomBuffer-1))
 	float expRandomBuffer[RANDOM_BUFFER_SIZE];
+	float reverbBuffer[MAX_DELAY_LENGTH][NUM_Stereo_VOICES];
+	int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pull-out
 
 	VstXSynthProgram* programs;
 	VstInt32 channelPrograms[16];

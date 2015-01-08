@@ -180,6 +180,16 @@ void VstXSynth::initProcess ()
 		lowNoise[i % RANDOM_BUFFER_SIZE] = 1.0f / 8.0f * lowNoise[i % RANDOM_BUFFER_SIZE] + (1.0f - 1.0f / 8.0f) * oldVal;
 		oldVal = lowNoise[i % RANDOM_BUFFER_SIZE];
 	}
+
+	// Clear reverberation buffer
+	for (int i = 0; i < NUM_Stereo_VOICES; i++)
+	{
+		for (int j = 0; j < MAX_DELAY_LENGTH; j++)
+		{
+			reverbBuffer[i][j] = 0;
+		}
+		reverbBufferLength[i] = 1;
+	}
 }
 
 //-----------------------------------------------------------------------------------------
@@ -191,19 +201,20 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 	float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
 	float vol = (float)(fVolume * (double)currentVelocity * midiScaler) * 4.0f;
 		
-	if (currentDelta > 0)
+	if (currentDelta > 0) // PROBLEM: THERE IS NO REVERB!
 	{
 		if (currentDelta >= sampleFrames)	// future
 		{
 			currentDelta -= sampleFrames;
 			for (int i = 0; i < sampleFrames; i++)
 			{
-				fRemainDC[0] *= REMAIN_DC_FALLOFF;
-				fRemainDC[1] *= REMAIN_DC_FALLOFF;
-				*out1 = fRemainDC[0];
-				*out2 = fRemainDC[1];
-				fLastOutput[0] = *out1;
-				fLastOutput[1] = *out2;
+				for (int j = 0; j < NUM_Stereo_VOICES; j++)
+				{
+					fRemainDC[j] *= REMAIN_DC_FALLOFF;
+					fLastOutput[j] = fRemainDC[j];
+				}
+				*out1 = fRemainDC[0] + fRemainDC[2];
+				*out2 = fRemainDC[1] + fRemainDC[3];
 				out1++;
 				out2++;
 			}
@@ -212,12 +223,13 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 
 		for (int i = 0; i < currentDelta; i++)
 		{
-			fRemainDC[0] *= REMAIN_DC_FALLOFF;
-			fRemainDC[1] *= REMAIN_DC_FALLOFF;
-			*out1 = fRemainDC[0];
-			*out2 = fRemainDC[1];
-			fLastOutput[0] = *out1;
-			fLastOutput[1] = *out2;
+			for (int j = 0; j < NUM_Stereo_VOICES; j++)
+			{
+				fRemainDC[j] *= REMAIN_DC_FALLOFF;
+				fLastOutput[j] = fRemainDC[j];
+			}
+			*out1 = fRemainDC[0] + fRemainDC[2];
+			*out2 = fRemainDC[1] + fRemainDC[3];
 			out1++;
 			out2++;
 		}
@@ -299,14 +311,29 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			outAmplitude[j] *= 1.0f + (lowNoise[sampleID % RANDOM_BUFFER_SIZE] - 1.0f) * noiseAmount;
 		}
 
-		fRemainDC[0] *= REMAIN_DC_FALLOFF;
-		fRemainDC[1] *= REMAIN_DC_FALLOFF;
+		// Put everything into the reverb buffers
+		int reverbPos = sampleID % MAX_DELAY_LENGTH;
+		for (int j = 0; j < NUM_Stereo_VOICES; j++)
+		{
+			reverbBuffer[reverbPos][j] = outAmplitude[j] * vol * fADSRVal + fRemainDC[j];
+			fRemainDC[j] *= REMAIN_DC_FALLOFF;
+			fLastOutput[j] = reverbBuffer[reverbPos][j];
+			
+			// Do the reverb feedback
+			int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
+			int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]) % 
+				MAX_DELAY_LENGTH;
+			reverbBuffer[reverbPos][j] += fDelayFeed * reverbBuffer[fromLocation][fromBuffer];
+		}
+
 		*out1 = 0;
 		*out2 = 0;
-		for (int j = 0; j < NUM_Stereo_VOICES/2; j++)
+		for (int j = 0; j < NUM_Stereo_VOICES; j += 2)
 		{
-			*out1 += outAmplitude[j];
-			*out2 += outAmplitude[j + NUM_Stereo_VOICES/2];
+			//*out1 += outAmplitude[j];
+			//*out2 += outAmplitude[j + 1];
+			*out1 += reverbBuffer[reverbPos][j];
+			*out2 += reverbBuffer[reverbPos][j+1];
 		}
 
 		// Apply moog filter
@@ -314,10 +341,6 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		//*out1 = moogFilter(filterFreq, fResoStart, *out1);
 		//*out2 = moogFilter(filterFreq, fResoStart, *out2);
 
-		*out1 = *out1 * vol * fADSRVal + fRemainDC[0];
-		*out2 = *out2 * vol * fADSRVal + fRemainDC[1];
-		fLastOutput[0] = *out1;
-		fLastOutput[1] = *out2;
 		*out1++;
 		*out2++;
 		fModulationPhase += fModulationSpeed / 256.0f;
@@ -378,8 +401,16 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta)
 	fADSRVal = 0.0f;
 	fTimePoint = 0.0f;
 
-	fRemainDC[0] = fLastOutput[0];
-	fRemainDC[1] = fLastOutput[1];
+	for (int i = 0; i < NUM_Stereo_VOICES; i++)
+	{
+		fRemainDC[i] = fLastOutput[i];
+	}
+
+	// Set the reverberation buffer length at key start (no interpolation)
+	reverbBufferLength[0] = iDelayLength * DELAY_MULTIPLICATOR + 1;
+	reverbBufferLength[1] = iDelayLength * DELAY_MULTIPLICATOR * 7 / 17 + 1;
+	reverbBufferLength[2] = iDelayLength * DELAY_MULTIPLICATOR * 13 / 23 + 1;
+	reverbBufferLength[3] = iDelayLength * DELAY_MULTIPLICATOR * 11 / 13 + 1;
 }
 
 //-----------------------------------------------------------------------------------------
