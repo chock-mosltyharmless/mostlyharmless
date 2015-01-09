@@ -139,8 +139,6 @@ void VstXSynth::initProcess ()
 		}
 	}
 	fModulationPhase = 0.f;
-	iADSR = 0;
-	fADSRVal = 0.0f;
 	fScaler = (float)((double)PI / 44100.);	// we don't know the sample rate yet
 	VstInt32 i;
 	for (int i = 0; i < NUM_Stereo_VOICES; i++)
@@ -213,23 +211,29 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		// Process ADSR envelope
 		switch (iADSR)
 		{
-		case 0:
-			fADSRVal += fAttack / 512.0f;
+		case 0: // Attack
+			fADSRVal += fAttack / 256.0f;
 			if (fADSRVal > 1.0f)
 			{
 				iADSR = 1;
 				fADSRVal = 1.0f;
 			}
 			break;
-		case 2:
-			fADSRVal *= (1.0f - fRelease / 2048.0f);
+		case 1: // Decay
+			fADSRVal -= fSustain;
+			fADSRVal *= (1.0f - fDecay / 1024.0f);
+			fADSRVal += fSustain;
+			break;
+		case 2: // Release
+			fADSRVal *= (1.0f - fRelease / 1024.0f);
 			break;
 		default:
 			break;
 		}
+		if (fADSRVal < 1.0f / 65536.0f) fADSRVal = 0.0f;
 
 		// The relative time point from instrument start to instrument end
-		float relTimePoint = fTimePoint / (fDuration + 1.0f / 256.0f);
+		float relTimePoint = fTimePoint / (fDuration + 1.0f / 512.0f);
 		float modT = fModulationPhase - (float)(int)(fModulationPhase);
 
 		float outAmplitude[NUM_Stereo_VOICES] = {0};
@@ -287,6 +291,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		{
 			reverbBuffer[reverbPos][j] = outAmplitude[j] * vol * fADSRVal + fRemainDC[j];
 			fRemainDC[j] *= REMAIN_DC_FALLOFF;
+			if (fRemainDC[j] < 1.0f / 65536.0f) fRemainDC[j] = 0.0f;
 			fLastOutput[j] = reverbBuffer[reverbPos][j];
 			
 			// Do the reverb feedback
@@ -294,6 +299,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]) % 
 				MAX_DELAY_LENGTH;
 			reverbBuffer[reverbPos][j] += fDelayFeed * reverbBuffer[fromLocation][fromBuffer];
+			if (fabsf(reverbBuffer[reverbPos][j]) < 1.0e-12) reverbBuffer[reverbPos][j] = 0.0f;
 		}
 
 		*out1 = 0;
@@ -313,7 +319,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 
 		*out1++;
 		*out2++;
-		fModulationPhase += fModulationSpeed / 256.0f;
+		fModulationPhase += fModulationSpeed / 512.0f;
 		fTimePoint += SAMPLE_TICK_DURATION;
 		if (fTimePoint > fDuration) fTimePoint = fDuration;
 		while (fModulationPhase > RANDOM_BUFFER_SIZE/2/NUM_OVERTONES) fModulationPhase -= RANDOM_BUFFER_SIZE/2/NUM_OVERTONES;

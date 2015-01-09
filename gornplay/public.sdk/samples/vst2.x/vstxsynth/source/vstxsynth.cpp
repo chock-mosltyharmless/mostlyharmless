@@ -36,7 +36,9 @@ VstXSynthProgram::VstXSynthProgram ()
 	fVolume    = .25f;
 	fDuration = 0.2f;
 	fAttack = 0.3f;
-	fRelease = 0.2f;
+	fDecay = 0.2f;
+	fSustain = 0.0f;
+	fRelease = 0.6f;
 	fQuakinessStart = .5f;
 	fQuakinessEnd = 0.2f;
 	iSoundShapeStart = 0;
@@ -48,7 +50,7 @@ VstXSynthProgram::VstXSynthProgram ()
 	fNoiseStart = 0.0f;
 	fNoiseEnd = 0.0f;
 	fDelayFeed = 0.0f;
-	iDelayLength = 0;
+	iDelayLength = 32;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
 }
 
@@ -98,6 +100,8 @@ void VstXSynth::setProgram (VstInt32 program)
 	fVolume    = ap->fVolume;
 	fDuration = ap->fDuration;
 	fAttack = ap->fAttack;
+	fDecay = ap->fDecay;
+	fSustain = ap->fSustain;
 	fRelease = ap->fRelease;
 	fQuakinessStart = ap->fQuakinessStart;
 	fQuakinessEnd = ap->fQuakinessEnd;
@@ -155,6 +159,8 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 		case kVolume:		dB2string (fVolume, text, kVstMaxParamStrLen);	break;
 		case kDuration:		float2string (fDuration, text, kVstMaxParamStrLen); break;
 		case kAttack:		float2string (fAttack, text, kVstMaxParamStrLen); break;
+		case kDecay:	float2string(fDecay, text, kVstMaxParamStrLen); break;
+		case kSustain: float2string(fSustain, text, kVstMaxParamStrLen); break;
 		case kRelease:		float2string (fRelease, text, kVstMaxParamStrLen); break;
 		case kQuakinessStart: dB2string (fQuakinessStart * 2.0f, text, kVstMaxParamStrLen); break;
 		case kQuakinessEnd: dB2string (fQuakinessEnd * 2.0f, text, kVstMaxParamStrLen); break;
@@ -179,19 +185,21 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 		case kVolume: vst_strncpy (label, "Volume", kVstMaxParamStrLen);	break;
 		case kDuration: vst_strncpy(label, "Duration", kVstMaxParamStrLen); break;
 		case kAttack: vst_strncpy(label, "Attack", kVstMaxParamStrLen); break;
+		case kDecay: vst_strncpy(label, "Decay", kVstMaxParamStrLen); break;
+		case kSustain: vst_strncpy(label, "Sustain", kVstMaxParamStrLen); break;
 		case kRelease: vst_strncpy(label, "Release", kVstMaxParamStrLen); break;
-		case kQuakinessStart: vst_strncpy (label, "QuakinessStart", kVstMaxParamStrLen);	break;
-		case kQuakinessEnd: vst_strncpy(label, "QuakinessEnd", kVstMaxParamStrLen); break;
-		case kSoundShapeStart: vst_strncpy (label, "SoundShapeStart", kVstMaxParamStrLen);	break;
-		case kSoundShapeEnd: vst_strncpy(label, "SoundShapeEnd", kVstMaxParamStrLen); break;
-		case kModulationAmount: vst_strncpy(label, "Mod. Amount", kVstMaxParamStrLen); break;
-		case kModulationSpeed: vst_strncpy(label, "Mod. Speed", kVstMaxParamStrLen); break;
+		case kQuakinessStart: vst_strncpy (label, "Quak start", kVstMaxParamStrLen);	break;
+		case kQuakinessEnd: vst_strncpy(label, "Quak end", kVstMaxParamStrLen); break;
+		case kSoundShapeStart: vst_strncpy (label, "Shape start", kVstMaxParamStrLen);	break;
+		case kSoundShapeEnd: vst_strncpy(label, "Shape end", kVstMaxParamStrLen); break;
+		case kModulationAmount: vst_strncpy(label, "Mod Amount", kVstMaxParamStrLen); break;
+		case kModulationSpeed: vst_strncpy(label, "Mod Speed", kVstMaxParamStrLen); break;
 		case kDetune: vst_strncpy(label, "Detune", kVstMaxParamStrLen); break;
 		case kStereo: vst_strncpy(label, "Stereo", kVstMaxParamStrLen); break;
-		case kNoiseStart: vst_strncpy(label, "NoiseStart", kVstMaxParamStrLen); break;
-		case kNoiseEnd: vst_strncpy(label, "NoiseEnd", kVstMaxParamStrLen); break;
-		case kDelayFeed: vst_strncpy(label, "DelayFeed", kVstMaxParamStrLen); break;
-		case kDelayLength: vst_strncpy(label, "DelayLength", kVstMaxParamStrLen); break;
+		case kNoiseStart: vst_strncpy(label, "Noise start", kVstMaxParamStrLen); break;
+		case kNoiseEnd: vst_strncpy(label, "Noise end", kVstMaxParamStrLen); break;
+		case kDelayFeed: vst_strncpy(label, "Delay feed", kVstMaxParamStrLen); break;
+		case kDelayLength: vst_strncpy(label, "Delay length", kVstMaxParamStrLen); break;
 	}
 }
 
@@ -204,6 +212,8 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kVolume:		fVolume		= ap->fVolume		= value;	break;
 		case kDuration: fDuration = ap->fDuration = value; break;
 		case kAttack: fAttack = ap->fAttack = value; break;
+		case kDecay: fDecay = ap->fDecay = value; break;
+		case kSustain: fSustain = ap->fSustain = value; break;
 		case kRelease: fRelease = ap->fRelease = value; break;
 		case kQuakinessStart: fQuakinessStart = ap->fQuakinessStart = value;	break;
 		case kQuakinessEnd: fQuakinessEnd = ap->fQuakinessEnd = value; break;
@@ -229,6 +239,8 @@ float VstXSynth::getParameter (VstInt32 index)
 		case kVolume:		value = fVolume;	break;
 		case kDuration: value = fDuration; break;
 		case kAttack: value = fAttack; break;
+		case kDecay : value = fDecay; break;
+		case kSustain: value = fSustain; break;
 		case kRelease: value = fRelease; break;
 		case kQuakinessStart:	value = fQuakinessStart;	break;
 		case kQuakinessEnd: value = fQuakinessEnd; break;

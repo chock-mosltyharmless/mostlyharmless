@@ -26,7 +26,7 @@
 
 // Size of a buffer with random numbers
 #define RANDOM_BUFFER_SIZE 65536
-#define DELAY_MULTIPLICATOR 256
+#define DELAY_MULTIPLICATOR 128
 #define MAX_DELAY_LENGTH (DELAY_MULTIPLICATOR * 130) // Some safety for miscalculation stuff...
 
 // Number of additive overtones
@@ -47,6 +47,8 @@ enum
 	kVolume = 0,
 	kDuration,
 	kAttack,
+	kDecay,
+	kSustain,
 	kRelease,
 	kQuakinessStart, // Volume of the overtones
 	kQuakinessEnd,
@@ -78,6 +80,8 @@ private:
 	float fVolume;
 	float fDuration;
 	float fAttack;
+	float fDecay;
+	float fSustain;
 	float fRelease;
 	float fQuakinessStart;
 	float fQuakinessEnd;
@@ -144,6 +148,8 @@ private:
 	float fVolume; // Overall volume of the instrument exluding midi velocity
 	float fDuration;
 	float fAttack;
+	float fDecay;
+	float fSustain;
 	float fRelease;
 	float fQuakinessStart; // Loudness of the overtones
 	float fQuakinessEnd;
@@ -157,7 +163,7 @@ private:
 	float fStereo;
 	float fDelayFeed;
 	int iDelayLength;
-	int iADSR; // 0: Attack, 1: SUSTAIN, 2: Release
+	int iADSR; // 0: Attack, 2: Decay, 3: Release
 	float fADSRVal; // Volume from ADSR envelope
 	float fPhase[NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
 	float fModulationPhase; // Phase of the modulation
