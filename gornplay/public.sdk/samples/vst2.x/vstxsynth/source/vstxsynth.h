@@ -177,15 +177,19 @@ private:
 	float reverbBuffer[MAX_DELAY_LENGTH][NUM_Stereo_VOICES];
 	int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pull-out
 
+	// Stuff for delayed midi notes
+	int midiDelaySamples;
+	VstInt32 midiDelayNote;
+	VstInt32 midiDelayVelocity;
+
 	VstXSynthProgram* programs;
 	VstInt32 channelPrograms[16];
 
 	VstInt32 currentNote;
 	VstInt32 currentVelocity; // That is the midi volume
-	VstInt32 currentDelta; // The time in samples until the note shall be played
 
 	void initProcess ();
-	void noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta);
+	void noteOn (VstInt32 note, VstInt32 velocity);
 	void noteOff ();
 	void fillProgram (VstInt32 channel, VstInt32 prg, MidiProgramName* mpn);
 };

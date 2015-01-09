@@ -142,10 +142,12 @@ void VstXSynth::initProcess ()
 	iADSR = 0;
 	fADSRVal = 0.0f;
 	fScaler = (float)((double)PI / 44100.);	// we don't know the sample rate yet
-	currentVelocity = 0;
-	currentDelta = currentNote = currentDelta = 0;
 	VstInt32 i;
-	noteOn (0, 0, 0);
+	for (int i = 0; i < NUM_Stereo_VOICES; i++)
+	{
+		fLastOutput[i] = 0.0f;
+	}
+	noteOn (0, 0);
 	sampleID = 0;
 
 	// Initialize moog filter parameters
@@ -199,47 +201,15 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 	float* out2 = outputs[1];
 
 	float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
-	float vol = (float)(fVolume * (double)currentVelocity * midiScaler) * 4.0f;
-		
-	if (currentDelta > 0) // PROBLEM: THERE IS NO REVERB!
-	{
-		if (currentDelta >= sampleFrames)	// future
-		{
-			currentDelta -= sampleFrames;
-			for (int i = 0; i < sampleFrames; i++)
-			{
-				for (int j = 0; j < NUM_Stereo_VOICES; j++)
-				{
-					fRemainDC[j] *= REMAIN_DC_FALLOFF;
-					fLastOutput[j] = fRemainDC[j];
-				}
-				*out1 = fRemainDC[0] + fRemainDC[2];
-				*out2 = fRemainDC[1] + fRemainDC[3];
-				out1++;
-				out2++;
-			}
-			return;
-		}
-
-		for (int i = 0; i < currentDelta; i++)
-		{
-			for (int j = 0; j < NUM_Stereo_VOICES; j++)
-			{
-				fRemainDC[j] *= REMAIN_DC_FALLOFF;
-				fLastOutput[j] = fRemainDC[j];
-			}
-			*out1 = fRemainDC[0] + fRemainDC[2];
-			*out2 = fRemainDC[1] + fRemainDC[3];
-			out1++;
-			out2++;
-		}
-		sampleFrames -= currentDelta;
-		currentDelta = 0;
-	}
+	float vol = (float)(fVolume * (double)currentVelocity * midiScaler) * 4.0f;		
 
 	// loop
 	while (--sampleFrames >= 0)
 	{
+		// Check if a new note has to be played
+		if (midiDelaySamples == 0) noteOn(midiDelayNote, midiDelayVelocity);
+		midiDelaySamples--;
+
 		// Process ADSR envelope
 		switch (iADSR)
 		{
@@ -372,7 +342,12 @@ VstInt32 VstXSynth::processEvents (VstEvents* ev)
 			if (!velocity && (note == currentNote))
 				noteOff ();
 			else
-				noteOn (note, velocity, event->deltaFrames);
+			{
+				midiDelaySamples = event->deltaFrames;
+				midiDelayNote = note;
+				midiDelayVelocity = velocity;
+				if (midiDelaySamples <= 0) noteOn(note, velocity);
+			}
 		}
 		else if (status == 0xb0)
 		{
@@ -385,11 +360,11 @@ VstInt32 VstXSynth::processEvents (VstEvents* ev)
 }
 
 //-----------------------------------------------------------------------------------------
-void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity, VstInt32 delta)
+void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 {
+	midiDelaySamples = -1;
 	currentNote = note;
 	currentVelocity = velocity;
-	currentDelta = delta;
 	for (int i = 0; i < NUM_OVERTONES; i++)
 	{
 		for (int j = 0; j < NUM_Stereo_VOICES; j++)

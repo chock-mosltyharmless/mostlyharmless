@@ -75,12 +75,6 @@ VstXSynth::VstXSynth (audioMasterCallback audioMaster)
 		setUniqueID ('nceG');			// <<<! *must* change this!!!!
 	}
 
-	// Set some initial value
-	fLastOutput[0] = 0.0f;
-	fLastOutput[1] = 0.0f;
-	fRemainDC[0] = 0.0f;
-	fRemainDC[1] = 0.0f;
-
 	initProcess ();
 	suspend ();
 }
