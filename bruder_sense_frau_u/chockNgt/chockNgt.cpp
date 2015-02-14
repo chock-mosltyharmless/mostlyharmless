@@ -89,6 +89,80 @@ void drawQuad(float startX, float endX, float startY, float endY, float startV, 
 			glEnable(GL_DEPTH_TEST);
 }
 
+// Newspaper move global data
+#define NUM_MOVE_NEWSPAPERS 9
+#define MOVE_NEWSPAPER_SPEED_X 0.004f
+#define MOVE_NEWSPAPER_SPEED_Y 0.005f
+#define MOVE_NEWSPAPER_WIDTH 0.6f
+#define MOVE_NEWSPAPER_HEIGHT 0.8f
+float newspaperPos[NUM_MOVE_NEWSPAPERS][2];
+int currentNewspaper;
+char *newspaperName[NUM_MOVE_NEWSPAPERS] = 
+{
+	"1.tga",
+	"2.tga",
+	"3.tga",
+	"4.tga",
+	"5.tga",
+	"6.tga",
+	"7.tga",
+	"8.tga",
+	"9.tga",
+};
+
+// Function to initialize the moving of newspapers (set to left)
+void initMoveNewspaper()
+{
+	for (int np = 0; np < NUM_MOVE_NEWSPAPERS; np++)
+	{
+		newspaperPos[np][0] = -1.0f - MOVE_NEWSPAPER_WIDTH;
+		newspaperPos[np][1] = 0.0f - 0.5f * MOVE_NEWSPAPER_HEIGHT;
+	}
+	currentNewspaper = -1;
+}
+
+// Update newspaper positions and draw the things
+void drawNewspaper(int deltaX, int deltaY)
+{
+	char errorString[MAX_ERROR_LENGTH+1];
+
+	if (currentNewspaper >= 0 && currentNewspaper < NUM_MOVE_NEWSPAPERS)
+	{
+		newspaperPos[currentNewspaper][0] += MOVE_NEWSPAPER_SPEED_X * deltaX;
+		if (newspaperPos[currentNewspaper][0] < -1.0f - MOVE_NEWSPAPER_WIDTH)
+		{
+			newspaperPos[currentNewspaper][0] = -1.0f - MOVE_NEWSPAPER_WIDTH;
+		}
+		if (newspaperPos[currentNewspaper][0] > 1.0f)
+		{
+			newspaperPos[currentNewspaper][0] = 1.0f;
+		}
+		if (newspaperPos[currentNewspaper][1] < -1.0f - MOVE_NEWSPAPER_HEIGHT)
+		{
+			newspaperPos[currentNewspaper][1] = -1.0f - MOVE_NEWSPAPER_HEIGHT;
+		}
+		if (newspaperPos[currentNewspaper][1] > 1.0f)
+		{
+			newspaperPos[currentNewspaper][1] = 1.0f;
+		}
+		newspaperPos[currentNewspaper][1] -= MOVE_NEWSPAPER_SPEED_Y * deltaY;
+	}
+
+	for (int np = 0; np < NUM_MOVE_NEWSPAPERS; np++)
+	{
+		GLuint texID;
+		if (textureManager.getTextureID(newspaperName[np], &texID, errorString))
+		{
+			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+			return;
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		drawQuad(newspaperPos[np][0], newspaperPos[np][0] + MOVE_NEWSPAPER_WIDTH,
+			     newspaperPos[np][1], newspaperPos[np][1] + MOVE_NEWSPAPER_HEIGHT,
+				 0.0f, 1.0f, 1.0f);
+	}
+}
+
 //WinMain -- Main Window
 int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                      LPSTR lpCmdLine, int nCmdShow )
@@ -112,9 +186,10 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	// Create the window
     //mainWnd = CreateWindow (szAppName,szAppName,WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,600,0,0,hInstance,0);
-	//mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,600,0,0,hInstance,0);
-	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
+	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	glInit();
+	initMoveNewspaper();
 
     ShowWindow(mainWnd,SW_SHOW);
     UpdateWindow(mainWnd);
@@ -132,21 +207,10 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	float fCurTime;
 	GetAsyncKeyState(VK_ESCAPE);
 
-	POINT oldMousePos = {0, 0};
 	POINT newMousePos = {0, 0};
 	int relMouseX, relMouseY;
 	do
     {
-		// Mouse stuff
-#if 1
-		ShowCursor(FALSE);
-		oldMousePos = newMousePos;
-		GetCursorPos(&newMousePos);
-		relMouseX = newMousePos.x - oldMousePos.x;
-		relMouseY = newMousePos.y - oldMousePos.y;
-		SetCursorPos(320, 240);
-#endif
-
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 		{
 			if (!IsDialogMessage(mainWnd, &msg))
@@ -156,6 +220,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			}
 		}
 		if (msg.message == WM_QUIT) break; // early exit on quit
+
+		// Mouse stuff
+#if 1
+		ShowCursor(FALSE);
+		GetCursorPos(&newMousePos);
+		relMouseX = newMousePos.x - 320;
+		relMouseY = newMousePos.y - 240;
+		SetCursorPos(320, 240);
+#endif
 
 		// update timer
 		long curTime = timeGetTime() - startTime;
@@ -167,14 +240,17 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		// render
 		wglMakeCurrent(mainDC, mainRC);
 		
-		glClearColor(0.0f, 0.3f, 0.0f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 
 		glDisable(GL_LIGHTING);
 
+		// Draw the newspaper moving thing
+		drawNewspaper(relMouseX, relMouseY);
+
 		// draw background
-		drawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
+		//drawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
 		//glEnable(GL_DEPTH_TEST);
 
 		// set up matrices
@@ -253,6 +329,31 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			return DefWindowProc(hwnd, message, wParam, lParam);
       }
       break;
+
+	case WM_KEYDOWN:
+		switch(wParam)
+		{
+			// move newspaper
+		case '1':
+		case '2':
+		case '3':
+		case '4':
+		case '5':
+		case '6':
+		case '7':
+		case '8':
+		case '9':
+			currentNewspaper = wParam - '1';
+			break;
+
+		case '0':
+			currentNewspaper = -1;
+			break;
+
+		default:
+			currentNewspaper = -1; // just in case...
+		}
+		break;
 
 	case WM_CREATE:
         break;
