@@ -45,6 +45,9 @@
     <ClInclude Include="Configuration.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Snippets.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -59,10 +62,8 @@
     <ClCompile Include="TextureManager.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="bass.lib">
-      <Filter>Ressourcendateien</Filter>
-    </Library>
+    <ClCompile Include="Snippets.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

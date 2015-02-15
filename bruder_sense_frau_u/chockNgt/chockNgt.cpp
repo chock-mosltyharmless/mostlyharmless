@@ -7,6 +7,7 @@
 #include "mathhelpers.h"
 #include "TextureManager.h"
 #include "Configuration.h"
+#include "Snippets.h"
 
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
@@ -38,6 +39,8 @@ static int *creditsTexData[1024*1024];
 //HSTREAM mp3Str;
 
 TextureManager textureManager;
+
+Snippets snippets;
 
 void glInit()
 {
@@ -207,6 +210,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	float fCurTime;
 	GetAsyncKeyState(VK_ESCAPE);
 
+	snippets.init();
+
 	POINT newMousePos = {0, 0};
 	int relMouseX, relMouseY;
 	do
@@ -247,7 +252,19 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glDisable(GL_LIGHTING);
 
 		// Draw the newspaper moving thing
-		drawNewspaper(relMouseX, relMouseY);
+		//drawNewspaper(relMouseX, relMouseY);
+
+		// Draw the snippet stuff
+		GLuint texID;
+		char errorString[MAX_ERROR_LENGTH + 1];
+		if (textureManager.getTextureID("1.tga", &texID, errorString))
+		{
+			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+			return -1;
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		snippets.update(fDeltaTime);
+		snippets.draw();
 
 		// draw background
 		//drawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
