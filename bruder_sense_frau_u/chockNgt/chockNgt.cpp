@@ -170,6 +170,8 @@ void drawNewspaper(int deltaX, int deltaY)
 int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                      LPSTR lpCmdLine, int nCmdShow )
 {
+	char errorString[MAX_ERROR_LENGTH + 1];
+
     MSG msg;
 	msg.message = WM_CREATE;
 
@@ -212,6 +214,55 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	snippets.init();
 
+
+#if 1
+	// Initialize test avi
+	AVISTREAMINFO psi;
+	PAVISTREAM pavi;
+	PGETFRAME pgf;
+	BITMAPINFOHEADER bmih;
+	int width;  // Video width
+	int height; // Video height
+	int lastFrame; // Last frame in the AVI stream (number of frames, basically)
+	char *pdata;  // Pointer to texture data
+
+	HDRAWDIB hdd = DrawDibOpen(); // Used for scaling/drawing the avi to a RAM buffer
+	HBITMAP hBitmap; // Bitmap that holds the texture
+	HDC hdc = CreateCompatibleDC(mainDC);
+	//HDC hdc = mainDC;
+	unsigned char *data = 0; // Resized image after using dibdraw
+
+	AVIFileInit(); // Opens the AVIFile Library
+	if (AVIStreamOpenFromFile(&pavi, "textures/test_awkward.avi", streamtypeVIDEO, 0, OF_READ, NULL))
+	{
+		MessageBox(mainWnd, "Failed to open textures/test.avi", "AVI error", MB_OK);
+		return -1;
+	}
+	AVIStreamInfo(pavi, &psi, sizeof(psi)); // Reads stream info
+	width = psi.rcFrame.right - psi.rcFrame.left;
+	height = psi.rcFrame.bottom - psi.rcFrame.top;
+	lastFrame = AVIStreamLength(pavi);
+	//mpf = AVIStreamSampleToTime(pavi, lastFrame) / lastFrame; // Clumsy frame rate computation
+
+	bmih.biSize = sizeof(BITMAPINFOHEADER);
+	bmih.biPlanes = 1;
+	bmih.biBitCount = 24;
+	bmih.biWidth = width;
+	bmih.biHeight = height;
+	bmih.biCompression = BI_RGB;
+	hBitmap = CreateDIBSection(hdc, (BITMAPINFO*)(&bmih), DIB_RGB_COLORS, (void**)(&data), NULL, NULL);
+	SelectObject(hdc, hBitmap);
+	GdiFlush();
+
+	pgf = AVIStreamGetFrameOpen(pavi, NULL);
+	if (pgf == NULL)
+	{
+		MessageBox(mainWnd, "Failed to open frames for loading", "AVI error", MB_OK);
+		return -1;
+	}
+#endif
+
+
 	POINT newMousePos = {0, 0};
 	int relMouseX, relMouseY;
 	do
@@ -251,12 +302,14 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 		glDisable(GL_LIGHTING);
 
+#if 0
 		// Draw the newspaper moving thing
-		//drawNewspaper(relMouseX, relMouseY);
+		drawNewspaper(relMouseX, relMouseY);
+#endif
 
+#if 0
 		// Draw the snippet stuff
 		GLuint texID;
-		char errorString[MAX_ERROR_LENGTH + 1];
 		if (textureManager.getTextureID("1.tga", &texID, errorString))
 		{
 			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
@@ -265,7 +318,29 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glBindTexture(GL_TEXTURE_2D, texID);
 		snippets.update(fDeltaTime);
 		snippets.draw();
+#endif
 
+#if 1
+		// Draw some avi texture
+		static int frame = 0;
+		LPBITMAPINFOHEADER lpbi;
+		lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(pgf, frame);
+		frame++;
+		frame %= lastFrame;
+		pdata = (char *)lpbi + lpbi->biSize + lpbi->biClrUsed * sizeof(RGBQUAD); // Skip header info to get to data
+		// Convert data to requested bitmap format
+		DrawDibDraw(hdd, hdc, 0, 0, width, height, lpbi, pdata, 0, 0, width, height, 0);
+		GdiFlush();
+		// create openGL texture
+		glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
+		GLuint aviTexID;
+		textureManager.getTextureID("1.tga", &aviTexID, errorString);
+		glBindTexture(GL_TEXTURE_2D, aviTexID);
+		//gluBuild2DMipmaps(GL_TEXTURE_2D, GL_BGR,
+		//				  64, 64, GL_BGRA, GL_UNSIGNED_BYTE, data);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, 400, GL_BGR, GL_UNSIGNED_BYTE, data);
+		drawQuad(-0.3f, 0.8f, -0.2f, 0.7, 0.0f, 1.0f, 1.0f);
+#endif
 		// draw background
 		//drawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
 		//glEnable(GL_DEPTH_TEST);
@@ -283,28 +358,6 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		//		  1., 0.5, 0.0,
 		//		  0.0, 1.0, 0.0);
 
-#if 0
-		// lighting:
-		float ambient[4] = {0.3f, 0.23f, 0.2f, 1.0f};
-		//float diffuse[4] = {1.8f, 1.7f, 0.8f, 1.0f};
-		float diffuse[4] = {0.9f, 0.85f, 0.4f, 1.0f};
-		float diffuse2[4] = {0.45f, 0.475f, 0.2f, 1.0f};
-		//float diffuse2[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-		float specular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-		float lightDir[4] = {0.7f, 0.0f, 0.7f, 0.0f};
-		float allOnes[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-		glEnable(GL_LIGHTING);
-		glEnable(GL_LIGHT0);
-		glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-		glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-		glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
-		glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
-		//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, allOnes);
-		//glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, allOnes);
-		//glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, allOnes);
-		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
-#endif
-
 		//glColor3ub(200, 100, 50);
 		//glEnable(GL_BLEND);
 		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -320,6 +373,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	BASS_ChannelStop(mp3Str);
 	BASS_StreamFree(mp3Str);
 	BASS_Free();
+#endif
+
+#if 1
+	// AVI uninit
+	DeleteObject(hBitmap);
+	DrawDibClose(hdd);
+	AVIStreamGetFrameClose(pgf);
+	AVIStreamRelease(pavi);
+	AVIFileExit();
 #endif
 
 	glUnInit();
