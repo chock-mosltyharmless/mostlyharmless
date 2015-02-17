@@ -102,6 +102,28 @@ void Snippets::update(float deltaTime)
 
 void Snippets::draw(void)
 {
+#if 0
+		// lighting:
+		float ambient[4] = {0.3f, 0.23f, 0.2f, 1.0f};
+		//float diffuse[4] = {1.8f, 1.7f, 0.8f, 1.0f};
+		float diffuse[4] = {0.9f, 0.85f, 0.4f, 1.0f};
+		float diffuse2[4] = {0.45f, 0.475f, 0.2f, 1.0f};
+		//float diffuse2[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+		float specular[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+		float lightDir[4] = {0.7f, 0.0f, 0.7f, 0.0f};
+		float allOnes[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+		glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+		glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
+		glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, allOnes);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, allOnes);
+		//glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, allOnes);
+		glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+#endif
+
 	// Width of a standard tex unit
 	const float texW = 0.02f;
 	// Width of a standard poly unit
