@@ -2,6 +2,10 @@
 #include "Snippets.h"
 #include "Math.h"
 
+#ifndef PI
+#define PI 3.1415926f
+#endif
+
 Snippets::Snippets(void)
 {
 }
@@ -23,22 +27,77 @@ void Snippets::init(void)
 		snippet[i].speed[1] = 0.0f;
 		snippet[i].speed[2] = 0.0f;
 
-		float quatLen = 0.0f;
-		for (int dim = 0; dim < 4; dim++)
+		for (int dim = 0; dim < 3; dim++)
 		{
-			snippet[i].rotation[dim] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
-			quatLen += snippet[i].rotation[dim];
-		}
-		quatLen = 1.0f / (quatLen + 0.0001f);
-		for (int dim = 0; dim < 4; dim++)
-		{
-			snippet[i].rotation[dim] *= quatLen;
+			snippet[i].rpy[dim] = 2.0f * PI * (float)rand() / (float)RAND_MAX;
 		}
 	}
 }
 
 void Snippets::update(float deltaTime)
 {
+	// Do a little bit of rotation
+	for (int i = 0; i < NUM_SNIPPETS; i++)
+	{
+		for (int dim = 0; dim < 3; dim++)
+		{
+			snippet[i].rpy[dim] += deltaTime*0.9f;
+			while (snippet[i].rpy[dim] > PI*2.0f) snippet[i].rpy[dim] -= PI*2.0f;
+		}
+	}
+
+	// Move according to speed
+	for (int i = 0; i < NUM_SNIPPETS; i++)
+	{
+		for (int dim = 0; dim < 3; dim++)
+		{
+			snippet[i].pos[dim] += snippet[i].speed[dim] * deltaTime;
+		}
+	}
+
+	// Gravitate
+	for (int i = 0; i < NUM_SNIPPETS; i++)
+	{
+		snippet[i].speed[1] -= 1.5f * deltaTime;
+	}
+
+	// Remove normal component
+	for (int i = 0; i < NUM_SNIPPETS; i++)
+	{
+		float normal[3] = {0.0f, 0.0f, 1.0f};
+		rotate(normal, snippet[i].rpy);
+		float scalProd = 0.0f;
+		for (int dim = 0; dim < 3; dim++)
+		{
+			scalProd += normal[dim] * snippet[i].speed[dim];
+		}
+		
+		// Remove it completely
+		for (int dim = 0; dim < 3; dim++)
+		{
+			snippet[i].speed[dim] -= scalProd * normal[dim];
+		}
+	}
+
+	// Slow down due to air resistance
+	for (int i = 0; i < NUM_SNIPPETS; i++)
+	{
+		for (int dim = 0; dim < 3; dim++)
+		{
+			snippet[i].speed[dim] *= 0.95f;
+		}
+	}
+
+	// Warp snippet up
+	for (int i = 0; i < NUM_SNIPPETS; i++)
+	{
+		if (snippet[i].pos[1] < -1.2f)
+		{
+			snippet[i].pos[0] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
+			snippet[i].pos[1] = 2.0f * (float)rand() / (float)RAND_MAX + 1.0f;
+			snippet[i].pos[2] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
+		}
+	}
 }
 
 void Snippets::draw(void)
@@ -72,14 +131,49 @@ void Snippets::draw(void)
 		float px = snippet[i].pos[0];
 		float py = snippet[i].pos[1];
 
+		float rvec[3] = {polyW, 0.0f, 0.0f};
+		float uvec[3] = {0.0f, polyW, 0.0f};
+
+		rotate(rvec, snippet[i].rpy);
+		rotate(uvec, snippet[i].rpy);
+
 		glTexCoord2f(texX + texW*(displ[0][0]-1.0f), texY + texW*(displ[0][1]+1.0f));
-		glVertex3f(px + polyW*(displ[0][0]-1.0f), py + polyW*(displ[0][1]+1.0f), 0.99f);
+		//glVertex3f(px + polyW*(displ[0][0]-1.0f), py + polyW*(displ[0][1]+1.0f), 0.99f);
+		glVertex3f(px + rvec[0]*(displ[0][0]-1.0f) + uvec[0]*(displ[0][1]+1.0f),
+			       py + rvec[1]*(displ[0][0]-1.0f) + uvec[1]*(displ[0][1]+1.0f), 0.99f);
 		glTexCoord2f(texX + texW*(displ[1][0]+1.0f), texY + texW*(displ[1][1]+1.0f));
-		glVertex3f(px + polyW*(displ[1][0]+1.0f), py + polyW*(displ[1][1]+1.0f), 0.99f);
+		//glVertex3f(px + polyW*(displ[1][0]+1.0f), py + polyW*(displ[1][1]+1.0f), 0.99f);
+		glVertex3f(px + rvec[0]*(displ[1][0]+1.0f) + uvec[0]*(displ[1][1]+1.0f),
+			       py + rvec[1]*(displ[1][0]+1.0f) + uvec[1]*(displ[1][1]+1.0f), 0.99f);		
 		glTexCoord2f(texX + texW*(displ[2][0]+1.0f), texY + texW*(displ[2][1]-1.0f));
-		glVertex3f(px + polyW*(displ[2][0]+1.0f), py + polyW*(displ[2][1]-1.0f), 0.99f);
+		//glVertex3f(px + polyW*(displ[2][0]+1.0f), py + polyW*(displ[2][1]-1.0f), 0.99f);
+		glVertex3f(px + rvec[0]*(displ[2][0]+1.0f) + uvec[0]*(displ[2][1]-1.0f),
+			       py + rvec[1]*(displ[2][0]+1.0f) + uvec[1]*(displ[2][1]-1.0f), 0.99f);				
 		glTexCoord2f(texX + texW*(displ[3][0]-1.0f), texY + texW*(displ[3][1]-1.0f));
-		glVertex3f(px + polyW*(displ[3][0]-1.0f), py + polyW*(displ[3][1]-1.0f), 0.99f);
+		//glVertex3f(px + polyW*(displ[3][0]-1.0f), py + polyW*(displ[3][1]-1.0f), 0.99f);
+		glVertex3f(px + rvec[0]*(displ[3][0]-1.0f) + uvec[0]*(displ[3][1]-1.0f),
+			       py + rvec[1]*(displ[3][0]-1.0f) + uvec[1]*(displ[3][1]-1.0f), 0.99f);
 	}
 	glEnd();
+}
+
+void Snippets::rotate(float pos[3], float rpy[3])
+{
+	float t[3];
+
+	t[0] = pos[0];
+	t[1] = cos(rpy[0]) * pos[1] - sin(rpy[0]) * pos[2];
+	t[2] = sin(rpy[0]) * pos[1] + cos(rpy[0]) * pos[2];
+
+	pos[0] = cos(rpy[1]) * t[0] - sin(rpy[1]) * t[2];
+	pos[1] = t[1];
+	pos[2] = sin(rpy[1]) * t[0] + cos(rpy[1]) * t[2];
+
+	t[0] = cos(rpy[2]) * pos[0] - sin(rpy[2]) * pos[1];
+	t[1] = sin(rpy[2]) * pos[0] + cos(rpy[2]) * pos[1];
+	t[2] = pos[2];
+
+	pos[0] = t[0];
+	pos[1] = t[1];
+	pos[2] = t[2];
 }
