@@ -20,7 +20,7 @@ void Snippets::init(void)
 	for (int i = 0; i < NUM_SNIPPETS; i++)
 	{
 		snippet[i].pos[0] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
-		snippet[i].pos[1] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
+		snippet[i].pos[1] = 2.0f * (float)rand() / (float)RAND_MAX + 1.0f;
 		snippet[i].pos[2] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
 
 		snippet[i].speed[0] = 0.0f;
@@ -84,7 +84,7 @@ void Snippets::update(float deltaTime)
 	{
 		for (int dim = 0; dim < 3; dim++)
 		{
-			snippet[i].speed[dim] *= 0.95f;
+			snippet[i].speed[dim] *= (float)exp(deltaTime * -8.f);
 		}
 	}
 
@@ -103,9 +103,9 @@ void Snippets::update(float deltaTime)
 void Snippets::draw(void)
 {
 	// Width of a standard tex unit
-	const float texW = 0.03f;
+	const float texW = 0.02f;
 	// Width of a standard poly unit
-	const float polyW = 0.04f;
+	const float polyW = 0.025f;
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();

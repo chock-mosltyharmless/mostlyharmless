@@ -1,6 +1,6 @@
 #pragma once
 
-#define NUM_SNIPPETS 256
+#define NUM_SNIPPETS 512
 
 class Snippet
 {
