@@ -7,7 +7,7 @@ class Snippet
 public:
 	float pos[3]; // But we simply ignore Z
 	float speed[3]; // Movement speed, should be 0 along normal
-	float rotation[4]; // Rotation stored in a quaternion
+	float rpy[3]; // Rotation stored as roll, pitch and yaw
 };
 
 class Snippets
@@ -26,6 +26,9 @@ public:
 	void draw(void);
 
 private:
+	// Rotate a vector in-place using roll, pitch and yaw
+	void rotate(float pos[3], float rpy[3]);
+
 	Snippet snippet[NUM_SNIPPETS];
 };
 
