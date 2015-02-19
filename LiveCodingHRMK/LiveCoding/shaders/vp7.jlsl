@@ -17,13 +17,13 @@ for (int i = 0; i < 100 && length(rayPos)<12. &&
 totalDensity < 0.98; i++) {                                           
 vec4 noiseA = vnoise3(rayPos*0.01 + vec3(time*0.03), 0.8);            
 float implicit = length(rayPos + 
-fract(rayDir*6.*sin(time*0.008))*sin(time*0.009+0.5)*3. +
+fract(rayDir*6.*sin(time*0.028))*sin(time*0.059+0.5)*3. +
 6.*noiseA.xyz*vnoise1(rayPos*0.02 + noiseA.xxx*sin(time*0.27)*0.6))   
 -2.;                                                                  
                                                                       
 float amounter =                                                      
 pow(vnoise3(rayPos.xxx*0.01 * sin(vec3(time*0.05)*2.1), 0.8).x, 1.5) *
-sin(time*sin(rayPos.y*0.002)) * (9.0 + sin(time*0.03)*2.);            
+sin(time*sin(rayPos.y*0.002)) * (9.0 + sin(time*0.21)*2.);            
 implicit += vnoise3(rayPos*0.15 - vec3(time*0.1)*0.01, 0.7).x         
 * amounter * max(0.0, (1.0 - abs(implicit)));                         
                                                                       
@@ -37,7 +37,7 @@ vec3(0.04, 0.03, 0.02),
 min(0.9,max(-.4,length(rayPos-vec3(sin(time)))-1.5)));                
 totalColor -= 1./(1. + abs(amounter)) * vec3(.05, 0.05, 0.03)         
 * (sin(time*.1)+0.) + (2.*sin(rayPos.z*5.)+1.) * 
-(0.01 * sin(time*0.03) + 0.02);                                       
+(0.01 * sin(time*0.072) + 0.02);     
                                                                       
 float stepSize = max(0.04, abs(implicit)*0.6*0.7);                    
 rayPos += rayDir * stepSize;                                          
