@@ -1,20 +1,41 @@
 void main(void) {                                                     
-vec3 color = vec3(0.0);                                               
-vec4 baseNoise = vnoise3(                                             
-vec3(ppos*0.05, length(ppos)*0.06 - time*0.02), 0.7);                 
-vec4 moveNoise = vnoise3(                                             
-vec3(ppos*0.04, ppos.y *0.03 - time*0.04), 0.8);                      
+vec3 color = vec3(0.);                                                
+vec3 rayPos = vec3(0., 0., 0. - 8.);                                  
+vec3 rayDir = normalize(vec3(ppos, 2.));                              
+vec3 totalColor = vec3(0.);                                           
+float totalDensity = 0.;                                              
                                                                       
-float amount = smoothstep(0.0, 0.3, 0.3 - abs(baseNoise.r)) *         
-(moveNoise.r + 0.2);                                                  
-color.rgb = mix(vec3(1.0, 0.7, 0.3), vec3(0.3, 0.4, 1.0),             
-baseNoise.g + 0.5);                                                   
-color.rgb *= vec3(amount)*2.;                                         
+rayDir.xz = rotate(rayDir.xz, time);                                  
+rayDir.xy = rotate(rayDir.xy, time);                                  
+rayPos.xz = rotate(rayPos.xz, time);                                  
+rayPos.xy = rotate(rayPos.xy, time);                                  
                                                                       
-float highlight = smoothstep(0.0, 0.08,                               
-0.1 - abs(baseNoise.r + 0.05)) * moveNoise.g;                         
-color.rgb += vec3(highlight)*2.;                                      
+for (int i = 0; i < 100 && length(rayPos) < 12. &&                    
+totalDensity < 0.95; i++) {                                           
+                                                                      
+float distort = vnoise1(rayPos*0.02).g;                               
+float smoothness = vnoise1(rayPos*0.01).x*5.;                         
+float bumper = 0.5;                                                   
+bumper += spike*4.*slider2+0.5;                                       
+vec3 noisePos = rayPos + bumper*vnoise5(rayPos*0.03*distort +         
+vec3(time*0.04), slider1).xyz;                                        
+float implicit = length(noisePos) - 3.*slider3;                       
+implicit += vnoise1(rayPos*0.04).b*8.*slider4;                        
+                                                                      
+float density = smoothstep(0., -0.3, implicit);                       
+totalDensity += (1. - totalDensity) * density;                        
+totalDensity += 0.01;                                                 
+totalColor += 4.*mix(vec3(0.01,0.013,0.014), vec3(0.014,0.012,0.009), 
+sin(noisePos.x*2.*noisePos.z));                                       
+                                                                      
+rayPos += rayDir * max(0.03, abs(implicit) * .5f);                    
+}                                                                     
+                                                                      
+color = mix(vec3(0.3,0.2,0.1), vec3(0.2,0.2,0.4),                     
+rayDir.z*rayDir.x*2.);                                                
+color = mix(color, totalColor, totalDensity);                         
                                                                       
 gl_FragColor = vec4(color, 1.0);                                      
 }                                                                     
+                                                                      
                                                                       

@@ -14,15 +14,15 @@ for (int i = 0; i < 100 && length(rayPos) < 40. &&
 totalDensity < 0.95; i++) {                                           
                                                                       
 vec3 noisePos = rayPos +                                              
-1.*vnoise3(rayPos*0.1 + vec3(time*0.05), 0.5).xyz;                    
+1.*vnoise3(rayPos*0.1 + vec3(time*0.1), 0.5).xyz;                     
 float implicit = length(rayPos +                                      
-sin(rayPos.x+time) *                                                  
+sin(rayPos.x+time*3. + spike) *                                       
 6. * vnoise3(noisePos*0.01,0.5).xyz) - 3.;                            
                                                                       
 float density = smoothstep(0.2, -0.5, abs(implicit));                 
 totalColor += 0.03 * (1. - totalDensity) *                            
 mix(vec3(.0, 2., 3.), vec3(3., 1., 1.0),                              
-vnoise1(rayPos*0.01).r + 0.5);                                        
+vnoise1(rayPos*0.01).r + 0.5 + spike*0.3);                            
 totalColor -= (1.-totalDensity) * density * density * 5.;             
 //totalColor += noisePos * density * (1. - totalDensity);             
 totalDensity += (1. - totalDensity) * density;                        
