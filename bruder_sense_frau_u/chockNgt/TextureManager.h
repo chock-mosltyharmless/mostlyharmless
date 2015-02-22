@@ -13,7 +13,9 @@
 
 #define TM_DIRECTORY "textures/"
 #define TM_SHADER_WILDCARD "*.tga"
+#define TM_VIDEO_WILDCARD "*.avi"
 #define TM_MAX_NUM_TEXTURES 64
+#define TM_MAX_NUM_VIDEOS 8
 #define TM_MAX_FILENAME_LENGTH 1024
 
 #define TM_OFFSCREEN_NAME "renderTarget"
@@ -62,17 +64,21 @@ public: // functions
 	// Returns 0 if successful, -1 otherwise
 	// The error string must hold space for at least SM_MAX_ERROR_LENGTH
 	// characters. It contains errors from compilation/loading
-	int init(char *errorString);
+	int init(char *errorString, HDC mainDC);
 
 	// Get the texture ID from a named texture
 	// That might either be a .tga or any of the special textures
 	int getTextureID(const char *name, GLuint *id, char *errorString);
+
+	// Get the texture ID from a named video (this also sets the video texture in openGL)
+	int getVideoID(const char *name, GLuint *id, char *errorString, int frameID);
 
 private: // functions
 	void releaseAll(void);
 	int createRenderTargetTexture(char *errorString, int width, int height,
 								  const char *name);
 	int loadTGA(const char *filename, char *errorString);
+	int loadAVI(const char *filename, char *errorString);
 	float frand(void);
 	void normalizeKernel(float *kernel, int kernelLength);
 	void normalizeTexture(float *texture, int textureSize);
@@ -86,5 +92,20 @@ private: // data
 	GLuint textureID[TM_MAX_NUM_TEXTURES];
 	int textureWidth[TM_MAX_NUM_TEXTURES];
 	int textureHeight[TM_MAX_NUM_TEXTURES];
+
+	// The same for the videos (including textures)
+	int numVideos;
+	char videoName[TM_MAX_NUM_VIDEOS][TM_MAX_FILENAME_LENGTH+1];
+	GLuint videoTextureID[TM_MAX_NUM_VIDEOS];
+	int videoWidth[TM_MAX_NUM_VIDEOS];
+	int videoHeight[TM_MAX_NUM_VIDEOS];
+	int videoNumFrames[TM_MAX_NUM_VIDEOS];
+	AVISTREAMINFO psi[TM_MAX_NUM_VIDEOS];
+	PAVISTREAM pavi[TM_MAX_NUM_VIDEOS];
+	PGETFRAME pgf[TM_MAX_NUM_VIDEOS];
+	HBITMAP hBitmap[TM_MAX_NUM_VIDEOS]; // Bitmap that holds the video texture
+	unsigned char *videoData[TM_MAX_NUM_VIDEOS];
+	HDRAWDIB hdd; // Used for scaling/drawing the avi to a RAM buffer
+	HDC hdc;
 };
 

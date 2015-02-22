@@ -87,7 +87,9 @@
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="mathhelpers.h" />
+    <ClInclude Include="MovingPapers.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ScreenBorders.h" />
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TextureManager.h" />
@@ -95,6 +97,8 @@
   <ItemGroup>
     <ClCompile Include="chockNgt.cpp" />
     <ClCompile Include="mathhelpers.cpp" />
+    <ClCompile Include="MovingPapers.cpp" />
+    <ClCompile Include="ScreenBorders.cpp" />
     <ClCompile Include="Snippets.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
