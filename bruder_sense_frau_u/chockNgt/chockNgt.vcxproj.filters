@@ -48,6 +48,12 @@
     <ClInclude Include="Snippets.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="MovingPapers.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="ScreenBorders.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -63,6 +69,12 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Snippets.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="MovingPapers.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="ScreenBorders.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

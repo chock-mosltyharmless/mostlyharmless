@@ -11,16 +11,86 @@ float noiseData3D[TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE
 TextureManager::TextureManager(void)
 {
 	numTextures = 0;
+	numVideos = 0;
 }
 
 TextureManager::~TextureManager(void)
 {
+	AVIFileExit();
 }
 
 void TextureManager::releaseAll(void)
 {
 	glDeleteTextures(numTextures, textureID);
 	numTextures = 0;
+
+	for (int i = 0; i < numVideos; i++)
+	{
+		AVIStreamGetFrameClose(pgf[i]);
+		AVIStreamRelease(pavi[i]);
+		DeleteObject(hBitmap);
+	}
+	DrawDibClose(hdd);
+	DeleteDC(hdc);
+	glDeleteTextures(numVideos, videoTextureID);
+	numVideos = 0;
+}
+
+int TextureManager::loadAVI(const char *filename, char *errorString)
+{
+	char combinedName[TM_MAX_FILENAME_LENGTH+1];
+	sprintf_s(combinedName, TM_MAX_FILENAME_LENGTH,
+			  TM_DIRECTORY "%s", filename);
+
+	if (numTextures >= TM_MAX_NUM_TEXTURES)
+	{
+		sprintf_s(errorString, MAX_ERROR_LENGTH, "Too many textures.");
+		return -1;
+	}
+
+	if (AVIStreamOpenFromFile(&(pavi[numVideos]), combinedName, streamtypeVIDEO, 0, OF_READ, NULL))
+	{
+		return -1;
+	}
+	AVIStreamInfo(pavi[numVideos], &(psi[numVideos]), sizeof(psi[numVideos])); // Reads stream info
+	videoWidth[numVideos] = psi[numVideos].rcFrame.right - psi[numVideos].rcFrame.left;
+	videoHeight[numVideos] = psi[numVideos].rcFrame.bottom - psi[numVideos].rcFrame.top;
+	videoNumFrames[numVideos] = AVIStreamLength(pavi[numVideos]);
+
+	BITMAPINFOHEADER bmih;
+	bmih.biSize = sizeof(BITMAPINFOHEADER);
+	bmih.biPlanes = 1;
+	bmih.biBitCount = 24;
+	bmih.biWidth = videoWidth[numVideos];
+	bmih.biHeight = videoHeight[numVideos];
+	bmih.biCompression = BI_RGB;
+	hBitmap[numVideos] = CreateDIBSection(hdc, (BITMAPINFO*)(&bmih), DIB_RGB_COLORS, (void**)(&(videoData[numVideos])), NULL, NULL);
+	SelectObject(hdc, hBitmap);
+	GdiFlush();
+
+	pgf[numVideos] = AVIStreamGetFrameOpen(pavi[numVideos], NULL);
+	if (pgf == NULL)
+	{
+		sprintf_s(errorString, MAX_ERROR_LENGTH, "Could not open AVI stream for %s", filename);
+		return -1;
+	}
+
+	// create openGL texture
+	int textureSize = videoWidth[numVideos] * videoHeight[numVideos] * 4;
+	unsigned char *textureData = new unsigned char[textureSize];
+	glGenTextures(1, &videoTextureID[numVideos]);
+	glBindTexture(GL_TEXTURE_2D, videoTextureID[numVideos]);
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
+	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
+	glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+				 videoWidth[numVideos], videoHeight[numVideos],
+				 0, GL_BGRA, GL_UNSIGNED_BYTE, textureData);
+	delete [] textureData;
+	strcpy_s(videoName[numVideos], TM_MAX_FILENAME_LENGTH, filename);
+
+	numVideos++;
+	return 0;
 }
 
 int TextureManager::loadTGA(const char *filename, char *errorString)
@@ -94,10 +164,15 @@ int TextureManager::loadTGA(const char *filename, char *errorString)
 	return 0;
 }
 
-int TextureManager::init(char *errorString)
+int TextureManager::init(char *errorString, HDC mainDC)
 {
 	// Free everything if there was something before.
 	releaseAll();
+
+	// Initialize video rendering
+	hdd = DrawDibOpen(); // Used for scaling/drawing the avi to a RAM buffer
+	hdc = CreateCompatibleDC(mainDC);
+	AVIFileInit(); // Opens the AVIFile Library
 
 	// create small and large rendertarget texture
 	createRenderTargetTexture(errorString, X_OFFSCREEN, Y_OFFSCREEN, TM_OFFSCREEN_NAME);
@@ -126,6 +201,59 @@ int TextureManager::init(char *errorString)
 		if (retVal) return retVal;
 	} while (FindNextFile(hFind, &ffd));
 
+	// Go to video first file in textures directory
+	hFind = INVALID_HANDLE_VALUE;
+	dirname = TM_DIRECTORY TM_VIDEO_WILDCARD;
+	hFind = FindFirstFile(TM_DIRECTORY TM_VIDEO_WILDCARD, &ffd);
+	if (hFind == INVALID_HANDLE_VALUE)
+	{
+		sprintf_s(errorString, MAX_ERROR_LENGTH,
+				  "IO Error\nThere are no videos in " TM_DIRECTORY);
+		// No videos are not necessarily an error.
+		return 0;
+	}
+
+	// Load all the videos in the directory
+	do
+	{		
+		// Note that the number of videos is increased automatically
+		int retVal = loadAVI(ffd.cFileName, errorString);
+		if (retVal) return retVal;
+	} while (FindNextFile(hFind, &ffd));
+
+	return 0;
+}
+
+int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, int frameID)
+{
+	for (int i = 0; i < numVideos; i++)
+	{
+		if (strcmp(name, videoName[i]) == 0)
+		{
+			*id = videoTextureID[i];
+
+			LPBITMAPINFOHEADER lpbi;
+			lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(pgf[i], frameID % videoNumFrames[i]);
+			char *pdata = (char *)lpbi + lpbi->biSize + lpbi->biClrUsed * sizeof(RGBQUAD); // Skip header info to get to data
+			// Convert data to requested bitmap format
+			int width = videoWidth[i];
+			int height = videoHeight[i];
+			SelectObject(hdc, hBitmap[i]);
+			DrawDibDraw(hdd, hdc, 0, 0, width, height, lpbi, pdata, 0, 0, width, height, 0);
+			GdiFlush();
+			// create openGL texture
+			glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
+			GLuint aviTexID;
+			glBindTexture(GL_TEXTURE_2D, *id);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, videoData[i]);
+
+			return 0;
+		}
+	}
+
+	// Got here without finding a texture, return error.
+	sprintf_s(errorString, MAX_ERROR_LENGTH,
+			  "Could not find video '%s'", name);
 	return 0;
 }
 
