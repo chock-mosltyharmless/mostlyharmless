@@ -1,0 +1,39 @@
+void main(void) {                                                     
+vec3 color = vec3(0.);                                                
+vec3 rayPos = vec3(0., 0., 0. - 8.);                                  
+vec3 rayDir = normalize(vec3(ppos, 2.));                              
+vec3 totalColor = vec3(0.);                                           
+float totalDensity = 0.;                                              
+                                                                      
+rayDir.xz = rotate(rayDir.xz, time);                                  
+rayDir.xy = rotate(rayDir.xy, time);                                  
+rayPos.xz = rotate(rayPos.xz, time);                                  
+rayPos.xy = rotate(rayPos.xy, time);                                  
+                                                                      
+for (int i = 0; i < 100 && length(rayPos) < 12. &&                    
+totalDensity < 0.95; i++) {                                           
+                                                                      
+vec3 dn = vnoise1(rayPos * 0.02).rgb;                                 
+vec3 nval = vnoise5(rayPos * 0.03 * dn- vec3(time)*0.03 + dn.rgr*0.1  
+, slider3).rgb;                                                       
+float implicit = abs(length(rayPos + nval * 3. * slider4) - 3.) -     
+spike * slider1 - slider5;                                            
+implicit -= nval.r * slider2 * 5.;                                    
+                                                                      
+float density = smoothstep(0., -3.*slider6, implicit);                
+//totalColor += (1.-totalDensity)*density * vec3(0.0, .2, 0.0);       
+totalDensity += (1.-totalDensity)*density;                            
+totalDensity += 0.01;                                                 
+totalColor += mix(vec3(0.01, 0.014, 0.017),                           
+vec3(0.018, 0.015, 0.01), nval.g * knob1 * 8. + 0.3)                  
+* knob2 * 5. * (sin(rayPos.x*10.*knob3) + 1.2);                       
+                                                                      
+rayPos += rayDir * max(0.03, abs(implicit) * .3f);                    
+}                                                                     
+                                                                      
+color = mix(color, totalColor, totalDensity);                         
+                                                                      
+gl_FragColor = vec4(color, 1.0);                                      
+}                                                                     
+                                                                      
+                                                                      
