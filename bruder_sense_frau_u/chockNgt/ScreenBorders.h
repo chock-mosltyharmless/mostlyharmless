@@ -13,7 +13,7 @@ public:
 	void drawBorders(TextureManager *tex, HWND mainWnd);
 
 public:
-	void drawQuad(float left, float bottom, float right, float top);
+	void drawQuad(float left, float bottom, float right, float top, float tx1, float tx2);
 	// segmentation left then right (leftmost Schrank first)
 	float xBorder[3][2];
 	// segmentation bottom then top (OpenGL orientation)

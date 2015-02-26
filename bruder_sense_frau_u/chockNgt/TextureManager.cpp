@@ -243,7 +243,6 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
 			GdiFlush();
 			// create openGL texture
 			glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
-			GLuint aviTexID;
 			glBindTexture(GL_TEXTURE_2D, *id);
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, videoData[i]);
 

@@ -35,6 +35,7 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd)
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_FALSE);
 	glDisable(GL_DEPTH_TEST);
+#if 0	
 	GLuint texID;
 	char errorString[MAX_ERROR_LENGTH + 1];
 	if (tex->getTextureID("black", &texID, errorString))
@@ -58,12 +59,39 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd)
 	drawQuad(xBorder[2][0], yBorder[2][1], xBorder[2][1], 1.0f);
 	drawQuad(xBorder[2][1], -1.0f, 1.0f, 1.0f);
 	glEnd();
+#endif
+
+	GLuint offscreenTexture;
+	char errorString[MAX_ERROR_LENGTH + 1];
+	if (tex->getTextureID("renderTarget", &offscreenTexture, errorString))
+	{
+		MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+		return;
+	}
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);   //Copy back buffer to texture
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glDisable(GL_DEPTH_TEST);
+
+	glBegin(GL_QUADS);
+	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	drawQuad(xBorder[0][0], yBorder[0][0], xBorder[0][1], yBorder[0][1], 0.0f, 0.33f);
+	drawQuad(xBorder[1][0], yBorder[1][0], xBorder[1][1], yBorder[1][1], 0.34f, 0.66f);
+	drawQuad(xBorder[2][0], yBorder[2][0], xBorder[2][1], yBorder[2][1], 0.67f, 1.0f);
+	glEnd();
 }
 
-void ScreenBorders::drawQuad(float left, float bottom, float right, float top)
+void ScreenBorders::drawQuad(float left, float bottom, float right, float top,
+	                         float tx1, float tx2)
 {
+	glTexCoord2f(tx1, 1.0f);
 	glVertex3f(left, top, 0.99f);
+	glTexCoord2f(tx2, 1.0f);
 	glVertex3f(right, top, 0.99f);
+	glTexCoord2f(tx2, 0.0f);
 	glVertex3f(right, bottom, 0.99f);
+	glTexCoord2f(tx1, 0.0f);
 	glVertex3f(left, bottom, 0.99f);
 }

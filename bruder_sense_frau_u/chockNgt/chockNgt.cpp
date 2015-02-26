@@ -10,6 +10,9 @@
 #include "ScreenBorders.h"
 #include "MovingPapers.h"
 
+int X_OFFSCREEN = 512;
+int Y_OFFSCREEN = 256;
+
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
 // -------------------------------------------------------------------
@@ -125,6 +128,12 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// Create the window
 	mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
 	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	
+	RECT windowRect;
+	GetWindowRect(mainWnd, &windowRect);
+	X_OFFSCREEN = windowRect.right - windowRect.left;
+	Y_OFFSCREEN = windowRect.bottom - windowRect.top;
+
 	glInit();
 
     ShowWindow(mainWnd,SW_SHOW);
@@ -169,7 +178,10 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		// render
 		wglMakeCurrent(mainDC, mainRC);
 		
-		glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+		// Set the stuff to render to "rendertarget"
+		//glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 
@@ -178,13 +190,13 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		if (whatIsShown == 0)
 		{
 			// Draw the newspaper moving thing
-			movingPapers.draw(fCurTime, mainWnd, &textureManager, &screenBorders, false);
+			movingPapers.draw(fCurTime, mainWnd, &textureManager, false);
 		}
 
 		if (whatIsShown == 1)
 		{
 			// Draw the newspaper moving thing
-			movingPapers.draw(fCurTime, mainWnd, &textureManager, &screenBorders, true);
+			movingPapers.draw(fCurTime, mainWnd, &textureManager, true);
 		}
 
 		if (whatIsShown == 2)

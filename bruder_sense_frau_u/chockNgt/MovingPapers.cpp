@@ -24,7 +24,7 @@ MovingPapers::~MovingPapers(void)
 {
 }
 
-void MovingPapers::draw(float time, HWND mainWnd, TextureManager *texManag, ScreenBorders *borders,
+void MovingPapers::draw(float time, HWND mainWnd, TextureManager *texManag,
 	                    bool drawVideo)
 {
 	// set up matrices
@@ -41,6 +41,9 @@ void MovingPapers::draw(float time, HWND mainWnd, TextureManager *texManag, Scre
 	float paperTime = time / (float)PAPER_PERIOD;
 	int timeIndex = (int)paperTime;
 	float innerTime = paperTime - (float)timeIndex;
+
+	float xBorder[3][2] = {{-1.0f, -0.3333f}, {-0.3333f, 0.3333f}, {0.3333f, 1.0f}};
+	float yBorder[3][2] = {{-1.0f, 1.0f}, {-1.0f, 1.0f}, {-1.0f, 1.0f}};
 
 	// Draw the four relevant papers.
 	for (int i = 0; i < 4; i++) // right to left
@@ -59,11 +62,11 @@ void MovingPapers::draw(float time, HWND mainWnd, TextureManager *texManag, Scre
 
 		glBegin(GL_QUADS);
 		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		float paperWidth = borders->xBorder[0][1] - borders->xBorder[0][0];
-		float paperHeight = borders->yBorder[0][1] - borders->yBorder[0][0];
+		float paperWidth = xBorder[0][1] - xBorder[0][0];
+		float paperHeight = yBorder[0][1] - yBorder[0][0];
 
-		float xPos[5] = {-1.0f - paperWidth, borders->xBorder[0][0], borders->xBorder[1][0], borders->xBorder[2][0], 1.0f};
-		float yPos[5] = {borders->yBorder[0][0], borders->yBorder[0][0], borders->yBorder[1][0], borders->yBorder[2][0], borders->yBorder[2][0]};
+		float xPos[5] = {-1.0f - paperWidth, xBorder[0][0], xBorder[1][0], xBorder[2][0], 1.0f};
+		float yPos[5] = {yBorder[0][0], yBorder[0][0], yBorder[1][0], yBorder[2][0], yBorder[2][0]};
 		float t = innerTime / (float)PAPER_MOVEMENT_TIME;
 		t -= i * (float)PAPER_MOVEMENT_DELTA;
 		if (t > 1.0f) t = 1.0f;
