@@ -148,8 +148,8 @@ void Snippets::draw(void)
 		float displ[4][2];
 		for (int corner = 0; corner < 4; corner++)
 		{
-			displ[corner][0] = 0.75f + 1.0f * cos(i * 7602.2f + corner * 2531.3f);
-			displ[corner][1] = 0.75f + 1.0f * cos(i * 3452.2f + corner * 8423.7f);
+			displ[corner][0] = 0.5f + 1.0f * cos(i * 7602.2f + corner * 2531.3f);
+			displ[corner][1] = 0.5f + 1.0f * cos(i * 3452.2f + corner * 8423.7f);
 		}
 
 		float px = snippet[i].pos[0];
