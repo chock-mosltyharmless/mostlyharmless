@@ -50,7 +50,7 @@ MovingPapers movingPapers;
 // An indicator what is currently done
 // 0: Move articles
 // 1: Falling snippets
-int whatIsShown = 0;
+int whatIsShown = -1;
 
 void glInit()
 {
@@ -126,8 +126,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RegisterClass (&wc);
 
 	// Create the window
-	mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
-	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	//mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
+	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	
 	RECT windowRect;
 	GetWindowRect(mainWnd, &windowRect);
@@ -189,14 +189,16 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 		if (whatIsShown == 0)
 		{
+			movingPapers.update(fDeltaTime);
 			// Draw the newspaper moving thing
-			movingPapers.draw(fCurTime, mainWnd, &textureManager, false);
+			movingPapers.draw(mainWnd, &textureManager, false);
 		}
 
 		if (whatIsShown == 1)
 		{
+			movingPapers.update(fDeltaTime);
 			// Draw the newspaper moving thing
-			movingPapers.draw(fCurTime, mainWnd, &textureManager, true);
+			movingPapers.draw(mainWnd, &textureManager, true);
 		}
 
 		if (whatIsShown == 2)
@@ -224,7 +226,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
 
 		//Sleep(5);
-    } while (msg.message != WM_QUIT && fCurTime < 230.0f && !GetAsyncKeyState(VK_ESCAPE));
+    } while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE));
 
 	// music uninit
 #if 0
@@ -264,12 +266,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			// change what is shown
 		case '1':
 			whatIsShown = 0;
+			movingPapers.init();
 			break;
 		case '2':
 			whatIsShown = 1;
 			break;
 		case '3':
 			whatIsShown = 2;
+			snippets.init();
 			break;
 		default:
 			whatIsShown = -1;

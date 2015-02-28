@@ -17,15 +17,50 @@ const char *MovingPapers::texNames[NUM_PAPER_TEXTURES] =
 
 MovingPapers::MovingPapers()
 {
+	init();
 }
-
 
 MovingPapers::~MovingPapers(void)
 {
 }
 
-void MovingPapers::draw(float time, HWND mainWnd, TextureManager *texManag,
-	                    bool drawVideo)
+void MovingPapers::init()
+{
+	time = 0.0;
+
+	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
+	{
+		paper[paperIdx].pos[0] = -1.0f - 2.0f/3.0f * (paperIdx + 1);
+		paper[paperIdx].pos[1] = -1.0f;
+		for (int tileY = 0; tileY < PAPER_Y_TILING; tileY++)
+		{
+			for (int tileX = 0; tileX < PAPER_X_TILING; tileX++)
+			{
+				paper[paperIdx].snippet[tileY][tileX].attached = true;
+			}
+		}
+	}
+}
+
+void MovingPapers::update(float deltaTime)
+{
+	time += deltaTime;
+
+	float paperTime = time / (float)PAPER_PERIOD;
+	int timeIndex = (int)paperTime;
+	float innerTime = paperTime - (float)timeIndex;
+	float innerMove = innerTime / PAPER_MOVEMENT_TIME;
+	if (innerMove > 1.0f) innerMove = 1.0f;
+	float t = 0.5f - 0.5f * cos(innerMove * 3.1415926f);
+	t = 0.5f - 0.5f * cos(t * 3.1415926f);
+
+	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
+	{
+		paper[paperIdx].pos[0] = t * 2.0f / 3.0f - 1.0f + 2.0f / 3.0f * timeIndex - 2.0f/3.0f * (paperIdx + 1);
+	}
+}
+
+void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
 {
 	// set up matrices
 	glMatrixMode(GL_PROJECTION);
@@ -38,6 +73,29 @@ void MovingPapers::draw(float time, HWND mainWnd, TextureManager *texManag,
 	GLuint texID;
 
 	char errorString[MAX_ERROR_LENGTH + 1];
+
+	for (int paperID = 0; paperID < NUM_PAPERS; paperID++)
+	{
+		int retVal = -1;
+		if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
+		else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
+		if (retVal != 0)
+		{
+			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+			return;
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+
+		// Draw all papers
+		glBegin(GL_QUADS);
+		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+		drawQuad(paper[paperID].pos[0], paper[paperID].pos[1],
+			     paper[paperID].pos[0] + 2.0f / 3.0f, paper[paperID].pos[1] + 2.0f,
+	  			 0.0f, 1.0f);
+		glEnd();
+	}
+
+#if 0
 	float paperTime = time / (float)PAPER_PERIOD;
 	int timeIndex = (int)paperTime;
 	float innerTime = paperTime - (float)timeIndex;
@@ -79,9 +137,11 @@ void MovingPapers::draw(float time, HWND mainWnd, TextureManager *texManag,
 
 		if (drawVideo)
 		{
+#if 0
 			int vidPos = (300000000 - timeIndex - i) % 3;
 			drawQuad(paperLeft, paperBottom, paperLeft + paperWidth, paperBottom + paperHeight,
 					(float)vidPos / 3.0f, (float)(vidPos+1) / 3.0f);
+#endif
 		}
 		else
 		{
@@ -90,6 +150,7 @@ void MovingPapers::draw(float time, HWND mainWnd, TextureManager *texManag,
 		}
 		glEnd();
 	}
+#endif
 }
 
 void MovingPapers::drawQuad(float left, float bottom, float right, float top,
