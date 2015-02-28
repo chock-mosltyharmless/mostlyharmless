@@ -52,6 +52,8 @@ public:
 
 private:
 	void drawQuad(float left, float bottom, float right, float top, float leftU, float rightU);
+	void rotate(float pos[3], float rpy[3]);
+	
 	const static char* texNames[NUM_PAPER_TEXTURES];
 
 	Paper paper[NUM_PAPERS];

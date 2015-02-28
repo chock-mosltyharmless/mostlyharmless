@@ -2,6 +2,10 @@
 #include "MovingPapers.h"
 #include "Configuration.h"
 
+#ifndef PI
+#define PI 3.1415926f
+#endif
+
 const char *MovingPapers::texNames[NUM_PAPER_TEXTURES] =
 {
 	"1.tga",
@@ -39,6 +43,27 @@ void MovingPapers::init()
 				paper[paperIdx].snippet[tileY][tileX].attached = true;
 			}
 		}
+
+		for (int py = 0; py <= PAPER_Y_TILING; py++)
+		{
+			for (int px = 0; px <= PAPER_X_TILING; px++)
+			{
+				float i = (float)(py + paperIdx * PAPER_Y_TILING + px * PAPER_X_TILING);
+				float displ0 = 0.5f + 1.0f * cos(i * 7602.2234f + px * 2517.3234f);
+				float displ1 = 0.5f + 1.0f * cos(i * 3455.2523f + px * 8435.7234f);
+				if (py == 0 || py == PAPER_Y_TILING || px == 0 || px == PAPER_X_TILING)
+				{
+					displ0 = displ1 = 0;
+				}
+
+				paper[paperIdx].texPos[py][px][0] = (float)px / (PAPER_X_TILING) + 0.5f * displ0 / PAPER_X_TILING;
+				paper[paperIdx].texPos[py][px][1] = (float)py / (PAPER_Y_TILING) + 0.5f * displ1 / PAPER_Y_TILING;
+
+				paper[paperIdx].tilePos[py][px][0] = displ0 / PAPER_X_TILING * 2.0f / 3.0f * 0.5f; // Hmm.. Dunno.
+				paper[paperIdx].tilePos[py][px][1] = displ1 / PAPER_Y_TILING * 2.0f * 0.5f;
+				paper[paperIdx].tilePos[py][px][2] = 0.0f;
+			}
+		}
 	}
 }
 
@@ -56,7 +81,76 @@ void MovingPapers::update(float deltaTime)
 
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
-		paper[paperIdx].pos[0] = t * 2.0f / 3.0f - 1.0f + 2.0f / 3.0f * timeIndex - 2.0f/3.0f * (paperIdx + 1);
+		int posIndex = timeIndex - paperIdx - 1;
+		while (posIndex > 3) posIndex -= NUM_PAPERS;
+		paper[paperIdx].pos[0] = t * 2.0f / 3.0f - 1.0f + 2.0f/3.0f * posIndex;
+
+		for (int py = 0; py < PAPER_Y_TILING; py++)
+		{
+			for (int px = 0; px < PAPER_X_TILING; px++)
+			{
+				if (paper[paperIdx].snippet[py][px].attached)
+				{
+					paper[paperIdx].snippet[py][px].pos[0] =
+						paper[paperIdx].pos[0] + ((float)px + 0.5f) / PAPER_X_TILING * 2.0f / 3.0f;
+					paper[paperIdx].snippet[py][px].pos[1] =
+						paper[paperIdx].pos[1] + ((float)py + 0.5f) / PAPER_Y_TILING * 2.0f;
+					paper[paperIdx].snippet[py][px].pos[2] = 0.99f;
+
+					paper[paperIdx].snippet[py][px].rpy[0] = 0.0f;
+					paper[paperIdx].snippet[py][px].rpy[1] = 0.0f;
+					paper[paperIdx].snippet[py][px].rpy[2] = 0.0f;
+
+					// Speed should be derived from possible movement...
+					paper[paperIdx].snippet[py][px].speed[0] = 0.0f;
+					paper[paperIdx].snippet[py][px].speed[1] = 0.0f;
+					paper[paperIdx].snippet[py][px].speed[2] = 0.0f;
+				}
+				else
+				{
+					// Do a little bit of rotation
+					for (int dim = 0; dim < 3; dim++)
+					{
+						paper[paperIdx].snippet[py][px].rpy[dim] += deltaTime*0.9f;
+						while (paper[paperIdx].snippet[py][px].rpy[dim] > PI*2.0f) paper[paperIdx].snippet[py][px].rpy[dim] -= PI*2.0f;
+					}
+
+					// Move according to speed
+					for (int dim = 0; dim < 3; dim++)
+					{
+						paper[paperIdx].snippet[py][px].pos[dim] += paper[paperIdx].snippet[py][px].speed[dim] * deltaTime;
+					}
+
+					// Gravitate
+					paper[paperIdx].snippet[py][px].speed[1] -= 2.f * deltaTime;
+
+					// Remove normal component
+					float normal[3] = {0.0f, 0.0f, 1.0f};
+					rotate(normal, paper[paperIdx].snippet[py][px].rpy);
+					float scalProd = 0.0f;
+					for (int dim = 0; dim < 3; dim++)
+					{
+						scalProd += normal[dim] * paper[paperIdx].snippet[py][px].speed[dim];
+					}
+		
+					// Remove it completely
+					for (int dim = 0; dim < 3; dim++)
+					{
+						paper[paperIdx].snippet[py][px].speed[dim] -= scalProd * normal[dim];
+					}
+
+					// Slow down due to air resistance
+					for (int dim = 0; dim < 3; dim++)
+					{
+						paper[paperIdx].snippet[py][px].speed[dim] *= (float)exp(deltaTime * -8.f);
+					}
+				}
+
+				// un-attach randomly
+				int timePos = ((py * 2 + px * 5890 + paperIdx * 2391445) % 472 + 20357) % 157 + py * 20;
+				if (time > (float)timePos * 0.1f) paper[paperIdx].snippet[py][px].attached = false;
+			}
+		}
 	}
 }
 
@@ -74,25 +168,65 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
 
 	char errorString[MAX_ERROR_LENGTH + 1];
 
-	for (int paperID = 0; paperID < NUM_PAPERS; paperID++)
+	for (int pass = 0; pass < 2; pass++)
 	{
-		int retVal = -1;
-		if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
-		else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
-		if (retVal != 0)
+		for (int paperID = 0; paperID < NUM_PAPERS; paperID++)
 		{
-			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
-			return;
-		}
-		glBindTexture(GL_TEXTURE_2D, texID);
+			int retVal = -1;
+			if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
+			else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
+			if (retVal != 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+				return;
+			}
+			glBindTexture(GL_TEXTURE_2D, texID);
 
-		// Draw all papers
-		glBegin(GL_QUADS);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		drawQuad(paper[paperID].pos[0], paper[paperID].pos[1],
-			     paper[paperID].pos[0] + 2.0f / 3.0f, paper[paperID].pos[1] + 2.0f,
-	  			 0.0f, 1.0f);
-		glEnd();
+			// Draw all papers
+			glBegin(GL_QUADS);
+			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+#if 0
+			drawQuad(paper[paperID].pos[0], paper[paperID].pos[1],
+						paper[paperID].pos[0] + 2.0f / 3.0f, paper[paperID].pos[1] + 2.0f,
+	  					0.0f, 1.0f);
+#else
+			// Corners are top-left, top-right, bottom-right, bottom-left
+			float cornerPos[4][2] =
+			{
+				{-1.0f / 3.0f / PAPER_X_TILING, -1.0f / PAPER_Y_TILING},
+				{1.0f / 3.0f / PAPER_X_TILING, -1.0f / PAPER_Y_TILING},
+				{1.0f / 3.0f / PAPER_X_TILING, 1.0f / PAPER_Y_TILING},
+				{-1.0f / 3.0f / PAPER_X_TILING, 1.0f / PAPER_Y_TILING}
+			};
+			for (int py = 0; py < PAPER_Y_TILING; py++)
+			{
+				for (int px = 0; px < PAPER_X_TILING; px++)
+				{
+					if ((pass == 0 && paper[paperID].snippet[py][px].attached) ||
+						(pass == 1 && !paper[paperID].snippet[py][px].attached))
+					{
+						glTexCoord2f(paper[paperID].texPos[py][px][0], paper[paperID].texPos[py][px][1]);
+						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py][px][0] + cornerPos[0][0],
+								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py][px][1] + cornerPos[0][1],
+								   0.99f);
+						glTexCoord2f(paper[paperID].texPos[py][px+1][0], paper[paperID].texPos[py][px+1][1]);
+						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py][px+1][0] + cornerPos[1][0],
+								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py][px+1][1] + cornerPos[1][1],
+								   0.99f);
+						glTexCoord2f(paper[paperID].texPos[py+1][px+1][0], paper[paperID].texPos[py+1][px+1][1]);
+						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py+1][px+1][0] + cornerPos[2][0],
+								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py+1][px+1][1] + cornerPos[2][1],
+								   0.99f);
+						glTexCoord2f(paper[paperID].texPos[py+1][px][0], paper[paperID].texPos[py+1][px][1]);
+						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py+1][px][0] + cornerPos[3][0],
+								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py+1][px][1] + cornerPos[3][1],
+								   0.99f);
+					}
+				}
+			}
+#endif
+			glEnd();
+		}
 	}
 
 #if 0
@@ -164,4 +298,25 @@ void MovingPapers::drawQuad(float left, float bottom, float right, float top,
 	glVertex3f(right, bottom, 0.99f);
 	glTexCoord2f(leftU, 0.0f);
 	glVertex3f(left, bottom, 0.99f);
+}
+
+void MovingPapers::rotate(float pos[3], float rpy[3])
+{
+	float t[3];
+
+	t[0] = pos[0];
+	t[1] = cos(rpy[0]) * pos[1] - sin(rpy[0]) * pos[2];
+	t[2] = sin(rpy[0]) * pos[1] + cos(rpy[0]) * pos[2];
+
+	pos[0] = cos(rpy[1]) * t[0] - sin(rpy[1]) * t[2];
+	pos[1] = t[1];
+	pos[2] = sin(rpy[1]) * t[0] + cos(rpy[1]) * t[2];
+
+	t[0] = cos(rpy[2]) * pos[0] - sin(rpy[2]) * pos[1];
+	t[1] = sin(rpy[2]) * pos[0] + cos(rpy[2]) * pos[1];
+	t[2] = pos[2];
+
+	pos[0] = t[0];
+	pos[1] = t[1];
+	pos[2] = t[2];
 }
