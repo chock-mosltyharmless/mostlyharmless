@@ -20,7 +20,7 @@ public:
 	void init(void);
 
 	// Do movement update of all snippets (For simplicity I do not have const time)
-	void update(float dTime);
+	void update(float deltaTime);
 	
 	// Draws all snippets (assuming ortho projection)
 	void draw(void);
