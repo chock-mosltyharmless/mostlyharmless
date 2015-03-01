@@ -227,6 +227,11 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
 					}
 					else if (pass == 1 && !paper[paperID].snippet[py][px].attached)
 					{
+						if (paper[paperID].snippet[py][px].pos[0] < -1.5f ||
+							paper[paperID].snippet[py][px].pos[0] > 1.5f ||
+							paper[paperID].snippet[py][px].pos[1] < -1.5f ||
+							paper[paperID].snippet[py][px].pos[1] > 1.5f) continue;
+
 						float cornerTexPos[4][2] = {
 							{paper[paperID].texPos[py][px][0], paper[paperID].texPos[py][px][1]},
 							{paper[paperID].texPos[py][px+1][0], paper[paperID].texPos[py][px+1][1]},
@@ -293,8 +298,8 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
 								// displace points based on their position. THIS IS SUPER-HACKY!!!
 								float displaceAmount = paper[paperID].snippet[py][px].detachedTime;
 								if (displaceAmount > 1.0f) displaceAmount = 1.0f;
-								pointPos[yp][xp][0] += displaceAmount * 0.5f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
-								pointPos[yp][xp][1] += displaceAmount * 0.5f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
+								pointPos[yp][xp][0] += displaceAmount * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
+								pointPos[yp][xp][1] += displaceAmount * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
 							}
 						}
 
