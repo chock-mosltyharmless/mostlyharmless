@@ -213,8 +213,8 @@ void Snippets::draw(void)
 				}
 
 				// displace points based on their position. THIS IS SUPER-HACKY!!!
-				pointPos[yp][xp][0] += 0.5f * polyW * (float)cos(pointPos[yp][xp][1] / polyW * 0.75f);
-				pointPos[yp][xp][1] += 0.5f * polyW * (float)cos(pointPos[yp][xp][0] / polyW * 0.75f);
+				pointPos[yp][xp][0] += 0.3f * polyW * (float)cos(pointPos[yp][xp][1] / polyW * 0.75f);
+				pointPos[yp][xp][1] += 0.3f * polyW * (float)cos(pointPos[yp][xp][0] / polyW * 0.75f);
 			}
 		}
 

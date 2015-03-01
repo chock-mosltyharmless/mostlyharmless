@@ -31,6 +31,8 @@ MovingPapers::~MovingPapers(void)
 void MovingPapers::init()
 {
 	time = 0.0;
+	doDetach = false;
+	detachingTime = 0.0f;
 
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
@@ -68,9 +70,10 @@ void MovingPapers::init()
 	}
 }
 
-void MovingPapers::update(float deltaTime)
+void MovingPapers::update(float deltaTime, bool noMovement)
 {
 	time += deltaTime;
+	if (doDetach) detachingTime += deltaTime;
 
 	float paperTime = time / (float)PAPER_PERIOD;
 	int timeIndex = (int)paperTime;
@@ -85,6 +88,11 @@ void MovingPapers::update(float deltaTime)
 		int posIndex = timeIndex - paperIdx - 1;
 		while (posIndex > 3) posIndex -= NUM_PAPERS;
 		paper[paperIdx].pos[0] = t * 2.0f / 3.0f - 1.0f + 2.0f/3.0f * posIndex;
+
+		if (noMovement)
+		{
+			paper[paperIdx].pos[0] = 1.0f - paperIdx * 2.0f / 3.0f;
+		}
 
 		for (int py = 0; py < PAPER_Y_TILING; py++)
 		{
@@ -151,14 +159,17 @@ void MovingPapers::update(float deltaTime)
 				}
 
 				// un-attach randomly
-				int timePos = ((py*2  + px * 58901 + paperIdx * 2391445) % 1471 + 20357) % 157 + py * 20;
-				if (time > (float)timePos * 0.1f) paper[paperIdx].snippet[py][px].attached = false;
+				if (doDetach)
+				{
+					int timePos = ((py*2  + px * 58901 + paperIdx * 2391445) % 1471 + 20357) % 157 + py * 20;
+					if (detachingTime > (float)timePos * 0.1f) paper[paperIdx].snippet[py][px].attached = false;
+				}
 			}
 		}
 	}
 }
 
-void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
+void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, const char *texName)
 {
 	// set up matrices
 	glMatrixMode(GL_PROJECTION);
@@ -177,7 +188,9 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
 		for (int paperID = 0; paperID < NUM_PAPERS; paperID++)
 		{
 			int retVal = -1;
-			if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
+			//if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
+			//else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
+			if (texName) retVal = texManag->getTextureID(texName, &texID, errorString);
 			else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
 			if (retVal != 0)
 			{
@@ -298,8 +311,8 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
 								// displace points based on their position. THIS IS SUPER-HACKY!!!
 								float displaceAmount = paper[paperID].snippet[py][px].detachedTime;
 								if (displaceAmount > 1.0f) displaceAmount = 1.0f;
-								pointPos[yp][xp][0] += displaceAmount * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
-								pointPos[yp][xp][1] += displaceAmount * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
+								pointPos[yp][xp][0] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
+								pointPos[yp][xp][1] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
 							}
 						}
 
