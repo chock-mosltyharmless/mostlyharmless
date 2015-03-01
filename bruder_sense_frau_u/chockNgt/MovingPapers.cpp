@@ -41,6 +41,7 @@ void MovingPapers::init()
 			for (int tileX = 0; tileX < PAPER_X_TILING; tileX++)
 			{
 				paper[paperIdx].snippet[tileY][tileX].attached = true;
+				paper[paperIdx].snippet[tileY][tileX].detachedTime = 0.0f;
 			}
 		}
 
@@ -56,11 +57,11 @@ void MovingPapers::init()
 					displ0 = displ1 = 0;
 				}
 
-				paper[paperIdx].texPos[py][px][0] = (float)px / (PAPER_X_TILING) + 0.5f * displ0 / PAPER_X_TILING;
-				paper[paperIdx].texPos[py][px][1] = (float)py / (PAPER_Y_TILING) + 0.5f * displ1 / PAPER_Y_TILING;
+				paper[paperIdx].texPos[py][px][0] = (float)px / (PAPER_X_TILING) + 0.6f * displ0 / PAPER_X_TILING;
+				paper[paperIdx].texPos[py][px][1] = (float)py / (PAPER_Y_TILING) + 0.6f * displ1 / PAPER_Y_TILING;
 
-				paper[paperIdx].tilePos[py][px][0] = displ0 / PAPER_X_TILING * 2.0f / 3.0f * 0.5f; // Hmm.. Dunno.
-				paper[paperIdx].tilePos[py][px][1] = displ1 / PAPER_Y_TILING * 2.0f * 0.5f;
+				paper[paperIdx].tilePos[py][px][0] = displ0 / PAPER_X_TILING * 2.0f / 3.0f * 0.6f; // Hmm.. Dunno.
+				paper[paperIdx].tilePos[py][px][1] = displ1 / PAPER_Y_TILING * 2.0f * 0.6f;
 				paper[paperIdx].tilePos[py][px][2] = 0.0f;
 			}
 		}
@@ -76,8 +77,8 @@ void MovingPapers::update(float deltaTime)
 	float innerTime = paperTime - (float)timeIndex;
 	float innerMove = innerTime / PAPER_MOVEMENT_TIME;
 	if (innerMove > 1.0f) innerMove = 1.0f;
-	float t = 0.5f - 0.5f * cos(innerMove * 3.1415926f);
-	t = 0.5f - 0.5f * cos(t * 3.1415926f);
+	float t = 0.5f - 0.5f * cos(innerMove * PI);
+	t = 0.5f - 0.5f * cos(t * PI);
 
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
@@ -108,10 +109,13 @@ void MovingPapers::update(float deltaTime)
 				}
 				else
 				{
+					// It's now longer detached
+					paper[paperIdx].snippet[py][px].detachedTime += deltaTime;
+
 					// Do a little bit of rotation
 					for (int dim = 0; dim < 3; dim++)
 					{
-						paper[paperIdx].snippet[py][px].rpy[dim] += deltaTime*0.9f;
+						paper[paperIdx].snippet[py][px].rpy[dim] += deltaTime*cos(dim * 34.12380f + px * 20.1239f + py * 12.1234f + time * 0.5f);
 						while (paper[paperIdx].snippet[py][px].rpy[dim] > PI*2.0f) paper[paperIdx].snippet[py][px].rpy[dim] -= PI*2.0f;
 					}
 
@@ -147,7 +151,7 @@ void MovingPapers::update(float deltaTime)
 				}
 
 				// un-attach randomly
-				int timePos = ((py * 2 + px * 5890 + paperIdx * 2391445) % 472 + 20357) % 157 + py * 20;
+				int timePos = ((py*2  + px * 58901 + paperIdx * 2391445) % 1471 + 20357) % 157 + py * 20;
 				if (time > (float)timePos * 0.1f) paper[paperIdx].snippet[py][px].attached = false;
 			}
 		}
@@ -202,8 +206,7 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
 			{
 				for (int px = 0; px < PAPER_X_TILING; px++)
 				{
-					if ((pass == 0 && paper[paperID].snippet[py][px].attached) ||
-						(pass == 1 && !paper[paperID].snippet[py][px].attached))
+					if (pass == 0 && paper[paperID].snippet[py][px].attached)
 					{
 						glTexCoord2f(paper[paperID].texPos[py][px][0], paper[paperID].texPos[py][px][1]);
 						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py][px][0] + cornerPos[0][0],
@@ -221,6 +224,94 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool drawVideo)
 						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py+1][px][0] + cornerPos[3][0],
 								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py+1][px][1] + cornerPos[3][1],
 								   0.99f);
+					}
+					else if (pass == 1 && !paper[paperID].snippet[py][px].attached)
+					{
+						float cornerTexPos[4][2] = {
+							{paper[paperID].texPos[py][px][0], paper[paperID].texPos[py][px][1]},
+							{paper[paperID].texPos[py][px+1][0], paper[paperID].texPos[py][px+1][1]},
+							{paper[paperID].texPos[py+1][px+1][0], paper[paperID].texPos[py+1][px+1][1]},
+							{paper[paperID].texPos[py+1][px][0], paper[paperID].texPos[py+1][px][1]}
+						};
+
+						float relCornerPos[4][3] =
+						{
+							{paper[paperID].tilePos[py][px][0] + cornerPos[0][0], paper[paperID].tilePos[py][px][1] + cornerPos[0][1], 0.0f},
+							{paper[paperID].tilePos[py][px+1][0] + cornerPos[1][0], paper[paperID].tilePos[py][px+1][1] + cornerPos[1][1], 0.0f},
+							{paper[paperID].tilePos[py+1][px+1][0] + cornerPos[2][0], paper[paperID].tilePos[py+1][px+1][1] + cornerPos[2][1], 0.0f},
+							{paper[paperID].tilePos[py+1][px][0] + cornerPos[3][0], paper[paperID].tilePos[py+1][px][1] + cornerPos[3][1], 0.0f}
+						};
+
+						rotate(relCornerPos[0], paper[paperID].snippet[py][px].rpy);
+						rotate(relCornerPos[1], paper[paperID].snippet[py][px].rpy);
+						rotate(relCornerPos[2], paper[paperID].snippet[py][px].rpy);
+						rotate(relCornerPos[3], paper[paperID].snippet[py][px].rpy);
+
+						float cornerTilePos[4][3] =
+						{
+							{paper[paperID].snippet[py][px].pos[0] + relCornerPos[0][0],
+								   paper[paperID].snippet[py][px].pos[1] + relCornerPos[0][1], 0.99f},
+							{paper[paperID].snippet[py][px].pos[0] + relCornerPos[1][0],
+								   paper[paperID].snippet[py][px].pos[1] + relCornerPos[1][1], 0.99f},
+							{paper[paperID].snippet[py][px].pos[0] + relCornerPos[2][0],
+								   paper[paperID].snippet[py][px].pos[1] + relCornerPos[2][1], 0.99f},
+							{paper[paperID].snippet[py][px].pos[0] + relCornerPos[3][0],
+								   paper[paperID].snippet[py][px].pos[1] + relCornerPos[3][1], 0.99f}
+						};
+
+						// Texture coordinates of the points on the stuff.
+						float pointTexPos[6][6][2];
+						float pointPos[6][6][3];
+						for (int yp = 0; yp < 6; yp++)
+						{
+							for (int xp = 0; xp < 6; xp++)
+							{
+								float deltaTile = 1.0f / 5.0f;
+								float leftAmount = xp * deltaTile;
+								float rightAmount = 1.0f - xp * deltaTile;
+								float topAmount = yp * deltaTile;
+								float bottomAmount = 1.0f - yp * deltaTile;
+								float topLeftAmount = leftAmount * topAmount;
+								float topRightAmount = rightAmount * topAmount;
+								float bottomLeftAmount = leftAmount * bottomAmount;
+								float bottomRightAmount = rightAmount * bottomAmount;
+								for (int dim = 0; dim < 2; dim++)
+								{
+									pointTexPos[yp][xp][dim] = topLeftAmount * cornerTexPos[0][dim] +
+										topRightAmount * cornerTexPos[1][dim] +
+										bottomRightAmount * cornerTexPos[2][dim] +
+										bottomLeftAmount * cornerTexPos[3][dim];
+								}
+								for (int dim = 0; dim < 3; dim++)
+								{
+									pointPos[yp][xp][dim] = topLeftAmount * cornerTilePos[0][dim] +
+										topRightAmount * cornerTilePos[1][dim] +
+										bottomRightAmount * cornerTilePos[2][dim] +
+										bottomLeftAmount * cornerTilePos[3][dim];
+								}
+
+								// displace points based on their position. THIS IS SUPER-HACKY!!!
+								float displaceAmount = paper[paperID].snippet[py][px].detachedTime;
+								if (displaceAmount > 1.0f) displaceAmount = 1.0f;
+								pointPos[yp][xp][0] += displaceAmount * 0.5f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
+								pointPos[yp][xp][1] += displaceAmount * 0.5f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
+							}
+						}
+
+						for (int xtile = 0; xtile < 5; xtile++)
+						{
+							for (int ytile = 0; ytile < 5; ytile++)
+							{
+								glTexCoord2f(pointTexPos[ytile][xtile][0], pointTexPos[ytile][xtile][1]);
+								glVertex3f(pointPos[ytile][xtile][0], pointPos[ytile][xtile][1], pointPos[ytile][xtile][2]);
+								glTexCoord2f(pointTexPos[ytile][xtile+1][0], pointTexPos[ytile][xtile+1][1]);
+								glVertex3f(pointPos[ytile][xtile+1][0], pointPos[ytile][xtile+1][1], pointPos[ytile][xtile+1][2]);
+								glTexCoord2f(pointTexPos[ytile+1][xtile+1][0], pointTexPos[ytile+1][xtile+1][1]);
+								glVertex3f(pointPos[ytile+1][xtile+1][0], pointPos[ytile+1][xtile+1][1], pointPos[ytile+1][xtile+1][2]);
+								glTexCoord2f(pointTexPos[ytile+1][xtile][0], pointTexPos[ytile+1][xtile][1]);
+								glVertex3f(pointPos[ytile+1][xtile][0], pointPos[ytile+1][xtile][1], pointPos[ytile+1][xtile][2]);
+							}
+						}
 					}
 				}
 			}

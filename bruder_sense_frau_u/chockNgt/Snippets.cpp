@@ -161,13 +161,6 @@ void Snippets::draw(void)
 		rotate(rvec, snippet[i].rpy);
 		rotate(uvec, snippet[i].rpy);
 
-		float texPos[4][2] = {
-			{texW*(displ[0][0]-1.0f), texY + texW*(displ[0][1]+1.0f)},
-			{texX + texW*(displ[1][0]+1.0f), texY + texW*(displ[1][1]+1.0f)},
-			{texX + texW*(displ[2][0]+1.0f), texY + texW*(displ[2][1]-1.0f)},
-			{texX + texW*(displ[3][0]-1.0f), texY + texW*(displ[3][1]-1.0f)}
-		};
-
 		float cornerTexPos[4][2] = 
 		{
 			{texX + texW*(displ[0][0]-1.0f), texY + texW*(displ[0][1]+1.0f)},
