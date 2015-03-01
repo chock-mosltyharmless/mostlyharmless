@@ -48,8 +48,12 @@ public:
 
 	// Initialize positions and stuff (TODO: Add wrapper for different runs)
 	void init();
-	void update(float deltaTime);
-	void draw(HWND mainWnd, TextureManager *texManag, bool drawVideo);
+	void update(float deltaTime, bool noMovement);
+	// Set texName to some valid name to not use papers
+	void draw(HWND mainWnd, TextureManager *texManag, const char *texName);
+
+	// Start dropping snippets.
+	void startDetaching(void) {doDetach = true; detachingTime = 0.0f;}
 
 private:
 	void drawQuad(float left, float bottom, float right, float top, float leftU, float rightU);
@@ -61,5 +65,7 @@ private:
 
 	// Overall time since init();
 	float time;
+	float detachingTime; // Time since dismantling started
+	bool doDetach;
 };
 

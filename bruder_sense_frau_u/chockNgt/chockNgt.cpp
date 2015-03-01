@@ -13,6 +13,12 @@
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
 
+#define SHOW_MOVING_PAPERS 1
+#define SHOW_VIDEO 2
+#define SHOW_FALLING_SNIPPETS 3
+#define SHOW_INTRO 4
+
+
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
 // -------------------------------------------------------------------
@@ -187,21 +193,28 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 		glDisable(GL_LIGHTING);
 
-		if (whatIsShown == 0)
+		if (whatIsShown == SHOW_INTRO)
 		{
-			movingPapers.update(fDeltaTime);
+			movingPapers.update(fDeltaTime, true);
 			// Draw the newspaper moving thing
-			movingPapers.draw(mainWnd, &textureManager, false);
+			movingPapers.draw(mainWnd, &textureManager, "intro.tga");
 		}
 
-		if (whatIsShown == 1)
+		if (whatIsShown == SHOW_MOVING_PAPERS)
 		{
-			movingPapers.update(fDeltaTime);
+			movingPapers.update(fDeltaTime, false);
 			// Draw the newspaper moving thing
-			movingPapers.draw(mainWnd, &textureManager, true);
+			movingPapers.draw(mainWnd, &textureManager, NULL);
 		}
 
-		if (whatIsShown == 2)
+		if (whatIsShown == SHOW_VIDEO)
+		{
+			movingPapers.update(fDeltaTime, true);
+			// Draw the newspaper moving thing
+			movingPapers.draw(mainWnd, &textureManager, "2-old.avi");
+		}
+
+		if (whatIsShown == SHOW_FALLING_SNIPPETS)
 		{
 			// Draw the snippet stuff
 			GLuint texID;
@@ -265,14 +278,27 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		{
 			// change what is shown
 		case '1':
-			whatIsShown = 0;
+			whatIsShown = SHOW_INTRO;
 			movingPapers.init();
 			break;
 		case '2':
-			whatIsShown = 1;
+			whatIsShown = SHOW_INTRO;
+			movingPapers.startDetaching();
 			break;
 		case '3':
-			whatIsShown = 2;
+			whatIsShown = SHOW_MOVING_PAPERS;
+			movingPapers.init();
+			break;
+		case '4':
+			whatIsShown = SHOW_MOVING_PAPERS;
+			movingPapers.startDetaching();
+			break;
+		case '5':
+			whatIsShown = SHOW_VIDEO;
+			movingPapers.init();
+			break;
+		case '6':
+			whatIsShown = SHOW_FALLING_SNIPPETS;
 			snippets.init();
 			break;
 		default:
