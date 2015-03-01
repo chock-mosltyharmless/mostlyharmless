@@ -17,6 +17,7 @@ class PaperSnippet
 {
 public:
 	bool attached; // If true, firmly attached to corresponding paper
+	float detachedTime; // Time since it is no longer attached
 	float pos[3]; // But we simply ignore Z
 	float speed[3]; // Movement speed, should be 0 along normal
 	float rpy[3]; // Rotation stored as roll, pitch and yaw
