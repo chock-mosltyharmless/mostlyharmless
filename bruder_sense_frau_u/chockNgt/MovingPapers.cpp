@@ -265,6 +265,8 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTex
 							{paper[paperID].tilePos[py+1][px][0] + cornerPos[3][0], paper[paperID].tilePos[py+1][px][1] + cornerPos[3][1], 0.0f}
 						};
 
+						float nvec[3] = {0.0f, 0.0f, 1.0f};
+						rotate(nvec, paper[paperID].snippet[py][px].rpy);
 						rotate(relCornerPos[0], paper[paperID].snippet[py][px].rpy);
 						rotate(relCornerPos[1], paper[paperID].snippet[py][px].rpy);
 						rotate(relCornerPos[2], paper[paperID].snippet[py][px].rpy);
@@ -314,10 +316,12 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTex
 								}
 
 								// displace points based on their position. THIS IS SUPER-HACKY!!!
-								float displaceAmount = paper[paperID].snippet[py][px].detachedTime;
-								if (displaceAmount > 1.0f) displaceAmount = 1.0f;
-								pointPos[yp][xp][0] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
-								pointPos[yp][xp][1] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
+								//float displaceAmount = paper[paperID].snippet[py][px].detachedTime;
+								//if (displaceAmount > 1.0f) displaceAmount = 1.0f;
+								//pointPos[yp][xp][0] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
+								//pointPos[yp][xp][1] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
+								pointPos[yp][xp][0] += 2.0f / PAPER_Y_TILING * nvec[0] * cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f + pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
+								pointPos[yp][xp][1] += 2.0f / PAPER_Y_TILING * nvec[1] * cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f + pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
 							}
 						}
 
