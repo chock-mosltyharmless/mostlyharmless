@@ -33,6 +33,8 @@ public:
 	float pos[2];
 
 	// The size of one paper is always 2/3 to 2/1
+	
+	bool updatePos;
 
 	PaperSnippet snippet[PAPER_Y_TILING][PAPER_X_TILING];
 	float texPos[PAPER_Y_TILING+1][PAPER_X_TILING+1][2];
@@ -50,10 +52,11 @@ public:
 	void init();
 	void update(float deltaTime, bool noMovement);
 	// Set texName to some valid name to not use papers
-	void draw(HWND mainWnd, TextureManager *texManag, const char *texName);
+	void draw(HWND mainWnd, TextureManager *texManag, bool useStaticTexture,  GLuint texID);
 
 	// Start dropping snippets.
 	void startDetaching(void) {doDetach = true; detachingTime = 0.0f;}
+	void stopFeeding(void) {doFeeding = false;}
 
 private:
 	void drawQuad(float left, float bottom, float right, float top, float leftU, float rightU);
@@ -66,6 +69,7 @@ private:
 	// Overall time since init();
 	float time;
 	float detachingTime; // Time since dismantling started
-	bool doDetach;
+	bool doDetach; // The papers transform into snippets
+	bool doFeeding; // Feed new papers from left when papers move out to the right
 };
 

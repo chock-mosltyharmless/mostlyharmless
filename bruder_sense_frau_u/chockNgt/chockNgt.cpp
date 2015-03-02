@@ -132,8 +132,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RegisterClass (&wc);
 
 	// Create the window
-	mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
-	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	//mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
+	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	
 	RECT windowRect;
 	GetWindowRect(mainWnd, &windowRect);
@@ -196,22 +196,40 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		if (whatIsShown == SHOW_INTRO)
 		{
 			movingPapers.update(fDeltaTime, true);
+
+			GLuint texID;
+			int retVal = textureManager.getTextureID("intro.tga", &texID, errorString);
+			if (retVal != 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+				return -1;
+			}
+
 			// Draw the newspaper moving thing
-			movingPapers.draw(mainWnd, &textureManager, "intro.tga");
+			movingPapers.draw(mainWnd, &textureManager, true, texID);
 		}
 
 		if (whatIsShown == SHOW_MOVING_PAPERS)
 		{
 			movingPapers.update(fDeltaTime, false);
 			// Draw the newspaper moving thing
-			movingPapers.draw(mainWnd, &textureManager, NULL);
+			movingPapers.draw(mainWnd, &textureManager, false, 0);
 		}
 
 		if (whatIsShown == SHOW_VIDEO)
 		{
 			movingPapers.update(fDeltaTime, true);
+
+			GLuint texID;
+			int retVal = textureManager.getVideoID("2-old.avi", &texID, errorString, (int)(fCurTime * 30.0f));
+			if (retVal != 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
+				return -1;
+			}
+
 			// Draw the newspaper moving thing
-			movingPapers.draw(mainWnd, &textureManager, "2-old.avi");
+			movingPapers.draw(mainWnd, &textureManager, true, texID);
 		}
 
 		if (whatIsShown == SHOW_FALLING_SNIPPETS)
@@ -281,28 +299,30 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_INTRO;
 			movingPapers.init();
 			break;
-		case '2':
-			whatIsShown = SHOW_INTRO;
+		case 'l':
+		case 'L':
 			movingPapers.startDetaching();
 			break;
-		case '3':
+		case 's':
+		case 'S':
+			movingPapers.stopFeeding();
+			break;
+		case '2':
 			whatIsShown = SHOW_MOVING_PAPERS;
 			movingPapers.init();
 			break;
-		case '4':
-			whatIsShown = SHOW_MOVING_PAPERS;
-			movingPapers.startDetaching();
-			break;
-		case '5':
+		case '3':
 			whatIsShown = SHOW_VIDEO;
 			movingPapers.init();
 			break;
-		case '6':
+		case '4':
 			whatIsShown = SHOW_FALLING_SNIPPETS;
 			snippets.init();
 			break;
-		default:
+		case '0':
 			whatIsShown = -1;
+			break;
+		default:
 			break;
 		}
 		break;
