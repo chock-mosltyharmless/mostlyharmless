@@ -134,8 +134,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RegisterClass (&wc);
 
 	// Create the window
-	mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
-	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	//mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
+	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	
 	RECT windowRect;
 	GetWindowRect(mainWnd, &windowRect);
@@ -299,6 +299,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		{
 			// change what is shown
 		case '1':
+			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_INTRO;
 			movingPapers.init();
 			break;
@@ -311,6 +312,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			movingPapers.stopFeeding();
 			break;
 		case '2':
+			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_MOVING_PAPERS;
 			movingPapers.init();
 			break;
@@ -322,10 +324,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			movingPapers.init();
 			break;
 		case '4':
+			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_FALLING_SNIPPETS;
 			snippets.init();
 			break;
 		case '0':
+			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = -1;
 			break;
 		default:
