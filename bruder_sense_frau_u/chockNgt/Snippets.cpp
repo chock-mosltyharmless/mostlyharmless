@@ -157,9 +157,11 @@ void Snippets::draw(void)
 
 		float rvec[3] = {polyW, 0.0f, 0.0f};
 		float uvec[3] = {0.0f, polyW, 0.0f};
+		float nvec[3] = {0.0f, 0.0f, 1.0f};
 
 		rotate(rvec, snippet[i].rpy);
 		rotate(uvec, snippet[i].rpy);
+		rotate(nvec, snippet[i].rpy);
 
 		float cornerTexPos[4][2] = 
 		{
@@ -213,8 +215,10 @@ void Snippets::draw(void)
 				}
 
 				// displace points based on their position. THIS IS SUPER-HACKY!!!
-				pointPos[yp][xp][0] += 0.3f * polyW * (float)cos(pointPos[yp][xp][1] / polyW * 0.75f);
-				pointPos[yp][xp][1] += 0.3f * polyW * (float)cos(pointPos[yp][xp][0] / polyW * 0.75f);
+				//pointPos[yp][xp][0] += 0.3f * polyW * (float)cos(pointPos[yp][xp][1] / polyW * 0.75f);
+				//pointPos[yp][xp][1] += 0.3f * polyW * (float)cos(pointPos[yp][xp][0] / polyW * 0.75f);
+				pointPos[yp][xp][0] += 0.5f * polyW * nvec[0] * cos(pointPos[yp][xp][0] / polyW * 0.75f + pointPos[yp][xp][1] / polyW * 0.75f);
+				pointPos[yp][xp][1] += 0.5f * polyW * nvec[1] * cos(pointPos[yp][xp][0] / polyW * 0.75f + pointPos[yp][xp][1] / polyW * 0.75f);
 			}
 		}
 

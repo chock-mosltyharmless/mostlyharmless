@@ -88,6 +88,7 @@
     <ClInclude Include="glext.h" />
     <ClInclude Include="mathhelpers.h" />
     <ClInclude Include="MovingPapers.h" />
+    <ClInclude Include="Parameter.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ScreenBorders.h" />
     <ClInclude Include="Snippets.h" />
@@ -98,6 +99,7 @@
     <ClCompile Include="chockNgt.cpp" />
     <ClCompile Include="mathhelpers.cpp" />
     <ClCompile Include="MovingPapers.cpp" />
+    <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="ScreenBorders.cpp" />
     <ClCompile Include="Snippets.cpp" />
     <ClCompile Include="stdafx.cpp">

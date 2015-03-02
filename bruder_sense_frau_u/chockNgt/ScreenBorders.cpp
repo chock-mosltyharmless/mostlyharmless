@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "ScreenBorders.h"
 #include "Configuration.h"
+#include "Parameter.h"
 
 ScreenBorders::ScreenBorders(void)
 {
@@ -61,6 +62,21 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd)
 	glEnd();
 #endif
 
+	// Get values for screen borders
+	xBorder[0][0] = params.getParam(2, 0.2f) * 0.5f - 1.0f;
+	xBorder[0][1] = xBorder[0][0] + params.getParam(3, 0.7f) * 1.5f / 3.0f + 0.5f / 3.0f;
+	xBorder[1][0] = -7.0f/12.0f + params.getParam(4, 0.7f) * 0.5f;
+	xBorder[1][1] = xBorder[1][0] + params.getParam(5, 0.7f) * 1.5f / 3.0f + 0.5f / 3.0f;
+	xBorder[2][0] = 1.0f / 12.0f + params.getParam(6, 0.7f) * 0.5f;
+	xBorder[2][1] = xBorder[2][0] + params.getParam(8, 0.7f) * 1.5f / 3.0f + 0.5f / 3.0f;
+	yBorder[0][0] = params.getParam(14, 0.2f) - 1.0f;
+	yBorder[0][1] = 1.0f - params.getParam(15, 0.2f);
+	yBorder[1][0] = params.getParam(16, 0.2f) - 1.0f;
+	yBorder[1][1] = 1.0f - params.getParam(17, 0.2f);
+	yBorder[2][0] = params.getParam(18, 0.2f) - 1.0f;
+	yBorder[2][1] = 1.0f - params.getParam(19, 0.2f);
+
+
 	GLuint offscreenTexture;
 	char errorString[MAX_ERROR_LENGTH + 1];
 	if (tex->getTextureID("renderTarget", &offscreenTexture, errorString))
@@ -76,7 +92,9 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd)
 	glDisable(GL_DEPTH_TEST);
 
 	glBegin(GL_QUADS);
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+	float dimmer = params.getParam(22, 0.0f);
+	float redenner = params.getParam(13, 0.0f);
+	glColor4f(1.0f - dimmer, 1.0f - dimmer - redenner * 0.7f, 1.0f - dimmer - redenner * 0.75f, 1.0f);
 	drawQuad(xBorder[0][0], yBorder[0][0], xBorder[0][1], yBorder[0][1], 0.0f, 0.33f);
 	drawQuad(xBorder[1][0], yBorder[1][0], xBorder[1][1], yBorder[1][1], 0.34f, 0.66f);
 	drawQuad(xBorder[2][0], yBorder[2][0], xBorder[2][1], yBorder[2][1], 0.67f, 1.0f);
