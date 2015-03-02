@@ -32,10 +32,12 @@ void MovingPapers::init()
 {
 	time = 0.0;
 	doDetach = false;
+	doFeeding = true;
 	detachingTime = 0.0f;
 
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
+		paper[paperIdx].updatePos = true;
 		paper[paperIdx].pos[0] = -1.0f - 2.0f/3.0f * (paperIdx + 1);
 		paper[paperIdx].pos[1] = -1.0f;
 		for (int tileY = 0; tileY < PAPER_Y_TILING; tileY++)
@@ -87,7 +89,14 @@ void MovingPapers::update(float deltaTime, bool noMovement)
 	{
 		int posIndex = timeIndex - paperIdx - 1;
 		while (posIndex > 3) posIndex -= NUM_PAPERS;
-		paper[paperIdx].pos[0] = t * 2.0f / 3.0f - 1.0f + 2.0f/3.0f * posIndex;
+
+		if (!doFeeding)
+		{
+			if (posIndex < -1) paper[paperIdx].updatePos = false;
+		}
+
+		if (paper[paperIdx].updatePos) paper[paperIdx].pos[0] = t * 2.0f / 3.0f - 1.0f + 2.0f/3.0f * posIndex;
+		else paper[paperIdx].pos[0] = -10.0f; // pretty far away...
 
 		if (noMovement)
 		{
@@ -162,14 +171,14 @@ void MovingPapers::update(float deltaTime, bool noMovement)
 				if (doDetach)
 				{
 					int timePos = ((py*2  + px * 58901 + paperIdx * 2391445) % 1471 + 20357) % 157 + py * 20;
-					if (detachingTime > (float)timePos * 0.1f) paper[paperIdx].snippet[py][px].attached = false;
+					if (detachingTime > (float)timePos * 0.075f) paper[paperIdx].snippet[py][px].attached = false;
 				}
 			}
 		}
 	}
 }
 
-void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, const char *texName)
+void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTexture, GLuint texID)
 {
 	// set up matrices
 	glMatrixMode(GL_PROJECTION);
@@ -179,7 +188,6 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, const char *texN
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_FALSE);
 	glDisable(GL_DEPTH_TEST);
-	GLuint texID;
 
 	char errorString[MAX_ERROR_LENGTH + 1];
 
@@ -190,23 +198,20 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, const char *texN
 			int retVal = -1;
 			//if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
 			//else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
-			if (texName) retVal = texManag->getTextureID(texName, &texID, errorString);
-			else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
-			if (retVal != 0)
+			if (!useConstTexture) 
 			{
-				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
-				return;
+				retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
+				if (retVal != 0)
+				{
+					MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+					return;
+				}
 			}
 			glBindTexture(GL_TEXTURE_2D, texID);
 
 			// Draw all papers
 			glBegin(GL_QUADS);
 			glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-#if 0
-			drawQuad(paper[paperID].pos[0], paper[paperID].pos[1],
-						paper[paperID].pos[0] + 2.0f / 3.0f, paper[paperID].pos[1] + 2.0f,
-	  					0.0f, 1.0f);
-#else
 			// Corners are top-left, top-right, bottom-right, bottom-left
 			float cornerPos[4][2] =
 			{
@@ -333,67 +338,9 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, const char *texN
 					}
 				}
 			}
-#endif
 			glEnd();
 		}
 	}
-
-#if 0
-	float paperTime = time / (float)PAPER_PERIOD;
-	int timeIndex = (int)paperTime;
-	float innerTime = paperTime - (float)timeIndex;
-
-	float xBorder[3][2] = {{-1.0f, -0.3333f}, {-0.3333f, 0.3333f}, {0.3333f, 1.0f}};
-	float yBorder[3][2] = {{-1.0f, 1.0f}, {-1.0f, 1.0f}, {-1.0f, 1.0f}};
-
-	// Draw the four relevant papers.
-	for (int i = 0; i < 4; i++) // right to left
-	{
-		int paperID = (i + timeIndex) % NUM_PAPER_TEXTURES;
-
-		int retVal = -1;
-		if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
-		else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
-		if (retVal != 0)
-		{
-			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
-			return;
-		}
-		glBindTexture(GL_TEXTURE_2D, texID);
-
-		glBegin(GL_QUADS);
-		glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-		float paperWidth = xBorder[0][1] - xBorder[0][0];
-		float paperHeight = yBorder[0][1] - yBorder[0][0];
-
-		float xPos[5] = {-1.0f - paperWidth, xBorder[0][0], xBorder[1][0], xBorder[2][0], 1.0f};
-		float yPos[5] = {yBorder[0][0], yBorder[0][0], yBorder[1][0], yBorder[2][0], yBorder[2][0]};
-		float t = innerTime / (float)PAPER_MOVEMENT_TIME;
-		t -= i * (float)PAPER_MOVEMENT_DELTA;
-		if (t > 1.0f) t = 1.0f;
-		if (t < 0.0f) t = 0.0f;
-		float tx = 0.5f - 0.5f * cos(t * 3.1415926f);
-		float paperLeft = tx * xPos[4 - i] + (1.0f - tx) * xPos[3 - i];
-		// steeper movement for y
-		float ty = 0.5f - 0.5f * cos(tx * 3.1415926f);
-		float paperBottom = ty * yPos[4 - i] + (1.0f - ty) * yPos[3 - i];
-
-		if (drawVideo)
-		{
-#if 0
-			int vidPos = (300000000 - timeIndex - i) % 3;
-			drawQuad(paperLeft, paperBottom, paperLeft + paperWidth, paperBottom + paperHeight,
-					(float)vidPos / 3.0f, (float)(vidPos+1) / 3.0f);
-#endif
-		}
-		else
-		{
-			drawQuad(paperLeft, paperBottom, paperLeft + paperWidth, paperBottom + paperHeight,
-					0.0f, 1.0f);
-		}
-		glEnd();
-	}
-#endif
 }
 
 void MovingPapers::drawQuad(float left, float bottom, float right, float top,
