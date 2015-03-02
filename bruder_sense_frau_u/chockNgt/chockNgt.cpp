@@ -52,6 +52,8 @@ TextureManager textureManager;
 Snippets snippets;
 ScreenBorders screenBorders;
 MovingPapers movingPapers;
+float videoStartTime = 0.0f;
+long startTime;
 
 // An indicator what is currently done
 // 0: Move articles
@@ -145,7 +147,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     ShowWindow(mainWnd,SW_SHOW);
     UpdateWindow(mainWnd);
  
-	long startTime = timeGetTime();
+	startTime = timeGetTime();
 	long lastTime = 0;
 
 	// start music playback
@@ -221,7 +223,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			movingPapers.update(fDeltaTime, true);
 
 			GLuint texID;
-			int retVal = textureManager.getVideoID("2-old.avi", &texID, errorString, (int)(fCurTime * 30.0f));
+			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
 			if (retVal != 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -275,6 +277,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HINSTANCE hInstance = GetModuleHandle(NULL);
+	long curTime;
 
 	switch (message)                  /* handle the messages */
     {
@@ -312,6 +315,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			movingPapers.init();
 			break;
 		case '3':
+			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			curTime = timeGetTime() - startTime;
+			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO;
 			movingPapers.init();
 			break;

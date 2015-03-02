@@ -225,11 +225,16 @@ int TextureManager::init(char *errorString, HDC mainDC)
 }
 
 int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, int frameID)
-{
+{	
 	for (int i = 0; i < numVideos; i++)
 	{
 		if (strcmp(name, videoName[i]) == 0)
 		{
+			if (frameID >= videoNumFrames[i])
+			{
+				return getTextureID("black.tga", id, errorString);
+			}
+
 			*id = videoTextureID[i];
 
 			LPBITMAPINFOHEADER lpbi;
