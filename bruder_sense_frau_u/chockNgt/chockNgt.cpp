@@ -310,6 +310,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case 's':
 		case 'S':
 			movingPapers.stopFeeding();
+			snippets.stopFalling();
 			break;
 		case '2':
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);

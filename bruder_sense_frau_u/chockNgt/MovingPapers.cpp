@@ -38,6 +38,7 @@ void MovingPapers::init()
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
 		paper[paperIdx].updatePos = true;
+		paper[paperIdx].texIdx = paperIdx;
 		paper[paperIdx].pos[0] = -1.0f - 2.0f/3.0f * (paperIdx + 1);
 		paper[paperIdx].pos[1] = -1.0f;
 		for (int tileY = 0; tileY < PAPER_Y_TILING; tileY++)
@@ -87,8 +88,14 @@ void MovingPapers::update(float deltaTime, bool noMovement)
 
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
+		paper[paperIdx].texIdx = paperIdx;
 		int posIndex = timeIndex - paperIdx - 1;
-		while (posIndex > 3) posIndex -= NUM_PAPERS;
+		while (posIndex > 3)
+		{
+			posIndex -= NUM_PAPERS;
+			paper[paperIdx].texIdx += NUM_PAPERS;
+		}
+		paper[paperIdx].texIdx %= NUM_PAPER_TEXTURES;
 
 		if (!doFeeding)
 		{
@@ -200,7 +207,8 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTex
 			//else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
 			if (!useConstTexture) 
 			{
-				retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
+				int texIdx = paper[paperID].texIdx;
+				retVal = texManag->getTextureID(texNames[texIdx], &texID, errorString);
 				if (retVal != 0)
 				{
 					MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
