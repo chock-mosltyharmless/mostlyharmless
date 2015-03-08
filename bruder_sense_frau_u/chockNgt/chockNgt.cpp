@@ -59,6 +59,7 @@ long startTime;
 // 0: Move articles
 // 1: Falling snippets
 int whatIsShown = -1;
+bool showBlue = false;
 
 void glInit()
 {
@@ -253,7 +254,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		//glEnable(GL_DEPTH_TEST);
 
 		// Draw the black borders around the Schraenke
-		screenBorders.drawBorders(&textureManager, mainWnd);
+		screenBorders.drawBorders(&textureManager, mainWnd, showBlue);
 
 		// swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
@@ -332,6 +333,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case '0':
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = -1;
+			break;
+		case 'b':
+		case 'B':
+			showBlue = !showBlue;
 			break;
 		default:
 			break;

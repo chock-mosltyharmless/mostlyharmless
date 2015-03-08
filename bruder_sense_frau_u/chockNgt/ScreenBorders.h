@@ -10,7 +10,7 @@ public:
 	ScreenBorders(void);
 	virtual ~ScreenBorders(void);
 
-	void drawBorders(TextureManager *tex, HWND mainWnd);
+	void drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue);
 
 public:
 	void drawQuad(float left, float bottom, float right, float top, float tx1, float tx2);

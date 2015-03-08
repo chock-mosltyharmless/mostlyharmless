@@ -26,7 +26,7 @@ ScreenBorders::~ScreenBorders(void)
 {
 }
 
-void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd)
+void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue)
 {
 	// set up matrices
 	glMatrixMode(GL_PROJECTION);
@@ -91,6 +91,41 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 
+	// Draw blue borders if applicable
+	if (showBlue)
+	{
+		GLuint texID;
+		if (tex->getTextureID("Blue_top_tall.tga", &texID, errorString))
+		{
+			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+			return;
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		glBegin(GL_QUADS);
+		for (int i = 0; i < 3; i++)
+		{
+			float height = (yBorder[i][1] - yBorder[i][0]) * 13.3f / 170.0f;
+			drawQuad(xBorder[i][0], yBorder[i][1] - height, xBorder[i][1], yBorder[i][1], 0.0f, 1.0f);
+			yBorder[i][1] -= height;
+		}
+		glEnd();
+		if (tex->getTextureID("Blue_bottom_tall.tga", &texID, errorString))
+		{
+			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+			return;
+		}
+		glBindTexture(GL_TEXTURE_2D, texID);
+		glBegin(GL_QUADS);
+		for (int i = 0; i < 3; i++)
+		{
+			float height = (yBorder[i][1] - yBorder[i][0]) * 8.3f / (170.0f-13.3f);
+			drawQuad(xBorder[i][0], yBorder[i][0], xBorder[i][1], yBorder[i][0] + height, 0.0f, 1.0f);
+			yBorder[i][0] += height;
+		}
+		glEnd();
+	}
+
+	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
 	glBegin(GL_QUADS);
 	float dimmer = params.getParam(22, 0.0f);
 	float redenner = params.getParam(13, 0.0f);
