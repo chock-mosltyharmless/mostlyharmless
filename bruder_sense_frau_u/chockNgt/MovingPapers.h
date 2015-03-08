@@ -2,8 +2,8 @@
 
 #include "TextureManager.h"
 
-#define NUM_PAPERS 9
-#define NUM_PAPER_TEXTURES NUM_PAPERS
+#define NUM_PAPERS 6
+#define NUM_PAPER_TEXTURES 9
 #define PAPER_PERIOD 3.0f
 #define PAPER_MOVEMENT_TIME 0.5f
 // Delay for a paper left to a right one to draw
@@ -31,6 +31,7 @@ class Paper
 public:
 	// Position of the main part (not counting the ripped-off stuff)
 	float pos[2];
+	int texIdx;
 
 	// The size of one paper is always 2/3 to 2/1
 	

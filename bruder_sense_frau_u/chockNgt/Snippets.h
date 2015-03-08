@@ -25,10 +25,15 @@ public:
 	// Draws all snippets (assuming ortho projection)
 	void draw(void);
 
+	// Avoid more leaves to fall
+	void stopFalling(void) {keepFalling = false;}
+
 private:
 	// Rotate a vector in-place using roll, pitch and yaw
 	void rotate(float pos[3], float rpy[3]);
 
 	Snippet snippet[NUM_SNIPPETS];
+
+	bool keepFalling;
 };
 

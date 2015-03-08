@@ -7,7 +7,7 @@
 #endif
 
 Snippets::Snippets(void)
-{
+{	
 }
 
 Snippets::~Snippets(void)
@@ -16,6 +16,8 @@ Snippets::~Snippets(void)
 
 void Snippets::init(void)
 {
+	keepFalling = true;
+
 	// Just randomly put them somewhere (with random rotation and no speed)
 	for (int i = 0; i < NUM_SNIPPETS; i++)
 	{
@@ -51,6 +53,8 @@ void Snippets::update(float deltaTime)
 	{
 		for (int dim = 0; dim < 3; dim++)
 		{
+			// Only if it's supposed to fall
+			if (keepFalling || snippet[i].pos[1] < 1.2f)
 			snippet[i].pos[dim] += snippet[i].speed[dim] * deltaTime;
 		}
 	}
@@ -91,7 +95,7 @@ void Snippets::update(float deltaTime)
 	// Warp snippet up
 	for (int i = 0; i < NUM_SNIPPETS; i++)
 	{
-		if (snippet[i].pos[1] < -1.2f)
+		if (snippet[i].pos[1] < -1.2f && keepFalling)
 		{
 			snippet[i].pos[0] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
 			snippet[i].pos[1] = 2.0f * (float)rand() / (float)RAND_MAX + 1.0f;
