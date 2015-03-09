@@ -303,6 +303,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_INTRO;
 			movingPapers.init();
+			showBlue = false;
 			break;
 		case 'p':
 		case 'P':
@@ -323,6 +324,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_MOVING_PAPERS;
 			movingPapers.init();
+			showBlue = true;
 			break;
 		case '3':
 			PlaySound("textures/2.wav", NULL, SND_ASYNC);
@@ -330,11 +332,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO;
 			movingPapers.init();
+			showBlue = true;
 			break;
 		case '4':
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_FALLING_SNIPPETS;
 			snippets.init();
+			showBlue = false;
 			break;
 		case '0':
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
