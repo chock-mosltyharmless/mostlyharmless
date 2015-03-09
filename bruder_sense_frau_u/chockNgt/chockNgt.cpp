@@ -304,6 +304,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_INTRO;
 			movingPapers.init();
 			break;
+		case 'p':
+		case 'P':
+			PlaySound("textures/intro.wav", NULL, SND_ASYNC);
+			whatIsShown = SHOW_INTRO;
+			movingPapers.startDetaching();
+			break;
 		case 'l':
 		case 'L':
 			movingPapers.startDetaching();
