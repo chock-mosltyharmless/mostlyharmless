@@ -3,7 +3,7 @@
 #include "TextureManager.h"
 
 #define NUM_PAPERS 6
-#define NUM_PAPER_TEXTURES 9
+#define NUM_PAPER_TEXTURES 104
 #define PAPER_PERIOD 3.0f
 #define PAPER_MOVEMENT_TIME 0.5f
 // Delay for a paper left to a right one to draw
