@@ -118,6 +118,7 @@ const char *MovingPapers::texNames[NUM_PAPER_TEXTURES] =
 
 MovingPapers::MovingPapers()
 {
+	startPaperIndex = 0;
 	init(false);
 }
 
@@ -132,6 +133,7 @@ void MovingPapers::init(bool startWithAll)
 	doFeeding = true;
 	detachingTime = 0.0f;
 	this->startWithAll = startWithAll;
+	startPaperIndex += 65; // THIS IS GLOBAL!!!
 
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
@@ -187,10 +189,10 @@ void MovingPapers::update(float deltaTime, bool noMovement)
 
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
-		paper[paperIdx].texIdx = paperIdx;
+		paper[paperIdx].texIdx = paperIdx + startPaperIndex;
 		int posIndex = timeIndex - paperIdx - 1;
 		if (startWithAll) posIndex += 3;
-		while (posIndex > 3)
+		while (posIndex > NUM_PAPERS - 3)
 		{
 			posIndex -= NUM_PAPERS;
 			paper[paperIdx].texIdx += NUM_PAPERS;

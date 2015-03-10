@@ -14,10 +14,14 @@ int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
 
 #define SHOW_MOVING_PAPERS 1
-#define SHOW_VIDEO 2
 #define SHOW_FALLING_SNIPPETS 3
 #define SHOW_INTRO 4
-
+#define SHOW_VIDEO_1 11
+#define SHOW_VIDEO_2 12
+#define SHOW_VIDEO_3 13
+#define SHOW_VIDEO_4 14
+#define SHOW_VIDEO_5 15
+#define SHOW_VIDEO_6 16
 
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
@@ -225,18 +229,83 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			movingPapers.draw(mainWnd, &textureManager, false, 0);
 		}
 
-		if (whatIsShown == SHOW_VIDEO)
+		if (whatIsShown == SHOW_VIDEO_1)
 		{
 			movingPapers.update(fDeltaTime, true);
-
 			GLuint texID;
 			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
-			if (retVal != 0)
+			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
 				return -1;
 			}
-
+			// Draw the newspaper moving thing
+			movingPapers.draw(mainWnd, &textureManager, true, texID);
+		}
+		if (whatIsShown == SHOW_VIDEO_2)
+		{
+			movingPapers.update(fDeltaTime, true);
+			GLuint texID;
+			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			if (retVal < 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
+				return -1;
+			}
+			if (retVal > 0) showBlue = false;
+			// Draw the newspaper moving thing
+			movingPapers.draw(mainWnd, &textureManager, true, texID);
+		}
+		if (whatIsShown == SHOW_VIDEO_3)
+		{
+			movingPapers.update(fDeltaTime, true);
+			GLuint texID;
+			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			if (retVal < 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
+				return -1;
+			}
+			// Draw the newspaper moving thing
+			movingPapers.draw(mainWnd, &textureManager, true, texID);
+		}
+		if (whatIsShown == SHOW_VIDEO_4)
+		{
+			movingPapers.update(fDeltaTime, true);
+			GLuint texID;
+			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			if (retVal < 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
+				return -1;
+			}
+			if (retVal > 0) showBlue = false;
+			// Draw the newspaper moving thing
+			movingPapers.draw(mainWnd, &textureManager, true, texID);
+		}
+		if (whatIsShown == SHOW_VIDEO_5)
+		{
+			movingPapers.update(fDeltaTime, true);
+			GLuint texID;
+			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			if (retVal < 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
+				return -1;
+			}
+			// Draw the newspaper moving thing
+			movingPapers.draw(mainWnd, &textureManager, true, texID);
+		}
+		if (whatIsShown == SHOW_VIDEO_6)
+		{
+			movingPapers.update(fDeltaTime, true);
+			GLuint texID;
+			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			if (retVal < 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
+				return -1;
+			}
 			// Draw the newspaper moving thing
 			movingPapers.draw(mainWnd, &textureManager, true, texID);
 		}
@@ -326,6 +395,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			showBlue = true;
 			fadeInTime = 0.0f;
 			break;
+		case 'w':
+		case 'W':
+			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+			whatIsShown = SHOW_MOVING_PAPERS;
+			movingPapers.init(false); // Move in from left
+			showBlue = true;
+			fadeInTime = 0.0f;
+			break;
 		case 'l':
 		case 'L':
 			movingPapers.startDetaching();
@@ -335,23 +412,73 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			movingPapers.stopFeeding();
 			snippets.stopFalling();
 			break;
+		case '1':
+			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			curTime = timeGetTime() - startTime;
+			videoStartTime = (float)curTime * 0.001f;
+			whatIsShown = SHOW_VIDEO_1;
+			movingPapers.init(false);
+			showBlue = true;
+			break;
+		case '2':
+			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			curTime = timeGetTime() - startTime;
+			videoStartTime = (float)curTime * 0.001f;
+			whatIsShown = SHOW_VIDEO_2;
+			movingPapers.init(false);
+			showBlue = true;
+			break;
 		case '3':
 			PlaySound("textures/2.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
-			whatIsShown = SHOW_VIDEO;
+			whatIsShown = SHOW_VIDEO_3;
 			movingPapers.init(false);
 			showBlue = true;
 			break;
 		case '4':
+			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			curTime = timeGetTime() - startTime;
+			videoStartTime = (float)curTime * 0.001f;
+			whatIsShown = SHOW_VIDEO_4;
+			movingPapers.init(false);
+			showBlue = true;
+			break;
+		case '5':
+			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			curTime = timeGetTime() - startTime;
+			videoStartTime = (float)curTime * 0.001f;
+			whatIsShown = SHOW_VIDEO_5;
+			movingPapers.init(false);
+			showBlue = true;
+			break;
+		case '6':
+			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			curTime = timeGetTime() - startTime;
+			videoStartTime = (float)curTime * 0.001f;
+			whatIsShown = SHOW_VIDEO_6;
+			movingPapers.init(false);
+			showBlue = true;
+			break;
+		case 't':
+		case 'T':
+		case 'y':
+		case 'Y':
+		case 'z':
+		case 'Z':
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_FALLING_SNIPPETS;
 			snippets.init();
 			showBlue = false;
 			break;
-		case '0':
+		case '9': // Soft reset (blue stays)
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = -1;
+			break;
+		case '0': // Hard reset (blue away)
+			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+			whatIsShown = -1;
+			showBlue = 0;
 			break;
 		case 'b':
 		case 'B':

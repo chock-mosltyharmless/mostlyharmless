@@ -13,6 +13,7 @@ Seite 8 Frau 2 Beginn der ersten Strom
 
 Video 1
 - Abrubt an, und abrubt aus (brauche Video)
+  Balken bleiben
 
 Video 2 (gleich danach)
 - Abrubt an und abrubt aus
@@ -40,7 +41,7 @@ Seite 18 2. Monolog
   Schnipsel fallen ohne Balken
 
 Seite 20 3. Monolog
-- Dieser dor ist der Atan-Berg (bis Seite 20 mitte)  
+- Dieser dort ist der Atan-Berg (bis Seite 20 mitte)  
   Schnipsel fallen ohne Balken
   
 Video 5 Seite 22
@@ -53,7 +54,8 @@ Video 6 Seite 23
   
 Seite 23 Klinkeltöne -> Zeitungen rein
 - Balken bleiben von vorher, die drei Zeitungen gleichzeitig rein
-  Einblenden
+  Einblenden <-- Gefällt mir so nicht (ist Arbeit)
+  TODO: CHECK WITH OTONE!
   Während Erbeben Eilmeldung (Seite 25) gehen abrubt aus
     (so richtig schnell weg), auch Balken aus
 	

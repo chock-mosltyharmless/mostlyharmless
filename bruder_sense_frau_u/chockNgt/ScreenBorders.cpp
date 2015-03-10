@@ -95,7 +95,7 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 	if (showBlue)
 	{
 		GLuint texID;
-		if (tex->getTextureID("Blue_top_tall.tga", &texID, errorString))
+		if (tex->getTextureID("Blue_top_tall_text.tga", &texID, errorString))
 		{
 			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 			return;
@@ -109,7 +109,7 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 			yBorder[i][1] -= height;
 		}
 		glEnd();
-		if (tex->getTextureID("Blue_bottom_tall.tga", &texID, errorString))
+		if (tex->getTextureID("Blue_bottom_tall_text.tga", &texID, errorString))
 		{
 			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 			return;

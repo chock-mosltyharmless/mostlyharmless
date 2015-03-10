@@ -2,7 +2,7 @@
 
 #include "TextureManager.h"
 
-#define NUM_PAPERS 6
+#define NUM_PAPERS 11
 #define NUM_PAPER_TEXTURES 106
 #define PAPER_PERIOD 3.0f
 #define PAPER_MOVEMENT_TIME 0.5f
@@ -73,5 +73,6 @@ private:
 	bool doDetach; // The papers transform into snippets
 	bool doFeeding; // Feed new papers from left when papers move out to the right
 	bool startWithAll; // Start drawing with all the papers present
+	int startPaperIndex; // The paper that the show starts with
 };
 
