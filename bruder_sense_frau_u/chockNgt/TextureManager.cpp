@@ -82,6 +82,8 @@ int TextureManager::loadAVI(const char *filename, char *errorString)
 	glBindTexture(GL_TEXTURE_2D, videoTextureID[numVideos]);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 	glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 				 videoWidth[numVideos], videoHeight[numVideos],
@@ -145,6 +147,8 @@ int TextureManager::loadTGA(const char *filename, char *errorString)
 	glBindTexture(GL_TEXTURE_2D, textureID[numTextures]);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
 	glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
 #if 0 // Use simple mipmap generation	
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
