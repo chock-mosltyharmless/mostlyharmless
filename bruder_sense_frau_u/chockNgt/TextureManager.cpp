@@ -236,7 +236,9 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
 		{
 			if (frameID >= videoNumFrames[i])
 			{
-				return getTextureID("black.tga", id, errorString);
+				int retVal = getTextureID("black.tga", id, errorString);
+				if (retVal < 0) return retVal;
+				else return 1; // mark finished
 			}
 
 			*id = videoTextureID[i];
@@ -262,7 +264,7 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
 	// Got here without finding a texture, return error.
 	sprintf_s(errorString, MAX_ERROR_LENGTH,
 			  "Could not find video '%s'", name);
-	return 0;
+	return -1;
 }
 
 int TextureManager::getTextureID(const char *name, GLuint *id, char *errorString)
@@ -279,7 +281,7 @@ int TextureManager::getTextureID(const char *name, GLuint *id, char *errorString
 	// Got here without finding a texture, return error.
 	sprintf_s(errorString, MAX_ERROR_LENGTH,
 			  "Could not find texture '%s'", name);
-	return 0;
+	return -1;
 }
 
 int TextureManager::createNoiseTexture(char *errorString, const char *name)
