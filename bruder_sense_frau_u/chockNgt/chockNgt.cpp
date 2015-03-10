@@ -60,6 +60,7 @@ long startTime;
 // 1: Falling snippets
 int whatIsShown = -1;
 bool showBlue = false;
+float fadeInTime; // Put to 0 to start fading in...
 
 void glInit()
 {
@@ -135,8 +136,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RegisterClass (&wc);
 
 	// Create the window
-	mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
-	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	//mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
+	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	
 	RECT windowRect;
 	GetWindowRect(mainWnd, &windowRect);
@@ -163,6 +164,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	snippets.init();
 
+	fadeInTime = 1.0f; // fully faded in.
+
 	do
     {
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -183,6 +186,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		long deltaTime = curTime - lastTime;
 		float fDeltaTime = (float) deltaTime * 0.001f;
 		lastTime = curTime;
+
+		fadeInTime += fDeltaTime * 3.0f;
+		if (fadeInTime > 1.0f) fadeInTime = 1.0f;
 
 		// render
 		wglMakeCurrent(mainDC, mainRC);
@@ -254,7 +260,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		//glEnable(GL_DEPTH_TEST);
 
 		// Draw the black borders around the Schraenke
-		screenBorders.drawBorders(&textureManager, mainWnd, showBlue);
+		screenBorders.drawBorders(&textureManager, mainWnd, showBlue, fadeInTime);
 
 		// swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
@@ -299,10 +305,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		switch(wParam)
 		{
 			// change what is shown
-		case '1':
+		case 'o':
+		case 'O':
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_INTRO;
-			movingPapers.init();
+			movingPapers.init(false);
 			showBlue = false;
 			break;
 		case 'p':
@@ -310,6 +317,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			PlaySound("textures/intro.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_INTRO;
 			movingPapers.startDetaching();
+			break;
+		case 'q':
+		case 'Q':
+			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+			whatIsShown = SHOW_MOVING_PAPERS;
+			movingPapers.init(true); // Fade it all in at the same time
+			showBlue = true;
+			fadeInTime = 0.0f;
 			break;
 		case 'l':
 		case 'L':
@@ -320,18 +335,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			movingPapers.stopFeeding();
 			snippets.stopFalling();
 			break;
-		case '2':
-			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
-			whatIsShown = SHOW_MOVING_PAPERS;
-			movingPapers.init();
-			showBlue = true;
-			break;
 		case '3':
 			PlaySound("textures/2.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO;
-			movingPapers.init();
+			movingPapers.init(false);
 			showBlue = true;
 			break;
 		case '4':

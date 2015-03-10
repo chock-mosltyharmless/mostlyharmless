@@ -26,7 +26,7 @@ ScreenBorders::~ScreenBorders(void)
 {
 }
 
-void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue)
+void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue, float opacity)
 {
 	// set up matrices
 	glMatrixMode(GL_PROJECTION);
@@ -129,7 +129,8 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 	glBegin(GL_QUADS);
 	float dimmer = params.getParam(22, 0.0f);
 	float redenner = params.getParam(13, 0.0f);
-	glColor4f(1.0f - dimmer, 1.0f - dimmer - redenner * 0.7f, 1.0f - dimmer - redenner * 0.75f, 1.0f);
+	glColor4f((1.0f - dimmer) * opacity, (1.0f - dimmer - redenner * 0.7f) * opacity,
+		      (1.0f - dimmer - redenner * 0.75f) * opacity, 1.0f);
 	drawQuad(xBorder[0][0], yBorder[0][0], xBorder[0][1], yBorder[0][1], 0.0f, 0.33f);
 	drawQuad(xBorder[1][0], yBorder[1][0], xBorder[1][1], yBorder[1][1], 0.34f, 0.66f);
 	drawQuad(xBorder[2][0], yBorder[2][0], xBorder[2][1], yBorder[2][1], 0.67f, 1.0f);

@@ -11,6 +11,8 @@ const char *MovingPapers::texNames[NUM_PAPER_TEXTURES] =
 	"n1.tga",
 	"n2.tga",
 	"n3.tga",
+	"n17.tga",
+	"n28.tga",
 	"s1.tga",
 	"s2.tga",
 	"s3.tga",
@@ -116,25 +118,27 @@ const char *MovingPapers::texNames[NUM_PAPER_TEXTURES] =
 
 MovingPapers::MovingPapers()
 {
-	init();
+	init(false);
 }
 
 MovingPapers::~MovingPapers(void)
 {
 }
 
-void MovingPapers::init()
+void MovingPapers::init(bool startWithAll)
 {
 	time = 0.0;
 	doDetach = false;
 	doFeeding = true;
 	detachingTime = 0.0f;
+	this->startWithAll = startWithAll;
 
 	for (int paperIdx = 0; paperIdx < NUM_PAPERS; paperIdx++)
 	{
 		paper[paperIdx].updatePos = true;
 		paper[paperIdx].texIdx = paperIdx;
 		paper[paperIdx].pos[0] = -1.0f - 2.0f/3.0f * (paperIdx + 1);
+		if (startWithAll) paper[paperIdx].pos[0] += 2.0f;
 		paper[paperIdx].pos[1] = -1.0f;
 		for (int tileY = 0; tileY < PAPER_Y_TILING; tileY++)
 		{
@@ -185,6 +189,7 @@ void MovingPapers::update(float deltaTime, bool noMovement)
 	{
 		paper[paperIdx].texIdx = paperIdx;
 		int posIndex = timeIndex - paperIdx - 1;
+		if (startWithAll) posIndex += 3;
 		while (posIndex > 3)
 		{
 			posIndex -= NUM_PAPERS;
