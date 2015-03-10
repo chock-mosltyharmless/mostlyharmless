@@ -3,7 +3,7 @@
 #include "TextureManager.h"
 
 #define NUM_PAPERS 6
-#define NUM_PAPER_TEXTURES 104
+#define NUM_PAPER_TEXTURES 106
 #define PAPER_PERIOD 3.0f
 #define PAPER_MOVEMENT_TIME 0.5f
 // Delay for a paper left to a right one to draw
@@ -50,7 +50,7 @@ public:
 	virtual ~MovingPapers(void);
 
 	// Initialize positions and stuff (TODO: Add wrapper for different runs)
-	void init();
+	void init(bool startWithAll);
 	void update(float deltaTime, bool noMovement);
 	// Set texName to some valid name to not use papers
 	void draw(HWND mainWnd, TextureManager *texManag, bool useStaticTexture,  GLuint texID);
@@ -72,5 +72,6 @@ private:
 	float detachingTime; // Time since dismantling started
 	bool doDetach; // The papers transform into snippets
 	bool doFeeding; // Feed new papers from left when papers move out to the right
+	bool startWithAll; // Start drawing with all the papers present
 };
 
