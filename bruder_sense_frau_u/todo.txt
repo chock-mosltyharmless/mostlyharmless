@@ -1,0 +1,73 @@
+Prolog (OK)
+
+o Balken ggf. mit Beschriftung?
+  Noch unklar
+
+Seite 1
+- Bei Klingelton erscheinen Zeitungen auf 3 Flächen.
+  Zeitungen fahren nicht herein
+  Möglicherweise einblenden
+  
+Seite 8 Frau 2 Beginn der ersten Strom
+- Kommen keine neuen Seiten mehr nach (OK)
+
+Video 1
+- Abrubt an, und abrubt aus (brauche Video)
+
+Video 2 (gleich danach)
+- Abrubt an und abrubt aus
+  Balken gehen mit Video aus
+  
+Bis Seite 13 keine Projektion
+Video 3
+- Video + Balken abrubt an und abrubt aus
+  Balken bleiben an
+  
+Seite 15
+Video 4
+- Video abrubt an und aus
+  Balken aus
+  
+Seite 16 1. Monolog
+- Haus des assistierenden Beambten erscheinen Zeitungsschnipsel
+  Nur Frau 1 Monolog
+  Schnipsel fallen ohne Balken
+  TODO ggf. ausblenden
+  ohne Balken
+
+Seite 18 2. Monolog
+- Im Fluss, der im Reisfeld fliesst (bis Seite 19 mitte)
+  Schnipsel fallen ohne Balken
+
+Seite 20 3. Monolog
+- Dieser dor ist der Atan-Berg (bis Seite 20 mitte)  
+  Schnipsel fallen ohne Balken
+  
+Video 5 Seite 22
+- Mit Balken abrubt an und aus
+  Balken bleiben an
+  
+Video 6 Seite 23
+- Abrubt an
+  Balken bleiben an
+  
+Seite 23 Klinkeltöne -> Zeitungen rein
+- Balken bleiben von vorher, die drei Zeitungen gleichzeitig rein
+  Einblenden
+  Während Erbeben Eilmeldung (Seite 25) gehen abrubt aus
+    (so richtig schnell weg), auch Balken aus
+	
+Seite 26 unten Todesmeldung
+- Normale Zeitungsmeldungen, die langsam zerfallen
+  Balken und Zeitungsartikel erscheinen
+  Zerfallen sofort
+  Bis Seite 27 oben "60 Jahre alt"
+  Balken bleiben
+  
+Video 5 (widerholt sich hier)
+- Mit dem Zerfallen.
+  Zerfallen beginnt mitten drin
+  Gegen Ende komplett zerfallen
+  Färben in engawa Farben
+  
+Und dann Black
