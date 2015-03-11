@@ -95,7 +95,7 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 	if (showBlue)
 	{
 		GLuint texID;
-		if (tex->getTextureID("Blue_top_tall_text.tga", &texID, errorString))
+		if (tex->getTextureID("Blue_top_tall_text2.tga", &texID, errorString))
 		{
 			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 			return;
