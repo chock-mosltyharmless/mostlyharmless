@@ -22,6 +22,7 @@ int Y_OFFSCREEN = 256;
 #define SHOW_VIDEO_4 14
 #define SHOW_VIDEO_5 15
 #define SHOW_VIDEO_6 16
+#define SHOW_VIDEO_7 17
 
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
@@ -58,6 +59,7 @@ ScreenBorders screenBorders;
 MovingPapers movingPapers;
 float videoStartTime = 0.0f;
 long startTime;
+bool notYetDetached = true;
 
 // An indicator what is currently done
 // 0: Move articles
@@ -140,8 +142,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RegisterClass (&wc);
 
 	// Create the window
-	//mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
-	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
+	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	
 	RECT windowRect;
 	GetWindowRect(mainWnd, &windowRect);
@@ -169,9 +171,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	snippets.init();
 
 	fadeInTime = 1.0f; // fully faded in.
-
 	do
     {
+		float fadeOut = 1.0f; // fully faded in.
+		float redenner = 0.0f; // How much red in there
+
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 		{
 			if (!IsDialogMessage(mainWnd, &msg))
@@ -309,6 +313,37 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			// Draw the newspaper moving thing
 			movingPapers.draw(mainWnd, &textureManager, true, texID);
 		}
+		if (whatIsShown == SHOW_VIDEO_7)
+		{
+			movingPapers.update(fDeltaTime, true);
+			GLuint texID;
+			int retVal = textureManager.getVideoID("05.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
+			if (fCurTime - videoStartTime > 43.0f && notYetDetached)
+			{
+				movingPapers.startDetaching(4);
+				notYetDetached = false;
+			}
+			if (retVal < 0)
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
+				return -1;
+			}
+			// Draw the newspaper moving thing
+			movingPapers.draw(mainWnd, &textureManager, true, texID);
+
+			// Fade everything out at the end
+			if (fCurTime - videoStartTime > 3.0f*60.0f + 45.0f)
+			{
+				fadeOut = (3.0f*60.0f + 45.0f - (fCurTime - videoStartTime)) / 10.0f + 1.0f;
+				if (fadeOut < 0.0f) fadeOut = 0.0f;
+			}
+			if (fCurTime - videoStartTime > 1.2f*60.0f)
+			{
+				redenner = ((fCurTime - videoStartTime) - 1.2f * 60.0f) / (2.0f*60.0f);
+				if (redenner < 0.0f) redenner = 0.0f;
+				if (redenner > 1.0f) redenner = 1.0f;
+			}
+		}
 
 		if (whatIsShown == SHOW_FALLING_SNIPPETS)
 		{
@@ -329,7 +364,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		//glEnable(GL_DEPTH_TEST);
 
 		// Draw the black borders around the Schraenke
-		screenBorders.drawBorders(&textureManager, mainWnd, showBlue, fadeInTime);
+		screenBorders.drawBorders(&textureManager, mainWnd, showBlue, fadeInTime * fadeOut, redenner);
 
 		// swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
@@ -380,12 +415,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_INTRO;
 			movingPapers.init(false);
 			showBlue = false;
+			fadeInTime = 0.0f;
 			break;
 		case 'p':
 		case 'P':
 			PlaySound("textures/intro.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_INTRO;
-			movingPapers.startDetaching();
+			movingPapers.startDetaching(1);
+			fadeInTime = 1.0f;
 			break;
 		case 'q':
 		case 'Q':
@@ -401,11 +438,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_MOVING_PAPERS;
 			movingPapers.init(false); // Move in from left
 			showBlue = true;
-			fadeInTime = 0.0f;
+			fadeInTime = 1.0f;
 			break;
 		case 'l':
 		case 'L':
-			movingPapers.startDetaching();
+			movingPapers.startDetaching(2);
 			break;
 		case 's':
 		case 'S':
@@ -419,6 +456,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_VIDEO_1;
 			movingPapers.init(false);
 			showBlue = true;
+			fadeInTime = 1.0f;
 			break;
 		case '2':
 			PlaySound("textures/02.wav", NULL, SND_ASYNC);
@@ -427,6 +465,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_VIDEO_2;
 			movingPapers.init(false);
 			showBlue = true;
+			fadeInTime = 1.0f;
 			break;
 		case '3':
 			PlaySound("textures/03.wav", NULL, SND_ASYNC);
@@ -435,6 +474,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_VIDEO_3;
 			movingPapers.init(false);
 			showBlue = true;
+			fadeInTime = 1.0f;
 			break;
 		case '4':
 			PlaySound("textures/04.wav", NULL, SND_ASYNC);
@@ -443,6 +483,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_VIDEO_4;
 			movingPapers.init(false);
 			showBlue = true;
+			fadeInTime = 1.0f;
 			break;
 		case '5':
 			PlaySound("textures/05.wav", NULL, SND_ASYNC);
@@ -451,12 +492,23 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			whatIsShown = SHOW_VIDEO_5;
 			movingPapers.init(false);
 			showBlue = true;
+			fadeInTime = 1.0f;
 			break;
 		case '6':
 			PlaySound("textures/06.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO_6;
+			movingPapers.init(false);
+			showBlue = true;
+			fadeInTime = 1.0f;
+			break;
+		case '7':
+			PlaySound("textures/05.wav", NULL, SND_ASYNC);
+			curTime = timeGetTime() - startTime;
+			videoStartTime = (float)curTime * 0.001f;
+			whatIsShown = SHOW_VIDEO_7;
+			notYetDetached = true;
 			movingPapers.init(false);
 			showBlue = true;
 			break;

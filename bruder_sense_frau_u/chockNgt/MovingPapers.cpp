@@ -280,7 +280,7 @@ void MovingPapers::update(float deltaTime, bool noMovement)
 				if (doDetach)
 				{
 					//int timePos = ((py*2  + px * 58901 + paperIdx * 2391445) % 1471 + 20357) % 157 + py * 20;
-					int timePos = ((py*2  + px * 58901 + paperIdx * 2391445) % 1471 + 20357) % 127 + py * 18;
+					int timePos = ((py*2  + px * 58901 + paperIdx * 2391445) % 1471 + 20357) % 127 + py * 18 * doDetach;
 					if (detachingTime > (float)timePos * 0.075f) paper[paperIdx].snippet[py][px].attached = false;
 				}
 			}

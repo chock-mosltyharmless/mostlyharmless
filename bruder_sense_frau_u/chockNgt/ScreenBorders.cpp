@@ -26,7 +26,7 @@ ScreenBorders::~ScreenBorders(void)
 {
 }
 
-void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue, float opacity)
+void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue, float opacity, float redenner)
 {
 	// set up matrices
 	glMatrixMode(GL_PROJECTION);
@@ -102,6 +102,7 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 		}
 		glBindTexture(GL_TEXTURE_2D, texID);
 		glBegin(GL_QUADS);
+		glColor4f(opacity, opacity, opacity, 0.0f);
 		for (int i = 0; i < 3; i++)
 		{
 			float height = (yBorder[i][1] - yBorder[i][0]) * 13.3f / 170.0f;
@@ -128,9 +129,9 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
 	glBegin(GL_QUADS);
 	float dimmer = params.getParam(22, 0.0f);
-	float redenner = params.getParam(13, 0.0f);
-	glColor4f((1.0f - dimmer) * opacity, (1.0f - dimmer - redenner * 0.7f) * opacity,
-		      (1.0f - dimmer - redenner * 0.75f) * opacity, 1.0f);
+	//float redenner = params.getParam(13, 0.0f);
+	glColor4f((1.0f - dimmer) * opacity, (1.0f - dimmer - redenner * 0.4f) * opacity,
+		      (1.0f - dimmer - redenner * 0.17f) * opacity, 1.0f);
 	drawQuad(xBorder[0][0], yBorder[0][0], xBorder[0][1], yBorder[0][1], 0.0f, 0.33f);
 	drawQuad(xBorder[1][0], yBorder[1][0], xBorder[1][1], yBorder[1][1], 0.34f, 0.66f);
 	drawQuad(xBorder[2][0], yBorder[2][0], xBorder[2][1], yBorder[2][1], 0.67f, 1.0f);

@@ -22,7 +22,10 @@ void Snippets::init(void)
 	for (int i = 0; i < NUM_SNIPPETS; i++)
 	{
 		snippet[i].pos[0] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
-		snippet[i].pos[1] = 2.0f * (float)rand() / (float)RAND_MAX + 1.1f;
+		snippet[i].pos[1] = 4.0f * (float)rand() / (float)RAND_MAX;
+		if (snippet[i].pos[1] < 2.0f * (float)rand() / (float)RAND_MAX) snippet[i].pos[1] += 2.0f;
+		//snippet[i].pos[1] = sqrtf(snippet[i].pos[1]);
+		snippet[i].pos[1] += 1.1f;
 		snippet[i].pos[2] = 2.0f * (float)rand() / (float)RAND_MAX - 1.0f;
 
 		snippet[i].speed[0] = 0.0f;

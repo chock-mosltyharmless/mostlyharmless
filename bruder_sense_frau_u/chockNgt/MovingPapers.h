@@ -56,7 +56,7 @@ public:
 	void draw(HWND mainWnd, TextureManager *texManag, bool useStaticTexture,  GLuint texID);
 
 	// Start dropping snippets.
-	void startDetaching(void) {doDetach = true; detachingTime = 0.0f;}
+	void startDetaching(int speed) {doDetach = speed; detachingTime = 0.0f;}
 	void stopFeeding(void) {doFeeding = false;}
 
 private:
@@ -70,7 +70,7 @@ private:
 	// Overall time since init();
 	float time;
 	float detachingTime; // Time since dismantling started
-	bool doDetach; // The papers transform into snippets
+	int doDetach; // The papers transform into snippets (value is about the time in minutes)
 	bool doFeeding; // Feed new papers from left when papers move out to the right
 	bool startWithAll; // Start drawing with all the papers present
 	int startPaperIndex; // The paper that the show starts with
