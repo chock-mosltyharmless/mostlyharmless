@@ -233,7 +233,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			int retVal = textureManager.getVideoID("01.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -246,7 +246,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			int retVal = textureManager.getVideoID("02.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -260,7 +260,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			int retVal = textureManager.getVideoID("03.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -273,7 +273,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			int retVal = textureManager.getVideoID("04.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -287,7 +287,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			int retVal = textureManager.getVideoID("05.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -300,7 +300,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("2-small.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 25.0f));
+			int retVal = textureManager.getVideoID("06.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -413,7 +413,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			snippets.stopFalling();
 			break;
 		case '1':
-			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			PlaySound("textures/01.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO_1;
@@ -421,7 +421,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			showBlue = true;
 			break;
 		case '2':
-			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			PlaySound("textures/02.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO_2;
@@ -429,7 +429,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			showBlue = true;
 			break;
 		case '3':
-			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			PlaySound("textures/03.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO_3;
@@ -437,7 +437,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			showBlue = true;
 			break;
 		case '4':
-			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			PlaySound("textures/04.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO_4;
@@ -445,7 +445,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			showBlue = true;
 			break;
 		case '5':
-			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			PlaySound("textures/05.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO_5;
@@ -453,7 +453,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			showBlue = true;
 			break;
 		case '6':
-			PlaySound("textures/2.wav", NULL, SND_ASYNC);
+			PlaySound("textures/06.wav", NULL, SND_ASYNC);
 			curTime = timeGetTime() - startTime;
 			videoStartTime = (float)curTime * 0.001f;
 			whatIsShown = SHOW_VIDEO_6;

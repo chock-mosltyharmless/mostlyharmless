@@ -140,7 +140,7 @@ void Snippets::draw(void)
 	glEnable(GL_TEXTURE_2D);
 	glDepthMask(GL_FALSE);
 	glDisable(GL_DEPTH_TEST);
-	glColor4f(1.0f, 1.0f, 0.92f, 1.0f);
+	glColor4f(1.0f, 1.0f, 0.85f, 1.0f);
 
 	glBegin(GL_QUADS);
 	for (int i = 0; i < NUM_SNIPPETS; i++)

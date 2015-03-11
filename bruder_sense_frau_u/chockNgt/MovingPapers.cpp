@@ -322,7 +322,8 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTex
 
 			// Draw all papers
 			glBegin(GL_QUADS);
-			glColor4f(1.0f, 1.0f, 0.92f, 1.0f);
+			if (!useConstTexture) glColor4f(1.0f, 1.0f, 0.85f, 1.0f);
+			else glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 			// Corners are top-left, top-right, bottom-right, bottom-left
 			float cornerPos[4][2] =
 			{
