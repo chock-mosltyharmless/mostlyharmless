@@ -23,6 +23,7 @@ int Y_OFFSCREEN = 256;
 #define SHOW_VIDEO_5 15
 #define SHOW_VIDEO_6 16
 #define SHOW_VIDEO_7 17
+#define SHOW_ENDING 18
 
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
@@ -67,6 +68,7 @@ bool notYetDetached = true;
 int whatIsShown = -1;
 bool showBlue = false;
 float fadeInTime; // Put to 0 to start fading in...
+float endingStartTime;
 
 void glInit()
 {
@@ -142,8 +144,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     RegisterClass (&wc);
 
 	// Create the window
-	mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
-	//mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+	//mainWnd = CreateWindow("chockngt","chockngt",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
+	mainWnd = CreateWindow("chockngt","chockngt",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 	
 	RECT windowRect;
 	GetWindowRect(mainWnd, &windowRect);
@@ -359,6 +361,86 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			snippets.draw();
 		}
 
+		if (whatIsShown == SHOW_ENDING)
+		{
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+			// Draw icon
+			GLuint texID;
+			if (textureManager.getTextureID("icon.tga", &texID, errorString))
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+				return -1;
+			}
+			glBindTexture(GL_TEXTURE_2D, texID);
+			float alpha;
+			if (fCurTime - endingStartTime < 0.4f) alpha = 0.0f;
+			else alpha = 1.0f;
+			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+
+			// Draw first highlight
+			if (textureManager.getTextureID("icon_highlight1.tga", &texID, errorString))
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+				return -1;
+			}
+			glBindTexture(GL_TEXTURE_2D, texID);
+			if (fCurTime - endingStartTime < 0.3f) alpha = (fCurTime - endingStartTime) / 0.3f;
+			else alpha = 1.1f - (fCurTime - endingStartTime - 0.3f) * 0.5f;
+			if (alpha < 0.0f) alpha = 0.0f;
+			if (alpha > 1.0f) alpha = 1.0f;
+			alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
+			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+
+			// Draw second highlight
+			if (textureManager.getTextureID("icon_highlight2.tga", &texID, errorString))
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+				return -1;
+			}
+			glBindTexture(GL_TEXTURE_2D, texID);
+			if (fCurTime - endingStartTime < 0.4f) alpha = (fCurTime - endingStartTime - 0.3f) / 0.1f;
+			else alpha = 1.2f - (fCurTime - endingStartTime - 0.4f) * 1.2f;
+			if (alpha < 0.0f) alpha = 0.0f;
+			if (alpha > 1.0f) alpha = 1.0f;
+			alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
+			alpha *= 0.75f;
+			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+
+			// draw some sparkles
+			if (textureManager.getTextureID("sparkle.tga", &texID, errorString))
+			{
+				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+				return -1;
+			}
+			glBindTexture(GL_TEXTURE_2D, texID);
+			float sparkleTime = (fCurTime - endingStartTime - 0.4f) * 0.4f;
+			for (int i = 0; i < 16; i++)
+			{
+				float sparkleDuration = 1.3f + 0.4f * sin(i*2.4f+2.3f);
+				if (sparkleTime > 0.0f && sparkleTime < sparkleDuration)
+				{
+					float amount = sqrtf(sin((sparkleTime / sparkleDuration * 3.1415f)));
+					float iconDistance = 0.5f;
+					float ASPECT_RATIO = 240.0f / 170.0f;
+					float centerX = -0.3f + iconDistance * (0.55f + 0.35f * sin(i*2.1f + 7.3f));
+					centerX += (0.7f+0.15f*sin(i*1.4f+8.3f)) * iconDistance / sparkleDuration * sparkleTime -
+							   0.1f * sparkleTime*sparkleTime/sparkleDuration/sparkleDuration;
+					float centerY = 0.5f + iconDistance * ASPECT_RATIO * (0.8f + 0.3f * sin(i*4.6f + 2.9f) - 1.0f);
+					centerY += (0.5f+0.2f*sin(i*6.8f+3.0f)) * iconDistance / sparkleDuration * sparkleTime * ASPECT_RATIO -
+							   0.2f * sparkleTime*sparkleTime/sparkleDuration/sparkleDuration;
+					float width = iconDistance * 0.25f;
+					drawQuad(centerX - width, centerX + width,
+							 centerY - width * ASPECT_RATIO, centerY + width * ASPECT_RATIO,
+							 0.0f, 1.0f, amount);
+				}
+			}
+
+
+			glDisable(GL_BLEND);
+		}
+
 		// draw background
 		//drawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
 		//glEnable(GL_DEPTH_TEST);
@@ -535,6 +617,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case 'b':
 		case 'B':
 			showBlue = !showBlue;
+			break;
+		case 'm':
+		case 'M':
+			PlaySound("textures/swoosh.wav", NULL, SND_ASYNC);
+			whatIsShown = SHOW_ENDING;
+			curTime = timeGetTime() - startTime;
+			endingStartTime = (float)curTime * 0.001f;
 			break;
 		default:
 			break;
