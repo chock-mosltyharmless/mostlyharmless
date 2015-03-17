@@ -46,13 +46,13 @@ vec3 noise(vec3 pos, int iterations, float reduction)\n\
    return result;\n\
 }\n\
 \n\
-vec3 color(vec3 pos, vec3 noiseData)\n\
+vec3 col(vec3 pos, float noiseData)\n\
 {\n\
   float fTime0_X = parameters[0][0];\n\
   vec3 innercolor = vec3(0.4, 0.1, 0.0);\n\
   vec3 outercolor = vec3(0.1, 0.35, 0.65);\n\
-  float height = (pos.y + noiseData.x);\n\
-  float colorpart = smoothstep(-0.5, 0.5, -length(pos) + noiseData.x*12.*(parameters[2][1]+1.) + 2.);\n\
+  float height = (pos.y + noiseData);\n\
+  float colorpart = smoothstep(-0.5, 0.5, -length(pos) + noiseData*12.*(parameters[2][1]+1.) + 2.);\n\
   float border = smoothstep(-0.8, 0.8, abs(colorpart - 0.5));\n\
   return mix(innercolor, outercolor, colorpart) * border + clamp(height - 2.*parameters[1][3] - 1.,0.0,100.0);\n\
 }\n\
@@ -106,7 +106,7 @@ void main(void)\n\
 	     float localDensity = 1. - exp(implicitVal);\n\
 		 //float localDensity = 0.1;\n\
 		 localDensity = (1.-totalDensity) * localDensity;\n\
-         totalColor += color(rayPos, noiseVal) * localDensity;\n\
+         totalColor += col(rayPos, noiseVal) * localDensity;\n\
          totalDensity += localDensity ;\n\
       }\n\
       \n\
