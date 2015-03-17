@@ -63,18 +63,21 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 #endif
 
 	// Get values for screen borders
-	xBorder[0][0] = params.getParam(2, 0.2f) * 0.5f - 1.0f;
-	xBorder[0][1] = xBorder[0][0] + params.getParam(3, 0.7f) * 1.5f / 3.0f + 0.5f / 3.0f;
-	xBorder[1][0] = -7.0f/12.0f + params.getParam(4, 0.7f) * 0.5f;
-	xBorder[1][1] = xBorder[1][0] + params.getParam(5, 0.7f) * 1.5f / 3.0f + 0.5f / 3.0f;
-	xBorder[2][0] = 1.0f / 12.0f + params.getParam(6, 0.7f) * 0.5f;
-	xBorder[2][1] = xBorder[2][0] + params.getParam(8, 0.7f) * 1.5f / 3.0f + 0.5f / 3.0f;
-	yBorder[0][0] = params.getParam(14, 0.2f) - 1.0f;
-	yBorder[0][1] = 1.0f - params.getParam(15, 0.2f);
-	yBorder[1][0] = params.getParam(16, 0.2f) - 1.0f;
+	//2:0.02(3) 3:0.38(48) 4:0.97(124) 5:0.25(32) 6:0.73(94) 8:0.38(49) 14:0.13(17) 15:0.59(75) 16:0.73(94)
+	//17:0.20(25) 18:0.00(0) 19:0.68(87) 
+	// 14:0.16(20) 
+	xBorder[0][0] = params.getParam(2, 0.02f) * 0.75f - 1.0f;
+	xBorder[0][1] = xBorder[0][0] + params.getParam(3, 0.38f) * 1.5f / 3.0f + 0.5f / 3.0f;
+	xBorder[1][0] = -9.0f/12.0f + params.getParam(4, 0.98f) * 0.75f;
+	xBorder[1][1] = xBorder[1][0] + params.getParam(5, 0.24f) * 1.5f / 3.0f + 0.5f / 3.0f;
+	xBorder[2][0] = 1.0f / 12.0f + params.getParam(6, 0.735f) * 0.75f;
+	xBorder[2][1] = xBorder[2][0] + params.getParam(8, 0.38f) * 1.5f / 3.0f + 0.5f / 3.0f;
+	yBorder[0][0] = params.getParam(14, 0.142f) - 1.0f;
+	yBorder[0][1] = 1.0f - params.getParam(15, 0.59f);
+	yBorder[1][0] = params.getParam(16, 0.74f) - 1.0f;
 	yBorder[1][1] = 1.0f - params.getParam(17, 0.2f);
-	yBorder[2][0] = params.getParam(18, 0.2f) - 1.0f;
-	yBorder[2][1] = 1.0f - params.getParam(19, 0.2f);
+	yBorder[2][0] = params.getParam(18, 0.0f) - 1.0f;
+	yBorder[2][1] = 1.0f - params.getParam(19, 0.685f);
 
 
 	GLuint offscreenTexture;
@@ -95,7 +98,7 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 	if (showBlue)
 	{
 		GLuint texID;
-		if (tex->getTextureID("Blue_top_tall_text2.tga", &texID, errorString))
+		if (tex->getTextureID("Blue_top_tall_text3_ds.tga", &texID, errorString))
 		{
 			MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 			return;
@@ -103,9 +106,10 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 		glBindTexture(GL_TEXTURE_2D, texID);
 		glBegin(GL_QUADS);
 		glColor4f(opacity, opacity, opacity, 0.0f);
+		const float topSize = 10.2;
 		for (int i = 0; i < 3; i++)
 		{
-			float height = (yBorder[i][1] - yBorder[i][0]) * 13.3f / 170.0f;
+			float height = (yBorder[i][1] - yBorder[i][0]) * topSize / 170.0f;
 			drawQuad(xBorder[i][0], yBorder[i][1] - height, xBorder[i][1], yBorder[i][1], 0.0f, 1.0f);
 			yBorder[i][1] -= height;
 		}
@@ -119,19 +123,20 @@ void ScreenBorders::drawBorders(TextureManager *tex, HWND mainWnd, bool showBlue
 		glBegin(GL_QUADS);
 		for (int i = 0; i < 3; i++)
 		{
-			float height = (yBorder[i][1] - yBorder[i][0]) * 8.3f / (170.0f-13.3f);
+			float height = (yBorder[i][1] - yBorder[i][0]) * 8.3f / (170.0f-topSize);
 			drawQuad(xBorder[i][0], yBorder[i][0], xBorder[i][1], yBorder[i][0] + height, 0.0f, 1.0f);
 			yBorder[i][0] += height;
 		}
 		glEnd();
 	}
-
+	
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
 	glBegin(GL_QUADS);
 	float dimmer = params.getParam(22, 0.0f);
 	//float redenner = params.getParam(13, 0.0f);
-	glColor4f((1.0f - dimmer) * opacity, (1.0f - dimmer - redenner * 0.4f) * opacity,
-		      (1.0f - dimmer - redenner * 0.17f) * opacity, 1.0f);
+	glColor4f((1.0f - dimmer) * opacity,
+		      (1.0f - dimmer - redenner * 0.8f) * opacity,
+		      (1.0f - dimmer - redenner * 0.34f) * opacity, 1.0f);
 	drawQuad(xBorder[0][0], yBorder[0][0], xBorder[0][1], yBorder[0][1], 0.0f, 0.33f);
 	drawQuad(xBorder[1][0], yBorder[1][0], xBorder[1][1], yBorder[1][1], 0.34f, 0.66f);
 	drawQuad(xBorder[2][0], yBorder[2][0], xBorder[2][1], yBorder[2][1], 0.67f, 1.0f);

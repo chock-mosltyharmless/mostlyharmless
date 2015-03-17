@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "MovingPapers.h"
 #include "Configuration.h"
+#include "Parameter.h"
 
 #ifndef PI
 #define PI 3.1415926f
@@ -288,7 +289,7 @@ void MovingPapers::update(float deltaTime, bool noMovement)
 	}
 }
 
-void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTexture, GLuint texID)
+void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTexture, GLuint texID, float redenner)
 {
 	// set up matrices
 	glMatrixMode(GL_PROJECTION);
@@ -301,162 +302,183 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTex
 
 	char errorString[MAX_ERROR_LENGTH + 1];
 
-	for (int pass = 0; pass < 2; pass++)
+	for (int redPass = 0; redPass < 2; redPass++) if (redPass == 0 || redenner > 0.0f)
 	{
-		for (int paperID = 0; paperID < NUM_PAPERS; paperID++)
+		if (redPass == 1)
 		{
-			int retVal = -1;
-			//if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
-			//else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
-			if (!useConstTexture) 
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+
+		for (int pass = 0; pass < 2; pass++)
+		{
+			for (int paperID = 0; paperID < NUM_PAPERS; paperID++)
 			{
-				int texIdx = paper[paperID].texIdx;
-				retVal = texManag->getTextureID(texNames[texIdx], &texID, errorString);
-				if (retVal != 0)
+				int retVal = -1;
+				//if (drawVideo) retVal = texManag->getVideoID("2-old.avi", &texID, errorString, (int)(time * 30.0f));
+				//else retVal = texManag->getTextureID(texNames[paperID], &texID, errorString);
+				if (!useConstTexture) 
 				{
-					MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
-					return;
-				}
-			}
-			glBindTexture(GL_TEXTURE_2D, texID);
-
-			// Draw all papers
-			glBegin(GL_QUADS);
-			if (!useConstTexture) glColor4f(1.0f, 1.0f, 0.85f, 1.0f);
-			else glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-			// Corners are top-left, top-right, bottom-right, bottom-left
-			float cornerPos[4][2] =
-			{
-				{-1.0f / 3.0f / PAPER_X_TILING, -1.0f / PAPER_Y_TILING},
-				{1.0f / 3.0f / PAPER_X_TILING, -1.0f / PAPER_Y_TILING},
-				{1.0f / 3.0f / PAPER_X_TILING, 1.0f / PAPER_Y_TILING},
-				{-1.0f / 3.0f / PAPER_X_TILING, 1.0f / PAPER_Y_TILING}
-			};
-			for (int py = 0; py < PAPER_Y_TILING; py++)
-			{
-				for (int px = 0; px < PAPER_X_TILING; px++)
-				{
-					if (pass == 0 && paper[paperID].snippet[py][px].attached)
+					int texIdx = paper[paperID].texIdx;
+					retVal = texManag->getTextureID(texNames[texIdx], &texID, errorString);
+					if (retVal != 0)
 					{
-						glTexCoord2f(paper[paperID].texPos[py][px][0], paper[paperID].texPos[py][px][1]);
-						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py][px][0] + cornerPos[0][0],
-								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py][px][1] + cornerPos[0][1],
-								   0.99f);
-						glTexCoord2f(paper[paperID].texPos[py][px+1][0], paper[paperID].texPos[py][px+1][1]);
-						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py][px+1][0] + cornerPos[1][0],
-								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py][px+1][1] + cornerPos[1][1],
-								   0.99f);
-						glTexCoord2f(paper[paperID].texPos[py+1][px+1][0], paper[paperID].texPos[py+1][px+1][1]);
-						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py+1][px+1][0] + cornerPos[2][0],
-								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py+1][px+1][1] + cornerPos[2][1],
-								   0.99f);
-						glTexCoord2f(paper[paperID].texPos[py+1][px][0], paper[paperID].texPos[py+1][px][1]);
-						glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py+1][px][0] + cornerPos[3][0],
-								   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py+1][px][1] + cornerPos[3][1],
-								   0.99f);
-					}
-					else if (pass == 1 && !paper[paperID].snippet[py][px].attached)
-					{
-						if (paper[paperID].snippet[py][px].pos[0] < -1.5f ||
-							paper[paperID].snippet[py][px].pos[0] > 1.5f ||
-							paper[paperID].snippet[py][px].pos[1] < -1.5f ||
-							paper[paperID].snippet[py][px].pos[1] > 1.5f) continue;
-
-						float cornerTexPos[4][2] = {
-							{paper[paperID].texPos[py][px][0], paper[paperID].texPos[py][px][1]},
-							{paper[paperID].texPos[py][px+1][0], paper[paperID].texPos[py][px+1][1]},
-							{paper[paperID].texPos[py+1][px+1][0], paper[paperID].texPos[py+1][px+1][1]},
-							{paper[paperID].texPos[py+1][px][0], paper[paperID].texPos[py+1][px][1]}
-						};
-
-						float relCornerPos[4][3] =
-						{
-							{paper[paperID].tilePos[py][px][0] + cornerPos[0][0], paper[paperID].tilePos[py][px][1] + cornerPos[0][1], 0.0f},
-							{paper[paperID].tilePos[py][px+1][0] + cornerPos[1][0], paper[paperID].tilePos[py][px+1][1] + cornerPos[1][1], 0.0f},
-							{paper[paperID].tilePos[py+1][px+1][0] + cornerPos[2][0], paper[paperID].tilePos[py+1][px+1][1] + cornerPos[2][1], 0.0f},
-							{paper[paperID].tilePos[py+1][px][0] + cornerPos[3][0], paper[paperID].tilePos[py+1][px][1] + cornerPos[3][1], 0.0f}
-						};
-
-						float nvec[3] = {0.0f, 0.0f, 1.0f};
-						rotate(nvec, paper[paperID].snippet[py][px].rpy);
-						rotate(relCornerPos[0], paper[paperID].snippet[py][px].rpy);
-						rotate(relCornerPos[1], paper[paperID].snippet[py][px].rpy);
-						rotate(relCornerPos[2], paper[paperID].snippet[py][px].rpy);
-						rotate(relCornerPos[3], paper[paperID].snippet[py][px].rpy);
-
-						float cornerTilePos[4][3] =
-						{
-							{paper[paperID].snippet[py][px].pos[0] + relCornerPos[0][0],
-								   paper[paperID].snippet[py][px].pos[1] + relCornerPos[0][1], 0.99f},
-							{paper[paperID].snippet[py][px].pos[0] + relCornerPos[1][0],
-								   paper[paperID].snippet[py][px].pos[1] + relCornerPos[1][1], 0.99f},
-							{paper[paperID].snippet[py][px].pos[0] + relCornerPos[2][0],
-								   paper[paperID].snippet[py][px].pos[1] + relCornerPos[2][1], 0.99f},
-							{paper[paperID].snippet[py][px].pos[0] + relCornerPos[3][0],
-								   paper[paperID].snippet[py][px].pos[1] + relCornerPos[3][1], 0.99f}
-						};
-
-						// Texture coordinates of the points on the stuff.
-						float pointTexPos[6][6][2];
-						float pointPos[6][6][3];
-						for (int yp = 0; yp < 6; yp++)
-						{
-							for (int xp = 0; xp < 6; xp++)
-							{
-								float deltaTile = 1.0f / 5.0f;
-								float leftAmount = xp * deltaTile;
-								float rightAmount = 1.0f - xp * deltaTile;
-								float topAmount = yp * deltaTile;
-								float bottomAmount = 1.0f - yp * deltaTile;
-								float topLeftAmount = leftAmount * topAmount;
-								float topRightAmount = rightAmount * topAmount;
-								float bottomLeftAmount = leftAmount * bottomAmount;
-								float bottomRightAmount = rightAmount * bottomAmount;
-								for (int dim = 0; dim < 2; dim++)
-								{
-									pointTexPos[yp][xp][dim] = topLeftAmount * cornerTexPos[0][dim] +
-										topRightAmount * cornerTexPos[1][dim] +
-										bottomRightAmount * cornerTexPos[2][dim] +
-										bottomLeftAmount * cornerTexPos[3][dim];
-								}
-								for (int dim = 0; dim < 3; dim++)
-								{
-									pointPos[yp][xp][dim] = topLeftAmount * cornerTilePos[0][dim] +
-										topRightAmount * cornerTilePos[1][dim] +
-										bottomRightAmount * cornerTilePos[2][dim] +
-										bottomLeftAmount * cornerTilePos[3][dim];
-								}
-
-								// displace points based on their position. THIS IS SUPER-HACKY!!!
-								//float displaceAmount = paper[paperID].snippet[py][px].detachedTime;
-								//if (displaceAmount > 1.0f) displaceAmount = 1.0f;
-								//pointPos[yp][xp][0] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
-								//pointPos[yp][xp][1] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
-								pointPos[yp][xp][0] += 2.0f / PAPER_Y_TILING * nvec[0] * cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f + pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
-								pointPos[yp][xp][1] += 2.0f / PAPER_Y_TILING * nvec[1] * cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f + pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
-							}
-						}
-
-						for (int xtile = 0; xtile < 5; xtile++)
-						{
-							for (int ytile = 0; ytile < 5; ytile++)
-							{
-								glTexCoord2f(pointTexPos[ytile][xtile][0], pointTexPos[ytile][xtile][1]);
-								glVertex3f(pointPos[ytile][xtile][0], pointPos[ytile][xtile][1], pointPos[ytile][xtile][2]);
-								glTexCoord2f(pointTexPos[ytile][xtile+1][0], pointTexPos[ytile][xtile+1][1]);
-								glVertex3f(pointPos[ytile][xtile+1][0], pointPos[ytile][xtile+1][1], pointPos[ytile][xtile+1][2]);
-								glTexCoord2f(pointTexPos[ytile+1][xtile+1][0], pointTexPos[ytile+1][xtile+1][1]);
-								glVertex3f(pointPos[ytile+1][xtile+1][0], pointPos[ytile+1][xtile+1][1], pointPos[ytile+1][xtile+1][2]);
-								glTexCoord2f(pointTexPos[ytile+1][xtile][0], pointTexPos[ytile+1][xtile][1]);
-								glVertex3f(pointPos[ytile+1][xtile][0], pointPos[ytile+1][xtile][1], pointPos[ytile+1][xtile][2]);
-							}
-						}
+						MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+						return;
 					}
 				}
+				if (redPass == 1)
+				{
+					retVal = texManag->getTextureID("white.tga", &texID, errorString);
+					if (retVal != 0)
+					{
+						MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
+						return;
+					}
+				}
+				glBindTexture(GL_TEXTURE_2D, texID);
+
+				// Draw all papers
+				glBegin(GL_QUADS);
+				//12:0.78(100) 13:0.55(70) 
+				if (!useConstTexture) glColor4f(1.0f, 1.0f, 0.85f, 1.0f);
+				else glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+				if (redPass == 1) glColor4f(params.getParam(9, 1.0f), params.getParam(12, 0.78f), params.getParam(13, 0.55f), redenner);
+				// Corners are top-left, top-right, bottom-right, bottom-left
+				float cornerPos[4][2] =
+				{
+					{-1.0f / 3.0f / PAPER_X_TILING, -1.0f / PAPER_Y_TILING},
+					{1.0f / 3.0f / PAPER_X_TILING, -1.0f / PAPER_Y_TILING},
+					{1.0f / 3.0f / PAPER_X_TILING, 1.0f / PAPER_Y_TILING},
+					{-1.0f / 3.0f / PAPER_X_TILING, 1.0f / PAPER_Y_TILING}
+				};
+				for (int py = 0; py < PAPER_Y_TILING; py++)
+				{
+					for (int px = 0; px < PAPER_X_TILING; px++)
+					{
+						if (pass == 0 && paper[paperID].snippet[py][px].attached)
+						{
+							glTexCoord2f(paper[paperID].texPos[py][px][0], paper[paperID].texPos[py][px][1]);
+							glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py][px][0] + cornerPos[0][0],
+									   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py][px][1] + cornerPos[0][1],
+									   0.99f);
+							glTexCoord2f(paper[paperID].texPos[py][px+1][0], paper[paperID].texPos[py][px+1][1]);
+							glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py][px+1][0] + cornerPos[1][0],
+									   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py][px+1][1] + cornerPos[1][1],
+									   0.99f);
+							glTexCoord2f(paper[paperID].texPos[py+1][px+1][0], paper[paperID].texPos[py+1][px+1][1]);
+							glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py+1][px+1][0] + cornerPos[2][0],
+									   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py+1][px+1][1] + cornerPos[2][1],
+									   0.99f);
+							glTexCoord2f(paper[paperID].texPos[py+1][px][0], paper[paperID].texPos[py+1][px][1]);
+							glVertex3f(paper[paperID].snippet[py][px].pos[0] + paper[paperID].tilePos[py+1][px][0] + cornerPos[3][0],
+									   paper[paperID].snippet[py][px].pos[1] + paper[paperID].tilePos[py+1][px][1] + cornerPos[3][1],
+									   0.99f);
+						}
+						else if (pass == 1 && !paper[paperID].snippet[py][px].attached)
+						{
+							if (paper[paperID].snippet[py][px].pos[0] < -1.5f ||
+								paper[paperID].snippet[py][px].pos[0] > 1.5f ||
+								paper[paperID].snippet[py][px].pos[1] < -1.5f ||
+								paper[paperID].snippet[py][px].pos[1] > 1.5f) continue;
+
+							float cornerTexPos[4][2] = {
+								{paper[paperID].texPos[py][px][0], paper[paperID].texPos[py][px][1]},
+								{paper[paperID].texPos[py][px+1][0], paper[paperID].texPos[py][px+1][1]},
+								{paper[paperID].texPos[py+1][px+1][0], paper[paperID].texPos[py+1][px+1][1]},
+								{paper[paperID].texPos[py+1][px][0], paper[paperID].texPos[py+1][px][1]}
+							};
+
+							float relCornerPos[4][3] =
+							{
+								{paper[paperID].tilePos[py][px][0] + cornerPos[0][0], paper[paperID].tilePos[py][px][1] + cornerPos[0][1], 0.0f},
+								{paper[paperID].tilePos[py][px+1][0] + cornerPos[1][0], paper[paperID].tilePos[py][px+1][1] + cornerPos[1][1], 0.0f},
+								{paper[paperID].tilePos[py+1][px+1][0] + cornerPos[2][0], paper[paperID].tilePos[py+1][px+1][1] + cornerPos[2][1], 0.0f},
+								{paper[paperID].tilePos[py+1][px][0] + cornerPos[3][0], paper[paperID].tilePos[py+1][px][1] + cornerPos[3][1], 0.0f}
+							};
+
+							float nvec[3] = {0.0f, 0.0f, 1.0f};
+							rotate(nvec, paper[paperID].snippet[py][px].rpy);
+							rotate(relCornerPos[0], paper[paperID].snippet[py][px].rpy);
+							rotate(relCornerPos[1], paper[paperID].snippet[py][px].rpy);
+							rotate(relCornerPos[2], paper[paperID].snippet[py][px].rpy);
+							rotate(relCornerPos[3], paper[paperID].snippet[py][px].rpy);
+
+							float cornerTilePos[4][3] =
+							{
+								{paper[paperID].snippet[py][px].pos[0] + relCornerPos[0][0],
+									   paper[paperID].snippet[py][px].pos[1] + relCornerPos[0][1], 0.99f},
+								{paper[paperID].snippet[py][px].pos[0] + relCornerPos[1][0],
+									   paper[paperID].snippet[py][px].pos[1] + relCornerPos[1][1], 0.99f},
+								{paper[paperID].snippet[py][px].pos[0] + relCornerPos[2][0],
+									   paper[paperID].snippet[py][px].pos[1] + relCornerPos[2][1], 0.99f},
+								{paper[paperID].snippet[py][px].pos[0] + relCornerPos[3][0],
+									   paper[paperID].snippet[py][px].pos[1] + relCornerPos[3][1], 0.99f}
+							};
+
+							// Texture coordinates of the points on the stuff.
+							float pointTexPos[6][6][2];
+							float pointPos[6][6][3];
+							for (int yp = 0; yp < 6; yp++)
+							{
+								for (int xp = 0; xp < 6; xp++)
+								{
+									float deltaTile = 1.0f / 5.0f;
+									float leftAmount = xp * deltaTile;
+									float rightAmount = 1.0f - xp * deltaTile;
+									float topAmount = yp * deltaTile;
+									float bottomAmount = 1.0f - yp * deltaTile;
+									float topLeftAmount = leftAmount * topAmount;
+									float topRightAmount = rightAmount * topAmount;
+									float bottomLeftAmount = leftAmount * bottomAmount;
+									float bottomRightAmount = rightAmount * bottomAmount;
+									for (int dim = 0; dim < 2; dim++)
+									{
+										pointTexPos[yp][xp][dim] = topLeftAmount * cornerTexPos[0][dim] +
+											topRightAmount * cornerTexPos[1][dim] +
+											bottomRightAmount * cornerTexPos[2][dim] +
+											bottomLeftAmount * cornerTexPos[3][dim];
+									}
+									for (int dim = 0; dim < 3; dim++)
+									{
+										pointPos[yp][xp][dim] = topLeftAmount * cornerTilePos[0][dim] +
+											topRightAmount * cornerTilePos[1][dim] +
+											bottomRightAmount * cornerTilePos[2][dim] +
+											bottomLeftAmount * cornerTilePos[3][dim];
+									}
+
+									// displace points based on their position. THIS IS SUPER-HACKY!!!
+									//float displaceAmount = paper[paperID].snippet[py][px].detachedTime;
+									//if (displaceAmount > 1.0f) displaceAmount = 1.0f;
+									//pointPos[yp][xp][0] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
+									//pointPos[yp][xp][1] += displaceAmount * 0.75f * 2.0f / PAPER_Y_TILING * (float)cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f);
+									pointPos[yp][xp][0] += 2.0f / PAPER_Y_TILING * nvec[0] * cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f + pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
+									pointPos[yp][xp][1] += 2.0f / PAPER_Y_TILING * nvec[1] * cos(pointPos[yp][xp][0] / 2.0f * PAPER_Y_TILING * 0.75f + pointPos[yp][xp][1] / 2.0f * PAPER_Y_TILING * 0.75f);
+								}
+							}
+
+							for (int xtile = 0; xtile < 5; xtile++)
+							{
+								for (int ytile = 0; ytile < 5; ytile++)
+								{
+									glTexCoord2f(pointTexPos[ytile][xtile][0], pointTexPos[ytile][xtile][1]);
+									glVertex3f(pointPos[ytile][xtile][0], pointPos[ytile][xtile][1], pointPos[ytile][xtile][2]);
+									glTexCoord2f(pointTexPos[ytile][xtile+1][0], pointTexPos[ytile][xtile+1][1]);
+									glVertex3f(pointPos[ytile][xtile+1][0], pointPos[ytile][xtile+1][1], pointPos[ytile][xtile+1][2]);
+									glTexCoord2f(pointTexPos[ytile+1][xtile+1][0], pointTexPos[ytile+1][xtile+1][1]);
+									glVertex3f(pointPos[ytile+1][xtile+1][0], pointPos[ytile+1][xtile+1][1], pointPos[ytile+1][xtile+1][2]);
+									glTexCoord2f(pointTexPos[ytile+1][xtile][0], pointTexPos[ytile+1][xtile][1]);
+									glVertex3f(pointPos[ytile+1][xtile][0], pointPos[ytile+1][xtile][1], pointPos[ytile+1][xtile][2]);
+								}
+							}
+						}
+					}
+				}
+				glEnd();
 			}
-			glEnd();
 		}
 	}
+	glDisable(GL_BLEND);
 }
 
 void MovingPapers::drawQuad(float left, float bottom, float right, float top,
