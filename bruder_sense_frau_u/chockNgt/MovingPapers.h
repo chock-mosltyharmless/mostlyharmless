@@ -53,7 +53,8 @@ public:
 	void init(bool startWithAll);
 	void update(float deltaTime, bool noMovement);
 	// Set texName to some valid name to not use papers
-	void draw(HWND mainWnd, TextureManager *texManag, bool useStaticTexture,  GLuint texID);
+	void draw(HWND mainWnd, TextureManager *texManag, bool useStaticTexture,  GLuint texID,
+		      float redenner = 0.0f);
 
 	// Start dropping snippets.
 	void startDetaching(int speed) {doDetach = speed; detachingTime = 0.0f;}

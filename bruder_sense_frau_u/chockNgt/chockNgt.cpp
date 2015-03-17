@@ -239,7 +239,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("01.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
+			int retVal = textureManager.getVideoID("01_hc.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -252,7 +252,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("02.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
+			int retVal = textureManager.getVideoID("02_hc.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -266,7 +266,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("03.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
+			int retVal = textureManager.getVideoID("03_hc.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -279,7 +279,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("04.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
+			int retVal = textureManager.getVideoID("04_hc.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -293,7 +293,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("05.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
+			int retVal = textureManager.getVideoID("05_hc.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -306,7 +306,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("06.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
+			int retVal = textureManager.getVideoID("06_hc.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (retVal < 0)
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get video ID", MB_OK);
@@ -319,7 +319,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		{
 			movingPapers.update(fDeltaTime, true);
 			GLuint texID;
-			int retVal = textureManager.getVideoID("05.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
+			int retVal = textureManager.getVideoID("05_hc.avi", &texID, errorString, (int)((fCurTime - videoStartTime) * 29.98f));
 			if (fCurTime - videoStartTime > 43.0f && notYetDetached)
 			{
 				movingPapers.startDetaching(4);
@@ -331,19 +331,20 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 				return -1;
 			}
 			// Draw the newspaper moving thing
-			movingPapers.draw(mainWnd, &textureManager, true, texID);
+			if (fCurTime - videoStartTime > 1.2f*60.0f)
+			{
+				redenner = ((fCurTime - videoStartTime) - 2.5f * 60.0f) / (1.0f*60.0f);
+				if (redenner < 0.0f) redenner = 0.0f;
+				if (redenner > 0.95f) redenner = 0.95f;
+			}
+			//redenner = 0.7f;
+			movingPapers.draw(mainWnd, &textureManager, true, texID, redenner);
 
 			// Fade everything out at the end
 			if (fCurTime - videoStartTime > 3.0f*60.0f + 45.0f)
 			{
 				fadeOut = (3.0f*60.0f + 45.0f - (fCurTime - videoStartTime)) / 10.0f + 1.0f;
 				if (fadeOut < 0.0f) fadeOut = 0.0f;
-			}
-			if (fCurTime - videoStartTime > 1.2f*60.0f)
-			{
-				redenner = ((fCurTime - videoStartTime) - 1.2f * 60.0f) / (2.0f*60.0f);
-				if (redenner < 0.0f) redenner = 0.0f;
-				if (redenner > 1.0f) redenner = 1.0f;
 			}
 		}
 
@@ -391,7 +392,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			if (alpha < 0.0f) alpha = 0.0f;
 			if (alpha > 1.0f) alpha = 1.0f;
 			alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
-			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
 
 			// Draw second highlight
 			if (textureManager.getTextureID("icon_highlight2.tga", &texID, errorString))
@@ -406,7 +407,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			if (alpha > 1.0f) alpha = 1.0f;
 			alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
 			alpha *= 0.75f;
-			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
 
 			// draw some sparkles
 			if (textureManager.getTextureID("sparkle.tga", &texID, errorString))
@@ -620,10 +621,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			break;
 		case 'm':
 		case 'M':
-			PlaySound("textures/swoosh.wav", NULL, SND_ASYNC);
+			//PlaySound("textures/swoosh.wav", NULL, SND_ASYNC);
 			whatIsShown = SHOW_ENDING;
 			curTime = timeGetTime() - startTime;
 			endingStartTime = (float)curTime * 0.001f;
+			showBlue = 0;
 			break;
 		default:
 			break;
