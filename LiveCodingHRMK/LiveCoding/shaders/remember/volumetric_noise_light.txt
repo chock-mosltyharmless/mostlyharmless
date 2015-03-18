@@ -13,22 +13,23 @@ rayPos.xy = rotate(rayPos.xy, time);
 for (int i = 0; i < 100 && length(rayPos) < 12. &&                    
 totalDensity < 0.95; i++) {                                           
                                                                       
-vec3 dn = vnoise1(rayPos * 0.02).rgb;                                 
-vec3 nval = vnoise5(rayPos * 0.03 * dn- vec3(time)*0.03 + dn.rgr*0.1  
-, slider3).rgb;                                                       
-float implicit = abs(length(rayPos + nval * 3. * slider4) - 3.) -     
-spike * slider1 - slider5;                                            
-implicit -= nval.r * slider2 * 5.;                                    
+vec3 dval = vnoise1(rayPos * 0.1 * slider4 + vec3(time*0.03)).rgb;    
+vec3 nval = vnoise5(dval*3.*slider5 +                                 
+rayPos * 0.1 * slider1 + vec3(time*0.05),                             
+slider2 + knob1 * spike).rgb;                                         
+float implicit = length(rayPos + slider3*nval*5.) - 3. -              
+2.*knob3*spike - 2.*knob6;                                            
                                                                       
-float density = smoothstep(0., -3.*slider6, implicit);                
-//totalColor += (1.-totalDensity)*density * vec3(0.0, .2, 0.0);       
-totalDensity += (1.-totalDensity)*density;                            
+float maxMove = (length(dval))*8. + 0.1;                              
+float colAdd = smoothstep(3., 0.1, maxMove)*50.*knob5+1.;             
+                                                                      
+float density = smoothstep(0., -knob4, implicit);                     
+totalDensity += (1. - totalDensity) * density;                        
 totalDensity += 0.01;                                                 
-totalColor += mix(vec3(0.01, 0.014, 0.017),                           
-vec3(0.018, 0.015, 0.01), nval.g * knob1 * 8. + 0.3)                  
-* knob2 * 5. * (sin(rayPos.x*10.*knob3) + 1.2);                       
+totalColor += mix(vec3(0.01, 0.012, 0.014),                           
+vec3(0.015, 0.013, 0.01), nval.r*10.*knob2) * colAdd * knob8;         
                                                                       
-rayPos += rayDir * max(0.03, abs(implicit) * .3f);                    
+rayPos += rayDir * max(0.03, min(maxMove,abs(implicit)) * .4f);       
 }                                                                     
                                                                       
 color = mix(color, totalColor, totalDensity);                         
