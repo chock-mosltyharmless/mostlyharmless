@@ -46,17 +46,6 @@ vec3 noise(vec3 pos, int iterations, float reduction)\n\
    return result;\n\
 }\n\
 \n\
-vec3 col(vec3 pos, float noiseData)\n\
-{\n\
-  float fTime0_X = parameters[0][0];\n\
-  vec3 innercolor = vec3(0.4, 0.1, 0.0);\n\
-  vec3 outercolor = vec3(0.1, 0.35, 0.65);\n\
-  float height = (pos.y + noiseData);\n\
-  float colorpart = smoothstep(-0.5, 0.5, -length(pos) + noiseData*12.*(parameters[2][1]+1.) + 2.);\n\
-  float border = smoothstep(-0.8, 0.8, abs(colorpart - 0.5));\n\
-  return mix(innercolor, outercolor, colorpart) * border + clamp(height - 2.*parameters[1][3] - 1.,0.0,100.0);\n\
-}\n\
-\n\
 vec2 rotate(vec2 pos, float angle)\n\
 {\n\
 	return pos * mat2(cos(angle),-sin(angle),sin(angle),cos(angle));\n\
@@ -65,6 +54,21 @@ vec2 rotate(vec2 pos, float angle)\n\
 void main(void)\n\
 {  \n\
    float fTime0_X = parameters[0][0];\n\
+   float slider1 = parameters[0][1];\n\
+   float slider2 = parameters[0][2];\n\
+   float slider3 = parameters[0][3];\n\
+   float slider4 = parameters[1][0];\n\
+   float slider5 = parameters[1][1];\n\
+   float slider6 = parameters[1][2];\n\
+   float slider7 = parameters[1][3];\n\
+   float knob1 = parameters[2][0];\n\
+   float knob2 = parameters[2][1];\n\
+   float knob3 = parameters[2][2];\n\
+   float knob4 = parameters[2][3];\n\
+   float knob5 = parameters[3][0];\n\
+   float knob6 = parameters[3][1];\n\
+   float knob7 = parameters[3][2];\n\
+   float spike = parameters[3][3];\n\
    vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));\n\
    vec3 camPos = vec3(0.0, 0.0, -8. + 8. * parameters[0][1]);\n\
    \n\
@@ -328,47 +332,22 @@ void fallingBall(float ftime)
 
 	parameterMatrix[0] = ftime; // time	
 	/* shader parameters */
-	/* 15:1.00(127) 16:0.69(88) 17:1.00(127) 18:0.50(63) 19:1.00(127) */
-	//parameterMatrix[1] = params.getParam(2, 1.0f);
-	//parameterMatrix[2] = params.getParam(3, 0.52f);
-	//parameterMatrix[3] = params.getParam(4, 0.38f);
-	//parameterMatrix[4] = params.getParam(5, 1.0f);
-	//parameterMatrix[5] = params.getParam(6, 1.0f);
-	//2:0.00(0) 3:0.60(76) 4:0.69(87) 5:0.42(53) 6:0.00(0) 8:0.00(0) 
-	//2:0.69(88) 3:0.87(110) 4:0.41(52) 5:0.28(35) 6:0.06(8) 8:0.46(58) 14:0.53(67) 15:1.00(127) 16:0.22(28) 17:1.00(127) 18:0.11(14) 
-	//2:1.00(127) 3:0.51(65) 4:0.33(42) 5:0.00(0) 6:0.40(51) 8:0.40(51) 14:0.69(88) 15:1.00(127) 16:0.31(39) 17:1.00(127) 18:0.00(0) 
-	//2:0.61(77) 3:0.46(59) 4:0.28(36) 5:0.28(35) 6:0.06(8) 8:0.46(58) 14:0.74(94) 15:1.00(127) 16:0.00(0) 17:1.00(127) 18:1.00(127) 
-	//2:0.60(76) 3:0.46(58) 4:0.28(35) 8:0.99(126) 14:0.69(88) 15:0.00(0) 16:0.74(94) 17:0.00(0) 18:0.00(0) 19:1.00(127)  THIS IS SOME STATIC SOMETHING.
-	//2:0.60(76) 3:0.83(106) 4:0.88(112) 5:0.00(0) 6:0.36(46) 8:0.64(81) 14:0.93(118) 15:0.17(22) 16:0.54(69) 17:0.75(95) 18:0.07(9) 19:0.60(76)  This is a flyby-in-light
-	//2:0.28(35) 3:0.72(92) 4:1.00(127) 5:0.00(0) 6:0.35(44) 8:0.80(102) 14:0.70(89) 15:0.06(8) 16:0.81(103) 17:0.72(92) 18:0.31(39) FIRE UP
-	//2:0.09(11) 3:0.54(69) 4:0.24(31) 5:0.00(0) 6:0.34(43) 8:0.49(62) 14:1.00(127) 15:1.00(127) 16:0.72(91) 17:1.00(127) 18:0.62(79) 19:0.00(0) // standard bar not fast
-    //2:0.00(0) 3:0.18(23) 4:0.69(87) 6:0.39(49) 8:0.50(64) 14:0.79(100) 15:1.00(127) 16:0.47(60) 17:0.82(104) 18:0.50(63) //Auspuff
-	//2:0.15(19) 3:0.49(62) 4:0.35(45) 6:0.39(49) 8:0.50(64) 14:0.77(98) 15:1.00(127) 16:0.24(31) 17:1.00(127) 18:0.51(65) //Auspuff2
-	//2:0.80(102) 3:0.17(22) 4:0.66(84) 8:0.72(92) 14:0.77(98) 15:1.00(127) 16:0.46(58) 17:0.00(0) 18:1.00(127) // Plasma
-	//2:0.52(66) 3:0.75(95) 4:0.80(101) 6:0.07(9) 8:0.64(81) 9:0.03(4) 14:1.00(127) 15:1.00(127) 16:0.91(115) 17:1.00(127) 18:1.00(127) 19:0.00(0) // Twister
-	//2:0.87(111) 3:0.83(106) 4:0.67(85) 6:0.12(15) 8:0.84(107) 14:0.78(99) 15:1.00(127) 16:0.52(66) 17:0.00(0) 18:1.00(127) // Plasma (b)
-	//2:0.00(0) 3:0.67(85) 4:0.21(27) 8:0.81(103) 9:0.08(10) 14:0.73(93) 15:1.00(127) 16:0.65(82) 17:1.00(127) 18:0.00(0) 25:0.00(0) // open stange
+	parameterMatrix[1] = params.getParam(2, 0.5f); //slider1
+	parameterMatrix[2] = params.getParam(3, 0.5f);
+	parameterMatrix[3] = params.getParam(4, 0.5f);
+	parameterMatrix[4] = params.getParam(5, 0.5f);
+	parameterMatrix[5] = params.getParam(6, 0.5f);
+	parameterMatrix[6] = params.getParam(8, 0.5f);
+	parameterMatrix[7] = params.getParam(9, 0.5f);
+	parameterMatrix[8] = params.getParam(14, 0.5f); // knob1
+	parameterMatrix[9] = params.getParam(15, 0.5f);
+	parameterMatrix[10] = params.getParam(16, 0.5f);
+	parameterMatrix[11] = params.getParam(17, 0.5f);
+	parameterMatrix[12] = params.getParam(18, 0.5f);
+	parameterMatrix[13] = params.getParam(19, 0.5f);
+	parameterMatrix[14] = params.getParam(20, 0.5f);
+	parameterMatrix[15] = 0.0f; // spike
 
-    // New version:
-	// Plasma 2:0.91(115) 3:0.50(64) 4:0.33(42) 5:0.98(125) 6:0.51(65) 8:0.69(88) 9:1.00(127) 12:0.00(0) 13:0.00(0) 
-	// Sidescroll 2:0.75(95) 3:0.83(105) 4:0.21(27) 5:0.83(106) 6:0.72(92) 8:0.79(100) 9:0.09(12) 12:0.16(20) 13:1.00(127) 
-	// Startup (8) 2:0.52(66) 3:0.54(69) 4:0.39(50) 5:0.72(91) 6:0.45(57) 8:0.43(54) 9:1.00(127) 12:0.57(72) 13:1.00(127) 
-	// Final 2:0.31(40) 3:0.70(89) 4:0.31(40) 5:0.87(110) 6:0.81(103) 8:0.74(94) 9:0.07(9) 12:0.00(0) 13:0.00(0) 
-	// Fasto (8) 2:0.69(87) 3:0.54(68) 4:0.39(49) 5:0.75(95) 6:0.00(0) 8:0.72(92) 9:1.00(127) 12:1.00(127) 13:1.00(127) 
-    // flythrough 2:0.99(126) 3:0.80(101) 4:0.69(88) 5:0.93(118) 6:0.72(92) 8:0.69(87) 9:1.00(127) 12:0.00(0) 13:1.00(127) 
-	// Bar (3) 2:0.26(33) 3:0.00(0) 4:1.00(127) 5:1.00(127) 6:0.87(110) 8:0.88(112) 9:1.00(127) 12:0.65(83) 13:1.00(127) 
-	// Cloud (5) 2:0.54(69) 3:0.20(25) 4:0.71(90) 5:0.76(97) 6:0.59(75) 8:0.90(114) 9:0.29(37) 12:0.06(7) 13:1.00(127)
-	// Tunnelb 2:1.00(127) 3:0.54(69) 4:0.35(45) 5:0.72(92) 6:0.54(69) 8:0.71(90) 9:1.00(127) 12:0.00(0) 13:1.00(127) 
-	// Baralong 2:0.72(92) 3:0.22(28) 4:0.73(93) 5:1.00(127) 6:0.78(99) 8:1.00(127) 9:1.00(127) 12:1.00(127) 13:1.00(127) 
-	parameterMatrix[1] = params.getParam(2, 0.75f);
-	parameterMatrix[2] = params.getParam(3, 0.83f);
-	parameterMatrix[3] = params.getParam(4, 0.21f);
-	parameterMatrix[4] = params.getParam(5, 0.83f);
-	parameterMatrix[5] = params.getParam(6, 0.72f);
-	parameterMatrix[6] = params.getParam(8, 0.79f);
-	parameterMatrix[7] = params.getParam(9, 0.09f);
-	parameterMatrix[8] = params.getParam(12, 0.1f);
-	parameterMatrix[9] = params.getParam(13, 1.0f);
 	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen
