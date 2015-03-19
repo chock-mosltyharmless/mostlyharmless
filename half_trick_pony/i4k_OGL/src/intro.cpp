@@ -27,7 +27,7 @@ uniform sampler3D Texture0;\n\
 varying vec3 objectPosition;\n\
 varying mat4 parameters;\n\
 \n\
-vec3 noise(vec3 pos, int iterations, float reduction)\n\
+vec3 vnoise(vec3 pos, int iterations, float reduction)\n\
 {\n\
    pos *= 2.; /*adjust texture size*/\n\
    float intensity = 1.;\n\
@@ -53,7 +53,7 @@ vec2 rotate(vec2 pos, float angle)\n\
 \n\
 void main(void)\n\
 {  \n\
-   float fTime0_X = parameters[0][0];\n\
+   float time = parameters[0][0];\n\
    float slider1 = parameters[0][1];\n\
    float slider2 = parameters[0][2];\n\
    float slider3 = parameters[0][3];\n\
@@ -70,60 +70,38 @@ void main(void)\n\
    float knob7 = parameters[3][2];\n\
    float spike = parameters[3][3];\n\
    vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));\n\
-   vec3 camPos = vec3(0.0, 0.0, -8. + 8. * parameters[0][1]);\n\
    \n\
-   // rotate camera around y axis\n\
-   float alpha;\n\
-   alpha = parameters[0][3]*9.42;\n\
-   camPos.xz = rotate(camPos.xz, alpha);\n\
-   rayDir.xz = rotate(rayDir.xz, alpha);\n\
-   alpha = parameters[0][2]*9.42;\n\
-   camPos.yz = rotate(camPos.yz, alpha);\n\
-   rayDir.yz = rotate(rayDir.yz, alpha);\n\
+   vec3 color = vec3(0.);\n\
+   vec3 rayPos = vec3(0., 0., 0. - 8.);\n\
+   //vec3 rayDir = normalize(vec3(ppos, 2.));\n\
+   vec3 totalColor = vec3(0.);\n\
+   float totalDensity = 0.;\n\
    \n\
-   vec3 rayPos = camPos;\n\
-   float sceneSize = 16.0;\n\
-   vec3 totalColor = vec3(0.,0.,0.);\n\
-   float stepSize;\n\
-   float totalDensity = 0.0;\n\
-   vec3 totalColorAdder = (vec3(0.016, 0.012, 0.009)) * (parameters[1][0]);\n\
+   rayDir.xz = rotate(rayDir.xz, time);\n\
+   rayDir.xy = rotate(rayDir.xy, time);\n\
+   rayPos.xz = rotate(rayPos.xz, time);\n\
+   rayPos.xy = rotate(rayPos.xy, time);\n\
    \n\
-   while(length(rayPos)<sceneSize && totalDensity < 0.95)\n\
-   {\n\
-      // base head\n\
-      vec3 tmpPos = rayPos;\n\
-      float base1 = abs(tmpPos.y);\n\
-	  float base2 = abs(length(rayPos.xz) - 2.0 + 2.0 * parameters[1][2]) * (0.5 + parameters[2][0]);\n\
-	  float socket = length(rayPos + vec3(0., 9., 0.)) - 8.2 + 20.*parameters[2][1];  \n\
-	  float base = (max(base1 - 1.1 - parameters[1][3]*20., base2 - 2.0*parameters[1][2] + 1.2));\n\
-	  float implicitVal = min(socket, base);\n\
-	  //float implicitVal = base;\n\
-\n\
-      vec3 noiseAdder = noise(rayPos * 0.03  - vec3(0.0, fTime0_X*0.02, 0.0), 2, 0.8) * 0.1 * parameters[1][1];\n\
-      float noiseVal = noise(noiseAdder*0.3 + rayPos*0.04*vec3(1.0,0.05+0.95*parameters[1][1],1.0) - vec3(0.0, fTime0_X*0.03, 0.0), 7, 0.7).r * 0.6;\n\
-      implicitVal -= noiseVal;\n\
+   for (int i = 0; i < 100 && length(rayPos) < 12. && totalDensity < 0.95; i++) {\n\
       \n\
-	  totalColor += totalColorAdder;\n\
-      totalDensity += 0.005;\n\
-      if (implicitVal < 0.0)\n\
-      {\n\
-	     float localDensity = 1. - exp(implicitVal);\n\
-		 //float localDensity = 0.1;\n\
-		 localDensity = (1.-totalDensity) * localDensity;\n\
-         totalColor += col(rayPos, noiseVal) * localDensity;\n\
-         totalDensity += localDensity ;\n\
-      }\n\
+      vec3 dval = vnoise(rayPos * 0.1 * slider4 + vec3(time*0.03), 2, 0.7).rgb;\n\
+      vec3 nval = vnoise(dval*3.*slider5 + rayPos * 0.1 * slider1 + vec3(time*0.05), 5, slider2 + knob1 * spike).rgb;\n\
+      float implicit = length(rayPos + slider3*nval*5.) - 3. - 2.*knob3*spike - 2.*knob6;\n\
       \n\
-	  stepSize = (implicitVal) * 0.5;\n\
-      stepSize = max(0.03, stepSize);\n\
-      rayPos += rayDir * stepSize;\n\
+      float maxMove = (length(dval))*8. + 0.1;\n\
+      float colAdd = smoothstep(3., 0.1, maxMove)*50.*knob5+1.;\n\
+      \n\
+      float density = smoothstep(0.1*knob4, -knob4*10., implicit);\n\
+      totalDensity += (1. - totalDensity) * density;\n\
+      totalDensity += 0.01;\n\
+	  totalColor += mix(vec3(0.01, 0.012, 0.014), vec3(0.015, 0.013, 0.01), (nval.r+0.1)*20.*knob2) * colAdd * knob7 * 2.;\n\
+      \n\
+      rayPos += rayDir * max(0.03, min(maxMove,abs(implicit)) * .4f);\n\
    }\n\
    \n\
-   float grad = normalize(rayPos).y;\n\
-   totalColor += (1.-totalDensity) * (grad * vec3(0.0,0.0,0.1) + (1.-grad)*vec3(0.0,0.1,0.2));\n\
+   color = mix(color, totalColor, totalDensity);\n\
    \n\
-   gl_FragColor = vec4(sqrt(smoothstep(0.3, 1.4, totalColor)), 1.0);\n\
-\n\
+   gl_FragColor = vec4(color, 1.0);\n\
 }";
 
 const GLchar *fragmentOffscreenCopy="\
