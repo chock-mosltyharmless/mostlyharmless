@@ -84,9 +84,10 @@ void main(void)\n\
    \n\
    for (int i = 0; i < 100 && length(rayPos) < 12. && totalDensity < 0.95; i++) {\n\
       \n\
-	  vec3 dval = vnoise((rayPos * 0.05) * slider4 * slider4 + vec3(time*0.01), 3, 0.6).rgb;\n\
-	  vec3 nval = vnoise(dval*rayPos*0.1*slider1*slider1 + dval*2.*slider5 + vec3(time*0.01), 5, slider2).rgb;\n\
-      float implicit = length(rayPos + slider3*nval*5.) - 3. - 2.*knob3*spike - 2.*knob6;\n\
+	  vec3 dval = vnoise((rayPos * 0.05 + vec3(time*0.02)) * slider4 * slider4, 3, 0.6).rgb;\n\
+	  vec3 nval = vnoise(dval*rayPos*0.1*slider1*slider1 + floor(rayDir*2.2)*0.01*knob1 + dval*2.*slider5 + vec3(time*0.01), 5, slider2).rgb;\n\
+	  float implicit = length(rayPos + slider3*nval*5.) - 3. - 2.*knob3*spike - 2.*knob6;\n\
+	  implicit -= slider6 * dval.g * 15.;\n\
       \n\
 	  float maxMove = (length(dval))*8. + 0.1/(knob5+0.01);\n\
 	  float colAdd = smoothstep(3., 0.1, maxMove)*50.*knob5+1.;\n\
