@@ -60,7 +60,7 @@ unsigned char script[14][NUM_SCENES] =
 	// Slider 1 (2: base Noise frequency)
 	{  9,   9,   9,   9,  12,  12,  29,   2,      64,  64},
 	// Slider 2 (3: base Noise modulation)
-	{ 68,  68,  68,  68,  68,  68,  78,  16,      72,  72},
+	{ 68,  68,  68,  68,  68,  68,  78,  16,      60,  60},
 	// Slider 3 (4: base Noise amount)
 	{127, 127, 127, 127, 127, 127, 127,  37,      64,  64},
 	// Slider 4 (5: delta Noise frequecny)
@@ -84,7 +84,7 @@ unsigned char script[14][NUM_SCENES] =
 	// Knob 6 (19: Delta noise movement speed)
 	{  0,   0,   0,   0,   0,   0,   0,  35,     127, 127},
 	// Knob 7 (20: Brightness)
-	{  0,  40,  60,  80,  62,  62,  72,   6,       2,   2}
+	{  0,  40,  60,  80,  62,  62,  72,   6,       5,   5}
 };
 
 // -------------------------------------------------------------------
