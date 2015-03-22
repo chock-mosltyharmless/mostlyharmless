@@ -17,4 +17,7 @@
 #define OFFSCREEN_WIDTH 512
 #define OFFSCREEN_HEIGHT 256
 
+// Use midi to check parameter values
+//#define EDIT_PARAMETERS
+
 #endif

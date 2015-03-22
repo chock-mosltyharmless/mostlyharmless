@@ -19,6 +19,53 @@ float frand();
 int rand();
 
 // -------------------------------------------------------------------
+//                          SCRIPT
+// -------------------------------------------------------------------
+#define NUM_SCENES 3
+
+// Additive, in half seconds?
+unsigned char scriptDurations[NUM_SCENES] =
+{
+	10,  // 10 seconds
+	240, // 120 seconds
+	255, // END
+};
+
+// NOTE: scene is first...
+//3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 
+unsigned char script[14][NUM_SCENES] =
+{
+	// Slider 1 (base Noise frequency)
+	{ 64,  64,  64},
+	// Slider 2 (base Noise modulation)
+	{ 72,  72,  72},
+	// Slider 3 (base Noise amount)
+	{ 64,  64,  64},
+	// Slider 4 (delta Noise frequecny)
+	{ 38,  38,  38},
+	// Slider 5 (delta Noise amount)
+	{ 31,  31,  31},
+	// Slider 6 (delta Noise implicit add amount)
+	{127, 127, 127},
+	// Slider 7 (ray movement speed)
+	{ 54,  54,  54},
+	// Knob 1 (Mirror shattering amount)
+	{  4,   4,   4},
+	// Knob 2 (Saturation)
+	{  6,   6,   6},
+	// Knob 3 (Spike size modulation)
+	{ 62,  62,  62},
+	// Knob 4 (Solid to transparent)
+	{ 84,  84,  84},
+	// Knob 5 (Delta noise brightness adder)
+	{127, 127, 127},
+	// Knob 6 (Delta noise movement speed)
+	{127, 127, 127},
+	// Knob 7 (Brightness)
+	{  0,   2,   2}
+};
+
+// -------------------------------------------------------------------
 //                          SHADER CODE:
 // -------------------------------------------------------------------
 
@@ -53,22 +100,22 @@ vec2 rotate(vec2 pos, float angle)\n\
 \n\
 void main(void)\n\
 {  \n\
-   float time = parameters[0][0];\n\
-   float slider1 = parameters[0][1];\n\
-   float slider2 = parameters[0][2];\n\
-   float slider3 = parameters[0][3];\n\
-   float slider4 = parameters[1][0];\n\
-   float slider5 = parameters[1][1];\n\
-   float slider6 = parameters[1][2];\n\
-   float slider7 = parameters[1][3];\n\
-   float knob1 = parameters[2][0];\n\
-   float knob2 = parameters[2][1];\n\
-   float knob3 = parameters[2][2];\n\
-   float knob4 = parameters[2][3];\n\
-   float knob5 = parameters[3][0];\n\
-   float knob6 = parameters[3][1];\n\
-   float knob7 = parameters[3][2];\n\
+   float time = parameters[3][2];\n\
    float spike = parameters[3][3];\n\
+   float slider1 = parameters[0][0];\n\
+   float slider2 = parameters[0][1];\n\
+   float slider3 = parameters[0][2];\n\
+   float slider4 = parameters[0][3];\n\
+   float slider5 = parameters[1][0];\n\
+   float slider6 = parameters[1][1];\n\
+   float slider7 = parameters[1][2];\n\
+   float knob1 = parameters[1][3];\n\
+   float knob2 = parameters[2][0];\n\
+   float knob3 = parameters[2][1];\n\
+   float knob4 = parameters[2][2];\n\
+   float knob5 = parameters[2][3];\n\
+   float knob6 = parameters[3][0];\n\
+   float knob7 = parameters[3][1];\n\
    vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));\n\
    \n\
    vec3 color = vec3(0.);\n\
@@ -311,24 +358,45 @@ void fallingBall(float ftime)
 	glMatrixMode(GL_MODELVIEW);	
 
 
-	parameterMatrix[0] = ftime; // time	
+	parameterMatrix[14] = ftime; // time	
+	parameterMatrix[15] = 0.0f; // spike
 	/* shader parameters */
 	//3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 
-	parameterMatrix[1] = params.getParam(2, 0.5f); //slider1
-	parameterMatrix[2] = params.getParam(3, 0.57f);
-	parameterMatrix[3] = params.getParam(4, 0.5f);
-	parameterMatrix[4] = params.getParam(5, 0.3f);
-	parameterMatrix[5] = params.getParam(6, 0.24f);
-	parameterMatrix[6] = params.getParam(8, 1.f);
-	parameterMatrix[7] = params.getParam(9, 0.43f);
-	parameterMatrix[8] = params.getParam(14, 0.03f); // knob1
-	parameterMatrix[9] = params.getParam(15, 0.05f);
-	parameterMatrix[10] = params.getParam(16, 0.49f);
-	parameterMatrix[11] = params.getParam(17, 0.66f);
-	parameterMatrix[12] = params.getParam(18, 1.f);
-	parameterMatrix[13] = params.getParam(19, 1.f);
-	parameterMatrix[14] = params.getParam(20, 0.02f);
-	parameterMatrix[15] = 0.0f; // spike
+#ifdef EDIT_PARAMETERS
+	parameterMatrix[0] = params.getParam(2, 0.5f); //slider1
+	parameterMatrix[1] = params.getParam(3, 0.57f);
+	parameterMatrix[2] = params.getParam(4, 0.5f);
+	parameterMatrix[3] = params.getParam(5, 0.3f);
+	parameterMatrix[4] = params.getParam(6, 0.24f);
+	parameterMatrix[5] = params.getParam(8, 1.f);
+	parameterMatrix[6] = params.getParam(9, 0.43f);
+	parameterMatrix[7] = params.getParam(14, 0.03f); // knob1
+	parameterMatrix[8] = params.getParam(15, 0.05f);
+	parameterMatrix[9] = params.getParam(16, 0.49f);
+	parameterMatrix[10] = params.getParam(17, 0.66f);
+	parameterMatrix[11] = params.getParam(18, 1.f);
+	parameterMatrix[12] = params.getParam(19, 1.f);
+	parameterMatrix[13] = params.getParam(20, 0.02f);
+#else
+	for (int i = 0; i < 14; i++)
+	{
+		int timePoint = 0;
+		float lastEndTime = 0.0f;
+		float nextEndTime = scriptDurations[0];
+		while (nextEndTime < ftime)
+		{
+			lastEndTime = nextEndTime;
+			timePoint++;
+			nextEndTime += scriptDurations[timePoint];
+		}
+		
+		float firstVal = script[i][timePoint] * (1.0f / 127.0f);
+		float lastVal = script[i][timePoint + 1] * (1.0f / 127.0f);
+		float t = (ftime - lastEndTime) / (nextEndTime - lastEndTime);
+		parameterMatrix[i] = (1.0f - t) * firstVal + t * lastVal;
+	}
+#endif
+
 
 	glLoadMatrixf(parameterMatrix);
 
