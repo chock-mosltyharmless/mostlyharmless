@@ -224,7 +224,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     long to=timeGetTime();
     while( !done )
-        {
+    {
 		long t = timeGetTime() - to;
 
         while( PeekMessage(&msg,0,0,0,PM_REMOVE) )
@@ -236,12 +236,15 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         intro_do( t );
 
+#ifdef EDIT_PARAMETERS
         if( t>(MZK_DURATION*1000) )
 		{
 			done = 1;
 		}
+#endif
+
         SwapBuffers( info->hDC );
-        }
+    }
 
     sndPlaySound( 0, 0 );
     window_end( info );
