@@ -21,48 +21,70 @@ int rand();
 // -------------------------------------------------------------------
 //                          SCRIPT
 // -------------------------------------------------------------------
-#define NUM_SCENES 3
+#define NUM_SCENES 10
 
 // Additive, in half seconds?
 unsigned char scriptDurations[NUM_SCENES] =
 {
-	10,  // 10 seconds
-	240, // 120 seconds
-	255, // END
+	15, // 0: From black to circles
+	2,  // 1: From circles to 8-bit (almost instant)
+	20, // 2: 8-Bit stay
+	0,  // 3: To fireball (instant?)
+	10, // 4: Shatter off
+	20, // 5: Fireball to transparent
+	 2, // 6: Exploded fireball
+	10,
+	240,
+	255, // END!
 };
 
 // NOTE: scene is first...
-//3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 
+// End effet|               3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 
+// Single circles|          2:0.00(0) 3:0.52(66) 4:1.00(127) 5:0.00(0) 6:0.00(0) 8:0.00(0) 9:0.41(52) 14:0.00(0) 15:0.57(73) 16:0.00(0) 17:0.00(0) 18:0.50(63) 19:0.00(0) 20:0.35(45) 21:0.01(1) 
+// Multiple circles|        2:0.00(0) 3:0.48(61) 4:1.00(127) 5:0.00(0) 6:0.00(0) 8:0.00(0) 9:0.31(39) 14:1.00(127) 15:0.52(66) 16:0.00(0) 17:0.00(0) 18:0.48(61) 19:0.00(0) 20:0.34(43) 
+// 8-Bit effect|            2:0.07(9) 3:0.54(68) 4:1.00(127) 5:0.06(8) 6:1.00(127) 8:0.00(0) 9:0.32(41) 14:1.00(127) 15:0.52(66) 17:0.00(0) 18:0.00(0) 19:0.00(0) 20:0.31(39) 
+// Fireball 1 with shatter| 2:0.09(12) 3:0.63(80) 4:1.00(127) 5:1.00(127) 6:0.00(0) 8:0.01(1) 9:0.30(38) 14:1.00(127) 15:0.61(77) 16:0.00(0) 17:0.00(0) 18:0.00(0) 19:0.00(0) 20:0.49(62) 
+// Transparent fireball|    2:0.23(29) 3:0.61(78) 4:1.00(127) 5:1.00(127) 6:0.00(0) 8:0.02(3) 9:0.69(87) 14:0.00(0) 15:0.57(72) 16:0.00(0) 17:1.00(127) 18:0.01(1) 19:0.00(0) 20:0.57(72) 
+// Exploded fireball|       2:0.02(2) 3:0.13(16) 4:0.29(37) 5:0.50(63) 6:0.11(14) 8:0.38(48) 9:0.76(97) 15:0.20(26) 16:0.00(0) 17:1.00(127) 18:0.77(98) 19:0.09(11) 20:0.05(6) 
 unsigned char script[14][NUM_SCENES] =
 {
-	// Slider 1 (base Noise frequency)
-	{ 64,  64,  64},
-	// Slider 2 (base Noise modulation)
-	{ 72,  72,  72},
-	// Slider 3 (base Noise amount)
-	{ 64,  64,  64},
-	// Slider 4 (delta Noise frequecny)
-	{ 38,  38,  38},
-	// Slider 5 (delta Noise amount)
-	{ 31,  31,  31},
-	// Slider 6 (delta Noise implicit add amount)
-	{127, 127, 127},
-	// Slider 7 (ray movement speed)
-	{ 54,  54,  54},
-	// Knob 1 (Mirror shattering amount)
-	{  4,   4,   4},
-	// Knob 2 (Saturation)
-	{  6,   6,   6},
-	// Knob 3 (Spike size modulation)
-	{ 62,  62,  62},
-	// Knob 4 (Solid to transparent)
-	{ 84,  84,  84},
-	// Knob 5 (Delta noise brightness adder)
-	{127, 127, 127},
-	// Knob 6 (Delta noise movement speed)
-	{127, 127, 127},
-	// Knob 7 (Brightness)
-	{  0,   2,   2}
+	// 0: From black to circles
+	// 1: From circles to 8-bit (almost instant)
+	// 2: 8-Bit stay
+	// 3: To fireball (instant?)
+	// 4: Shatter off
+	// 5: Fireball to transparent
+	// 6: Exploded Fireball
+
+	// 0    1    2    3    4    5    6    7
+	// Slider 1 (2: base Noise frequency)
+	{  9,   9,   9,   9,  12,  12,  29,   2,      64,  64},
+	// Slider 2 (3: base Noise modulation)
+	{ 68,  68,  68,  68,  68,  68,  78,  16,      72,  72},
+	// Slider 3 (4: base Noise amount)
+	{127, 127, 127, 127, 127, 127, 127,  37,      64,  64},
+	// Slider 4 (5: delta Noise frequecny)
+	{  0,   0,   8,   8, 127, 127, 127,  63,      38,  38},
+	// Slider 5 (6: delta Noise amount)
+	{127, 127, 127, 127,   0,   0,   0,  14,      31,  31},
+	// Slider 6 (8: delta Noise implicit add amount)
+	{  0,   0,   0,   0,   1,   1,   3,  48,     127, 127},
+	// Slider 7 (9: ray movement speed)
+	{ 44,  44,  24,  32,  38,  39,  87,  97,      54,  54},
+	// Knob 1 (14: Mirror shattering amount)
+	{  0, 127, 127, 127, 127,   0,   0,   0,       0,   0},
+	// Knob 2 (15: Saturation)
+	{ 66,  66,  66,  66,  77,  77,  72,  26,       6,   6},
+	// Knob 3 (16: Spike size modulation)
+	{  0,   0,   0,   0,   0,   0,   0,   0,       0,   0},
+	// Knob 4 (17: Solid to transparent)
+	{  0,   0,   0,   0,   0,   0, 127, 127,      84,  84},
+	// Knob 5 (18: Delta noise brightness adder)
+	{  0,   0,   0,   0,   0,   0,   0,  98,     127, 127},
+	// Knob 6 (19: Delta noise movement speed)
+	{  0,   0,   0,   0,   0,   0,   0,  35,     127, 127},
+	// Knob 7 (20: Brightness)
+	{  0,  40,  60,  80,  62,  62,  72,   6,       2,   2}
 };
 
 // -------------------------------------------------------------------
@@ -342,6 +364,8 @@ void intro_init( void )
 
 void fallingBall(float ftime)
 {
+	ftime += EFFECT_START_TIME;
+
 	GLUquadric* quad = gluNewQuadric();
 
 	glDisable(GL_BLEND);
@@ -393,6 +417,7 @@ void fallingBall(float ftime)
 		float firstVal = script[i][timePoint] * (1.0f / 127.0f);
 		float lastVal = script[i][timePoint + 1] * (1.0f / 127.0f);
 		float t = (ftime - lastEndTime) / (nextEndTime - lastEndTime);
+		t = 0.5f - 0.5f * (float)cos(t * 3.1415f);
 		parameterMatrix[i] = (1.0f - t) * firstVal + t * lastVal;
 	}
 #endif

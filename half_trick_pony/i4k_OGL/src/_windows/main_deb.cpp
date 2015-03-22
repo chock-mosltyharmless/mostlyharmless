@@ -236,7 +236,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         intro_do( t );
 
-#ifdef EDIT_PARAMETERS
+#ifndef EDIT_PARAMETERS
         if( t>(MZK_DURATION*1000) )
 		{
 			done = 1;
