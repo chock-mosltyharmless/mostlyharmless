@@ -78,15 +78,17 @@ void main(void)\n\
    float totalDensity = 0.;\n\
    \n\
    rayDir.xz = rotate(rayDir.xz, time);\n\
-   rayDir.xy = rotate(rayDir.xy, time);\n\
+   rayDir.xy = rotate(rayDir.xy, time*0.7);\n\
+   rayDir.xz = rotate(rayDir.xz, time*0.4);\n\
    rayPos.xz = rotate(rayPos.xz, time);\n\
-   rayPos.xy = rotate(rayPos.xy, time);\n\
+   rayPos.xy = rotate(rayPos.xy, time*0.7);\n\
+   rayPos.xz = rotate(rayPos.xz, time*0.4);\n\
    \n\
    for (int i = 0; i < 100 && length(rayPos) < 12. && totalDensity < 0.95; i++) {\n\
       \n\
-	  vec3 dval = vnoise((rayPos * 0.05 + vec3(time*0.02)) * slider4 * slider4, 3, 0.6).rgb;\n\
+	  vec3 dval = vnoise((rayPos * 0.05) * slider4 * slider4 + vec3(time*0.02) * knob6, 3, 0.6).rgb;\n\
 	  vec3 nval = vnoise(dval*rayPos*0.1*slider1*slider1 + floor(rayDir*2.2)*0.01*knob1 + dval*2.*slider5 + vec3(time*0.01), 5, slider2).rgb;\n\
-	  float implicit = length(rayPos + slider3*nval*5.) - 3. - 2.*knob3*spike - 2.*knob6;\n\
+	  float implicit = length(rayPos + slider3*nval*5.) - 3. - 2.*knob3*spike;\n\
 	  implicit -= slider6 * dval.g * 15.;\n\
       \n\
 	  float maxMove = (length(dval))*8. + 0.1/(knob5+0.01);\n\
@@ -311,20 +313,21 @@ void fallingBall(float ftime)
 
 	parameterMatrix[0] = ftime; // time	
 	/* shader parameters */
+	//3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 
 	parameterMatrix[1] = params.getParam(2, 0.5f); //slider1
-	parameterMatrix[2] = params.getParam(3, 0.5f);
+	parameterMatrix[2] = params.getParam(3, 0.57f);
 	parameterMatrix[3] = params.getParam(4, 0.5f);
-	parameterMatrix[4] = params.getParam(5, 0.5f);
-	parameterMatrix[5] = params.getParam(6, 0.5f);
-	parameterMatrix[6] = params.getParam(8, 0.5f);
-	parameterMatrix[7] = params.getParam(9, 0.5f);
-	parameterMatrix[8] = params.getParam(14, 0.5f); // knob1
-	parameterMatrix[9] = params.getParam(15, 0.5f);
-	parameterMatrix[10] = params.getParam(16, 0.5f);
-	parameterMatrix[11] = params.getParam(17, 0.5f);
-	parameterMatrix[12] = params.getParam(18, 0.5f);
-	parameterMatrix[13] = params.getParam(19, 0.5f);
-	parameterMatrix[14] = params.getParam(20, 0.5f);
+	parameterMatrix[4] = params.getParam(5, 0.3f);
+	parameterMatrix[5] = params.getParam(6, 0.24f);
+	parameterMatrix[6] = params.getParam(8, 1.f);
+	parameterMatrix[7] = params.getParam(9, 0.43f);
+	parameterMatrix[8] = params.getParam(14, 0.03f); // knob1
+	parameterMatrix[9] = params.getParam(15, 0.05f);
+	parameterMatrix[10] = params.getParam(16, 0.49f);
+	parameterMatrix[11] = params.getParam(17, 0.66f);
+	parameterMatrix[12] = params.getParam(18, 1.f);
+	parameterMatrix[13] = params.getParam(19, 1.f);
+	parameterMatrix[14] = params.getParam(20, 0.02f);
 	parameterMatrix[15] = 0.0f; // spike
 
 	glLoadMatrixf(parameterMatrix);
