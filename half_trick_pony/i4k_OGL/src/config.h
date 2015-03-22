@@ -14,10 +14,11 @@
 //#define YRES        (1080 * 1280 / 1920)
 #define XRES        1000
 #define YRES        (1080 * XRES / 1920)
-#define OFFSCREEN_WIDTH 512
+#define OFFSCREEN_WIDTH 350
 #define OFFSCREEN_HEIGHT 256
 
 // Use midi to check parameter values
 //#define EDIT_PARAMETERS
+#define EFFECT_START_TIME 0.0f
 
 #endif
