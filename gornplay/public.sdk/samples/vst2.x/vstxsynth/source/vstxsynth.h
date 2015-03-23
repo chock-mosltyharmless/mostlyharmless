@@ -24,6 +24,9 @@
 
 #include "public.sdk/source/vst2.x/audioeffectx.h"
 
+// Use this define to save the music to file.
+#define SAVE_MUSIC
+
 // Size of a buffer with random numbers
 #define RANDOM_BUFFER_SIZE 65536
 #define DELAY_MULTIPLICATOR 128
@@ -198,6 +201,14 @@ private:
 	void noteOn (VstInt32 note, VstInt32 velocity);
 	void noteOff ();
 	void fillProgram (VstInt32 channel, VstInt32 prg, MidiProgramName* mpn);
+
+#ifdef SAVE_MUSIC
+	static int firstNoteTime; // This one is static along buffers so that streams are synchronized
+	int savedNoteID;
+	int savedNoteTime[1000000];
+	int savedNote[1000000];
+	int savedVelocity[1000000];
+#endif
 };
 
 #endif

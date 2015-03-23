@@ -20,6 +20,8 @@
 //-------------------------------------------------------------------------------------------------------
 
 #include <math.h>
+#include <stdio.h>
+#include <Windows.h>
 #include "vstxsynth.h"
 
 enum
@@ -34,6 +36,10 @@ enum
 // Midi-relevant constants
 const double midiScaler = (1. / 127.);
 static float freqtab[kNumFrequencies];
+
+#ifdef SAVE_MUSIC
+int VstXSynth::firstNoteTime = -1;
+#endif
 
 // Moog x-pass from musicdsp.org:
 #if 0
@@ -190,6 +196,10 @@ void VstXSynth::initProcess ()
 		}
 		reverbBufferLength[i] = 1;
 	}
+
+#ifdef SAVE_MUSIC
+	savedNoteID = 0;
+#endif
 }
 
 //-----------------------------------------------------------------------------------------
@@ -261,7 +271,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 
 				for (int j = 0; j < NUM_Stereo_VOICES; j++)
 				{
-					outAmplitude[j] += sin(fPhase[i][j] + fStereo * (2 * PI * randomBuffer[i*NUM_Stereo_VOICES + j])) *
+					outAmplitude[j] += (float)sin(fPhase[i][j] + fStereo * (2 * PI * randomBuffer[i*NUM_Stereo_VOICES + j])) *
 						overtoneLoudness * soundShape * modulation;
 
 					fPhase[i][j] += baseFreq * (i+1) * (1.0f + fStereo/64.0f * (randomBuffer[i] - 0.5f)) *
@@ -368,6 +378,18 @@ VstInt32 VstXSynth::processEvents (VstEvents* ev)
 //-----------------------------------------------------------------------------------------
 void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 {
+#ifdef SAVE_MUSIC
+	if (firstNoteTime < 0 && velocity > 0) firstNoteTime = sampleID;
+
+	if (firstNoteTime >= 0)
+	{
+		savedNoteTime[savedNoteID] = sampleID;
+		savedNote[savedNoteID] = note;
+		savedVelocity[savedNoteID] = velocity;
+		savedNoteID++;
+	}
+#endif
+
 	midiDelaySamples = -1;
 	currentNote = note;
 	currentVelocity = velocity;
@@ -392,6 +414,102 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	reverbBufferLength[1] = iDelayLength * DELAY_MULTIPLICATOR * 7 / 17 + 1;
 	reverbBufferLength[2] = iDelayLength * DELAY_MULTIPLICATOR * 13 / 23 + 1;
 	reverbBufferLength[3] = iDelayLength * DELAY_MULTIPLICATOR * 11 / 13 + 1;
+
+	// Write everything out, we can overwrite at the next note.
+#ifdef SAVE_MUSIC
+	FILE *fid;
+	char filename[1024];
+	SYSTEMTIME sysTime;
+	GetSystemTime(&sysTime);
+#if 0
+	sprintf_s(filename, 1024, "C:/vierKA/music.%d.txt",
+		sysTime.wYear, sysTime.wMonth,
+		sysTime.wDay, sysTime.wHour, sysTime.wMinute, sysTime.wSecond, (int)this);
+#else
+	sprintf_s(filename, 1024, "C:/vierKA/music.%d.txt", (int)this);
+#endif
+	fopen_s(&fid, filename, "wb");
+
+	// write Instrument information
+	// This assumes that no automation is active anymore...
+	fprintf(fid, "#ifndef F_VOLUME\n");
+	fprintf(fid, "#define F_VOLUME               0\n");
+	fprintf(fid, "#define K_DURATION             1\n");
+	fprintf(fid, "#define K_ATTACK               2\n");
+	fprintf(fid, "#define K_DECAY                3\n");
+	fprintf(fid, "#define K_SUSTAIN              4\n");
+	fprintf(fid, "#define K_RELEASE              5\n");
+	fprintf(fid, "#define K_QUAKINESS_START      6\n");
+	fprintf(fid, "#define K_QUAKINESS_END        7\n");
+	fprintf(fid, "#define K_SOUND_SHAPE_START    8\n");
+	fprintf(fid, "#define K_SOUND_SHAPE_END      9\n");
+	fprintf(fid, "#define K_MODULATION_AMOUNT   10\n");
+	fprintf(fid, "#define K_MODULATION_SPEED    11\n");
+	fprintf(fid, "#define K_DETUNE              12\n");
+	fprintf(fid, "#define K_STEREO              13\n");
+	fprintf(fid, "#define K_NOISE_START         14\n");
+	fprintf(fid, "#define K_NOISE_END           15\n");
+	fprintf(fid, "#define K_DELAY_FEED          16\n");
+	fprintf(fid, "#define K_DELAY_LENGTH        17\n");
+	fprintf(fid, "#endif\n\n");
+
+	fprintf(fid, "unsigned char instrumentParams_%d[] = {\n", (int)this);
+	fprintf(fid, "  %d,\n", (int)(fVolume*127));
+	fprintf(fid, "  %d,\n", (int)(fDuration*127));
+	fprintf(fid, "  %d,\n", (int)(fAttack*127));
+	fprintf(fid, "  %d,\n", (int)(fDecay*127));
+	fprintf(fid, "  %d,\n", (int)(fSustain*127));
+	fprintf(fid, "  %d,\n", (int)(fRelease*127));
+	fprintf(fid, "  %d,\n", (int)(fQuakinessStart*127));
+	fprintf(fid, "  %d,\n", (int)(fQuakinessEnd*127));
+	fprintf(fid, "  %d,\n", iSoundShapeStart);
+	fprintf(fid, "  %d,\n", iSoundShapeEnd);
+	fprintf(fid, "  %d,\n", (int)(fModulationAmount*127));
+	fprintf(fid, "  %d,\n", (int)(fModulationSpeed*127));
+	fprintf(fid, "  %d,\n", (int)(fDetune*127));
+	fprintf(fid, "  %d,\n", (int)(fStereo*127));
+	fprintf(fid, "  %d,\n", (int)(fNoiseStart*127));
+	fprintf(fid, "  %d,\n", (int)(fNoiseEnd*127));
+	fprintf(fid, "  %d,\n", (int)(fDelayFeed*127));
+	fprintf(fid, "  %d\n", iDelayLength);
+	fprintf(fid, "};\n\n");
+
+	// write the note stuff
+	fprintf(fid, "#define NUM_NOTES_%d %d\n\n", (int)this, savedNoteID);
+	fprintf(fid, "unsigned char savedNoteTime_%d[] = {\n ", (int)this);
+	int lastTime = firstNoteTime;
+	for (int i = 0; i < savedNoteID; i++)
+	{
+		fprintf(fid, " %d,", (savedNoteTime[i] - lastTime) / 4134);
+		if (i % 32 == 31) fprintf(fid, "\n ");
+		lastTime = savedNoteTime[i];
+	}
+	fprintf(fid, "};\n\n");
+
+	fprintf(fid, "signed char savedNote_%d[] = {\n ", (int)this);
+	int lastNote = 0;
+	for (int i = 0; i < savedNoteID; i++)
+	{
+		fprintf(fid, " %d,", savedNote[i] - lastNote);
+		if (i % 32 == 31) fprintf(fid, "\n ");
+		lastNote = savedNote[i];
+	}
+	fprintf(fid, "};\n\n");
+
+#if 0
+	fprintf(fid, "signed char savedVelocity[] = {\n ");
+	int lastVelocity = 0;
+	for (int i = 0; i < savedNoteID; i++)
+	{
+		fprintf(fid, " %d,", savedVelocity[i] - lastVelocity);
+		if (i % 32 == 31) fprintf(fid, "\n");
+		lastVelocity = savedVelocity[i];
+	}
+	fprintf(fid, "};\n\n");
+#endif
+
+	fclose(fid);
+#endif
 }
 
 //-----------------------------------------------------------------------------------------

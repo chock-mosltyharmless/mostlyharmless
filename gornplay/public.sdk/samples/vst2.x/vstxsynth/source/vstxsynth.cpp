@@ -115,6 +115,8 @@ void VstXSynth::setProgram (VstInt32 program)
 	fNoiseEnd = ap->fNoiseEnd;
 	fDelayFeed = ap->fDelayFeed;
 	iDelayLength = ap->iDelayLength;
+
+	firstNoteTime = -1;
 }
 
 //-----------------------------------------------------------------------------------------
