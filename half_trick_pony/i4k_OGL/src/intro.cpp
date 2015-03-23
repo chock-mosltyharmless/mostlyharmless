@@ -36,8 +36,8 @@ unsigned char scriptDurations[NUM_SCENES] =
 	20, // 7: To Shadow man
 	20, // 8: To Light mystic
 	 5, // 9: Hold Light mystic
-	15, // 10: Blorange wool ball
-	10, // 11: Fade out
+	12, // 10: Blorange wool ball
+	13, // 11: Fade out
 	255, // END!
 };
 
@@ -94,7 +94,7 @@ unsigned char script[14][NUM_SCENES] =
 	// Knob 6 (19: Delta noise movement speed)
 	{  0,   0,   0,   0,   0,   0,   0,  35, 127, 127, 127, 127, 127},
 	// Knob 7 (20: Brightness)
-	{  0,  40,  60,  80,  62,  62,  72,   3,   3,  14,  14,  37,   0}
+	{  0,  40,  60,  80, 255,  62,  72,   3,   3,  14,  14,  37,   0}
 };
 
 // -------------------------------------------------------------------
