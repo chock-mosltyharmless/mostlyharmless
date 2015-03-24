@@ -430,6 +430,21 @@ void fallingBall(float ftime)
 		t = 0.5f - 0.5f * (float)cos(t * 3.1415f);
 		parameterMatrix[i] = (1.0f - t) * firstVal + t * lastVal;
 	}
+
+	parameterMatrix[0] = params.getParam(2, parameterMatrix[0]); //slider1
+	parameterMatrix[1] = params.getParam(3, parameterMatrix[1]);
+	parameterMatrix[2] = params.getParam(4, parameterMatrix[2]);
+	parameterMatrix[3] = params.getParam(5, parameterMatrix[3]);
+	parameterMatrix[4] = params.getParam(6, parameterMatrix[4]);
+	parameterMatrix[5] = params.getParam(8, parameterMatrix[5]);
+	parameterMatrix[6] = params.getParam(9, parameterMatrix[6]);
+	parameterMatrix[7] = params.getParam(14, parameterMatrix[7]); // knob1
+	parameterMatrix[8] = params.getParam(15, parameterMatrix[8]);
+	parameterMatrix[9] = params.getParam(16, parameterMatrix[9]);
+	parameterMatrix[10] = params.getParam(17, parameterMatrix[10]);
+	parameterMatrix[11] = params.getParam(18, parameterMatrix[11]);
+	parameterMatrix[12] = params.getParam(19, parameterMatrix[12]);
+	parameterMatrix[13] = params.getParam(20, parameterMatrix[13]);
 #endif
 
 
