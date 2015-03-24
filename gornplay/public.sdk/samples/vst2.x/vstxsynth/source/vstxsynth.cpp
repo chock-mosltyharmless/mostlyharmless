@@ -230,6 +230,29 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kDelayFeed: fDelayFeed = ap->fDelayFeed = value; break;
 		case kDelayLength: iDelayLength = ap->iDelayLength = (int)(value * 128.0f + 0.5f); break;
 	}
+
+#ifdef SAVE_MUSIC
+	// Do I have to check for program?
+	if (index >= 0 && index < kNumParams && curProgram == 0)
+	{
+		if (savedInstrumentID > 0 && sampleID - savedInstrumentTime[savedInstrumentID-1] < 4134)
+		{
+			// overwrite last one
+			savedInstrumentID--;
+		}
+		else
+		{
+			savedInstrumentTime[savedInstrumentID] = sampleID;
+			for (int i = 0; i < kNumParams; i++)
+			{
+				savedInstrumentParameter[i][savedInstrumentID] = -1;
+			}
+		}
+		savedInstrumentParameter[index][savedInstrumentID] = (int)(value * 127.0f + 0.5f);
+		savedInstrumentID++;
+		savedInstrumentParameter[kNumParams][1000000];
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------------------

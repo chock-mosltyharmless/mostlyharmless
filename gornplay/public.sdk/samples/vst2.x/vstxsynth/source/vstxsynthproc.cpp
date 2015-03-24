@@ -199,6 +199,10 @@ void VstXSynth::initProcess ()
 
 #ifdef SAVE_MUSIC
 	savedNoteID = 0;
+	for (int i = 0; i < kNumParams; i++)
+	{
+		savedInstrumentID = 0;
+	}
 #endif
 }
 
@@ -453,6 +457,9 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	fprintf(fid, "#define K_DELAY_LENGTH        17\n");
 	fprintf(fid, "#endif\n\n");
 
+#if 1
+	// Print single instrument parameters
+	fprintf(fid, "#pragma data_seg(\".instrumentParams\")\n");
 	fprintf(fid, "unsigned char instrumentParams_%d[] = {\n", (int)this);
 	fprintf(fid, "  %d,\n", (int)(fVolume*127));
 	fprintf(fid, "  %d,\n", (int)(fDuration*127));
@@ -473,9 +480,39 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	fprintf(fid, "  %d,\n", (int)(fDelayFeed*127));
 	fprintf(fid, "  %d\n", iDelayLength);
 	fprintf(fid, "};\n\n");
+#else // print timed instrument data
+	fprintf(fid, "#define NUM_INSTRUMENT_DATA_%d %d\n\n", (int)this, savedInstrumentID);
+	fprintf(fid, "#pragma data_seg(\".savedInstrumentTime\")\n");
+	fprintf(fid, "unsigned char savedInstrumetTime_%d[] = {\n", (int)this);
+	int lastInstTime = firstNoteTime;
+	for (int i = 0; i < savedInstrumentID; i++)
+	{
+		fprintf(fid, " %d,", (savedInstrumentTime[i] - lastInstTime) / 4134);
+		if (i % 32 == 31) fprintf(fid, "\n ");
+		lastInstTime = savedInstrumentTime[i];
+	}
+	fprintf(fid, "};\n\n");
+
+	fprintf(fid, "#pragma data_seg(\".savedInstrumentParam\")\n");
+	fprintf(fid, "signed char savedInstrumentParam_%d[%d][%d] = {\n ", (int)this, kNumParams, savedInstrumentID);
+	for (int idx = 0; idx < kNumParams; idx++)
+	{
+		fprintf(fid, " { ");
+		int lastParam = 0;
+		for (int i = 0; i < savedInstrumentID; i++)
+		{
+			fprintf(fid, " %d,", savedInstrumentParameter[idx][i] - lastParam);
+			if (i % 32 == 31) fprintf(fid, "\n   ");
+			//lastParam = savedInstrumentParameter[idx][i];
+		}
+		fprintf(fid, "},\n");
+	}
+	fprintf(fid, "};\n\n");
+#endif
 
 	// write the note stuff
 	fprintf(fid, "#define NUM_NOTES_%d %d\n\n", (int)this, savedNoteID);
+	fprintf(fid, "#pragma data_seg(\".savedNoteTime\")\n");
 	fprintf(fid, "unsigned char savedNoteTime_%d[] = {\n ", (int)this);
 	int lastTime = firstNoteTime;
 	for (int i = 0; i < savedNoteID; i++)
@@ -486,6 +523,7 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	}
 	fprintf(fid, "};\n\n");
 
+	fprintf(fid, "#pragma data_seg(\".savedNote\")\n");
 	fprintf(fid, "signed char savedNote_%d[] = {\n ", (int)this);
 	int lastNote = 0;
 	for (int i = 0; i < savedNoteID; i++)
@@ -497,6 +535,7 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	fprintf(fid, "};\n\n");
 
 #if 0
+	fprintf(fid, "#pragma data_seg(\".savedVelocity\")\n");
 	fprintf(fid, "signed char savedVelocity[] = {\n ");
 	int lastVelocity = 0;
 	for (int i = 0; i < savedNoteID; i++)

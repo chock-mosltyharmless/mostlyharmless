@@ -208,6 +208,9 @@ private:
 	int savedNoteTime[1000000];
 	int savedNote[1000000];
 	int savedVelocity[1000000];
+	int savedInstrumentID;
+	int savedInstrumentTime[1000000]; // Made relative to firstNoteTime
+	int savedInstrumentParameter[kNumParams][1000000];
 #endif
 };
 
