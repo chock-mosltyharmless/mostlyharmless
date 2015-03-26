@@ -186,6 +186,7 @@ void main(void)\n\
    gl_FragColor = vec4(color, 1.0);\n\
 }";
 
+#if 0
 const GLchar *fragmentOffscreenCopy="\
 uniform sampler2D Texture0;\n\
 varying vec3 objectPosition;\n\
@@ -201,6 +202,29 @@ void main(void)\n\
    gl_FragColor = texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.02;\n\
 \n\
 }";
+#else
+const GLchar *fragmentOffscreenCopy="\
+uniform sampler2D Texture0;\n\
+varying vec3 objectPosition;\n\
+varying mat4 parameters;\n\
+\n\
+void main(void) {\n\
+	float time = parameters[3][2];\n\
+	vec4 col = texture2D(Texture0, 0.5*objectPosition.xy+0.5);\n\
+	for (int i = 0; i < 9; i++)\n\
+	{\n\
+		float n1=fract(sin(time + dot(objectPosition.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\n\
+		float n2=fract(sin(time + dot(objectPosition.xy,vec2(23.34534,23.4324-float(i))))*2038.23482);\n\
+		vec4 col2 = texture2D(Texture0, 0.5*objectPosition.xy+0.5 + vec2(n1,n2)*vec2(n1,n2)*0.05);\n\
+		float similarity = 0.07 / (length(col - col2) + 0.07);\n\
+		//col = mix(col, col2, 0.5 * similarity);\n\
+		//if (similarity > .5) {col = mix(col,col2,0.5);}\n\
+		if (similarity > 0.) {col = mix(col,col2,.3*similarity);}\n\
+		col += 0.03 * vec4(min(n1,n2));\n\
+	}\n\
+	gl_FragColor = 1.1 * col - vec3(0.1);\n\
+}";
+#endif
 
 const GLchar *vertexMainObject="\
 #version 120\n\
