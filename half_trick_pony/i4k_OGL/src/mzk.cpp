@@ -18,6 +18,9 @@
 #define NUM_OVERTONES 16
 #define NUM_Stereo_VOICES 4
 
+// Music time update parameter
+#define SAMPLE_TICK_DURATION (1.0f / 32768.0f)
+
 // 128 midi notes
 #define kNumFrequencies 128
 static float freqtab[kNumFrequencies];
@@ -40,6 +43,8 @@ int reverbBufferLength[NUM_INSTRUMENTS][NUM_Stereo_VOICES]; // Actual length tak
 int currentNoteIndex[NUM_INSTRUMENTS];
 int currentNote[NUM_INSTRUMENTS];
 float fPhase[NUM_INSTRUMENTS][NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
+float fTimePoint[NUM_INSTRUMENTS];
+float fModulationPhase[NUM_INSTRUMENTS];
 
 // Current instrument parameter (possibly interpolated?)
 int intInstParameter[NUM_INSTRUMENTS][NUM_INSTRUMENT_PARAMETERS];
@@ -313,6 +318,7 @@ void mzkPlayBlock(short *blockBuffer)
 			// Key on (or off)
 			iADSR[instrument] = 0; // attack
 			fADSRVal[instrument] = 0.0f; // starting up
+			fTimePoint[instrument] = 0.0f;
 
 			// Apply delta-note
 			currentNote[instrument] += savedNote[instrument][currentNoteIndex[instrument]];
@@ -324,6 +330,8 @@ void mzkPlayBlock(short *blockBuffer)
 
 		// Get audio frequency
 		float baseFreq = freqtab[currentNote[instrument] & 0x7f] * fScaler;
+		float fVolume = floatInstParameter[instrument][F_VOLUME];
+		float vol = fVolume * 4.0f;
 
 		for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++)
 		{
@@ -355,7 +363,60 @@ void mzkPlayBlock(short *blockBuffer)
 			}
 			if (fADSRVal[instrument] < 1.0f / 65536.0f) fADSRVal[instrument] = 0.0f;
 
-			blockBuffer[sample*2] += (int)(16000*sin(fPhase[instrument][0][0]) * fADSRVal[instrument]);
+			// The relative time point from instrument start to instrument end, modulation time
+			float fDuration = floatInstParameter[instrument][K_DURATION];
+			float relTimePoint = fTimePoint[instrument] / (fDuration + 1.0f / 512.0f);
+			float modT = fModulationPhase[instrument] - (float)(int)(fModulationPhase[instrument]);
+					
+			float outAmplitude[NUM_Stereo_VOICES] = {0};
+
+			int maxOvertones = (int)(3.0f / baseFreq);
+			float overtoneLoudness = 1.0f;
+			float overallLoudness = 0.0f;
+			for (int i = 0; i < NUM_OVERTONES; i++)
+			{
+				float soundShape = 1.0f;
+				int iSoundShapeStart = instrumentParams[NUM_INSTRUMENTS][K_SOUND_SHAPE_START];
+				int iSoundShapeEnd = instrumentParams[NUM_INSTRUMENTS][K_SOUND_SHAPE_END];
+
+				if (i != 0 || true)
+				{
+					float soundShapeStart = expRandomBuffer[i + iSoundShapeStart*NUM_OVERTONES];
+					float soundShapeEnd = expRandomBuffer[i + iSoundShapeEnd*NUM_OVERTONES];
+					soundShape = relTimePoint * soundShapeEnd + (1.0f - relTimePoint) * soundShapeStart;
+				}
+
+				if (i < maxOvertones)
+				{
+					// Modulation:
+					float startMod = expRandomBuffer[i + (int)(fModulationPhase[instrument])*NUM_OVERTONES];
+					float endMod = expRandomBuffer[i + (int)(fModulationPhase[instrument])*NUM_OVERTONES + NUM_OVERTONES];
+					float modulation = modT * endMod + (1.0f - modT) * startMod;
+					float fModulationAmount = floatInstParameter[instrument][K_MODULATION_AMOUNT];
+					modulation = .5f + (modulation - 0.5f) * fModulationAmount;
+
+					for (int j = 0; j < NUM_Stereo_VOICES; j++)
+					{
+						float fStereo = floatInstParameter[instrument][K_STEREO];
+						outAmplitude[j] += (float)sin(fPhase[instrument][i][j] + fStereo * (2 * PI * randomBuffer[i*NUM_Stereo_VOICES + j])) *
+							overtoneLoudness * soundShape * modulation;
+
+						float fDetune = floatInstParameter[instrument][K_DETUNE];
+						fPhase[instrument][i][j] += baseFreq * (i+1) * (1.0f + fStereo/64.0f * (randomBuffer[i] - 0.5f)) *
+							 (1.0f + fDetune * (randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES] - 0.5f));
+						while (fPhase[instrument][i][j] > 2.0f * PI) fPhase[instrument][i][j] -= 2.0f * (float)PI;
+					}
+				}
+				overallLoudness += overtoneLoudness * soundShape;
+				float fQuakinessStart = floatInstParameter[instrument][K_QUAKINESS_START];
+				float fQuakinessEnd = floatInstParameter[instrument][K_QUAKINESS_END];
+				float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
+				overtoneLoudness *= quakiness * 2.0f;
+			}
+
+			//float outAmplitude = sin(fPhase[instrument][0][0]);
+
+			blockBuffer[sample*2] += (int)(16000 * outAmplitude[0] * fADSRVal[instrument] * vol);
 			fPhase[instrument][0][0] += baseFreq;
 			while (fPhase[instrument][0][0] > 2.0f * PI) fPhase[instrument][0][0] -= 2.0f * (float)PI;
 		}			
