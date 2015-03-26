@@ -425,11 +425,12 @@ void mzkPlayBlock(short *blockBuffer)
 
 // put here your synth
 #pragma code_seg(".mzkInit")
-void mzk_init( short *buffer )
+void mzk_init()
 {
 	// init music data
 	init_mzk_data();
 
+#if 0
 	// create some test output
 	for (int block = 0; block < MZK_DURATION; block++)
 	{
@@ -437,4 +438,5 @@ void mzk_init( short *buffer )
 		short *blockBuffer = buffer + 2 * block*MZK_BLOCK_SIZE;
 		mzkPlayBlock(blockBuffer);
 	}
+#endif
 }
