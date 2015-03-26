@@ -220,7 +220,7 @@ void main(void) {\n\
 		//col = mix(col, col2, 0.5 * similarity);\n\
 		//if (similarity > .5) {col = mix(col,col2,0.5);}\n\
 		if (similarity > 0.) {col = mix(col,col2,.3*similarity);}\n\
-		col += 0.03 * vec4(min(n1,n2));\n\
+		col += 0.04 * vec4(min(n1,n2));\n\
 	}\n\
 	gl_FragColor = 1.1 * col - vec3(0.1);\n\
 }";
