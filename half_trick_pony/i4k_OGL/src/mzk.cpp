@@ -128,6 +128,9 @@ __inline void init_mzk_data()
 				fPhase[inst][i][j] = 0.f;
 			}
 		}
+
+		// Don't play instrument
+		iADSR[inst] = 3;
 	}
 
 	// Ring-low-pass-filtering of lowPass
@@ -303,6 +306,8 @@ __inline void processReplacing (float** outputs, VstInt32 numSamples)
 #pragma code_seg(".mzkPlayBlock")
 void mzkPlayBlock(short *blockBuffer)
 {
+	static int sampleID = 0;
+
 	// clear audio block
 	for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 	{
@@ -319,6 +324,12 @@ void mzkPlayBlock(short *blockBuffer)
 			iADSR[instrument] = 0; // attack
 			fADSRVal[instrument] = 0.0f; // starting up
 			fTimePoint[instrument] = 0.0f;
+
+			// Set the reverberation buffer length at key start (no interpolation)
+			reverbBufferLength[instrument][0] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR + 1;
+			reverbBufferLength[instrument][1] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 7 / 17 + 1;
+			reverbBufferLength[instrument][2] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 13 / 23 + 1;
+			reverbBufferLength[instrument][3] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 11 / 13 + 1;
 
 			// Apply delta-note
 			currentNote[instrument] += savedNote[instrument][currentNoteIndex[instrument]];
@@ -379,12 +390,9 @@ void mzkPlayBlock(short *blockBuffer)
 				int iSoundShapeStart = instrumentParams[NUM_INSTRUMENTS][K_SOUND_SHAPE_START];
 				int iSoundShapeEnd = instrumentParams[NUM_INSTRUMENTS][K_SOUND_SHAPE_END];
 
-				if (i != 0 || true)
-				{
-					float soundShapeStart = expRandomBuffer[i + iSoundShapeStart*NUM_OVERTONES];
-					float soundShapeEnd = expRandomBuffer[i + iSoundShapeEnd*NUM_OVERTONES];
-					soundShape = relTimePoint * soundShapeEnd + (1.0f - relTimePoint) * soundShapeStart;
-				}
+				float soundShapeStart = expRandomBuffer[i + iSoundShapeStart*NUM_OVERTONES];
+				float soundShapeEnd = expRandomBuffer[i + iSoundShapeEnd*NUM_OVERTONES];
+				soundShape = relTimePoint * soundShapeEnd + (1.0f - relTimePoint) * soundShapeStart;
 
 				if (i < maxOvertones)
 				{
@@ -414,11 +422,58 @@ void mzkPlayBlock(short *blockBuffer)
 				overtoneLoudness *= quakiness * 2.0f;
 			}
 
-			//float outAmplitude = sin(fPhase[instrument][0][0]);
+			float fNoiseStart = floatInstParameter[instrument][K_NOISE_START];
+			float fNoiseEnd = floatInstParameter[instrument][K_NOISE_END];
+			float noiseAmount = relTimePoint * fNoiseEnd + (1.0f - relTimePoint) * fNoiseStart;
+			for (int j = 0; j < NUM_Stereo_VOICES; j++)
+			{
+				// Adjust volume
+				outAmplitude[j] /= overallLoudness;
 
-			blockBuffer[sample*2] += (int)(16000 * outAmplitude[0] * fADSRVal[instrument] * vol);
-			fPhase[instrument][0][0] += baseFreq;
-			while (fPhase[instrument][0][0] > 2.0f * PI) fPhase[instrument][0][0] -= 2.0f * (float)PI;
+				// Ring modulation with noise
+				outAmplitude[j] *= 1.0f + (lowNoise[sampleID % RANDOM_BUFFER_SIZE] - 1.0f) * noiseAmount;
+			}
+
+			// Put everything into the reverb buffers
+			int reverbPos = sampleID % MAX_DELAY_LENGTH;
+			for (int j = 0; j < NUM_Stereo_VOICES; j++)
+			{
+				reverbBuffer[instrument][reverbPos][j] = outAmplitude[j] * vol * fADSRVal[instrument];
+			
+				// Do the reverb feedback
+				int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
+				int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[instrument][fromBuffer]) % 
+					MAX_DELAY_LENGTH;
+				float fDelayFeed = floatInstParameter[instrument][K_DELAY_FEED];
+				reverbBuffer[instrument][reverbPos][j] += fDelayFeed * reverbBuffer[instrument][fromLocation][fromBuffer];
+				if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
+			}
+
+#if 0
+		*out1 = 0;
+		*out2 = 0;
+		for (int j = 0; j < NUM_Stereo_VOICES; j += 2)
+		{
+			//*out1 += outAmplitude[j];
+			//*out2 += outAmplitude[j + 1];
+			*out1 += reverbBuffer[reverbPos][j];
+			*out2 += reverbBuffer[reverbPos][j+1];
+		}
+#endif
+
+
+			blockBuffer[sample*2] += (int)(8000 * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol);
+			blockBuffer[sample*2] += (int)(8000 * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol);
+			blockBuffer[sample*2+1] += (int)(8000 * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol);
+			blockBuffer[sample*2+1] += (int)(8000 * reverbBuffer[instrument][reverbPos][3] * fADSRVal[instrument] * vol);
+
+			float fModulationSpeed = floatInstParameter[instrument][K_MODULATION_SPEED];
+			fModulationPhase[instrument] += fModulationSpeed / 512.0f;
+			fTimePoint[instrument] += SAMPLE_TICK_DURATION;
+			if (fTimePoint[instrument] > fDuration) fTimePoint[instrument] = fDuration;
+			while (fModulationPhase[instrument] > RANDOM_BUFFER_SIZE/2/NUM_OVERTONES) fModulationPhase[instrument] -= RANDOM_BUFFER_SIZE/2/NUM_OVERTONES;
+
+			sampleID++;
 		}			
 	}
 }
