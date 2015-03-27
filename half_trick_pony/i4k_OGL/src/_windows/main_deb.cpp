@@ -204,6 +204,27 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
+DWORD WINAPI thread_func(LPVOID lpParameter)
+{
+	while (true)
+	{
+		// Try to unprepare header
+		if (waveOutUnprepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR))
+			!= WAVERR_STILLPLAYING)
+		{
+#ifdef USEDSOUND
+			mzkPlayBlock(myMuzikBlock[nextPlayBlock]);
+#endif
+			waveOutPrepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
+			waveOutWrite(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
+			nextPlayBlock = 1 - nextPlayBlock;
+		}
+		else
+		{
+			Sleep(1);
+		}
+	}
+}
 
 //==============================================================================================
 
@@ -250,6 +271,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	waveOutPrepareHeader(hWaveOut, &(header[1]), sizeof(WAVEHDR));
 	waveOutWrite(hWaveOut, &(header[1]), sizeof(WAVEHDR));
 
+	CreateThread(NULL, 0, thread_func, NULL, 0, 0);
+
 #if 0
     mzk_init( myMuzik+22 );
 
@@ -284,21 +307,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #endif
 
         SwapBuffers( info->hDC );
-
-		// Try to unprepare header
-		if (waveOutUnprepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR))
-			!= WAVERR_STILLPLAYING)
-		{
-#ifdef USEDSOUND
-			for (int i = 0; i < MZK_BLOCK_PER_BUFFER; i++)
-			{
-				mzkPlayBlock(myMuzikBlock[nextPlayBlock] + i * MZK_BLOCK_SIZE * 2);
-			}
-#endif
-			waveOutPrepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
-			waveOutWrite(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
-			nextPlayBlock = 1 - nextPlayBlock;
-		}
     }
 
     // Close the wave output (for savety?)
