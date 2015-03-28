@@ -280,6 +280,24 @@ void mzkPlayBlock(short *blockBuffer)
 			int maxOvertones = (int)(3.0f / baseFreq);
 			float overtoneLoudness = 1.0f;
 			float overallLoudness = 0.0f;
+
+			float fQuakinessStart = floatInstParameter[instrument][K_QUAKINESS_START];
+			float fQuakinessEnd = floatInstParameter[instrument][K_QUAKINESS_END];
+			if (instrument == 0)
+			{
+				// Hard-coded quak end envalope
+				if (sampleID > MZK_BLOCK_SIZE * (4-4)) fQuakinessEnd = (float)(sampleID - MZK_BLOCK_SIZE * (4-4)) / (float)(MZK_BLOCK_SIZE * (70));;
+				if (sampleID > MZK_BLOCK_SIZE * (64-4)) fQuakinessEnd = 0.f;
+				if (sampleID > MZK_BLOCK_SIZE * (3*64+2-4)) fQuakinessEnd = (float)(sampleID - MZK_BLOCK_SIZE * (3*64+2-4)) / (float)(MZK_BLOCK_SIZE * (70));
+				if (sampleID > MZK_BLOCK_SIZE * (4*64+2-4)) fQuakinessEnd = (float)(MZK_BLOCK_SIZE * (5*64-8-4) - sampleID) / (float)(MZK_BLOCK_SIZE * (70));
+				if (sampleID > MZK_BLOCK_SIZE * (7*64-4)) fQuakinessEnd = (float)(sampleID - MZK_BLOCK_SIZE * (7*64-4)) / (float)(MZK_BLOCK_SIZE * (256)) + 0.25f;
+				if (sampleID > MZK_BLOCK_SIZE * (9*64-4)) fQuakinessEnd = 0.7f;
+				//if (sampleID > MZK_BLOCK_SIZE * (13*64-4)) fQuakinessEnd = (float)(sampleID - MZK_BLOCK_SIZE * (13*64-4)) / (float)(MZK_BLOCK_SIZE * (70));
+				if (sampleID > MZK_BLOCK_SIZE * (13*64-4)) fQuakinessEnd = 0.f;
+				if (fQuakinessEnd < 0.f) fQuakinessEnd = 0.f;
+			}
+			float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
+
 			for (int i = 0; i < NUM_OVERTONES; i++)
 			{
 				float soundShape = 1.0f;
@@ -312,9 +330,6 @@ void mzkPlayBlock(short *blockBuffer)
 					}
 				}
 				overallLoudness += overtoneLoudness * soundShape;
-				float fQuakinessStart = floatInstParameter[instrument][K_QUAKINESS_START];
-				float fQuakinessEnd = floatInstParameter[instrument][K_QUAKINESS_END];
-				float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
 				overtoneLoudness *= quakiness * 2.0f;
 			}
 
@@ -346,10 +361,12 @@ void mzkPlayBlock(short *blockBuffer)
 			}
 
 			float totalLoudness = 1.f;
-			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol;
-			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol;
-			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol;
-			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][3] * fADSRVal[instrument] * vol;
+			if (sampleID > MZK_BLOCK_SIZE * (18*64-4)) totalLoudness = 1.f - (float)(sampleID - MZK_BLOCK_SIZE * (18*64-4)) / ((float)MZK_BLOCK_SIZE * 96);
+			if (totalLoudness < 0.f) totalLoudness = 0.f;
+			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][0];
+			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][2];
+			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][1];
+			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][3];
 
 			float fModulationSpeed = floatInstParameter[instrument][K_MODULATION_SPEED];
 			fModulationPhase[instrument] += fModulationSpeed / 512.0f;

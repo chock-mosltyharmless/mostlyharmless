@@ -57,10 +57,10 @@ unsigned char scriptDurations[NUM_SCENES] =
 	51, // 6: Fireball to transparent
 	 8, // 7: Exploded fireball
 	30, // 8: To Shadow man
-	50, // 9: To Light mystic
-	15, // 10: Hold Light mystic
-	36, // 11: Blorange wool ball
-	38, // 12: Fade out
+	45, // 9: To Light mystic
+	 5, // 10: Hold Light mystic
+	41, // 11: Blorange wool ball
+	48, // 12: Fade out
 	255, // END!
 };
 #endif
