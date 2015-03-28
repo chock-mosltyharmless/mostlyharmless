@@ -73,9 +73,10 @@ static HWAVEOUT hWaveOut; // audio device handle
 // TODO: Use more than 2 buffers with very small sizes so that I have
 //       no influence on frame rate!
 //static MMTIME timer; // Using getPosition of wave audio playback
+#define NUM_PLAY_BLOCKS 8
 static int nextPlayBlock = 0; // The block that must be filled and played next
-short myMuzikBlock[2][AUDIO_BUFFER_SIZE*MZK_NUMCHANNELS]; // The audio blocks
-static WAVEHDR header[2];    // header of the audio block
+short myMuzikBlock[NUM_PLAY_BLOCKS][AUDIO_BUFFER_SIZE*MZK_NUMCHANNELS]; // The audio blocks
+static WAVEHDR header[NUM_PLAY_BLOCKS];    // header of the audio block
 static const WAVEFORMATEX wfx = {
 	WAVE_FORMAT_PCM,					// wFormatTag
 	MZK_NUMCHANNELS,					// nChannels
@@ -217,7 +218,8 @@ DWORD WINAPI thread_func(LPVOID lpParameter)
 #endif
 			waveOutPrepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
 			waveOutWrite(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
-			nextPlayBlock = 1 - nextPlayBlock;
+			nextPlayBlock++;
+			if (nextPlayBlock >= NUM_PLAY_BLOCKS) nextPlayBlock = 0;
 		}
 		else
 		{
@@ -262,14 +264,13 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // create music block
 	mzk_init();
 	// prepare and play music block
-	header[0].lpData = (char *)myMuzikBlock[0];
-	header[1].lpData = (char *)myMuzikBlock[1];
-	header[0].dwBufferLength = AUDIO_BUFFER_SIZE * MZK_NUMCHANNELS * 2;
-	header[1].dwBufferLength = AUDIO_BUFFER_SIZE * MZK_NUMCHANNELS * 2;
-	waveOutPrepareHeader(hWaveOut, &(header[0]), sizeof(WAVEHDR));
-	waveOutWrite(hWaveOut, &(header[0]), sizeof(WAVEHDR));
-	waveOutPrepareHeader(hWaveOut, &(header[1]), sizeof(WAVEHDR));
-	waveOutWrite(hWaveOut, &(header[1]), sizeof(WAVEHDR));
+	for (int i = 0; i < NUM_PLAY_BLOCKS; i++)
+	{
+		header[i].lpData = (char *)myMuzikBlock[i];
+		header[i].dwBufferLength = AUDIO_BUFFER_SIZE * MZK_NUMCHANNELS * 2;
+		waveOutPrepareHeader(hWaveOut, &(header[i]), sizeof(WAVEHDR));
+		waveOutWrite(hWaveOut, &(header[i]), sizeof(WAVEHDR));
+	}
 
 	CreateThread(NULL, 0, thread_func, NULL, 0, 0);
 

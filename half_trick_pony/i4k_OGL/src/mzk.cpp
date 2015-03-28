@@ -12,7 +12,7 @@
 #define LOG_2_E 1.44269f
 #define fScaler ((float)((double)2*PI / (double)MZK_RATE))
 
-#define NUM_INSTRUMENTS 3
+#define NUM_INSTRUMENTS 5
 #define NUM_INSTRUMENT_PARAMETERS 18
 // Number of additive overtones
 #define NUM_OVERTONES 16
@@ -172,10 +172,11 @@ void mzkPlayBlock(short *blockBuffer)
 	int sampleID;
 
 	// clear audio block
+	float floatOutput[MZK_BLOCK_SIZE][2];
 	for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 	{
 		// Stereo! --> 2 values
-		blockBuffer[sample] = 0;
+		floatOutput[0][sample] = 0;
 	}
 
 	for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
@@ -333,30 +334,11 @@ void mzkPlayBlock(short *blockBuffer)
 				if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
 			}
 
-#if 0
-		*out1 = 0;
-		*out2 = 0;
-		for (int j = 0; j < NUM_Stereo_VOICES; j += 2)
-		{
-			//*out1 += outAmplitude[j];
-			//*out2 += outAmplitude[j + 1];
-			*out1 += reverbBuffer[reverbPos][j];
-			*out2 += reverbBuffer[reverbPos][j+1];
-		}
-#endif
-
-
-#if 1
-			blockBuffer[sample*2] += (int)(4000 * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2] += (int)(4000 * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2+1] += (int)(4000 * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2+1] += (int)(4000 * reverbBuffer[instrument][reverbPos][3] * fADSRVal[instrument] * vol);
-#else
-			blockBuffer[sample*2] += (int)(8000 * outAmplitude[0] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2+1] += (int)(8000 * outAmplitude[1] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2] += (int)(8000 * outAmplitude[2] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2+1] += (int)(8000 * outAmplitude[3] * fADSRVal[instrument] * vol);
-#endif
+			float totalLoudness = 10000.0f;
+			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol;
+			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol;
+			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol;
+			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][3] * fADSRVal[instrument] * vol;
 
 			float fModulationSpeed = floatInstParameter[instrument][K_MODULATION_SPEED];
 			fModulationPhase[instrument] += fModulationSpeed / 512.0f;
@@ -365,7 +347,16 @@ void mzkPlayBlock(short *blockBuffer)
 			while (fModulationPhase[instrument] > RANDOM_BUFFER_SIZE/2/NUM_OVERTONES) fModulationPhase[instrument] -= RANDOM_BUFFER_SIZE/2/NUM_OVERTONES;
 
 			sampleID++;
-		}			
+		}
+	}
+
+	// Copy to int output
+	for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
+	{
+		int val = (int)floatOutput[0][sample];
+		if (val > 32767) val = 32767;
+		if (val < -32767) val = -32767;
+		blockBuffer[sample] = val;
 	}
 
 	startSampleID = sampleID;
