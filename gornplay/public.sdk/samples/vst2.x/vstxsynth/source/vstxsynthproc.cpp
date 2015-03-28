@@ -359,14 +359,25 @@ VstInt32 VstXSynth::processEvents (VstEvents* ev)
 			VstInt32 velocity = midiData[2] & 0x7f;
 			if (status == 0x80)
 				velocity = 0;	// note off by velocity 0
+#if 0
 			if (!velocity && (note == currentNote))
 				noteOff ();
 			else
+#endif
 			{
-				midiDelaySamples = event->deltaFrames;
-				midiDelayNote = note;
-				midiDelayVelocity = velocity;
-				if (midiDelaySamples <= 0) noteOn(note, velocity);
+				if (!velocity && (note == currentNote))
+				{
+					midiDelayNote = -1; // delay note off
+					midiDelayVelocity = -1;
+				}
+				else
+				{
+					midiDelayNote = note;
+					midiDelayVelocity = velocity;
+				}
+
+				midiDelaySamples = event->deltaFrames;				
+				if (midiDelaySamples <= 0) noteOn(midiDelayNote, midiDelayVelocity);
 			}
 		}
 		else if (status == 0xb0)
@@ -397,53 +408,36 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 #endif
 
 	midiDelaySamples = -1;
-	currentNote = note;
-	currentVelocity = velocity;
-	for (int i = 0; i < NUM_OVERTONES; i++)
+	if (note != -1)
 	{
-		for (int j = 0; j < NUM_Stereo_VOICES; j++)
+		currentNote = note;
+		currentVelocity = velocity;
+		for (int i = 0; i < NUM_OVERTONES; i++)
 		{
-			fPhase[i][j] = 0;
+			for (int j = 0; j < NUM_Stereo_VOICES; j++)
+			{
+				fPhase[i][j] = 0;
+			}
 		}
-	}
-	iADSR = 0;
-	fADSRVal = 0.0f;
-	fTimePoint = 0.0f;
+		iADSR = 0;
+		fADSRVal = 0.0f;
+		fTimePoint = 0.0f;
 
-	for (int i = 0; i < NUM_Stereo_VOICES; i++)
-	{
-		fRemainDC[i] = fLastOutput[i];
-	}
-
-	// Set the reverberation buffer length at key start (no interpolation)
-	reverbBufferLength[0] = iDelayLength * DELAY_MULTIPLICATOR + 1;
-	reverbBufferLength[1] = iDelayLength * DELAY_MULTIPLICATOR * 7 / 17 + 1;
-	reverbBufferLength[2] = iDelayLength * DELAY_MULTIPLICATOR * 13 / 23 + 1;
-	reverbBufferLength[3] = iDelayLength * DELAY_MULTIPLICATOR * 11 / 13 + 1;
-
-}
-
-//-----------------------------------------------------------------------------------------
-void VstXSynth::noteOff ()
-{
-#ifdef SAVE_MUSIC
-	if (firstNoteTime >= 0)
-	{
-		if (savedNoteID > 0 && savedNote[savedNoteID - 1] >= 0) // Only stop if not yet stopped
+		for (int i = 0; i < NUM_Stereo_VOICES; i++)
 		{
-			savedNoteTime[savedNoteID] = sampleID;
-			savedNote[savedNoteID] = -1;
-			savedVelocity[savedNoteID] = -1;
-			savedNoteID++;
+			fRemainDC[i] = fLastOutput[i];
 		}
-	}
-#endif
 
-	//currentVelocity = 0;
-	iADSR = 2;
-	// This must be done when a new note is started only!
-	//fRemainDC[0] = fLastOutput[0];
-	//fRemainDC[1] = fLastOutput[1];
+		// Set the reverberation buffer length at key start (no interpolation)
+		reverbBufferLength[0] = iDelayLength * DELAY_MULTIPLICATOR + 1;
+		reverbBufferLength[1] = iDelayLength * DELAY_MULTIPLICATOR * 7 / 17 + 1;
+		reverbBufferLength[2] = iDelayLength * DELAY_MULTIPLICATOR * 13 / 23 + 1;
+		reverbBufferLength[3] = iDelayLength * DELAY_MULTIPLICATOR * 11 / 13 + 1;
+	}
+	else
+	{
+		iADSR = 2;
+	}
 
 	// Write everything out, we can overwrite at the next note.
 #ifdef SAVE_MUSIC
@@ -594,4 +588,14 @@ void VstXSynth::noteOff ()
 
 	fclose(fid);
 #endif
+}
+
+//-----------------------------------------------------------------------------------------
+void VstXSynth::noteOff ()
+{
+	//currentVelocity = 0;
+	iADSR = 2;
+	// This must be done when a new note is started only!
+	//fRemainDC[0] = fLastOutput[0];
+	//fRemainDC[1] = fLastOutput[1];
 }
