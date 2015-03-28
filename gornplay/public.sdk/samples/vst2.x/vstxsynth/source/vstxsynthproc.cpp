@@ -387,6 +387,8 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 
 	if (firstNoteTime >= 0)
 	{
+		// Overwrite last note if next one comes shortly after...
+		if (savedNoteID > 0 && sampleID - savedNoteTime[savedNoteID-1] < 1024) savedNoteID--;
 		savedNoteTime[savedNoteID] = sampleID;
 		savedNote[savedNoteID] = note;
 		savedVelocity[savedNoteID] = velocity;
@@ -418,6 +420,27 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	reverbBufferLength[1] = iDelayLength * DELAY_MULTIPLICATOR * 7 / 17 + 1;
 	reverbBufferLength[2] = iDelayLength * DELAY_MULTIPLICATOR * 13 / 23 + 1;
 	reverbBufferLength[3] = iDelayLength * DELAY_MULTIPLICATOR * 11 / 13 + 1;
+
+}
+
+//-----------------------------------------------------------------------------------------
+void VstXSynth::noteOff ()
+{
+#ifdef SAVE_MUSIC
+	if (firstNoteTime >= 0)
+	{
+		savedNoteTime[savedNoteID] = sampleID;
+		savedNote[savedNoteID] = -1;
+		savedVelocity[savedNoteID] = -1;
+		savedNoteID++;
+	}
+#endif
+
+	//currentVelocity = 0;
+	iADSR = 2;
+	// This must be done when a new note is started only!
+	//fRemainDC[0] = fLastOutput[0];
+	//fRemainDC[1] = fLastOutput[1];
 
 	// Write everything out, we can overwrite at the next note.
 #ifdef SAVE_MUSIC
@@ -461,23 +484,23 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	// Print single instrument parameters
 	fprintf(fid, "#pragma data_seg(\".instrumentParams\")\n");
 	fprintf(fid, "unsigned char instrumentParams_%d[] = {\n", (int)this);
-	fprintf(fid, "  %d,\n", (int)(fVolume*127));
-	fprintf(fid, "  %d,\n", (int)(fDuration*127));
-	fprintf(fid, "  %d,\n", (int)(fAttack*127));
-	fprintf(fid, "  %d,\n", (int)(fDecay*127));
-	fprintf(fid, "  %d,\n", (int)(fSustain*127));
-	fprintf(fid, "  %d,\n", (int)(fRelease*127));
-	fprintf(fid, "  %d,\n", (int)(fQuakinessStart*127));
-	fprintf(fid, "  %d,\n", (int)(fQuakinessEnd*127));
-	fprintf(fid, "  %d,\n", iSoundShapeStart);
-	fprintf(fid, "  %d,\n", iSoundShapeEnd);
-	fprintf(fid, "  %d,\n", (int)(fModulationAmount*127));
-	fprintf(fid, "  %d,\n", (int)(fModulationSpeed*127));
-	fprintf(fid, "  %d,\n", (int)(fDetune*127));
-	fprintf(fid, "  %d,\n", (int)(fStereo*127));
-	fprintf(fid, "  %d,\n", (int)(fNoiseStart*127));
-	fprintf(fid, "  %d,\n", (int)(fNoiseEnd*127));
-	fprintf(fid, "  %d,\n", (int)(fDelayFeed*127));
+	fprintf(fid, "  %d,", (int)(fVolume*127));
+	fprintf(fid, "  %d,", (int)(fDuration*127));
+	fprintf(fid, "  %d,", (int)(fAttack*127));
+	fprintf(fid, "  %d,", (int)(fDecay*127));
+	fprintf(fid, "  %d,", (int)(fSustain*127));
+	fprintf(fid, "  %d,", (int)(fRelease*127));
+	fprintf(fid, "  %d,", (int)(fQuakinessStart*127));
+	fprintf(fid, "  %d,", (int)(fQuakinessEnd*127));
+	fprintf(fid, "  %d,", iSoundShapeStart);
+	fprintf(fid, "  %d,", iSoundShapeEnd);
+	fprintf(fid, "  %d,", (int)(fModulationAmount*127));
+	fprintf(fid, "  %d,", (int)(fModulationSpeed*127));
+	fprintf(fid, "  %d,", (int)(fDetune*127));
+	fprintf(fid, "  %d,", (int)(fStereo*127));
+	fprintf(fid, "  %d,", (int)(fNoiseStart*127));
+	fprintf(fid, "  %d,", (int)(fNoiseEnd*127));
+	fprintf(fid, "  %d,", (int)(fDelayFeed*127));
 	fprintf(fid, "  %d\n", iDelayLength);
 	fprintf(fid, "};\n\n");
 #else // print timed instrument data
@@ -521,16 +544,26 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 		if (i % 32 == 31) fprintf(fid, "\n ");
 		lastTime = savedNoteTime[i];
 	}
-	fprintf(fid, "};\n\n");
+	// There is one final 255 to wait it out...
+	fprintf(fid, " 255};\n\n");
 
 	fprintf(fid, "#pragma data_seg(\".savedNote\")\n");
 	fprintf(fid, "signed char savedNote_%d[] = {\n ", (int)this);
 	int lastNote = 0;
 	for (int i = 0; i < savedNoteID; i++)
 	{
-		fprintf(fid, " %d,", savedNote[i] - lastNote);
-		if (i % 32 == 31) fprintf(fid, "\n ");
-		lastNote = savedNote[i];
+		if (savedNote[i] >= 0)
+		{
+			// note on, save delta
+			fprintf(fid, " %d,", savedNote[i] - lastNote);
+			lastNote = savedNote[i];
+		}
+		else
+		{
+			// note off, save -128
+			fprintf(fid, " -128,");
+		}
+		if (i % 32 == 31) fprintf(fid, "\n ");		
 	}
 	fprintf(fid, "};\n\n");
 
@@ -540,23 +573,22 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	int lastVelocity = 0;
 	for (int i = 0; i < savedNoteID; i++)
 	{
-		fprintf(fid, " %d,", savedVelocity[i] - lastVelocity);
+		if (savedVelocity[i] >= 0)
+		{
+			// note on
+			fprintf(fid, " %d,", savedVelocity[i] - lastVelocity);
+			lastVelocity = savedVelocity[i];
+		}
+		else
+		{
+			// note off
+			fprintf(fid, " 0,");
+		}
 		if (i % 32 == 31) fprintf(fid, "\n");
-		lastVelocity = savedVelocity[i];
 	}
 	fprintf(fid, "};\n\n");
 #endif
 
 	fclose(fid);
 #endif
-}
-
-//-----------------------------------------------------------------------------------------
-void VstXSynth::noteOff ()
-{
-	//currentVelocity = 0;
-	iADSR = 2;
-	// This must be done when a new note is started only!
-	//fRemainDC[0] = fLastOutput[0];
-	//fRemainDC[1] = fLastOutput[1];
 }
