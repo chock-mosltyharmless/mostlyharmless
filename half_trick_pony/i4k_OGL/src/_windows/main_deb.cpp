@@ -286,10 +286,13 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 #endif
 
+	//timer.wType = TIME_SAMPLES;
     long to=timeGetTime();
     while( !done )
     {
 		long t = timeGetTime() - to;
+		//waveOutGetPosition(hWaveOut, &timer, sizeof(timer));
+		//t = timer.u.sample * 1000 / 44100;
 
         while( PeekMessage(&msg,0,0,0,PM_REMOVE) )
         {
