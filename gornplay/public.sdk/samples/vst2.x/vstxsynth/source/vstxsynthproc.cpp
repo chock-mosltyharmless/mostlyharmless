@@ -429,10 +429,13 @@ void VstXSynth::noteOff ()
 #ifdef SAVE_MUSIC
 	if (firstNoteTime >= 0)
 	{
-		savedNoteTime[savedNoteID] = sampleID;
-		savedNote[savedNoteID] = -1;
-		savedVelocity[savedNoteID] = -1;
-		savedNoteID++;
+		if (savedNoteID > 0 && savedNote[savedNoteID - 1] >= 0) // Only stop if not yet stopped
+		{
+			savedNoteTime[savedNoteID] = sampleID;
+			savedNote[savedNoteID] = -1;
+			savedVelocity[savedNoteID] = -1;
+			savedNoteID++;
+		}
 	}
 #endif
 
