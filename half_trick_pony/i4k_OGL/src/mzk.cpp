@@ -334,7 +334,7 @@ void mzkPlayBlock(short *blockBuffer)
 				if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
 			}
 
-			float totalLoudness = 10000.0f;
+			float totalLoudness = 8000.0f;
 			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol;
 			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol;
 			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol;
