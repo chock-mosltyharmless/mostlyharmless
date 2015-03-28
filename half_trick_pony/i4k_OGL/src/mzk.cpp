@@ -166,13 +166,13 @@ __inline void init_mzk_data()
 }
 
 #pragma code_seg(".mzkPlayBlock")
+static float floatOutput[MZK_BLOCK_SIZE][2];
 void mzkPlayBlock(short *blockBuffer)
 {
 	static int startSampleID = 0;
 	int sampleID;
 
 	// clear audio block
-	float floatOutput[MZK_BLOCK_SIZE][2];
 	for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 	{
 		// Stereo! --> 2 values
