@@ -82,6 +82,7 @@ unsigned char scriptDurations[NUM_SCENES] =
 // Exploded fireball|       2:0.02(2) 3:0.13(16) 4:0.29(37) 5:0.50(63) 6:0.11(14) 8:0.38(48) 9:0.76(97) 15:0.20(26) 16:0.00(0) 17:1.00(127) 18:0.77(98) 19:0.09(11) 20:0.05(6) 
 // Light mystic|            2:0.15(19) 3:0.41(52) 4:0.35(45) 5:0.34(43) 6:0.24(31) 8:0.70(89) 9:0.34(43) 14:0.00(0) 15:0.05(6) 16:0.00(0) 17:0.01(1) 18:0.46(59) 19:1.00(127) 20:0.13(17) 
 // Blorange wool ball|      2:0.27(34) 3:0.09(12) 4:0.43(54) 5:0.52(66) 6:0.19(24) 8:0.00(0) 9:0.26(33) 14:0.19(24) 15:0.39(50) 16:0.00(0) 17:0.03(4) 18:0.24(30) 19:1.00(127) 20:0.29(37) 
+#pragma data_seg(".script")
 unsigned char script[14][NUM_SCENES] =
 {
 	// 0: From black to circles
@@ -135,6 +136,7 @@ unsigned char script[14][NUM_SCENES] =
 //                          SHADER CODE:
 // -------------------------------------------------------------------
 
+#pragma data_seg(".fragment_main_background")
 const GLchar *fragmentMainBackground="\
 uniform sampler3D Texture0;\n\
 varying vec3 objectPosition;\n\
@@ -220,6 +222,7 @@ void main(void)\n\
    gl_FragColor = vec4(color, 1.0);\n\
 }";
 
+#pragma data_seg(".fragment_offscreen_copy")
 #if 0
 const GLchar *fragmentOffscreenCopy="\
 uniform sampler2D Texture0;\n\
@@ -260,6 +263,7 @@ void main(void) {\n\
 }";
 #endif
 
+#pragma data_seg(".vertex_main_object")
 const GLchar *vertexMainObject="\
 #version 120\n\
 varying vec3 objectPosition;\
@@ -278,6 +282,7 @@ void main(void)\
 
 HWND hWnd;
 
+#pragma data_seg(".gl_names")
 #ifdef DEBUG_SHADER
 #define NUM_GL_NAMES 10
 const static char* glnames[NUM_GL_NAMES]={
@@ -331,6 +336,7 @@ static GLuint shaderPrograms[2];
 #ifdef DEBUG_SHADER
 static char err[4097];
 #endif
+#pragma code_seg(".intro_init")
 void intro_init( void )
 {
 	// create openGL functions
@@ -445,6 +451,7 @@ void intro_init( void )
 
 static GLint viewport[4];
 
+#pragma code_seg(".intro_do")
 void intro_do( long itime )
 {
 	float ftime = 0.001f*(float)itime;
