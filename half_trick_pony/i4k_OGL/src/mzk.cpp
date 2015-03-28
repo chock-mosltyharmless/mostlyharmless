@@ -12,7 +12,7 @@
 #define LOG_2_E 1.44269f
 #define fScaler ((float)((double)2*PI / (double)MZK_RATE))
 
-#define NUM_INSTRUMENTS 1
+#define NUM_INSTRUMENTS 3
 #define NUM_INSTRUMENT_PARAMETERS 18
 // Number of additive overtones
 #define NUM_OVERTONES 16
@@ -168,8 +168,8 @@ __inline void init_mzk_data()
 #pragma code_seg(".mzkPlayBlock")
 void mzkPlayBlock(short *blockBuffer)
 {
-	static int sampleID = 0;
-	//static int savedNoteTime[1][10] = {0};
+	static int startSampleID = 0;
+	int sampleID;
 
 	// clear audio block
 	for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
@@ -180,6 +180,9 @@ void mzkPlayBlock(short *blockBuffer)
 
 	for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 	{
+		// Go over all samples
+		sampleID = startSampleID;
+
 		// Check if we go to next note
 		if (savedNoteTime[instrument][currentNoteIndex[instrument]] == 0)
 		{
@@ -344,10 +347,10 @@ void mzkPlayBlock(short *blockBuffer)
 
 
 #if 1
-			blockBuffer[sample*2] += (int)(8000 * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2] += (int)(8000 * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2+1] += (int)(8000 * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol);
-			blockBuffer[sample*2+1] += (int)(8000 * reverbBuffer[instrument][reverbPos][3] * fADSRVal[instrument] * vol);
+			blockBuffer[sample*2] += (int)(4000 * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol);
+			blockBuffer[sample*2] += (int)(4000 * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol);
+			blockBuffer[sample*2+1] += (int)(4000 * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol);
+			blockBuffer[sample*2+1] += (int)(4000 * reverbBuffer[instrument][reverbPos][3] * fADSRVal[instrument] * vol);
 #else
 			blockBuffer[sample*2] += (int)(8000 * outAmplitude[0] * fADSRVal[instrument] * vol);
 			blockBuffer[sample*2+1] += (int)(8000 * outAmplitude[1] * fADSRVal[instrument] * vol);
@@ -364,6 +367,8 @@ void mzkPlayBlock(short *blockBuffer)
 			sampleID++;
 		}			
 	}
+
+	startSampleID = sampleID;
 }
 
 // put here your synth
