@@ -21,9 +21,10 @@ int rand();
 // -------------------------------------------------------------------
 //                          SCRIPT
 // -------------------------------------------------------------------
-#define NUM_SCENES 13
+#define NUM_SCENES 14
 
-// Additive, in half seconds?
+// Additive, in 4*4096/44100 seconds?
+#if 0
 unsigned char scriptDurations[NUM_SCENES] =
 {
 	5, // 0: From black to circles
@@ -40,6 +41,25 @@ unsigned char scriptDurations[NUM_SCENES] =
 	13, // 11: Fade out
 	255, // END!
 };
+#else
+unsigned char scriptDurations[NUM_SCENES] =
+{
+	14, // 0: From black to circles
+	6,  // 1: From circles to 8-bit (almost instant)
+	40, // 2: 8-Bit stay
+	21, // 3: Shatter of in 8-Bit land
+	 0,  // 4: To pre-shatter in 8-Bit land
+	11,  // 5: To fireball (instant?)
+	51, // 6: Fireball to transparent
+	 8, // 7: Exploded fireball
+	30, // 8: To Shadow man
+	50, // 9: To Light mystic
+	15, // 10: Hold Light mystic
+	36, // 11: Blorange wool ball
+	38, // 12: Fade out
+	255, // END!
+};
+#endif
 
 // NOTE: scene is first...
 // End effet|               3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 
@@ -56,45 +76,46 @@ unsigned char script[14][NUM_SCENES] =
 	// 0: From black to circles
 	// 1: From circles to 8-bit (almost instant)
 	// 2: 8-Bit stay
-	// 3: To fireball (instant?)
-	// 4: Shatter off
-	// 5: Fireball to transparent
-	// 6: Exploded Fireball
-	// 7: to Shadow man
-	// 8: To Light Mystic
-	// 9: Hold Light mystic
-	// 10: Blorange wool ball
-	// 11: Fade out
+	// 3: Shatter of in 8-Bit land
+	// 4: To pre-shatter in 8-Bit land
+	// 5: To fireball (instant?)
+	// 6: Fireball to transparent
+	// 7: Exploded Fireball
+	// 8: to Shadow man
+	// 9: To Light Mystic
+	// 10: Hold Light mystic
+	// 11: Blorange wool ball
+	// 12: Fade out
 
-	// 0    1    2    3    4    5    6    7    8    9   10   11
+	// 0    1    2    3    4    5    6    7    8    9   10   11   12
 	// Slider 1 (2: base Noise frequency)
-	{  9,   9,   9,   9,  12,  12,  29,   2,  64,  19,  19,  34,  34},
+	{  9,   9,   9,   9,   9,   9,  12,  29,   2,  64,  19,  19,  34,  34},
 	// Slider 2 (3: base Noise modulation)
-	{ 68,  68,  68,  68,  68,  68,  78,  16,  60,  52,  52,  12,  12},
+	{ 68,  68,  68,  68,  68,  68,  68,  78,  16,  60,  52,  52,  12,  12},
 	// Slider 3 (4: base Noise amount)
-	{127, 127, 127, 127, 127, 127, 127,  37,  64,  45,  45,  54,  54},
+	{127, 127, 127, 127, 127, 127, 127, 127,  37,  64,  45,  45,  54,  54},
 	// Slider 4 (5: delta Noise frequecny)
-	{  0,   0,   8,   8, 127, 127, 127,  63,  38,  43,  43,  66,  66},
+	{  0,   0,   8,   8,   0, 127, 127, 127,  63,  38,  43,  43,  66,  66},
 	// Slider 5 (6: delta Noise amount)
-	{127, 127, 127, 127,   0,   0,   0,  14,  31,  31,  31,  24,   0},
+	{127, 127, 127, 127, 127,   0,   0,   0,  14,  31,  31,  31,  12,   0},
 	// Slider 6 (8: delta Noise implicit add amount)
-	{  0,   0,   0,   0,   1,   1,   3,  48, 127,  89,  89,   0,   0},
+	{  0,   0,   0,   0,   0,   0,   0,   3,  48, 127,  89,  89,   0,   0},
 	// Slider 7 (9: ray movement speed)
-	{ 44,  44,  24,  32,  38,  39,  87,  97,  54,  43,  43,  33,  33},
+	{ 44,  44,  24,  32,  32,  32,  39,  87,  97,  54,  43,  43,  33,  33},
 	// Knob 1 (14: Mirror shattering amount)
-	{  0, 127, 127, 127, 127,   0,   0,   0,   0,   0,   0,   0,   0},
+	{  0, 127, 127, 127,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
 	// Knob 2 (15: Saturation)
-	{ 66,  66,  66,  66,  77,  77,  72,  26,   6,   6,   6,  50,   0},
+	{ 66,  66,  66,  66,  66,  66,  72,  72,  26,   6,   6,   6,  50,   0},
 	// Knob 3 (16: Spike size modulation)
-	{  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
+	{  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
 	// Knob 4 (17: Solid to transparent)
-	{  0,   0,   0,   0,   0,   0, 127, 127,  84,   3,   3,   4,   4},
+	{  0,   0,   0,   0,   0,   0,   0, 127, 127,  84,   3,   3,   4,   4},
 	// Knob 5 (18: Delta noise brightness adder)
-	{  0,   0,   0,   0,   0,   0,   0,  98, 127,  59,  59,  30,  30},
+	{  0,   0,   0,   0,   0,   0,   0,   0,  98, 127,  59,  59,  30,  30},
 	// Knob 6 (19: Delta noise movement speed)
-	{  0,   0,   0,   0,   0,   0,   0,  35, 127, 127, 127, 127, 127},
+	{  0,   0,   0,   0,   0,   0,   0,   0,  35, 127, 127, 127, 127, 127},
 	// Knob 7 (20: Brightness)
-	{  0,  40,  60,  80, 255,  62,  72,   3,   3,  14,  14,  37,   0}
+	{  0,  40,  60,  80,  64,  64,  72,  72,   3,   3,  14,  14,  37,   0}
 };
 
 // -------------------------------------------------------------------
@@ -166,7 +187,7 @@ void main(void)\n\
    for (int i = 0; i < 100 && length(rayPos) < 12. && totalDensity < 0.95; i++) {\n\
       \n\
 	  vec3 dval = vnoise((rayPos * 0.05) * slider4 * slider4 + vec3(time*0.02) * knob6, 3, 0.6).rgb;\n\
-	  vec3 nval = vnoise(dval*rayPos*0.1*slider1*slider1 + floor(rayDir*2.2)*0.01*knob1 + dval*2.*slider5 + vec3(time*0.01), 5, slider2).rgb;\n\
+	  vec3 nval = vnoise(dval*rayPos*0.1*slider1*slider1 + floor(rayDir*3.5*knob1)*0.01*knob1 + dval*2.*slider5 + vec3(time*0.01), 5, slider2).rgb;\n\
 	  float implicit = length(rayPos + slider3*nval*5.) - 3. - 2.*knob3*spike;\n\
 	  implicit -= slider6 * dval.g * 15.;\n\
       \n\
@@ -440,12 +461,12 @@ void fallingBall(float ftime)
 	{
 		int timePoint = 0;
 		float lastEndTime = 0.0f;
-		float nextEndTime = scriptDurations[0];
+		float nextEndTime = scriptDurations[0] * 4 * 4096.0f / 44100.0f;
 		while (nextEndTime < ftime)
 		{
 			lastEndTime = nextEndTime;
 			timePoint++;
-			nextEndTime += scriptDurations[timePoint];
+			nextEndTime += scriptDurations[timePoint] * 4 * 4096.0f / 44100.0f;
 		}
 		
 		float firstVal = script[i][timePoint] * (1.0f / 127.0f);
