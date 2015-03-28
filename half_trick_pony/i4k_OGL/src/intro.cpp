@@ -18,6 +18,10 @@
 float frand();
 int rand();
 
+#ifndef PI
+#define PI 3.1415f
+#endif
+
 // -------------------------------------------------------------------
 //                          SCRIPT
 // -------------------------------------------------------------------
@@ -97,7 +101,7 @@ unsigned char script[14][NUM_SCENES] =
 	// Slider 4 (5: delta Noise frequecny)
 	{  0,   0,   8,   8,   0, 127, 127, 127,  63,  38,  43,  43,  66,  66},
 	// Slider 5 (6: delta Noise amount)
-	{127, 127, 127, 127, 127,   0,   0,   0,  14,  31,  31,  31,  12,   0},
+	{ 80,  80,  80,  80,  80,   0,   0,   0,  14,  31,  31,  31,  12,   0},
 	// Slider 6 (8: delta Noise implicit add amount)
 	{  0,   0,   0,   0,   0,   0,   0,   3,  48, 127,  89,  89,   0,   0},
 	// Slider 7 (9: ray movement speed)
@@ -107,7 +111,8 @@ unsigned char script[14][NUM_SCENES] =
 	// Knob 2 (15: Saturation)
 	{ 66,  66,  66,  66,  66,  66,  72,  72,  26,   6,   6,   6,  50,   0},
 	// Knob 3 (16: Spike size modulation)
-	{  0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
+	//{127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127, 127},
+	{ 60,  60,  60,  60,  60,   60,  40,   0,   0,   40,  40,  20,  0,   0},
 	// Knob 4 (17: Solid to transparent)
 	{  0,   0,   0,   0,   0,   0,   0, 127, 127,  84,   3,   3,   4,   4},
 	// Knob 5 (18: Delta noise brightness adder)
@@ -115,7 +120,8 @@ unsigned char script[14][NUM_SCENES] =
 	// Knob 6 (19: Delta noise movement speed)
 	{  0,   0,   0,   0,   0,   0,   0,   0,  35, 127, 127, 127, 127, 127},
 	// Knob 7 (20: Brightness)
-	{  0,  40,  60,  80,  64,  64,  72,  72,   3,   3,  14,  14,  37,   0}
+	//{  0,  40,  60,  80,  64,  64,  72,  72,   3,   3,  14,  14,  37,   0}
+	{  0,  30,  45,  50,  40,  40,  50,  50,   2,   2,  8,  8,  23,   0}
 };
 
 // -------------------------------------------------------------------
@@ -202,7 +208,7 @@ void main(void)\n\
       rayPos += rayDir * max(0.03, min(maxMove,abs(implicit)) * slider7);\n\
    }\n\
    \n\
-   color = mix(color, totalColor, totalDensity);\n\
+   color = mix(color, totalColor, totalDensity) * (1.0 + spike) - 0.2*spike + 0.1;\n\
    \n\
    gl_FragColor = vec4(color, 1.0);\n\
 }";
@@ -243,7 +249,7 @@ void main(void) {\n\
 		if (similarity > 0.) {col = mix(col,col2,.3*similarity);}\n\
 		col += 0.04 * vec4(min(n1,n2));\n\
 	}\n\
-	gl_FragColor = 1.1 * col - vec3(0.1);\n\
+	gl_FragColor = 1.1 * col - vec4(0.1);\n\
 }";
 #endif
 
@@ -438,7 +444,20 @@ void fallingBall(float ftime)
 
 
 	parameterMatrix[14] = ftime; // time	
-	parameterMatrix[15] = 0.0f; // spike
+	// BPM => spike calculation
+	float BPS = (float)MZK_RATE / (float)MZK_BLOCK_SIZE;
+	float jumpsPerSecond = BPS / 8.0f; // Jump on every fourth beat.
+	float phase = 0.35f;
+	float jumpTime = (ftime * jumpsPerSecond) + phase;
+	jumpTime -= floor(jumpTime);
+	jumpTime = jumpTime * jumpTime;
+	// spike is between 0.0 and 1.0 depending on the position within whatever.
+	//float spike = 0.5f * cosf(jumpTime * PI * 1.5f) + 0.5f;
+	float spike = 1.0f - jumpTime * 3.f;
+	if (spike < 0) spike = 0;
+	if (ftime < MZK_BLOCK_SIZE * 60.0f / 44100.0f ||
+		ftime > MZK_BLOCK_SIZE * 60.0f * 18.0f / 44100.0f) spike = 0;
+	parameterMatrix[15] = spike; // spike
 	/* shader parameters */
 	//3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 
 #ifdef EDIT_PARAMETERS
@@ -517,7 +536,7 @@ void intro_do( long itime )
     // render
 	//glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_BLEND);
-    glEnable( GL_CULL_FACE );
+    //glEnable( GL_CULL_FACE );
 	//glCullFace( GL_FRONT );
 	//glDisable( GL_BLEND );
     //glEnable( GL_LIGHTING );

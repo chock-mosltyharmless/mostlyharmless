@@ -7,7 +7,7 @@
 #include "music.h"
 
 #ifndef PI
-#define PI 3.1415
+#define PI 3.1415f
 #endif
 #define LOG_2_E 1.44269f
 #define fScaler ((float)((double)2*PI / (double)MZK_RATE))
@@ -334,7 +334,7 @@ void mzkPlayBlock(short *blockBuffer)
 				if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
 			}
 
-			float totalLoudness = 8000.0f;
+			float totalLoudness = 0.75f;
 			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol;
 			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol;
 			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol;
@@ -353,10 +353,18 @@ void mzkPlayBlock(short *blockBuffer)
 	// Copy to int output
 	for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 	{
+#if 0
 		int val = (int)floatOutput[0][sample];
 		if (val > 32767) val = 32767;
 		if (val < -32767) val = -32767;
 		blockBuffer[sample] = val;
+#else
+		float val = floatOutput[0][sample];
+		if (val > 0.5f * PI) val = 0.5f*PI;
+		if (val < -0.5f * PI) val = -0.5f*PI;
+		val = (float)sin(val) * 32765.0f;
+		blockBuffer[sample] = (int)val;
+#endif
 	}
 
 	startSampleID = sampleID;
