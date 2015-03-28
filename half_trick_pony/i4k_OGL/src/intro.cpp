@@ -105,7 +105,7 @@ unsigned char script[14][NUM_SCENES] =
 	// Slider 6 (8: delta Noise implicit add amount)
 	{  0,   0,   0,   0,   0,   0,   0,   3,  48, 127,  89,  89,   0,   0},
 	// Slider 7 (9: ray movement speed)
-	{ 44,  44,  24,  32,  32,  32,  39,  87,  97,  54,  43,  43,  33,  33},
+	{ 44,  44,  24,  32,  32,  32,  39,  87,  97,  54,  43,  35,  30,  30},
 	// Knob 1 (14: Mirror shattering amount)
 	{  0, 127, 127, 127,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
 	// Knob 2 (15: Saturation)
@@ -208,7 +208,7 @@ void main(void)\n\
       rayPos += rayDir * max(0.03, min(maxMove,abs(implicit)) * slider7);\n\
    }\n\
    \n\
-   color = mix(color, totalColor, totalDensity) * (1.0 + spike) - 0.2*spike + 0.1;\n\
+   color = mix(color, totalColor, totalDensity) * (1.0 + spike) - 0.2*spike;\n\
    \n\
    gl_FragColor = vec4(color, 1.0);\n\
 }";
@@ -447,7 +447,7 @@ void fallingBall(float ftime)
 	// BPM => spike calculation
 	float BPS = (float)MZK_RATE / (float)MZK_BLOCK_SIZE;
 	float jumpsPerSecond = BPS / 8.0f; // Jump on every fourth beat.
-	float phase = 0.35f;
+	float phase = 0.3f;
 	float jumpTime = (ftime * jumpsPerSecond) + phase;
 	jumpTime -= floor(jumpTime);
 	jumpTime = jumpTime * jumpTime;
