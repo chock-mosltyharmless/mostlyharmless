@@ -104,8 +104,8 @@ __inline void init_mzk_data()
 {
 	// Create data tables
 	// make frequency (Hz) table
-	double k = 1.059463094359;	// 12th root of 2
-	double a = 6.875;	// a
+	float k = 1.059463094359f;	// 12th root of 2
+	float a = 6.875f;	// a
 	a *= k;	// b
 	a *= k;	// bb
 	a *= k;	// c, frequency of midi note 0
@@ -124,6 +124,7 @@ __inline void init_mzk_data()
 		lowNoise[i] = 16.0f * (randomBuffer[i] - 0.5f);
 	}
 
+#if 0
 	// Set the oscillator phases to zero
 	for (int inst = 0; inst < NUM_INSTRUMENTS; inst++)
 	{
@@ -138,6 +139,7 @@ __inline void init_mzk_data()
 		// Don't play instrument
 		iADSR[inst] = 3;
 	}
+#endif
 
 	// Ring-low-pass-filtering of lowPass
 	// Use a one-pole
@@ -196,7 +198,7 @@ void mzkPlayBlock(short *blockBuffer)
 			if (savedNote[instrument][currentNoteIndex[instrument]] != -128)
 			{
 				// Key on
-				iADSR[instrument] = 0; // attack
+				iADSR[instrument] = 1; // attack
 				fADSRVal[instrument] = 0.0f; // starting up
 				fTimePoint[instrument] = 0.0f;
 
@@ -221,7 +223,7 @@ void mzkPlayBlock(short *blockBuffer)
 			else
 			{
 				// NoteOff
-				iADSR[instrument] = 2; // Release
+				iADSR[instrument] = 3; // Release
 			}
 
 			// Go to next note location
@@ -243,20 +245,20 @@ void mzkPlayBlock(short *blockBuffer)
 			float fRelease = floatInstParameter[instrument][K_RELEASE];
 			switch (iADSR[instrument])
 			{
-			case 0: // Attack
+			case 1: // Attack
 				fADSRVal[instrument] += fAttack / 256.0f;
 				if (fADSRVal[instrument] > 1.0f)
 				{
-					iADSR[instrument] = 1;
+					iADSR[instrument] = 2;
 					fADSRVal[instrument] = 1.0f;
 				}
 				break;
-			case 1: // Decay
+			case 2: // Decay
 				fADSRVal[instrument] -= fSustain;
 				fADSRVal[instrument] *= (1.0f - fDecay / 1024.0f);
 				fADSRVal[instrument] += fSustain;
 				break;
-			case 2: // Release
+			case 3: // Release
 				fADSRVal[instrument] *= (1.0f - fRelease / 1024.0f);
 				break;
 			default:
