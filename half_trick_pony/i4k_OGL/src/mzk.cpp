@@ -187,27 +187,35 @@ void mzkPlayBlock(short *blockBuffer)
 		// Check if we go to next note
 		if (savedNoteTime[instrument][currentNoteIndex[instrument]] == 0)
 		{
-			// Key on (or off)
-			iADSR[instrument] = 0; // attack
-			fADSRVal[instrument] = 0.0f; // starting up
-			fTimePoint[instrument] = 0.0f;
-
-			// Set the reverberation buffer length at key start (no interpolation)
-			reverbBufferLength[instrument][0] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR + 1;
-			reverbBufferLength[instrument][1] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 7 / 17 + 1;
-			reverbBufferLength[instrument][2] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 13 / 23 + 1;
-			reverbBufferLength[instrument][3] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 11 / 13 + 1;
-
-			// Apply delta-note
-			currentNote[instrument] += savedNote[instrument][currentNoteIndex[instrument]];
-
-			// Set the oscillator phases to zero
-			for (int i = 0; i < NUM_OVERTONES; i++)
+			if (savedNote[instrument][currentNoteIndex[instrument]] != -128)
 			{
-				for (int j = 0; j < NUM_Stereo_VOICES; j++)
+				// Key on
+				iADSR[instrument] = 0; // attack
+				fADSRVal[instrument] = 0.0f; // starting up
+				fTimePoint[instrument] = 0.0f;
+
+				// Set the reverberation buffer length at key start (no interpolation)
+				reverbBufferLength[instrument][0] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR + 1;
+				reverbBufferLength[instrument][1] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 7 / 17 + 1;
+				reverbBufferLength[instrument][2] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 13 / 23 + 1;
+				reverbBufferLength[instrument][3] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 11 / 13 + 1;
+
+				// Apply delta-note
+				currentNote[instrument] += savedNote[instrument][currentNoteIndex[instrument]];
+
+				// Set the oscillator phases to zero
+				for (int i = 0; i < NUM_OVERTONES; i++)
 				{
-					fPhase[instrument][i][j] = 0.f;
+					for (int j = 0; j < NUM_Stereo_VOICES; j++)
+					{
+						fPhase[instrument][i][j] = 0.f;
+					}
 				}
+			}
+			else
+			{
+				// NoteOff
+				iADSR[instrument] = 2; // Release
 			}
 
 			// Go to next note location
@@ -249,12 +257,15 @@ void mzkPlayBlock(short *blockBuffer)
 				break;
 			}
 
-			// fade out on new instrument
+#if 1
+			// fade out on new instrument (but not on noteoff...)
 			if (savedNoteTime[instrument][currentNoteIndex[instrument]] == 0 &&
-				sample >= MZK_BLOCK_SIZE - 1024)
+				sample >= MZK_BLOCK_SIZE - 512 &&
+			    savedNote[instrument][currentNoteIndex[instrument]] != -128)
 			{
-				fADSRVal[instrument] -= 1.0f / 1024.0f;
+				fADSRVal[instrument] -= 1.0f / 512.0f;
 			}
+#endif
 
 			// Some optimziation?
 			if (fADSRVal[instrument] < 1.0f / 65536.0f) fADSRVal[instrument] = 0.0f;
@@ -334,7 +345,7 @@ void mzkPlayBlock(short *blockBuffer)
 				if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
 			}
 
-			float totalLoudness = 0.75f;
+			float totalLoudness = 1.f;
 			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][0] * fADSRVal[instrument] * vol;
 			floatOutput[sample][0] += totalLoudness * reverbBuffer[instrument][reverbPos][2] * fADSRVal[instrument] * vol;
 			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][1] * fADSRVal[instrument] * vol;
