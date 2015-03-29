@@ -194,6 +194,7 @@ static const GLchar *vertexMainObject=
 
 HWND hWnd;
 
+#define MAX_GL_NAME_LENGTH 16
 #pragma data_seg(".gl_names")
 #ifdef SHADER_DEBUG
 #define NUM_GL_NAMES 10
@@ -204,10 +205,10 @@ const static char* glnames[NUM_GL_NAMES]={
 };
 #else
 #define NUM_GL_NAMES 8
-const static char* glnames[NUM_GL_NAMES]={
-     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
-     "glAttachShader", "glLinkProgram", "glUseProgram",
-	 "glTexImage3D"
+const static char glnames[NUM_GL_NAMES][MAX_GL_NAME_LENGTH]={
+	{"glCreateShader"}, {"glCreateProgram"}, {"glShaderSource"}, {"glCompileShader"}, 
+	{"glAttachShader"}, {"glLinkProgram"}, {"glUseProgram"},
+	{"glTexImage3D"}
 };
 #endif
 
@@ -366,7 +367,7 @@ static GLint viewport[4];
 #pragma code_seg(".intro_do")
 void intro_do( long itime )
 {
-	float ftime = 0.001f*(float)itime;
+	float ftime = 0.001f * (float)itime;
 
 	/* Set everything to beginning */
 	for (int i = 0; i < 16; i++)
@@ -381,6 +382,7 @@ void intro_do( long itime )
 
 
 	parameterMatrix[14] = ftime; // time	
+#if 1
 	// BPM => spike calculation
 	float BPS = (float)MZK_RATE / (float)MZK_BLOCK_SIZE;
 	float jumpsPerSecond = BPS / 8.0f; // Jump on every fourth beat.
@@ -395,6 +397,18 @@ void intro_do( long itime )
 	if (spike < 0) spike = 0;
 	if (ftime < MZK_BLOCK_SIZE * 60.0f / 44100.0f ||
 		ftime > MZK_BLOCK_SIZE * 60.0f * 18.0f / 44100.0f) spike = 0;
+#else
+	int jumpIndex = (itime + 223) / 8 * MZK_RATE / MZK_BLOCK_SIZE / 1000;
+	int iJumpTime = (itime + 223) - jumpIndex * MZK_BLOCK_SIZE * 1000 / MZK_RATE * 8;
+	float jumpTime = (float)iJumpTime / 8.0f * (float)MZK_RATE / (float)MZK_BLOCK_SIZE / 1000.0f;
+	jumpTime = jumpTime * jumpTime;
+	// spike is between 0.0 and 1.0 depending on the position within whatever.
+	//float spike = 0.5f * cosf(jumpTime * PI * 1.5f) + 0.5f;
+	float spike = 1.0f - jumpTime * 3.f;
+	if (spike < 0) spike = 0;
+	if (ftime < MZK_BLOCK_SIZE * 60.0f / 44100.0f ||
+		ftime > MZK_BLOCK_SIZE * 60.0f * 18.0f / 44100.0f) spike = 0;
+#endif
 	parameterMatrix[15] = spike; // spike
 	/* shader parameters */
 	//3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 

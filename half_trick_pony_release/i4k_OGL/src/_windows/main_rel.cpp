@@ -21,6 +21,7 @@ static HWAVEOUT hWaveOut; // audio device handle
 static int nextPlayBlock = 0; // The block that must be filled and played next
 short myMuzikBlock[NUM_PLAY_BLOCKS][AUDIO_BUFFER_SIZE*MZK_NUMCHANNELS]; // The audio blocks
 static WAVEHDR header[NUM_PLAY_BLOCKS];    // header of the audio block
+#pragma data_seg(".wfx")
 static const WAVEFORMATEX wfx = {
 	WAVE_FORMAT_PCM,					// wFormatTag
 	MZK_NUMCHANNELS,					// nChannels
@@ -96,7 +97,7 @@ void entrypoint( void )
     ShowCursor( 0 );
     #endif
     // create window
-    HWND hWnd = CreateWindow( "static",0,WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,0,0);
+    HWND hWnd = CreateWindow("static",0,WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,0,0);
     HDC hDC = GetDC(hWnd);
     // initalize opengl
     if( !SetPixelFormat(hDC,ChoosePixelFormat(hDC,&pfd),&pfd) ) return;
@@ -107,13 +108,7 @@ void entrypoint( void )
 	intro_init();
 
 	// open audio device
-	if (waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 
-					0, 0, CALLBACK_NULL) != MMSYSERR_NOERROR)
-	{
-		MessageBox(0, "unable to open WAVE_MAPPER device", "error", MB_OK|MB_ICONEXCLAMATION);
-		return;
-	}
-
+	waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 0, 0, CALLBACK_NULL);
     // create music block
 	mzk_init();
 	// prepare and play music block
