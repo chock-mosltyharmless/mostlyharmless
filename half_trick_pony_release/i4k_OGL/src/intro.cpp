@@ -173,27 +173,15 @@ varying vec3 o;\
 varying mat4 p;\
 \
 void main(void) {\
-  float stime = smoothstep(6.0, 4.0, p[3][2]);\n\
-  vec3 col = vec3(1.3);\n\
-  vec2 q = o.xy;\n\
-  q.y *= 0.6;\n\
-  vec2 r=q.xx+vec2(q.y,-q.y);\n\
-  float d1 = length(q)-0.2;\n\
-  float d2 = max(max(q.x+0.1, -0.2-q.x), max(q.y-0.3, -q.y));\n\
-  float d3 = max(max(-r.x, r.x-0.2-stime*0.4), max(r.y+0.155, -0.28-r.y));\n\
-  float d4 = max(max(-r.x, r.x-0.65), max(r.y+0.01, -.135-r.y));\n\
-  float d5 = max(max(-r.x, r.x-0.25-stime*0.4), max(r.y-0.135, .01-r.y));\n\
-  float d6 = max(max(-r.x, r.x-0.18-stime*0.4), max(r.y-0.28, .155-r.y));\n\
-  float dist = min(min(d5, d6), min(min(d3, d4), min(d1, d2)));\n\
-  dist = smoothstep(.005, 0., dist);\n\
-  col = mix(col, vec3(0.1), dist);\n\
-  dist = max(max(max(-q.x-0.1, q.x-0.1), max(-q.y-0.1, q.y-0.1)), max(-r.y-0.14, r.y-0.14));\n\
-  dist = smoothstep(.005, 0., dist);\n\
-  col = mix(col, vec3(1.3), dist);\n\
-  dist = max(max(max(-q.x-0.08, q.x-0.08), max(-q.y-0.08, q.y-0.08)), max(-r.y-0.11, r.y-0.11));\n\
-  dist = smoothstep(.005, 0., dist);\n\
-  col = mix(col, vec3(1.3,.1,.1), dist);\n\
-vec4 e=mix(texture2D(t,.5*o.xy+.5),vec4(col, 1.),0.7*stime);\n\
+float s=smoothstep(6.,4.,p[3][2]);\
+vec3 c=vec3(1.3);\
+vec2 q=o.xy;\
+q.y*=.6;\
+vec2 r=q.xx+vec2(q.y,-q.y);\
+c=mix(c,vec3(0.1),smoothstep(.005,0.,min(min(length(q)-.2,max(max(q.x+.1,-.2-q.x),max(q.y-.3,-q.y))),min(min(max(max(-r.x,r.x-.2-s*.4),max(r.y+.155,-0.28-r.y)),max(max(-r.x,r.x-.65),max(r.y+.01,-.135-r.y))),min(max(max(-r.x, r.x-.25-s*.4),max(r.y-.135,.01-r.y)),max(max(-r.x, r.x-.18-s*.4),max(r.y-.28,.155-r.y)))))));\
+c=mix(c,vec3(1.3),smoothstep(.005,0.,max(max(max(-q.x-.1,q.x-.1),max(-q.y-.1,q.y-.1)),max(-r.y-.14,r.y-.14))));\
+c=mix(c,vec3(1.3,.1,.1),smoothstep(.005,0.,max(max(max(-q.x-.08,q.x-.08),max(-q.y-.08,q.y-.08)),max(-r.y-.11,r.y-.11))));\
+vec4 e=mix(texture2D(t,.5*o.xy+.5),vec4(c,1.),.7*s);\
 for (int i=0;i<9;i++)\
 {\
 float r=fract(sin(p[3][2]+dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\
