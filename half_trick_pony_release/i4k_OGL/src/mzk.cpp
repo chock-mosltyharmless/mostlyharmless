@@ -96,76 +96,6 @@ static double exp2jo(double f)
 	return f;
 }
 
-// This method transforms the music data so that it can be used to generate samples
-#pragma code_seg(".initMzkData")
-__inline void init_mzk_data()
-{
-	// Create data tables
-	// make frequency (Hz) table
-#if 0
-	float k = 1.059463094359f;	// 12th root of 2
-	float a = 6.875f;	// a
-	a *= k;	// b
-	a *= k;	// bb
-	a *= k;	// c, frequency of midi note 0
-	for (int i = 0; i < kNumFrequencies; i++)	// 128 midi notes
-	{
-		freqtab[i] = (float)a;
-		a *= k;
-	}
-#endif
-
-	// Make table with random number
-	seed = 1;
-	for (int i = 0; i < RANDOM_BUFFER_SIZE; i++)
-	{
-		randomBuffer[i] = frand();
-		expRandomBuffer[i] = (float)exp2jo(LOG_2_E * 4.0f * (randomBuffer[i] - 1));
-		lowNoise[i] = 16.0f * (randomBuffer[i] - 0.5f);
-	}
-
-#if 0
-	// Set the oscillator phases to zero
-	for (int inst = 0; inst < NUM_INSTRUMENTS; inst++)
-	{
-		for (int i = 0; i < NUM_OVERTONES; i++)
-		{
-			for (int j = 0; j < NUM_Stereo_VOICES; j++)
-			{
-				fPhase[inst][i][j] = 0.f;
-			}
-		}
-
-		// Don't play instrument
-		iADSR[inst] = 3;
-	}
-#endif
-
-	// Ring-low-pass-filtering of lowPass
-	// Use a one-pole
-	float oldVal = 0.0f;
-	for (int i = 0; i < RANDOM_BUFFER_SIZE * 8; i++)
-	{
-		lowNoise[i % RANDOM_BUFFER_SIZE] = 1.0f / 8.0f * lowNoise[i % RANDOM_BUFFER_SIZE] + (1.0f - 1.0f / 8.0f) * oldVal;
-		oldVal = lowNoise[i % RANDOM_BUFFER_SIZE];
-	}
-
-	// Clear reverberation buffer
-#if 0
-	for (int inst = 0; inst < NUM_INSTRUMENTS; inst++)
-	{
-		for (int i = 0; i < NUM_Stereo_VOICES; i++)
-		{
-			for (int j = 0; j < MAX_DELAY_LENGTH; j++)
-			{
-				reverbBuffer[inst][i][j] = 0;
-			}
-			reverbBufferLength[inst][i] = 1;
-		}
-	}
-#endif
-}
-
 #pragma code_seg(".mzkPlayBlock")
 static float floatOutput[MZK_BLOCK_SIZE][2];
 static float fInstParams[18];
@@ -427,8 +357,74 @@ void mzkPlayBlock(short *blockBuffer)
 #pragma code_seg(".mzkInit")
 void mzk_init()
 {
-	// init music data
-	init_mzk_data();
+	// Create data tables
+	// make frequency (Hz) table
+#if 0
+	float k = 1.059463094359f;	// 12th root of 2
+	float a = 6.875f;	// a
+	a *= k;	// b
+	a *= k;	// bb
+	a *= k;	// c, frequency of midi note 0
+	for (int i = 0; i < kNumFrequencies; i++)	// 128 midi notes
+	{
+		freqtab[i] = (float)a;
+		a *= k;
+	}
+#endif
+
+	// Make table with random number
+	seed = 1;
+	for (int i = 0; i < RANDOM_BUFFER_SIZE; i++)
+	{
+		randomBuffer[i] = frand();
+		expRandomBuffer[i] = (float)exp2jo(LOG_2_E * 4.0f * (randomBuffer[i] - 1));
+		lowNoise[i] = 16.0f * (randomBuffer[i] - 0.5f);
+	}
+
+#if 0
+	// Set the oscillator phases to zero
+	for (int inst = 0; inst < NUM_INSTRUMENTS; inst++)
+	{
+		for (int i = 0; i < NUM_OVERTONES; i++)
+		{
+			for (int j = 0; j < NUM_Stereo_VOICES; j++)
+			{
+				fPhase[inst][i][j] = 0.f;
+			}
+		}
+
+		// Don't play instrument
+		iADSR[inst] = 3;
+	}
+#endif
+
+	// Ring-low-pass-filtering of lowPass
+	// Use a one-pole
+	float oldVal = 0.0f;
+	for (int j = 0; j < 8; j++)
+	{
+		for (int i = 0; i < RANDOM_BUFFER_SIZE; i++)
+		{
+			lowNoise[i] = 1.0f / 8.0f * lowNoise[i] + (1.0f - 1.0f / 8.0f) * oldVal;
+			oldVal = lowNoise[i];
+		}
+	}
+
+	// Clear reverberation buffer
+#if 0
+	for (int inst = 0; inst < NUM_INSTRUMENTS; inst++)
+	{
+		for (int i = 0; i < NUM_Stereo_VOICES; i++)
+		{
+			for (int j = 0; j < MAX_DELAY_LENGTH; j++)
+			{
+				reverbBuffer[inst][i][j] = 0;
+			}
+			reverbBufferLength[inst][i] = 1;
+		}
+	}
+#endif
+
 
 #if 0
 	// create some test output
