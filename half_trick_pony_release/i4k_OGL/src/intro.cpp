@@ -175,12 +175,11 @@ varying mat4 p;\
 void main(void) {\
 float s=smoothstep(6.,4.,p[3][2]);\
 vec3 c=vec3(1.3);\
-vec2 q=o.xy;\
-q.y*=.6;\
-vec2 r=q.xx+vec2(q.y,-q.y);\
-c=mix(c,vec3(0.1),smoothstep(.005,0.,min(min(length(q)-.2,max(max(q.x+.1,-.2-q.x),max(q.y-.3,-q.y))),min(min(max(max(-r.x,r.x-.2-s*.4),max(r.y+.155,-0.28-r.y)),max(max(-r.x,r.x-.65),max(r.y+.01,-.135-r.y))),min(max(max(-r.x, r.x-.25-s*.4),max(r.y-.135,.01-r.y)),max(max(-r.x, r.x-.18-s*.4),max(r.y-.28,.155-r.y)))))));\
-c=mix(c,vec3(1.3),smoothstep(.005,0.,max(max(max(-q.x-.1,q.x-.1),max(-q.y-.1,q.y-.1)),max(-r.y-.14,r.y-.14))));\
-c=mix(c,vec3(1.3,.1,.1),smoothstep(.005,0.,max(max(max(-q.x-.08,q.x-.08),max(-q.y-.08,q.y-.08)),max(-r.y-.11,r.y-.11))));\
+float m=o.x,i=o.y*.6;\
+float x=m+i,y=m-i;\
+c=mix(c,vec3(0.1),smoothstep(.005,0.,min(min(length(vec2(m,i))-.2,max(max(m+.1,-.2-m),max(i-.3,-i))),max(-x,min(min(max(x-.2-s*.4,max(y+.155,-0.28-y)),max(x-.65,max(y+.01,-.135-y))),min(max(x-.25-s*.4,max(y-.135,.01-y)),max(x-.18-s*.4,max(y-.28,.155-y))))))));\
+c=mix(c,vec3(1.3),smoothstep(.005,0.,max(max(abs(m)-.1,abs(i)-.1),abs(y)-.14)));\
+c=mix(c,vec3(1.3,.1,.1),smoothstep(0.005,0.,max(max(abs(m)-.08,abs(i)-.08),abs(y)-.11)));\
 vec4 e=mix(texture2D(t,.5*o.xy+.5),vec4(c,1.),.7*s);\
 for (int i=0;i<9;i++)\
 {\
