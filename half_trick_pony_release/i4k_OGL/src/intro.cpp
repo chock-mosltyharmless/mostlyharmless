@@ -22,7 +22,7 @@ int rand();
 #define PI 3.1415f
 #endif
 
-#define DEBUG_SHADER
+//#define DEBUG_SHADER
 
 inline int ftoi_fast(float f)
 {
@@ -107,7 +107,7 @@ unsigned char script[14][NUM_SCENES] =
 	// Slider 3 (4: base Noise amount)
 	{127, 127, 127, 127, 127, 127, 127, 127,  37,  64,  45,  45,  54,  54},
 	// Slider 4 (5: delta Noise frequecny)
-	{  0,   0,   8,   8,   0, 127, 127, 127,  63,  38,  43,  43,  66,  66},
+	{  0,   0,   6,   6,   0, 127, 127, 127,  63,  38,  43,  43,  66,  66},
 	// Slider 5 (6: delta Noise amount)
 	{ 80,  80,  80,  80,  80,   0,   0,   0,  14,  31,  31,  31,  12,   0},
 	// Slider 6 (8: delta Noise implicit add amount)
@@ -160,77 +160,61 @@ vec2 q(vec2 p,float i)\
 return p*mat2(cos(i),-sin(i),sin(i),cos(i));\
 }\
 \
-void main(void)\n\
-{  \n\
-   vec3 rayDir = normalize(o * vec3(1.0, 0.6, 1.0));\n\
-   \n\
-   vec3 rayPos = vec3(0., 0., 0. - 8.);\n\
-   //vec3 rayDir = normalize(vec3(ppos, 2.));\n\
-   vec3 totalColor = vec3(0.);\n\
-   float totalDensity = 0.;\n\
-   \n\
-   rayDir.xz = q(rayDir.xz, p[3][2]);\n\
-   rayDir.xy = q(rayDir.xy, p[3][2]*0.7);\n\
-   rayDir.xz = q(rayDir.xz, p[3][2]*0.4);\n\
-   rayPos.xz = q(rayPos.xz, p[3][2]);\n\
-   rayPos.xy = q(rayPos.xy, p[3][2]*0.7);\n\
-   rayPos.xz = q(rayPos.xz, p[3][2]*0.4);\n\
-   \n\
-   for (int i = 0; i < 100 && length(rayPos) < 12. && totalDensity < 0.95; i++) {\n\
-      \n\
-	  vec3 dval = v((rayPos * 0.05) * p[0][3] * p[0][3] + vec3(p[3][2]*0.02) * p[3][0], 3, 0.6).rgb;\n\
-	  vec3 nval = v(dval*rayPos*0.1*p[0][0]*p[0][0] + floor(rayDir*3.5*p[1][3])*0.01*p[1][3] + dval*2.*p[1][0] + vec3(p[3][2]*0.01), 5, p[0][1]).rgb;\n\
-	  float implicit = length(rayPos + p[0][2]*nval*5.) - 3. - 2.*p[2][1]*p[3][3];\n\
-	  implicit -= p[1][1] * dval.g * 15.;\n\
-      \n\
-	  float maxMove = (length(dval))*8. + 0.1/(p[2][3]+0.01);\n\
-	  float colAdd = smoothstep(3., 0.1, maxMove)*50.*p[2][3]+1.;\n\
-      \n\
-      float density = smoothstep(0.1*p[2][2], -p[2][2]*10., implicit);\n\
-      totalDensity += (1. - totalDensity) * density;\n\
-      totalDensity += 0.01;\n\
-	  totalColor += mix(vec3(0.01, 0.012, 0.014), vec3(0.015, 0.013, 0.01), (nval.r+0.1)*20.*p[2][0]) * colAdd * p[3][1] * 3.;\n\
-      \n\
-      rayPos += rayDir * max(0.03, min(maxMove,abs(implicit)) * p[1][2]);\n\
-   }\n\
-   \n\
-   gl_FragColor = vec4((totalDensity*.8+.2) * totalColor * (1.0 + p[3][3]) - 0.2*p[3][3], 1.0);\n\
+void main(void)\
+{\
+vec3 d=normalize(o*vec3(1.,.6,1.));\
+vec3 y=vec3(0.,0.,-8.);\
+vec3 t=vec3(0.);\
+float e=0.;\
+\
+d.xz=q(d.xz,p[3][2]);\
+d.xy=q(d.xy,p[3][2]*.7);\
+d.xz=q(d.xz,p[3][2]*.4);\
+y.xz=q(y.xz,p[3][2]);\
+y.xy=q(y.xy,p[3][2]*.7);\
+y.xz=q(y.xz,p[3][2]*.4);\
+\
+for (int i=0;i<100&&length(y)<12.&&e<.95;i++){\
+\
+vec3 r=v((y*.05)*p[0][3]*p[0][3]+vec3(p[3][2]*.02)*p[3][0],3,.6);\
+vec3 u=v(r*y*.1*p[0][0]*p[0][0]+floor(d*3.5*p[1][3])*.01*p[1][3]+r*2.*p[1][0]+vec3(p[3][2]*.01),5,p[0][1]);\
+float a=length(y+p[0][2]*u*5.)-3.-2.*p[2][1]*p[3][3]-p[1][1]*r.g*15.;\
+float f=(length(r))*8.+.1/(p[2][3]+.01);\
+e+=(1.-e)*smoothstep(.1*p[2][2],-p[2][2]*10.,a)+.01;\
+t+=mix(vec3(.01,.012,.014),vec3(.015,.013,.01),(u.r+.1)*20.*p[2][0])*(smoothstep(3.,.1,f)*50.*p[2][3]+1.)*p[3][1]*3.;\
+y+=d*max(.03,min(f,abs(a))*p[1][2]);\
+}\
+gl_FragColor=vec4((e*.8+.2)*t*(1.+p[3][3])-.2*p[3][3],1.);\
 }";
 
 #pragma data_seg(".fragment_offscreen_copy")
 const GLchar *fragmentOffscreenCopy="\
-uniform sampler2D t;\n\
-varying vec3 o;\n\
-varying mat4 p;\n\
-\n\
-void main(void) {\n\
-	float time = p[3][2];\n\
-	vec4 col = texture2D(t, 0.5*o.xy+0.5);\n\
-	for (int i = 0; i < 9; i++)\n\
-	{\n\
-		float n1=fract(sin(time + dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\n\
-		float n2=fract(sin(time + dot(o.xy,vec2(23.34534,23.4324-float(i))))*2038.23482);\n\
-		vec4 col2 = texture2D(t, 0.5*o.xy+0.5 + vec2(n1,n2)*vec2(n1,n2)*0.03);\n\
-		float similarity = 0.07 / (length(col - col2) + 0.07);\n\
-		//col = mix(col, col2, 0.5 * similarity);\n\
-		//if (similarity > .5) {col = mix(col,col2,0.5);}\n\
-		if (similarity > 0.) {col = mix(col,col2,.3*similarity);}\n\
-		col += 0.04 * vec4(min(n1,n2));\n\
-	}\n\
-	gl_FragColor = 1.1 * col - vec4(0.1);\n\
+uniform sampler2D t;\
+varying vec3 o;\
+varying mat4 p;\
+\
+void main(void) {\
+vec4 e=texture2D(t,.5*o.xy+.5);\n\
+for (int i=0;i<9;i++)\
+{\
+float r=fract(sin(p[3][2]+dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\
+float y=fract(sin(p[3][2]+dot(o.xy,vec2(23.34534,23.4324-float(i))))*2038.23482);\
+vec4 q=texture2D(t,.5*o.xy+.5+vec2(r,y)*vec2(r,y)*.03);\
+e=mix(e,q,.3*(.07/(length(e-q)+.07)))+.04*vec4(min(r,y));\
+}\
+gl_FragColor=1.1*e-vec4(.1);\
 }";
 
 #pragma data_seg(".vertex_main_object")
 const GLchar *vertexMainObject="\
-#version 120\n\
 varying vec3 o;\
 varying mat4 p;\
 \
 void main(void)\
 {\
-   p = gl_ModelViewMatrix;\
-   o = vec3(gl_Vertex.x, gl_Vertex.y, 1.0);\
-   gl_Position = vec4(gl_Vertex.x, gl_Vertex.y, 0.5, 1.0);\
+p=gl_ModelViewMatrix;\
+o=vec3(gl_Vertex.xy,.9);\
+gl_Position=vec4(o,1.);\
 }";
 
 // -------------------------------------------------------------------
@@ -373,9 +357,11 @@ void intro_init( void )
 	glBindTexture(GL_TEXTURE_3D, noiseTexture);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+#if 0
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_REPEAT);
+#endif
 	//glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA8, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, NOISE_TEXTURE_SIZE, 0, GL_RGBA, 
 	//	         GL_UNSIGNED_BYTE, noiseData);
 #ifdef FLOAT_TEXTURE
@@ -389,9 +375,6 @@ void intro_init( void )
 #endif
 
 	// Create a rendertarget texture
-	/*glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
-			     OFFSCREEN_WIDTH, OFFSCREEN_HEIGHT,
-				 0, GL_RGBA, GL_UNSIGNED_BYTE, &offscreenTexture);*/
 	glGenTextures(1, &offscreenTexture);
 	glBindTexture(GL_TEXTURE_2D, offscreenTexture);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
