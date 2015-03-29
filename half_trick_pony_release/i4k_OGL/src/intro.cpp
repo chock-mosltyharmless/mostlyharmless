@@ -22,7 +22,7 @@ int rand();
 #define PI 3.1415f
 #endif
 
-//#define DEBUG_SHADER
+#define SHADER_DEBUG
 
 inline int ftoi_fast(float f)
 {
@@ -38,10 +38,10 @@ inline int ftoi_fast(float f)
 #pragma data_seg(".script_durations")
 static unsigned char scriptDurations[NUM_SCENES] =
 {
-	14, // 0: From black to circles
-	6,  // 1: From circles to 8-bit (almost instant)
-	40, // 2: 8-Bit stay
-	21, // 3: Shatter of in 8-Bit land
+	44,//14, // 0: From black to circles
+	16,  // 1: From circles to 8-bit (almost instant)
+	10,//40, // 2: 8-Bit stay
+	11, // 3: Shatter of in 8-Bit land
 	 0,  // 4: To pre-shatter in 8-Bit land
 	11,  // 5: To fireball (instant?)
 	51, // 6: Fireball to transparent
@@ -120,17 +120,17 @@ static unsigned char script[14][NUM_SCENES] =
 
 #pragma data_seg(".fragment_main_background")
 static const GLchar *fragmentMainBackground="\
-uniform sampler3D t;\n\
-varying vec3 o;\n\
-varying mat4 p;\n\
-\n\
+uniform sampler3D t;\
+varying vec3 o;\
+varying mat4 p;\
+\
 vec3 v(vec3 s,int i,float r)\
 {\
 float n=1.;\
 vec3 u=vec3(0.);\
 for (;i>0;i--)\
 {\
-u += texture3D(t, s*2.).xyz*n;\
+u+=texture3D(t, s*2.).xyz*n;\
 n*=r;\
 s*=1.93;\
 }\
@@ -144,9 +144,7 @@ return p*mat2(cos(i),-sin(i),sin(i),cos(i));\
 \
 void main(void)\
 {\
-vec3 d=normalize(o*vec3(1.,.6,1.));\
-vec3 y=vec3(0.,0.,-8.);\
-vec3 t=vec3(0.);\
+vec3 d=normalize(o*vec3(1.,.6,1.)),y=vec3(0.,0.,-8.),t=vec3(0.);\
 float e=0.;\
 \
 d.xz=q(d.xz,p[3][2]);\
@@ -160,13 +158,53 @@ for (int i=0;i<100&&length(y)<12.&&e<.95;i++){\
 \
 vec3 r=v((y*.05)*p[0][3]*p[0][3]+vec3(p[3][2]*.02)*p[3][0],3,.6);\
 vec3 u=v(r*y*.1*p[0][0]*p[0][0]+floor(d*3.5*p[1][3])*.01*p[1][3]+r*2.*p[1][0]+vec3(p[3][2]*.01),5,p[0][1]);\
-float a=length(y+p[0][2]*u*5.)-3.-2.*p[2][1]*p[3][3]-p[1][1]*r.g*15.;\
-float f=(length(r))*8.+.1/(p[2][3]+.01);\
+float a=length(y+p[0][2]*u*5.)-3.-2.*p[2][1]*p[3][3]-p[1][1]*r.g*15.,f=(length(r))*8.+.1/(p[2][3]+.01);\
 e+=(1.-e)*smoothstep(.1*p[2][2],-p[2][2]*10.,a)+.01;\
 t+=mix(vec3(.01,.012,.014),vec3(.015,.013,.01),(u.r+.1)*20.*p[2][0])*(smoothstep(3.,.1,f)*50.*p[2][3]+1.)*p[3][1]*3.;\
 y+=d*max(.03,min(f,abs(a))*p[1][2]);\
 }\
 gl_FragColor=vec4((e*.8+.2)*t*(1.+p[3][3])-.2*p[3][3],1.);\
+}";
+
+#pragma data_seg(".fotze_shader")
+static const GLchar *fotzeShader="\
+varying vec3 o;\n\
+varying mat4 p;\n\
+\n\
+bool circle(vec2 pixel, vec2 pos, float size)\n\
+{\n\
+  return (length(pixel-pos)<size);\n\
+}\n\
+\n\
+bool rect(vec2 pixel, vec2 topright, vec2 bottomright)\n\
+{\n\
+  return (pixel.x < topright.x && pixel.y < topright.y && pixel.x > bottomright.x && pixel.y > bottomright.y);\n\
+}\n\
+\n\
+bool srect(vec2 pixel, vec4 coords)\n\
+{\n\
+  return (pixel.x+pixel.y > coords.x && pixel.x+pixel.y < coords.y && pixel.x-pixel.y > coords.z && pixel.x-pixel.y < coords.w);\n\
+}\n\
+bool fotze(vec2 pixel, float size)\n\
+{\n\
+return (pixel.x > -size && pixel.x < size && pixel.y > -size && pixel.y < size && pixel.x-pixel.y < 1.4*size && pixel.x-pixel.y > -1.4*size);\n\
+}\n\
+void main(void)\n\
+{\n\
+  float time = p[3][2];\n\
+  vec3 col = vec3(.8);\n\
+  vec2 q = o.xy;\n\
+  q.y *= 0.6;\n\
+  if (circle(q, vec2(0.), 0.2)) {col = vec3(0.2);}\n\
+  if (circle(q, vec2(-0.15, 0.3), 0.05)) {col = vec3(0.2);}\n\
+  if (rect(q, vec2(-0.1, 0.3), vec2(-0.2, 0.))) {col = vec3(0.2);}\n\
+  if (srect(q, vec4(0., 0.6, -0.28, -0.155))) {col = vec3(0.2);}\n\
+  if (srect(q, vec4(0., 0.65, -0.135, -0.01))) {col = vec3(0.2);}\n\
+  if (srect(q, vec4(0., 0.65, 0.01, 0.135))) {col = vec3(0.2);}\n\
+  if (srect(q, vec4(0., 0.58, 0.155, 0.28))) {col = vec3(0.2);}\n\
+  if (fotze(q, 0.1)) {col = vec3(0.8);}\n\
+  if (fotze(q, 0.08)) {col = vec3(0.8,0.2,0.2);}\n\
+  gl_FragColor=vec4(col, 1.) * smoothstep(60.0, 40.0, time);\n\
 }";
 
 #pragma data_seg(".fragment_offscreen_copy")
@@ -175,8 +213,41 @@ uniform sampler2D t;\
 varying vec3 o;\
 varying mat4 p;\
 \
+bool circle(vec2 pixel, vec2 pos, float size)\n\
+{\n\
+  return (length(pixel-pos)<size);\n\
+}\n\
+\n\
+bool rect(vec2 pixel, vec2 topright, vec2 bottomright)\n\
+{\n\
+  return (pixel.x < topright.x && pixel.y < topright.y && pixel.x > bottomright.x && pixel.y > bottomright.y);\n\
+}\n\
+\n\
+bool srect(vec2 pixel, vec4 coords)\n\
+{\n\
+  return (pixel.x+pixel.y > coords.x && pixel.x+pixel.y < coords.y && pixel.x-pixel.y > coords.z && pixel.x-pixel.y < coords.w);\n\
+}\n\
+bool fotze(vec2 pixel, float size)\n\
+{\n\
+return (pixel.x > -size && pixel.x < size && pixel.y > -size && pixel.y < size && pixel.x-pixel.y < 1.4*size && pixel.x-pixel.y > -1.4*size);\n\
+}\n\
+\
 void main(void) {\
-vec4 e=texture2D(t,.5*o.xy+.5);\n\
+  float time = p[3][2];\n\
+  float stime = smoothstep(6.0, 4.0, time);\n\
+  vec3 col = vec3(.8);\n\
+  vec2 q = o.xy;\n\
+  q.y *= 0.6;\n\
+  if (circle(q, vec2(0.), 0.2)) {col = vec3(0.1);}\n\
+  if (circle(q, vec2(-0.15, 0.3), 0.05)) {col = vec3(0.1);}\n\
+  if (rect(q, vec2(-0.1, 0.3), vec2(-0.2, 0.))) {col = vec3(0.1);}\n\
+  if (srect(q, vec4(0., 0.2 + stime*0.4, -0.28, -0.155))) {col = vec3(0.1);}\n\
+  if (srect(q, vec4(0., 0.65, -0.135, -0.01))) {col = vec3(0.1);}\n\
+  if (srect(q, vec4(0., 0.25 + stime*0.4, 0.01, 0.135))) {col = vec3(0.1);}\n\
+  if (srect(q, vec4(0., 0.18 + stime*0.4, 0.155, 0.28))) {col = vec3(0.1);}\n\
+  if (fotze(q, 0.1)) {col = vec3(0.9);}\n\
+  if (fotze(q, 0.08)) {col = vec3(0.9,0.1,0.1);}\n\
+vec4 e=mix(texture2D(t,.5*o.xy+.5),vec4(col, 1.),stime);\n\
 for (int i=0;i<9;i++)\
 {\
 float r=fract(sin(p[3][2]+dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\
@@ -206,7 +277,7 @@ gl_Position=vec4(o,1.);\
 HWND hWnd;
 
 #pragma data_seg(".gl_names")
-#ifdef DEBUG_SHADER
+#ifdef SHADER_DEBUG
 #define NUM_GL_NAMES 10
 const static char* glnames[NUM_GL_NAMES]={
      "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
@@ -256,7 +327,7 @@ static GLuint shaderPrograms[2];
 //                          Code:
 // -------------------------------------------------------------------
 
-#ifdef DEBUG_SHADER
+#ifdef SHADER_DEBUG
 static char err[4097];
 #endif
 #pragma code_seg(".intro_init")
@@ -292,6 +363,7 @@ void intro_init( void )
 	glShaderSource(vMainObject, 1, &vertexMainObject, NULL);
 	glCompileShader(vMainObject);
 	glShaderSource(fMainBackground, 1, &fragmentMainBackground, NULL);
+	//glShaderSource(fMainBackground, 1, &fotzeShader, NULL);
 	glCompileShader(fMainBackground);
 	glShaderSource(fOffscreenCopy, 1, &fragmentOffscreenCopy, NULL);
 	glCompileShader(fOffscreenCopy);
