@@ -24,7 +24,9 @@
 
 // 128 midi notes
 #define kNumFrequencies 128
+#if 0
 static float freqtab[kNumFrequencies];
+#endif
 
 // The multiplier to get from midi int to float
 #define MIDI_INT_TO_FLOAT (1.0f / 127.0f)
@@ -34,25 +36,22 @@ static float freqtab[kNumFrequencies];
 #define DELAY_MULTIPLICATOR 128
 #define MAX_DELAY_LENGTH (DELAY_MULTIPLICATOR * 130) // Some safety for miscalculation stuff...
 
-float randomBuffer[RANDOM_BUFFER_SIZE];
-float lowNoise[RANDOM_BUFFER_SIZE];
+static float randomBuffer[RANDOM_BUFFER_SIZE];
+static float lowNoise[RANDOM_BUFFER_SIZE];
 // The same as random Buffer, but contains exp(4*(randomBuffer-1))
-float expRandomBuffer[RANDOM_BUFFER_SIZE];
-float reverbBuffer[NUM_INSTRUMENTS][MAX_DELAY_LENGTH][NUM_Stereo_VOICES];
-int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pull-out
+static float expRandomBuffer[RANDOM_BUFFER_SIZE];
+static float reverbBuffer[NUM_INSTRUMENTS][MAX_DELAY_LENGTH][NUM_Stereo_VOICES];
+static int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pull-out
 // The note index that the instrument is on
-int currentNoteIndex[NUM_INSTRUMENTS];
-int currentNote[NUM_INSTRUMENTS];
-float fPhase[NUM_INSTRUMENTS][NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
-float fTimePoint[NUM_INSTRUMENTS];
-float fModulationPhase[NUM_INSTRUMENTS];
-
-// Current instrument parameter (possibly interpolated?)
-int intInstParameter[NUM_INSTRUMENTS][NUM_INSTRUMENT_PARAMETERS];
+static int currentNoteIndex[NUM_INSTRUMENTS];
+static int currentNote[NUM_INSTRUMENTS];
+static float fPhase[NUM_INSTRUMENTS][NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
+static float fTimePoint[NUM_INSTRUMENTS];
+static float fModulationPhase[NUM_INSTRUMENTS];
 
 // attack values and stuff
-int iADSR[NUM_INSTRUMENTS];
-float fADSRVal[NUM_INSTRUMENTS];
+static int iADSR[NUM_INSTRUMENTS];
+static float fADSRVal[NUM_INSTRUMENTS];
 
 static unsigned long seed;
 
@@ -103,6 +102,7 @@ __inline void init_mzk_data()
 {
 	// Create data tables
 	// make frequency (Hz) table
+#if 0
 	float k = 1.059463094359f;	// 12th root of 2
 	float a = 6.875f;	// a
 	a *= k;	// b
@@ -113,6 +113,7 @@ __inline void init_mzk_data()
 		freqtab[i] = (float)a;
 		a *= k;
 	}
+#endif
 
 	// Make table with random number
 	seed = 1;
@@ -225,7 +226,8 @@ void mzkPlayBlock(short *blockBuffer)
 		savedNoteTime[instrument][currentNoteIndex[instrument]]--;
 
 		// Get audio frequency
-		float baseFreq = freqtab[currentNote[instrument] & 0x7f] * fScaler;
+		//float baseFreq = freqtab[currentNote[instrument] & 0x7f] * fScaler;
+		float baseFreq = 8.175f * (float)exp2jo((float)currentNote[instrument] * (1.0f/12.0f)) * fScaler;
 #if 0
 		float fVolume = instrumentParams[instrument][F_VOLUME] * MIDI_INT_TO_FLOAT;
 		float fAttack = instrumentParams[instrument][K_ATTACK] * MIDI_INT_TO_FLOAT;
