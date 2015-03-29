@@ -173,20 +173,26 @@ varying vec3 o;\
 varying mat4 p;\
 \
 void main(void) {\
-  float time = p[3][2];\n\
-  float stime = smoothstep(6.0, 4.0, time);\n\
+  float stime = smoothstep(6.0, 4.0, p[3][2]);\n\
   vec3 col = vec3(1.3);\n\
   vec2 q = o.xy;\n\
   q.y *= 0.6;\n\
   vec2 r=q.xx+vec2(q.y,-q.y);\n\
-  if (length(q)<0.2) {col = vec3(.1);}\n\
-  if (q.x<-0.1 && q.x>-0.2 && q.y>0. && q.y<.3) {col = vec3(.1);}\n\
-  if (r.x>0. && r.x<0.2+stime*0.4 && r.y>-.28 && r.y<-0.155) {col = vec3(.1);}\n\
-  if (r.x>0. && r.x<0.65 && r.y>-.135 && r.y<-0.01) {col = vec3(.1);}\n\
-  if (r.x>0. && r.x<0.25+stime*0.4 && r.y>.01 && r.y<0.135) {col = vec3(.1);}\n\
-  if (r.x>0. && r.x<0.18+stime*0.4 && r.y>.155 && r.y<0.28) {col = vec3(.1);}\n\
-  if (q.x>-0.1 && q.x<0.1 && q.y>-0.1 && q.y<0.1 && r.y>-0.14 && r.y<0.14) {col=vec3(1.3);}\n\
-  if (q.x>-0.08 && q.x<0.08 && q.y>-0.08 && q.y<0.08 && r.y>-0.11 && r.y<0.11) {col=vec3(1.3,.1,.1);}\n\
+  float d1 = length(q)-0.2;\n\
+  float d2 = max(max(q.x+0.1, -0.2-q.x), max(q.y-0.3, -q.y));\n\
+  float d3 = max(max(-r.x, r.x-0.2-stime*0.4), max(r.y+0.155, -0.28-r.y));\n\
+  float d4 = max(max(-r.x, r.x-0.65), max(r.y+0.01, -.135-r.y));\n\
+  float d5 = max(max(-r.x, r.x-0.25-stime*0.4), max(r.y-0.135, .01-r.y));\n\
+  float d6 = max(max(-r.x, r.x-0.18-stime*0.4), max(r.y-0.28, .155-r.y));\n\
+  float dist = min(min(d5, d6), min(min(d3, d4), min(d1, d2)));\n\
+  dist = smoothstep(.005, 0., dist);\n\
+  col = mix(col, vec3(0.1), dist);\n\
+  dist = max(max(max(-q.x-0.1, q.x-0.1), max(-q.y-0.1, q.y-0.1)), max(-r.y-0.14, r.y-0.14));\n\
+  dist = smoothstep(.005, 0., dist);\n\
+  col = mix(col, vec3(1.3), dist);\n\
+  dist = max(max(max(-q.x-0.08, q.x-0.08), max(-q.y-0.08, q.y-0.08)), max(-r.y-0.11, r.y-0.11));\n\
+  dist = smoothstep(.005, 0., dist);\n\
+  col = mix(col, vec3(1.3,.1,.1), dist);\n\
 vec4 e=mix(texture2D(t,.5*o.xy+.5),vec4(col, 1.),0.7*stime);\n\
 for (int i=0;i<9;i++)\
 {\
