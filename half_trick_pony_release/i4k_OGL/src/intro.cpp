@@ -22,7 +22,7 @@ int rand();
 #define PI 3.1415f
 #endif
 
-#define SHADER_DEBUG
+//#define SHADER_DEBUG
 
 inline int ftoi_fast(float f)
 {
@@ -166,88 +166,28 @@ y+=d*max(.03,min(f,abs(a))*p[1][2]);\
 gl_FragColor=vec4((e*.8+.2)*t*(1.+p[3][3])-.2*p[3][3],1.);\
 }";
 
-#pragma data_seg(".fotze_shader")
-static const GLchar *fotzeShader="\
-varying vec3 o;\n\
-varying mat4 p;\n\
-\n\
-bool circle(vec2 pixel, vec2 pos, float size)\n\
-{\n\
-  return (length(pixel-pos)<size);\n\
-}\n\
-\n\
-bool rect(vec2 pixel, vec2 topright, vec2 bottomright)\n\
-{\n\
-  return (pixel.x < topright.x && pixel.y < topright.y && pixel.x > bottomright.x && pixel.y > bottomright.y);\n\
-}\n\
-\n\
-bool srect(vec2 pixel, vec4 coords)\n\
-{\n\
-  return (pixel.x+pixel.y > coords.x && pixel.x+pixel.y < coords.y && pixel.x-pixel.y > coords.z && pixel.x-pixel.y < coords.w);\n\
-}\n\
-bool fotze(vec2 pixel, float size)\n\
-{\n\
-return (pixel.x > -size && pixel.x < size && pixel.y > -size && pixel.y < size && pixel.x-pixel.y < 1.4*size && pixel.x-pixel.y > -1.4*size);\n\
-}\n\
-void main(void)\n\
-{\n\
-  float time = p[3][2];\n\
-  vec3 col = vec3(.8);\n\
-  vec2 q = o.xy;\n\
-  q.y *= 0.6;\n\
-  if (circle(q, vec2(0.), 0.2)) {col = vec3(0.2);}\n\
-  if (circle(q, vec2(-0.15, 0.3), 0.05)) {col = vec3(0.2);}\n\
-  if (rect(q, vec2(-0.1, 0.3), vec2(-0.2, 0.))) {col = vec3(0.2);}\n\
-  if (srect(q, vec4(0., 0.6, -0.28, -0.155))) {col = vec3(0.2);}\n\
-  if (srect(q, vec4(0., 0.65, -0.135, -0.01))) {col = vec3(0.2);}\n\
-  if (srect(q, vec4(0., 0.65, 0.01, 0.135))) {col = vec3(0.2);}\n\
-  if (srect(q, vec4(0., 0.58, 0.155, 0.28))) {col = vec3(0.2);}\n\
-  if (fotze(q, 0.1)) {col = vec3(0.8);}\n\
-  if (fotze(q, 0.08)) {col = vec3(0.8,0.2,0.2);}\n\
-  gl_FragColor=vec4(col, 1.) * smoothstep(60.0, 40.0, time);\n\
-}";
-
 #pragma data_seg(".fragment_offscreen_copy")
 static const GLchar *fragmentOffscreenCopy="\
 uniform sampler2D t;\
 varying vec3 o;\
 varying mat4 p;\
 \
-bool circle(vec2 pixel, vec2 pos, float size)\n\
-{\n\
-  return (length(pixel-pos)<size);\n\
-}\n\
-\n\
-bool rect(vec2 pixel, vec2 topright, vec2 bottomright)\n\
-{\n\
-  return (pixel.x < topright.x && pixel.y < topright.y && pixel.x > bottomright.x && pixel.y > bottomright.y);\n\
-}\n\
-\n\
-bool srect(vec2 pixel, vec4 coords)\n\
-{\n\
-  return (pixel.x+pixel.y > coords.x && pixel.x+pixel.y < coords.y && pixel.x-pixel.y > coords.z && pixel.x-pixel.y < coords.w);\n\
-}\n\
-bool fotze(vec2 pixel, float size)\n\
-{\n\
-return (pixel.x > -size && pixel.x < size && pixel.y > -size && pixel.y < size && pixel.x-pixel.y < 1.4*size && pixel.x-pixel.y > -1.4*size);\n\
-}\n\
-\
 void main(void) {\
   float time = p[3][2];\n\
   float stime = smoothstep(6.0, 4.0, time);\n\
-  vec3 col = vec3(.8);\n\
+  vec3 col = vec3(1.3);\n\
   vec2 q = o.xy;\n\
   q.y *= 0.6;\n\
-  if (circle(q, vec2(0.), 0.2)) {col = vec3(0.1);}\n\
-  if (circle(q, vec2(-0.15, 0.3), 0.05)) {col = vec3(0.1);}\n\
-  if (rect(q, vec2(-0.1, 0.3), vec2(-0.2, 0.))) {col = vec3(0.1);}\n\
-  if (srect(q, vec4(0., 0.2 + stime*0.4, -0.28, -0.155))) {col = vec3(0.1);}\n\
-  if (srect(q, vec4(0., 0.65, -0.135, -0.01))) {col = vec3(0.1);}\n\
-  if (srect(q, vec4(0., 0.25 + stime*0.4, 0.01, 0.135))) {col = vec3(0.1);}\n\
-  if (srect(q, vec4(0., 0.18 + stime*0.4, 0.155, 0.28))) {col = vec3(0.1);}\n\
-  if (fotze(q, 0.1)) {col = vec3(0.9);}\n\
-  if (fotze(q, 0.08)) {col = vec3(0.9,0.1,0.1);}\n\
-vec4 e=mix(texture2D(t,.5*o.xy+.5),vec4(col, 1.),stime);\n\
+  vec2 r=q.xx+vec2(q.y,-q.y);\n\
+  if (length(q)<0.2) {col = vec3(.1);}\n\
+  if (q.x<-0.1 && q.x>-0.2 && q.y>0. && q.y<.3) {col = vec3(.1);}\n\
+  if (r.x>0. && r.x<0.2+stime*0.4 && r.y>-.28 && r.y<-0.155) {col = vec3(.1);}\n\
+  if (r.x>0. && r.x<0.65 && r.y>-.135 && r.y<-0.01) {col = vec3(.1);}\n\
+  if (r.x>0. && r.x<0.25+stime*0.4 && r.y>.01 && r.y<0.135) {col = vec3(.1);}\n\
+  if (r.x>0. && r.x<0.18+stime*0.4 && r.y>.155 && r.y<0.28) {col = vec3(.1);}\n\
+  if (q.x>-0.1 && q.x<0.1 && q.y>-0.1 && q.y<0.1 && r.y>-0.14 && r.y<0.14) {col=vec3(1.3);}\n\
+  if (q.x>-0.08 && q.x<0.08 && q.y>-0.08 && q.y<0.08 && r.y>-0.11 && r.y<0.11) {col=vec3(1.3,.1,.1);}\n\
+vec4 e=mix(texture2D(t,.5*o.xy+.5),vec4(col, 1.),0.7*stime);\n\
 for (int i=0;i<9;i++)\
 {\
 float r=fract(sin(p[3][2]+dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\
