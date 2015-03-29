@@ -119,89 +119,74 @@ static unsigned char script[14][NUM_SCENES] =
 // -------------------------------------------------------------------
 
 #pragma data_seg(".fragment_main_background")
-static const GLchar *fragmentMainBackground="\
-uniform sampler3D t;\
-varying vec3 o;\
-varying mat4 p;\
-\
-vec3 v(vec3 s,int i,float r)\
-{\
-float n=1.;\
-vec3 u=vec3(0.);\
-for (;i>0;i--)\
-{\
-u+=texture3D(t, s*2.).xyz*n;\
-n*=r;\
-s*=1.93;\
-}\
-return u;\
-}\
-\
-vec2 q(vec2 p,float i)\
-{\
-return p*mat2(cos(i),-sin(i),sin(i),cos(i));\
-}\
-\
-void main(void)\
-{\
-vec3 d=normalize(o*vec3(1.,.6,1.)),y=vec3(0.,0.,-8.),t=vec3(0.);\
-float e=0.;\
-\
-d.xz=q(d.xz,p[3][2]);\
-d.xy=q(d.xy,p[3][2]*.7);\
-d.xz=q(d.xz,p[3][2]*.4);\
-y.xz=q(y.xz,p[3][2]);\
-y.xy=q(y.xy,p[3][2]*.7);\
-y.xz=q(y.xz,p[3][2]*.4);\
-\
-for (int i=0;i<100&&length(y)<12.&&e<.95;i++){\
-\
-vec3 r=v((y*.05)*p[0][3]*p[0][3]+vec3(p[3][2]*.02)*p[3][0],3,.6);\
-vec3 u=v(r*y*.1*p[0][0]*p[0][0]+floor(d*3.5*p[1][3])*.01*p[1][3]+r*2.*p[1][0]+vec3(p[3][2]*.01),5,p[0][1]);\
-float a=length(y+p[0][2]*u*5.)-3.-2.*p[2][1]*p[3][3]-p[1][1]*r.g*15.,f=(length(r))*8.+.1/(p[2][3]+.01);\
-e+=(1.-e)*smoothstep(.1*p[2][2],-p[2][2]*10.,a)+.01;\
-t+=mix(vec3(.01,.012,.014),vec3(.015,.013,.01),(u.r+.1)*20.*p[2][0])*(smoothstep(3.,.1,f)*50.*p[2][3]+1.)*p[3][1]*3.;\
-y+=d*max(.03,min(f,abs(a))*p[1][2]);\
-}\
-gl_FragColor=vec4((e*.8+.2)*t*(1.+p[3][3])-.2*p[3][3],1.);\
-}";
+static const GLchar *fragmentMainBackground=
+ "uniform sampler3D t;"
+ "varying vec3 o;"
+ "varying mat4 p;"
+ "vec3 v(vec3 z,int v,float m)"
+ "{"
+   "float y=1.;"
+   "vec3 x=vec3(0.);"
+   "for(;v>0;v--)"
+     "x+=texture3D(t,z*2.).xyz*y,y*=m,z*=1.93;"
+   "return x;"
+ "}"
+ "vec2 v(vec2 z,float v)"
+ "{"
+   "return z*mat2(cos(v),-sin(v),sin(v),cos(v));"
+ "}"
+ "void main()"
+ "{"
+   "vec3 z=normalize(o*vec3(1.,.6,1.)),y=vec3(0.,0.,-8.),f=vec3(0.);"
+   "float x=0.;"
+   "z.xz=v(z.xz,p[3][2]);"
+   "z.xy=v(z.xy,p[3][2]*.7);"
+   "z.xz=v(z.xz,p[3][2]*.4);"
+   "y.xz=v(y.xz,p[3][2]);"
+   "y.xy=v(y.xy,p[3][2]*.7);"
+   "y.xz=v(y.xz,p[3][2]*.4);"
+   "for(int m=0;m<100&&length(y)<12.&&x<.95;m++)"
+     "{"
+       "vec3 s=v(y*.05*p[0][3]*p[0][3]+vec3(p[3][2]*.02)*p[3][0],3,.6),c=v(s*y*.1*p[0][0]*p[0][0]+floor(z*3.5*p[1][3])*.01*p[1][3]+s*2.*p[1][0]+vec3(p[3][2]*.01),5,p[0][1]);"
+       "float i=length(y+p[0][2]*c*5.)-3.-2.*p[2][1]*p[3][3]-p[1][1]*s.y*15.,r=length(s)*8.+.1/(p[2][3]+.01);"
+       "x+=(1.-x)*smoothstep(.1*p[2][2],-p[2][2]*10.,i)+.01;"
+       "f+=mix(vec3(.01,.012,.014),vec3(.015,.013,.01),(c.x+.1)*20.*p[2][0])*(smoothstep(3.,.1,r)*50.*p[2][3]+1.)*p[3][1]*3.;"
+       "y+=z*max(.03,min(r,abs(i))*p[1][2]);"
+     "}"
+   "gl_FragColor=vec4((x*.8+.2)*f*(1.+p[3][3])-.2*p[3][3],1.);"
+ "}";
 
 #pragma data_seg(".fragment_offscreen_copy")
-static const GLchar *fragmentOffscreenCopy="\
-uniform sampler2D t;\
-varying vec3 o;\
-varying mat4 p;\
-\
-void main(void) {\
-float s=smoothstep(6.,4.,p[3][2]);\
-vec3 c=vec3(1.3);\
-float m=o.x,i=o.y*.6;\
-float x=m+i,y=m-i;\
-c=mix(c,vec3(0.1),smoothstep(.005,0.,min(min(length(vec2(m,i))-.2,max(max(m+.1,-.2-m),max(i-.3,-i))),max(-x,min(min(max(x-.2-s*.4,max(y+.155,-0.28-y)),max(x-.65,max(y+.01,-.135-y))),min(max(x-.25-s*.4,max(y-.135,.01-y)),max(x-.18-s*.4,max(y-.28,.155-y))))))));\
-c=mix(c,vec3(1.3),smoothstep(.005,0.,max(max(abs(m)-.1,abs(i)-.1),abs(y)-.14)));\
-c=mix(c,vec3(1.3,.1,.1),smoothstep(0.005,0.,max(max(abs(m)-.08,abs(i)-.08),abs(y)-.11)));\
-vec4 e=mix(texture2D(t,.5*o.xy+.5),vec4(c,1.),.7*s);\
-for (int i=0;i<9;i++)\
-{\
-float r=fract(sin(p[3][2]+dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\
-float y=fract(sin(p[3][2]+dot(o.xy,vec2(23.34534,23.4324-float(i))))*2038.23482);\
-vec4 q=texture2D(t,.5*o.xy+.5+vec2(r,y)*vec2(r,y)*.03);\
-e=mix(e,q,.3*(.07/(length(e-q)+.07)))+.04*vec4(min(r,y));\
-}\
-gl_FragColor=1.1*e-vec4(.1);\
-}";
+static const GLchar *fragmentOffscreenCopy=
+ "uniform sampler2D t;"
+ "varying vec3 o;"
+ "varying mat4 p;"
+ "void main()"
+ "{"
+   "float v=smoothstep(6.,4.,p[3][2]);"
+   "vec3 m=vec3(1.3);"
+   "float s=o.x,a=o.y*.6,l=s+a,y=s-a;"
+   "m=mix(m,vec3(.1),smoothstep(.005,0.,min(min(length(vec2(s,a))-.2,max(max(s+.1,-.2-s),max(a-.3,-a))),max(-l,min(min(max(l-.2-v*.4,max(y+.155,-.28-y)),max(l-.65,max(y+.01,-.135-y))),min(max(l-.25-v*.4,max(y-.135,.01-y)),max(l-.18-v*.4,max(y-.28,.155-y))))))));"
+   "m=mix(m,vec3(1.3),smoothstep(.005,0.,max(max(abs(s)-.1,abs(a)-.1),abs(y)-.14)));"
+   "m=mix(m,vec3(1.3,.1,.1),smoothstep(.005,0.,max(max(abs(s)-.08,abs(a)-.08),abs(y)-.11)));"
+   "vec4 f=mix(texture2D(t,.5*o.xy+.5),vec4(m,1.),.7*v);"
+   "for(int i=0;i<9;i++)"
+     "{"
+       "float x=fract(sin(p[3][2]+dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5),r=fract(sin(p[3][2]+dot(o.xy,vec2(23.3453,23.4324-float(i))))*2038.23);"
+       "vec4 e=texture2D(t,.5*o.xy+.5+vec2(x,r)*vec2(x,r)*.03);"
+       "f=mix(f,e,.3*(.07/(length(f-e)+.07)))+.04*vec4(min(x,r));"
+     "}"
+   "gl_FragColor=1.1*f-vec4(.1);"
+ "}";
 
 #pragma data_seg(".vertex_main_object")
-static const GLchar *vertexMainObject="\
-varying vec3 o;\
-varying mat4 p;\
-\
-void main(void)\
-{\
-p=gl_ModelViewMatrix;\
-o=vec3(gl_Vertex.xy,.9);\
-gl_Position=vec4(o,1.);\
-}";
+static const GLchar *vertexMainObject=
+ "varying vec3 o;"
+ "varying mat4 p;"
+ "void main()"
+ "{"
+   "p=gl_ModelViewMatrix,o=vec3(gl_Vertex.xy,.9),gl_Position=vec4(o,1.);"
+ "}";
 
 // -------------------------------------------------------------------
 //                          Constants:
