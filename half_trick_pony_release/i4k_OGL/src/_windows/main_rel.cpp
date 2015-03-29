@@ -144,7 +144,7 @@ void entrypoint( void )
     
         //SwapBuffers ( hDC );   
         wglSwapLayerBuffers( hDC, WGL_SWAP_MAIN_PLANE );
-	}while ( !GetAsyncKeyState(VK_ESCAPE) && t<(MZK_DURATION*1000) );
+	}while ( !GetAsyncKeyState(VK_ESCAPE) && t<(MZK_DURATION*MZK_BLOCK_SIZE/MZK_RATE*1000) );
 
     waveOutClose(hWaveOut);
     

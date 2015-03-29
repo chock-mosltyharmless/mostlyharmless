@@ -265,7 +265,7 @@ void mzkPlayBlock(short *blockBuffer)
 				break;
 			}
 
-#if 0
+#if 1
 			// fade out on new instrument (but not on noteoff...)
 			if (savedNoteTime[instrument][currentNoteIndex[instrument]] == 0 &&
 				sample >= MZK_BLOCK_SIZE - 512 &&
@@ -291,6 +291,7 @@ void mzkPlayBlock(short *blockBuffer)
 
 			float fQuakinessStart = floatInstParameter[instrument][K_QUAKINESS_START];
 			float fQuakinessEnd = floatInstParameter[instrument][K_QUAKINESS_END];
+#if 1
 			if (instrument == 0)
 			{
 				// Hard-coded quak end envalope
@@ -304,6 +305,7 @@ void mzkPlayBlock(short *blockBuffer)
 				if (sampleID > MZK_BLOCK_SIZE * (13*64-4)) fQuakinessEnd = 0.f;
 				if (fQuakinessEnd < 0.f) fQuakinessEnd = 0.f;
 			}
+#endif
 			float quakiness = relTimePoint * fQuakinessEnd + (1.0f - relTimePoint) * fQuakinessStart;
 
 			for (int i = 0; i < NUM_OVERTONES; i++)

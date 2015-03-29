@@ -22,7 +22,7 @@ int rand();
 #define PI 3.1415f
 #endif
 
-//#define DEBUG_SHADER
+#define DEBUG_SHADER
 
 inline int ftoi_fast(float f)
 {
@@ -113,7 +113,7 @@ unsigned char script[14][NUM_SCENES] =
 	// Slider 6 (8: delta Noise implicit add amount)
 	{  0,   0,   0,   0,   0,   0,   0,   3,  48, 127,  89,  89,   0,   0},
 	// Slider 7 (9: ray movement speed)
-	{ 44,  44,  24,  32,  32,  32,  39,  87,  97,  54,  43,  35,  30,  30},
+	{ 44,  44,  24,  32,  32,  32,  39,  87,  97,  54,  43,  35,  35,  35},
 	// Knob 1 (14: Mirror shattering amount)
 	{  0, 127, 127, 127,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0},
 	// Knob 2 (15: Saturation)
@@ -138,121 +138,79 @@ unsigned char script[14][NUM_SCENES] =
 
 #pragma data_seg(".fragment_main_background")
 const GLchar *fragmentMainBackground="\
-uniform sampler3D Texture0;\n\
-varying vec3 objectPosition;\n\
-varying mat4 parameters;\n\
+uniform sampler3D t;\n\
+varying vec3 o;\n\
+varying mat4 p;\n\
 \n\
-vec3 vnoise(vec3 pos, int iterations, float reduction)\n\
-{\n\
-   pos *= 2.; /*adjust texture size*/\n\
-   float intensity = 1.;\n\
-   float size = 1.;\n\
-   vec3 result = vec3(0.);\n\
-\n\
-   for (int k = 0; k < iterations; k++)\n\
-   {\n\
-      vec3 pos2 = floor(pos*size*16.) + smoothstep(0.,1., (pos*size*16.) - floor(pos*size*16.)) - 0.5;\n\
-      vec4 inp = texture3D(Texture0, pos2/16.);\n\
-      result += inp.xyz * intensity;\n\
-      intensity = intensity * reduction;\n\
-      size = size * 1.93;\n\
-   }\n\
-   \n\
-   return result;\n\
-}\n\
-\n\
-vec2 rotate(vec2 pos, float angle)\n\
-{\n\
-	return pos * mat2(cos(angle),-sin(angle),sin(angle),cos(angle));\n\
-}\n\
-\n\
+vec3 v(vec3 s,int i,float r)\
+{\
+float n=1.;\
+vec3 u=vec3(0.);\
+for (;i>0;i--)\
+{\
+u += texture3D(t, s*2.).xyz*n;\
+n*=r;\
+s*=1.93;\
+}\
+return u;\
+}\
+\
+vec2 q(vec2 p,float i)\
+{\
+return p*mat2(cos(i),-sin(i),sin(i),cos(i));\
+}\
+\
 void main(void)\n\
 {  \n\
-   float time = parameters[3][2];\n\
-   float spike = parameters[3][3];\n\
-   float slider1 = parameters[0][0];\n\
-   float slider2 = parameters[0][1];\n\
-   float slider3 = parameters[0][2];\n\
-   float slider4 = parameters[0][3];\n\
-   float slider5 = parameters[1][0];\n\
-   float slider6 = parameters[1][1];\n\
-   float slider7 = parameters[1][2];\n\
-   float knob1 = parameters[1][3];\n\
-   float knob2 = parameters[2][0];\n\
-   float knob3 = parameters[2][1];\n\
-   float knob4 = parameters[2][2];\n\
-   float knob5 = parameters[2][3];\n\
-   float knob6 = parameters[3][0];\n\
-   float knob7 = parameters[3][1];\n\
-   vec3 rayDir = normalize(objectPosition * vec3(1.0, 0.6, 1.0));\n\
+   vec3 rayDir = normalize(o * vec3(1.0, 0.6, 1.0));\n\
    \n\
-   vec3 color = vec3(0.);\n\
    vec3 rayPos = vec3(0., 0., 0. - 8.);\n\
    //vec3 rayDir = normalize(vec3(ppos, 2.));\n\
    vec3 totalColor = vec3(0.);\n\
    float totalDensity = 0.;\n\
    \n\
-   rayDir.xz = rotate(rayDir.xz, time);\n\
-   rayDir.xy = rotate(rayDir.xy, time*0.7);\n\
-   rayDir.xz = rotate(rayDir.xz, time*0.4);\n\
-   rayPos.xz = rotate(rayPos.xz, time);\n\
-   rayPos.xy = rotate(rayPos.xy, time*0.7);\n\
-   rayPos.xz = rotate(rayPos.xz, time*0.4);\n\
+   rayDir.xz = q(rayDir.xz, p[3][2]);\n\
+   rayDir.xy = q(rayDir.xy, p[3][2]*0.7);\n\
+   rayDir.xz = q(rayDir.xz, p[3][2]*0.4);\n\
+   rayPos.xz = q(rayPos.xz, p[3][2]);\n\
+   rayPos.xy = q(rayPos.xy, p[3][2]*0.7);\n\
+   rayPos.xz = q(rayPos.xz, p[3][2]*0.4);\n\
    \n\
    for (int i = 0; i < 100 && length(rayPos) < 12. && totalDensity < 0.95; i++) {\n\
       \n\
-	  vec3 dval = vnoise((rayPos * 0.05) * slider4 * slider4 + vec3(time*0.02) * knob6, 3, 0.6).rgb;\n\
-	  vec3 nval = vnoise(dval*rayPos*0.1*slider1*slider1 + floor(rayDir*3.5*knob1)*0.01*knob1 + dval*2.*slider5 + vec3(time*0.01), 5, slider2).rgb;\n\
-	  float implicit = length(rayPos + slider3*nval*5.) - 3. - 2.*knob3*spike;\n\
-	  implicit -= slider6 * dval.g * 15.;\n\
+	  vec3 dval = v((rayPos * 0.05) * p[0][3] * p[0][3] + vec3(p[3][2]*0.02) * p[3][0], 3, 0.6).rgb;\n\
+	  vec3 nval = v(dval*rayPos*0.1*p[0][0]*p[0][0] + floor(rayDir*3.5*p[1][3])*0.01*p[1][3] + dval*2.*p[1][0] + vec3(p[3][2]*0.01), 5, p[0][1]).rgb;\n\
+	  float implicit = length(rayPos + p[0][2]*nval*5.) - 3. - 2.*p[2][1]*p[3][3];\n\
+	  implicit -= p[1][1] * dval.g * 15.;\n\
       \n\
-	  float maxMove = (length(dval))*8. + 0.1/(knob5+0.01);\n\
-	  float colAdd = smoothstep(3., 0.1, maxMove)*50.*knob5+1.;\n\
+	  float maxMove = (length(dval))*8. + 0.1/(p[2][3]+0.01);\n\
+	  float colAdd = smoothstep(3., 0.1, maxMove)*50.*p[2][3]+1.;\n\
       \n\
-      float density = smoothstep(0.1*knob4, -knob4*10., implicit);\n\
+      float density = smoothstep(0.1*p[2][2], -p[2][2]*10., implicit);\n\
       totalDensity += (1. - totalDensity) * density;\n\
       totalDensity += 0.01;\n\
-	  totalColor += mix(vec3(0.01, 0.012, 0.014), vec3(0.015, 0.013, 0.01), (nval.r+0.1)*20.*knob2) * colAdd * knob7 * 3.;\n\
+	  totalColor += mix(vec3(0.01, 0.012, 0.014), vec3(0.015, 0.013, 0.01), (nval.r+0.1)*20.*p[2][0]) * colAdd * p[3][1] * 3.;\n\
       \n\
-      rayPos += rayDir * max(0.03, min(maxMove,abs(implicit)) * slider7);\n\
+      rayPos += rayDir * max(0.03, min(maxMove,abs(implicit)) * p[1][2]);\n\
    }\n\
    \n\
-   color = mix(color, totalColor, totalDensity) * (1.0 + spike) - 0.2*spike;\n\
-   \n\
-   gl_FragColor = vec4(color, 1.0);\n\
+   gl_FragColor = vec4((totalDensity*.8+.2) * totalColor * (1.0 + p[3][3]) - 0.2*p[3][3], 1.0);\n\
 }";
 
 #pragma data_seg(".fragment_offscreen_copy")
-#if 0
 const GLchar *fragmentOffscreenCopy="\
-uniform sampler2D Texture0;\n\
-varying vec3 objectPosition;\n\
-varying mat4 parameters;\n\
-\n\
-void main(void)\n\
-{  \n\
-   float fTime0_X = parameters[0][0];\n\
-   vec3 noisePos = objectPosition + fTime0_X;\n\
-   vec2 noiseVal;\n\
-   noiseVal.x = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43758.5453);\n\
-   noiseVal.y = fract(sin(dot(noisePos.xy, vec2(12.9898, 78.233))) * 43753.5453);\n\
-   gl_FragColor = texture2D(Texture0, 0.5*objectPosition.xy + 0.5 + 0.001*noiseVal.xy) + noiseVal.x*0.02;\n\
-\n\
-}";
-#else
-const GLchar *fragmentOffscreenCopy="\
-uniform sampler2D Texture0;\n\
-varying vec3 objectPosition;\n\
-varying mat4 parameters;\n\
+uniform sampler2D t;\n\
+varying vec3 o;\n\
+varying mat4 p;\n\
 \n\
 void main(void) {\n\
-	float time = parameters[3][2];\n\
-	vec4 col = texture2D(Texture0, 0.5*objectPosition.xy+0.5);\n\
+	float time = p[3][2];\n\
+	vec4 col = texture2D(t, 0.5*o.xy+0.5);\n\
 	for (int i = 0; i < 9; i++)\n\
 	{\n\
-		float n1=fract(sin(time + dot(objectPosition.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\n\
-		float n2=fract(sin(time + dot(objectPosition.xy,vec2(23.34534,23.4324-float(i))))*2038.23482);\n\
-		vec4 col2 = texture2D(Texture0, 0.5*objectPosition.xy+0.5 + vec2(n1,n2)*vec2(n1,n2)*0.05);\n\
+		float n1=fract(sin(time + dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);\n\
+		float n2=fract(sin(time + dot(o.xy,vec2(23.34534,23.4324-float(i))))*2038.23482);\n\
+		vec4 col2 = texture2D(t, 0.5*o.xy+0.5 + vec2(n1,n2)*vec2(n1,n2)*0.03);\n\
 		float similarity = 0.07 / (length(col - col2) + 0.07);\n\
 		//col = mix(col, col2, 0.5 * similarity);\n\
 		//if (similarity > .5) {col = mix(col,col2,0.5);}\n\
@@ -261,18 +219,17 @@ void main(void) {\n\
 	}\n\
 	gl_FragColor = 1.1 * col - vec4(0.1);\n\
 }";
-#endif
 
 #pragma data_seg(".vertex_main_object")
 const GLchar *vertexMainObject="\
 #version 120\n\
-varying vec3 objectPosition;\
-varying mat4 parameters;\
+varying vec3 o;\
+varying mat4 p;\
 \
 void main(void)\
 {\
-   parameters = gl_ModelViewMatrix;\
-   objectPosition = vec3(gl_Vertex.x, gl_Vertex.y, 1.0);\
+   p = gl_ModelViewMatrix;\
+   o = vec3(gl_Vertex.x, gl_Vertex.y, 1.0);\
    gl_Position = vec4(gl_Vertex.x, gl_Vertex.y, 0.5, 1.0);\
 }";
 
