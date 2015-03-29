@@ -49,7 +49,6 @@ float fModulationPhase[NUM_INSTRUMENTS];
 
 // Current instrument parameter (possibly interpolated?)
 int intInstParameter[NUM_INSTRUMENTS][NUM_INSTRUMENT_PARAMETERS];
-float floatInstParameter[NUM_INSTRUMENTS][NUM_INSTRUMENT_PARAMETERS];
 
 // attack values and stuff
 int iADSR[NUM_INSTRUMENTS];
@@ -162,15 +161,6 @@ __inline void init_mzk_data()
 			reverbBufferLength[inst][i] = 1;
 		}
 	}
-
-	// Get floating point instrument parameters
-	for (int inst = 0; inst < NUM_INSTRUMENTS; inst++)
-	{
-		for (int param = 0; param < NUM_INSTRUMENT_PARAMETERS; param++)
-		{
-			floatInstParameter[inst][param] = instrumentParams[inst][param] * MIDI_INT_TO_FLOAT;
-		}
-	}
 }
 
 #pragma code_seg(".mzkPlayBlock")
@@ -233,16 +223,26 @@ void mzkPlayBlock(short *blockBuffer)
 
 		// Get audio frequency
 		float baseFreq = freqtab[currentNote[instrument] & 0x7f] * fScaler;
-		float fVolume = floatInstParameter[instrument][F_VOLUME];
+		float fVolume = instrumentParams[instrument][F_VOLUME] * MIDI_INT_TO_FLOAT;
+		float fAttack = instrumentParams[instrument][K_ATTACK] * MIDI_INT_TO_FLOAT;
+		float fDecay = instrumentParams[instrument][K_DECAY] * MIDI_INT_TO_FLOAT;
+		float fSustain = instrumentParams[instrument][K_SUSTAIN] * MIDI_INT_TO_FLOAT;
+		float fRelease = instrumentParams[instrument][K_RELEASE] * MIDI_INT_TO_FLOAT;
+		float fDuration = instrumentParams[instrument][K_DURATION] * MIDI_INT_TO_FLOAT;
+		float fQuakinessStart = instrumentParams[instrument][K_QUAKINESS_START] * MIDI_INT_TO_FLOAT;
+		float fQuakinessEnd = instrumentParams[instrument][K_QUAKINESS_END] * MIDI_INT_TO_FLOAT;
+		float fModulationAmount = instrumentParams[instrument][K_MODULATION_AMOUNT] * MIDI_INT_TO_FLOAT;
+		float fStereo = instrumentParams[instrument][K_STEREO] * MIDI_INT_TO_FLOAT;
+		float fDetune = instrumentParams[instrument][K_DETUNE] * MIDI_INT_TO_FLOAT;
+		float fNoiseStart = instrumentParams[instrument][K_NOISE_START] * MIDI_INT_TO_FLOAT;
+		float fNoiseEnd = instrumentParams[instrument][K_NOISE_END] * MIDI_INT_TO_FLOAT;
+		float fDelayFeed = instrumentParams[instrument][K_DELAY_FEED] * MIDI_INT_TO_FLOAT;
+		float fModulationSpeed = instrumentParams[instrument][K_MODULATION_SPEED] * MIDI_INT_TO_FLOAT;
 		float vol = fVolume * 4.0f;
 
 		for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++)
 		{
 			// Process ADSR envelope
-			float fAttack = floatInstParameter[instrument][K_ATTACK];
-			float fDecay = floatInstParameter[instrument][K_DECAY];
-			float fSustain = floatInstParameter[instrument][K_SUSTAIN];
-			float fRelease = floatInstParameter[instrument][K_RELEASE];
 			switch (iADSR[instrument])
 			{
 			case 1: // Attack
@@ -279,7 +279,6 @@ void mzkPlayBlock(short *blockBuffer)
 			if (fADSRVal[instrument] < 1.0f / 65536.0f) fADSRVal[instrument] = 0.0f;
 
 			// The relative time point from instrument start to instrument end, modulation time
-			float fDuration = floatInstParameter[instrument][K_DURATION];
 			float relTimePoint = fTimePoint[instrument] / (fDuration + 1.0f / 512.0f);
 			float modT = fModulationPhase[instrument] - (float)ftoi_fast(fModulationPhase[instrument]);
 					
@@ -289,8 +288,6 @@ void mzkPlayBlock(short *blockBuffer)
 			float overtoneLoudness = 1.0f;
 			float overallLoudness = 0.0f;
 
-			float fQuakinessStart = floatInstParameter[instrument][K_QUAKINESS_START];
-			float fQuakinessEnd = floatInstParameter[instrument][K_QUAKINESS_END];
 #if 1
 			if (instrument == 0)
 			{
@@ -324,16 +321,13 @@ void mzkPlayBlock(short *blockBuffer)
 					float startMod = expRandomBuffer[i + ftoi_fast(fModulationPhase[instrument])*NUM_OVERTONES];
 					float endMod = expRandomBuffer[i + ftoi_fast(fModulationPhase[instrument])*NUM_OVERTONES + NUM_OVERTONES];
 					float modulation = modT * endMod + (1.0f - modT) * startMod;
-					float fModulationAmount = floatInstParameter[instrument][K_MODULATION_AMOUNT];
 					modulation = .5f + (modulation - 0.5f) * fModulationAmount;
 
 					for (int j = 0; j < NUM_Stereo_VOICES; j++)
 					{
-						float fStereo = floatInstParameter[instrument][K_STEREO];
 						outAmplitude[j] += (float)sin(fPhase[instrument][i][j] + fStereo * (2 * PI * randomBuffer[i*NUM_Stereo_VOICES + j])) *
 							overtoneLoudness * soundShape * modulation;
 
-						float fDetune = floatInstParameter[instrument][K_DETUNE];
 						fPhase[instrument][i][j] += baseFreq * (i+1) * (1.0f + fStereo/64.0f * (randomBuffer[i] - 0.5f)) *
 							 (1.0f + fDetune * (randomBuffer[i + iSoundShapeEnd*NUM_OVERTONES] - 0.5f));
 						while (fPhase[instrument][i][j] > 2.0f * PI) fPhase[instrument][i][j] -= 2.0f * (float)PI;
@@ -343,8 +337,6 @@ void mzkPlayBlock(short *blockBuffer)
 				overtoneLoudness *= quakiness * 2.0f;
 			}
 
-			float fNoiseStart = floatInstParameter[instrument][K_NOISE_START];
-			float fNoiseEnd = floatInstParameter[instrument][K_NOISE_END];
 			float noiseAmount = relTimePoint * fNoiseEnd + (1.0f - relTimePoint) * fNoiseStart;
 			for (int j = 0; j < NUM_Stereo_VOICES; j++)
 			{
@@ -365,7 +357,6 @@ void mzkPlayBlock(short *blockBuffer)
 				int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
 				int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[instrument][fromBuffer]) % 
 					MAX_DELAY_LENGTH;
-				float fDelayFeed = floatInstParameter[instrument][K_DELAY_FEED];
 				reverbBuffer[instrument][reverbPos][j] += fDelayFeed * reverbBuffer[instrument][fromLocation][fromBuffer];
 				if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
 			}
@@ -378,7 +369,6 @@ void mzkPlayBlock(short *blockBuffer)
 			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][1];
 			floatOutput[sample][1] += totalLoudness * reverbBuffer[instrument][reverbPos][3];
 
-			float fModulationSpeed = floatInstParameter[instrument][K_MODULATION_SPEED];
 			fModulationPhase[instrument] += fModulationSpeed / 512.0f;
 			fTimePoint[instrument] += SAMPLE_TICK_DURATION;
 			if (fTimePoint[instrument] > fDuration) fTimePoint[instrument] = fDuration;
