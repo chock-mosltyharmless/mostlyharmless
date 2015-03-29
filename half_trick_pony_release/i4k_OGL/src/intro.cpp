@@ -41,9 +41,9 @@ static unsigned char scriptDurations[NUM_SCENES] =
 	44,//14, // 0: From black to circles
 	16,  // 1: From circles to 8-bit (almost instant)
 	10,//40, // 2: 8-Bit stay
-	11, // 3: Shatter of in 8-Bit land
+	10, // 3: Shatter of in 8-Bit land
 	 0,  // 4: To pre-shatter in 8-Bit land
-	11,  // 5: To fireball (instant?)
+	12,  // 5: To fireball (instant?)
 	51, // 6: Fireball to transparent
 	 8, // 7: Exploded fireball
 	30, // 8: To Shadow man
