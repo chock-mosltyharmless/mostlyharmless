@@ -35,25 +35,8 @@ inline int ftoi_fast(float f)
 #define NUM_SCENES 14
 
 // Additive, in 4*4096/44100 seconds?
-#if 0
-unsigned char scriptDurations[NUM_SCENES] =
-{
-	5, // 0: From black to circles
-	2,  // 1: From circles to 8-bit (almost instant)
-	10, // 2: 8-Bit stay
-	0,  // 3: To fireball (instant?)
-	10, // 4: Shatter off
-	20, // 5: Fireball to transparent
-	 3, // 6: Exploded fireball
-	20, // 7: To Shadow man
-	20, // 8: To Light mystic
-	 5, // 9: Hold Light mystic
-	12, // 10: Blorange wool ball
-	13, // 11: Fade out
-	255, // END!
-};
-#else
-unsigned char scriptDurations[NUM_SCENES] =
+#pragma data_seg(".script_durations")
+static unsigned char scriptDurations[NUM_SCENES] =
 {
 	14, // 0: From black to circles
 	6,  // 1: From circles to 8-bit (almost instant)
@@ -70,7 +53,6 @@ unsigned char scriptDurations[NUM_SCENES] =
 	48, // 12: Fade out
 	255, // END!
 };
-#endif
 
 // NOTE: scene is first...
 // End effet|               3:0.57(72) 5:0.30(38) 6:0.24(31) 8:1.00(127) 9:0.43(54) 14:0.03(4) 15:0.05(6) 16:0.49(62) 17:0.66(84) 18:1.00(127) 19:1.00(127) 20:0.02(2) 
@@ -83,7 +65,7 @@ unsigned char scriptDurations[NUM_SCENES] =
 // Light mystic|            2:0.15(19) 3:0.41(52) 4:0.35(45) 5:0.34(43) 6:0.24(31) 8:0.70(89) 9:0.34(43) 14:0.00(0) 15:0.05(6) 16:0.00(0) 17:0.01(1) 18:0.46(59) 19:1.00(127) 20:0.13(17) 
 // Blorange wool ball|      2:0.27(34) 3:0.09(12) 4:0.43(54) 5:0.52(66) 6:0.19(24) 8:0.00(0) 9:0.26(33) 14:0.19(24) 15:0.39(50) 16:0.00(0) 17:0.03(4) 18:0.24(30) 19:1.00(127) 20:0.29(37) 
 #pragma data_seg(".script")
-unsigned char script[14][NUM_SCENES] =
+static unsigned char script[14][NUM_SCENES] =
 {
 	// 0: From black to circles
 	// 1: From circles to 8-bit (almost instant)
@@ -137,7 +119,7 @@ unsigned char script[14][NUM_SCENES] =
 // -------------------------------------------------------------------
 
 #pragma data_seg(".fragment_main_background")
-const GLchar *fragmentMainBackground="\
+static const GLchar *fragmentMainBackground="\
 uniform sampler3D t;\n\
 varying vec3 o;\n\
 varying mat4 p;\n\
@@ -188,7 +170,7 @@ gl_FragColor=vec4((e*.8+.2)*t*(1.+p[3][3])-.2*p[3][3],1.);\
 }";
 
 #pragma data_seg(".fragment_offscreen_copy")
-const GLchar *fragmentOffscreenCopy="\
+static const GLchar *fragmentOffscreenCopy="\
 uniform sampler2D t;\
 varying vec3 o;\
 varying mat4 p;\
@@ -206,7 +188,7 @@ gl_FragColor=1.1*e-vec4(.1);\
 }";
 
 #pragma data_seg(".vertex_main_object")
-const GLchar *vertexMainObject="\
+static const GLchar *vertexMainObject="\
 varying vec3 o;\
 varying mat4 p;\
 \
