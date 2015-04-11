@@ -38,7 +38,8 @@ rayPos += rayDir * max(0.03, abs(implicit)*0.6*.5);
 }                                                                     
                                                                       
 color = mix(color,totalColor,totalDensity);                           
-                                                                      
+
+color *= (1. - knob9);
 gl_FragColor = vec4(color, 1.0);                                      
 }                                                                     
                                                                       
