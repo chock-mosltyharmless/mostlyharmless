@@ -27,7 +27,7 @@ totalColor -= (1.-totalDensity) * density * density * 20. * knob3;
 totalDensity += (1. - totalDensity) * density;                        
 totalDensity += 0.01;                                                 
                                                                       
-rayPos += rayDir * max(0.03, abs(implicit) * (.1 + slider9));         
+rayPos += rayDir * max(0.03, abs(implicit) * (1.1 - slider9));
 }                                                                     
                                                                       
 color = mix(vec3(0.1, -0.4, 0.1), vec3(-0.4, -0.2, 0.0),              

@@ -35,7 +35,7 @@ totalColor += vec3(0.06, 0.04, 0.02) *
 totalColor -= (amounter) / (1. + 5.*abs(implicit)) *                  
 vec3(.05, 0.05, 0.08);                                                
                                                                       
-rayPos += rayDir * max(0.03, abs(implicit)*0.8*.5);                   
+rayPos += rayDir * max(0.03, abs(implicit)*0.8*.5); 
 }                                                                     
                                                                       
 color = mix(color,totalColor,totalDensity);
