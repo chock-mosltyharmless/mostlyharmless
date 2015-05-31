@@ -169,6 +169,8 @@ void Editor::render(long iTime)
 	int errorTextPos = 0;
 	int errorTextX = 0;
 	int errorTextY = 0;
+	bool isError = false; // Only draw if it really is an error.
+	int lineCharPos = 0; // character position inside the line
 	while (displayedError[errorTextPos] != 0)
 	{
 		float yDisplay = (float)errorTextY;
@@ -186,19 +188,29 @@ void Editor::render(long iTime)
 		{
 			if (displayedError[errorTextPos] != ' ' &&
 				displayedError[errorTextPos] != '\r' &&
-				displayedError[errorTextPos] != '\t')
+				displayedError[errorTextPos] != '\t' &&
+				isError)
 			{
 				drawChar((float)errorTextX, yDisplay + ED_ERROR_Y_OFFSET,
 					     displayedError[errorTextPos]);
 			}
 		}
+		if (lineCharPos == 4 && (displayedError[errorTextPos] == 'r' || displayedError[errorTextPos] == 'R'))
+		{
+			isError = true;
+		}
 
-		errorTextX++;
+		lineCharPos++;
+
+		if (isError) errorTextX++;
+		
 		if (displayedError[errorTextPos+1] == '\n')
 		{
 			errorTextX = 0;
-			errorTextY++;
+			if (isError) errorTextY++;
 			errorTextPos++;
+			isError = false; // assume no error.
+			lineCharPos = 0;
 		}
 		if (errorTextX >= ED_MAX_LINE_LENGTH)
 		{
@@ -311,6 +323,24 @@ void Editor::redo()
 		setErrorText(dummyError);
 	}
 	lastFileHistory = prev;
+}
+
+void Editor::deleteLine(void)
+{
+	// Change --> show
+	textDisplayAlpha = 1.0f;
+	isTextFading = false;
+	// Copy all following lines to this one
+	numLines--;
+	for (int line = cursorPos[1]; line < numLines; line++)
+	{
+		for (int k = 0; k < ED_MAX_LINE_LENGTH+1; k++)
+		{
+			text[line][k] = text[line+1][k];
+		}
+	}
+	text[numLines][0] = 0; // end char?
+	updateIndentation(); // may have changed after deleteing { or }
 }
 
 void Editor::controlCharacter(WPARAM vKey)
