@@ -105,6 +105,9 @@ public: // functions
 	// Mark that the error shall fade off (if it isn't off already)
 	void unshowError(void);
 
+	// Delete the current line in the editor
+	void deleteLine(void);
+
 	// Mark that the text shall fade off (if it isn't off already)
 	// The text is faded in once there is any modification
 	void unshowText(void);

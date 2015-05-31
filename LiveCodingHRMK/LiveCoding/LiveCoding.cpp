@@ -197,6 +197,14 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			editor.controlCharacter(wParam);
 			break;
 
+		case 'k':
+		case 'K':
+			if (GetAsyncKeyState(VK_CONTROL) < 0)
+			{
+				editor.deleteLine();
+			}
+			break;
+
 		case 'z':
 		case 'Z':
 			if (GetAsyncKeyState(VK_CONTROL) < 0)
