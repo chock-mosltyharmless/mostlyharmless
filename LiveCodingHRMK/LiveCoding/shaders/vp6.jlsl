@@ -16,11 +16,12 @@ totalDensity < 0.95; i++) {
 float distort = vnoise1(rayPos*0.02).g;                               
 float smoothness = vnoise1(rayPos*0.01).x*5.;                         
 float bumper = 0.5;                                                   
-bumper += spike*4.*slider2+0.5;                                       
-vec3 noisePos = rayPos + bumper*vnoise5(rayPos*0.03*distort +         
-vec3(time*0.04), slider1).xyz;                                        
-float implicit = length(noisePos) - 3.*slider3;                       
-implicit += vnoise1(rayPos*0.04).b*8.*slider4;                        
+bumper += spike*4.*knob1+0.5;                                       
+vec3 noisePos = rayPos +
+bumper*vnoise5(rayPos*0.1*distort*slider1 +
+vec3(time*0.04), slider2).xyz;                                        
+float implicit = length(noisePos) - 3.*slider3;
+implicit += vnoise1(rayPos*0.04*slider4).b*8.*slider5;
                                                                       
 float density = smoothstep(0., -0.3, implicit);                       
 totalDensity += (1. - totalDensity) * density;                        
@@ -28,7 +29,7 @@ totalDensity += 0.01;
 totalColor += 4.*mix(vec3(0.01,0.013,0.014), vec3(0.014,0.012,0.009), 
 sin(noisePos.x*2.*noisePos.z));                                       
                                                                       
-rayPos += rayDir * max(0.03, abs(implicit) * .5f);                    
+rayPos += rayDir * max(0.05, abs(implicit)*1.*(1.1-slider9));
 }                                                                     
                                                                       
 color = mix(vec3(0.3,0.2,0.1), vec3(0.2,0.2,0.4),                     

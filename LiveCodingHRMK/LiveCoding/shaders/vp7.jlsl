@@ -2,10 +2,12 @@ void main(void) {
 vec3 color = vec3(0.);                                                
                                                                       
 for (int step = 0; step < 3; step++) {                                
-float tz = fract(0.1*time + 0.33 * step);                             
+float tz = fract(0.1*time + 0.33 * step);
+tz+=spike*knob1*0.05;
 float zoo = pow(0.5, 16.0*tz);                                        
                                                                       
-vec2 z = rotate(ppos, time*0.25) * pow(zoo,slider3) +                 
+vec2 z = rotate(ppos, time*0.25+spike*knob1*0.2) *
+pow(zoo,slider3) +
 vec2(slider4, slider5)*0.2;                                           
                                                                       
 vec2 c = vec2(slider1,slider2)*0.5;
@@ -14,12 +16,12 @@ float m2 = 0.0;
                                                                       
 float iter = 0.;                                                      
 for (int i = 0; i < 150; i++) {   
-if (m2 > 1024.0 *pow(slider6, 5.0) ) continue;
+if (m2 > 1024.0 * pow(slider6, 5.0) ) continue;
                                                                       
 // Z -> Z^2 + c;                                                      
 z = vec2(z.x*z.x - z.y*z.y, 2.0 * z.x*z.y) + c;                       
 m2 = dot(z,z);                                                        
-iter += 0.01;                                                         
+iter += 0.01 + 0.005*spike*knob1;
 }                                                                     
                                                                       
 float amount = sin(tz*3.14);                                          
@@ -27,7 +29,7 @@ float amount = sin(tz*3.14);
 // use iter count instead;                                            
 float d = iter * 0.7;                                                 
                                                                       
-color = color * (1. - amount) + amount *                              
+color = color * (1. - amount) + amount *
 vec3(0.7+0.2*step, 0.8, 0.9-0.2*step) * d * 0.3 *                     
 vec3(z.x/length(z)+2., 2., z.y/length(z)+2.);                         
 }                                                                     
