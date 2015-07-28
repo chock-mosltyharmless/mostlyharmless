@@ -116,7 +116,9 @@ void VstXSynth::setProgram (VstInt32 program)
 	fDelayFeed = ap->fDelayFeed;
 	iDelayLength = ap->iDelayLength;
 
+#ifdef SAVE_MUSIC
 	firstNoteTime = -1;
+#endif
 }
 
 //-----------------------------------------------------------------------------------------

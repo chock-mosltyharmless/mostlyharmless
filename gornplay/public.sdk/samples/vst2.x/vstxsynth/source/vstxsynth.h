@@ -25,7 +25,7 @@
 #include "public.sdk/source/vst2.x/audioeffectx.h"
 
 // Use this define to save the music to file.
-#define SAVE_MUSIC
+//#define SAVE_MUSIC
 
 // Size of a buffer with random numbers
 #define RANDOM_BUFFER_SIZE 65536
@@ -34,7 +34,7 @@
 
 // Number of additive overtones
 #define NUM_OVERTONES 16
-#define NUM_Stereo_VOICES 4
+#define NUM_STEREO_VOICES 4
 
 #ifndef PI
 #define PI 3.1415926
@@ -49,20 +49,6 @@ enum
 
 	kVolume = 0,
 	kDuration,
-	kAttack,
-	kDecay,
-	kSustain,
-	kRelease,
-	kQuakinessStart, // Volume of the overtones
-	kQuakinessEnd,
-	kSoundShapeStart, // Which random numbers to take for spectral shape
-	kSoundShapeEnd,
-	kModulationAmount, // Amount of Waveshape modulation
-	kModulationSpeed, // Speed of the waveshape modulation
-	kDetune, // Detuning of overtones
-	kStereo, // Strength of Stereo (detune)
-	kNoiseStart, // low-pass filter start frequency
-	kNoiseEnd,
 	kDelayFeed, // Resonance at the start
 	kDelayLength,
 
@@ -81,21 +67,6 @@ public:
 
 private:
 	float fVolume;
-	float fDuration;
-	float fAttack;
-	float fDecay;
-	float fSustain;
-	float fRelease;
-	float fQuakinessStart;
-	float fQuakinessEnd;
-	int iSoundShapeStart;
-	int iSoundShapeEnd;
-	float fModulationAmount;
-	float fModulationSpeed;
-	float fDetune;
-	float fStereo;
-	float fNoiseStart;
-	float fNoiseEnd;
 	float fDelayFeed;
 	int iDelayLength;
 	char name[kVstMaxProgNameLen+1];
@@ -148,31 +119,10 @@ private:
 	float moogFilter(float frequency, float resonance, float in);
 	float b0, b1, b2, b3, b4; // moog filter parameters
 
-	float fVolume; // Overall volume of the instrument exluding midi velocity
-	float fDuration;
-	float fAttack;
-	float fDecay;
-	float fSustain;
-	float fRelease;
-	float fQuakinessStart; // Loudness of the overtones
-	float fQuakinessEnd;
-	int iSoundShapeStart; // Which random numbers to take for overtones
-	int iSoundShapeEnd;
-	float fNoiseStart;
-	float fNoiseEnd;
-	float fModulationAmount;
-	float fModulationSpeed;
-	float fDetune;
-	float fStereo;
-	float fDelayFeed;
-	int iDelayLength;
 	int iADSR; // 0: Attack, 2: Decay, 3: Release
 	float fADSRVal; // Volume from ADSR envelope
-	float fPhase[NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
-	float fModulationPhase; // Phase of the modulation
-	float fTimePoint; // Time point relative to fDuration;
-	float fLastOutput[NUM_Stereo_VOICES]; // Last output value
-	float fRemainDC[NUM_Stereo_VOICES]; // To avoid clicking, this value contains the last output before start/stop
+	float fPhase[NUM_OVERTONES]; // Phase of the instrument
+
 	float fScaler; // 2pi / sampleRate
 	int sampleID; // ID of the processed sample
 
@@ -183,19 +133,21 @@ private:
 	float lowNoise[RANDOM_BUFFER_SIZE];
 	// The same as random Buffer, but contains exp(4*(randomBuffer-1))
 	float expRandomBuffer[RANDOM_BUFFER_SIZE];
-	float reverbBuffer[MAX_DELAY_LENGTH][NUM_Stereo_VOICES];
-	int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pull-out
-
-	// Stuff for delayed midi notes
-	int midiDelaySamples;
-	VstInt32 midiDelayNote;
-	VstInt32 midiDelayVelocity;
+	
+	// Reverberation
+	float reverbBuffer[MAX_DELAY_LENGTH][NUM_STEREO_VOICES];
+	int reverbBufferLength[NUM_STEREO_VOICES]; // Actual length taken for pull-out
 
 	VstXSynthProgram* programs;
 	VstInt32 channelPrograms[16];
 
+	// The next program will be turned to current when death counter goes to 0.
+	// Starting at 256, the death counter pulls down the volume.
+	int deathCounter;
 	VstInt32 currentNote;
 	VstInt32 currentVelocity; // That is the midi volume
+	VstInt32 nextNote;
+	VstInt32 nextVelocity;
 
 	void initProcess ();
 	void noteOn (VstInt32 note, VstInt32 velocity);
@@ -204,6 +156,7 @@ private:
 
 #ifdef SAVE_MUSIC
 	static int firstNoteTime; // This one is static along buffers so that streams are synchronized
+	int lastNote;
 	int savedNoteID;
 	int savedNoteTime[1000000];
 	int savedNote[1000000];
