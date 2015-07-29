@@ -34,6 +34,7 @@ AudioEffect* createEffectInstance (audioMasterCallback audioMaster)
 VstXSynthProgram::VstXSynthProgram ()
 {
 	fVolume    = .25f;
+#if 0
 	fDuration = 0.2f;
 	fAttack = 0.3f;
 	fDecay = 0.2f;
@@ -49,6 +50,7 @@ VstXSynthProgram::VstXSynthProgram ()
 	fStereo = 0.0f;
 	fNoiseStart = 0.0f;
 	fNoiseEnd = 0.0f;
+#endif
 	fDelayFeed = 0.0f;
 	iDelayLength = 32;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
@@ -62,6 +64,7 @@ VstXSynth::VstXSynth (audioMasterCallback audioMaster)
 {
 	// initialize programs
 	programs = new VstXSynthProgram[kNumPrograms];
+	curProgram = &(programs[0]);
 	for (VstInt32 i = 0; i < 16; i++)
 		channelPrograms[i] = i;
 
@@ -94,9 +97,10 @@ void VstXSynth::setProgram (VstInt32 program)
 	if (program < 0 || program >= kNumPrograms)
 		return;
 	
-	VstXSynthProgram *ap = &programs[program];
-	curProgram = program;
-	
+	//VstXSynthProgram *ap = &programs[program];
+	curProgram = &(programs[program]);
+
+#if 0
 	fVolume    = ap->fVolume;
 	fDuration = ap->fDuration;
 	fAttack = ap->fAttack;
@@ -115,6 +119,7 @@ void VstXSynth::setProgram (VstInt32 program)
 	fNoiseEnd = ap->fNoiseEnd;
 	fDelayFeed = ap->fDelayFeed;
 	iDelayLength = ap->iDelayLength;
+#endif
 
 #ifdef SAVE_MUSIC
 	firstNoteTime = -1;
@@ -124,13 +129,13 @@ void VstXSynth::setProgram (VstInt32 program)
 //-----------------------------------------------------------------------------------------
 void VstXSynth::setProgramName (char* name)
 {
-	vst_strncpy (programs[curProgram].name, name, kVstMaxProgNameLen);
+	vst_strncpy (curProgram->name, name, kVstMaxProgNameLen);
 }
 
 //-----------------------------------------------------------------------------------------
 void VstXSynth::getProgramName (char* name)
 {
-	vst_strncpy (name, programs[curProgram].name, kVstMaxProgNameLen);
+	vst_strncpy (name, curProgram->name, kVstMaxProgNameLen);
 }
 
 //-----------------------------------------------------------------------------------------
@@ -141,6 +146,7 @@ void VstXSynth::getParameterLabel (VstInt32 index, char* label)
 		case kVolume:
 			vst_strncpy (label, "dB", kVstMaxParamStrLen);
 			break;
+#if 0
 		case kQuakinessStart:
 		case kQuakinessEnd:
 			vst_strncpy (label, "dB", kVstMaxParamStrLen);
@@ -148,6 +154,7 @@ void VstXSynth::getParameterLabel (VstInt32 index, char* label)
 		case kModulationAmount:
 			vst_strncpy (label, "dB", kVstMaxParamStrLen);
 			break;
+#endif
 		default: // No label
 			label[0] = 0;
 			break;
@@ -160,7 +167,8 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 	text[0] = 0;
 	switch (index)
 	{
-		case kVolume:		dB2string (fVolume, text, kVstMaxParamStrLen);	break;
+		case kVolume:		dB2string (curProgram->fVolume, text, kVstMaxParamStrLen);	break;
+#if 0
 		case kDuration:		float2string (fDuration, text, kVstMaxParamStrLen); break;
 		case kAttack:		float2string (fAttack, text, kVstMaxParamStrLen); break;
 		case kDecay:	float2string(fDecay, text, kVstMaxParamStrLen); break;
@@ -176,8 +184,9 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 		case kStereo: float2string(fStereo, text, kVstMaxParamStrLen); break;
 		case kNoiseStart: float2string(fNoiseStart, text, kVstMaxParamStrLen); break;
 		case kNoiseEnd: float2string(fNoiseEnd, text, kVstMaxParamStrLen); break;
-		case kDelayFeed: float2string(fDelayFeed, text, kVstMaxParamStrLen); break;
-		case kDelayLength: int2string(iDelayLength, text, kVstMaxParamStrLen); break;
+#endif
+		case kDelayFeed: float2string(curProgram->fDelayFeed, text, kVstMaxParamStrLen); break;
+		case kDelayLength: int2string(curProgram->iDelayLength, text, kVstMaxParamStrLen); break;
 	}
 }
 
@@ -187,6 +196,7 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 	switch (index)
 	{
 		case kVolume: vst_strncpy (label, "Volume", kVstMaxParamStrLen);	break;
+#if 0
 		case kDuration: vst_strncpy(label, "Duration", kVstMaxParamStrLen); break;
 		case kAttack: vst_strncpy(label, "Attack", kVstMaxParamStrLen); break;
 		case kDecay: vst_strncpy(label, "Decay", kVstMaxParamStrLen); break;
@@ -202,6 +212,7 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 		case kStereo: vst_strncpy(label, "Stereo", kVstMaxParamStrLen); break;
 		case kNoiseStart: vst_strncpy(label, "Noise start", kVstMaxParamStrLen); break;
 		case kNoiseEnd: vst_strncpy(label, "Noise end", kVstMaxParamStrLen); break;
+#endif
 		case kDelayFeed: vst_strncpy(label, "Delay feed", kVstMaxParamStrLen); break;
 		case kDelayLength: vst_strncpy(label, "Delay length", kVstMaxParamStrLen); break;
 	}
@@ -210,10 +221,12 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 //-----------------------------------------------------------------------------------------
 void VstXSynth::setParameter (VstInt32 index, float value)
 {
-	VstXSynthProgram *ap = &programs[curProgram];
+	//VstXSynthProgram *ap = &programs[curProgram];
+	VstXSynthProgram *ap = curProgram;
 	switch (index)
 	{
-		case kVolume:		fVolume		= ap->fVolume		= value;	break;
+		case kVolume: ap->fVolume		= value;	break;
+#if 0
 		case kDuration: fDuration = ap->fDuration = value; break;
 		case kAttack: fAttack = ap->fAttack = value; break;
 		case kDecay: fDecay = ap->fDecay = value; break;
@@ -229,8 +242,9 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kStereo: fStereo = ap->fStereo = value; break;
 		case kNoiseStart: fNoiseStart = ap->fNoiseStart = value; break;
 		case kNoiseEnd: fNoiseEnd = ap->fNoiseEnd = value; break;
-		case kDelayFeed: fDelayFeed = ap->fDelayFeed = value; break;
-		case kDelayLength: iDelayLength = ap->iDelayLength = (int)(value * 128.0f + 0.5f); break;
+#endif
+		case kDelayFeed: ap->fDelayFeed = value; break;
+		case kDelayLength: ap->iDelayLength = (int)(value * 128.0f + 0.5f); break;
 	}
 
 #ifdef SAVE_MUSIC
@@ -263,7 +277,8 @@ float VstXSynth::getParameter (VstInt32 index)
 	float value = 0;
 	switch (index)
 	{
-		case kVolume:		value = fVolume;	break;
+		case kVolume:		value = curProgram->fVolume;	break;
+#if 0
 		case kDuration: value = fDuration; break;
 		case kAttack: value = fAttack; break;
 		case kDecay : value = fDecay; break;
@@ -279,8 +294,9 @@ float VstXSynth::getParameter (VstInt32 index)
 		case kStereo: value = fStereo; break;
 		case kNoiseStart: value = fNoiseStart; break;
 		case kNoiseEnd: value = fNoiseEnd; break;
-		case kDelayFeed: value = fDelayFeed; break;
-		case kDelayLength: value = (float)iDelayLength / 128.0f; break;
+#endif
+		case kDelayFeed: value = curProgram->fDelayFeed; break;
+		case kDelayLength: value = (float)(curProgram->iDelayLength) / 128.0f; break;
 	}
 	return value;
 }

@@ -139,19 +139,12 @@ void VstXSynth::initProcess ()
 {
 	for (int i = 0; i < NUM_OVERTONES; i++)
 	{
-		for (int j = 0; j < NUM_Stereo_VOICES; j++)
-		{
-			fPhase[i][j] = 0.f;
-		}
+		fPhase[i] = 0.f;
 	}
-	fModulationPhase = 0.f;
 	fScaler = (float)((double)PI / 44100.);	// we don't know the sample rate yet
 	VstInt32 i;
-	for (int i = 0; i < NUM_Stereo_VOICES; i++)
-	{
-		fLastOutput[i] = 0.0f;
-	}
-	noteOn (0, 0);
+	currentNote = nextNote = 0;
+	currentVelocity = nextVelocity = 0;
 	sampleID = 0;
 
 	// Initialize moog filter parameters
@@ -188,7 +181,7 @@ void VstXSynth::initProcess ()
 	}
 
 	// Clear reverberation buffer
-	for (int i = 0; i < NUM_Stereo_VOICES; i++)
+	for (int i = 0; i < NUM_STEREO_VOICES; i++)
 	{
 		for (int j = 0; j < MAX_DELAY_LENGTH; j++)
 		{
@@ -213,16 +206,23 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 	float* out2 = outputs[1];
 
 	float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
-	float vol = (float)(fVolume * (double)currentVelocity * midiScaler) * 4.0f;		
+	float vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
 
 	// loop
 	while (--sampleFrames >= 0)
 	{
 		// Check if a new note has to be played
-		if (midiDelaySamples == 0) noteOn(midiDelayNote, midiDelayVelocity);
-		midiDelaySamples--;
+		if (deathCounter == 0)
+		{
+			noteOn();
+			baseFreq = freqtab[currentNote & 0x7f] * fScaler;
+			vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
+		}
+		if (deathCounter > 0) deathCounter--;
 
 		// Process ADSR envelope
+		fADSRVal = 1.0f;
+#if 0
 		switch (iADSR)
 		{
 		case 0: // Attack
@@ -245,13 +245,39 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			break;
 		}
 		if (fADSRVal < 1.0f / 65536.0f) fADSRVal = 0.0f;
+#endif
 
-		// The relative time point from instrument start to instrument end
-		float relTimePoint = fTimePoint / (fDuration + 1.0f / 512.0f);
-		float modT = fModulationPhase - (float)(int)(fModulationPhase);
+		// deathcounter volume
+		float deathVolume = 1.0f;
+		if (deathCounter >= 0 && deathCounter < DEATH_COUNTER_SAMPLES) 
+		{
+			deathVolume = deathCounter * 1.0f / (float)DEATH_COUNTER_SAMPLES;
+		}
 
-		float outAmplitude[NUM_Stereo_VOICES] = {0};
+		float outAmplitude[NUM_STEREO_VOICES] = {0.0f};
 
+		int maxOvertones = (int)(3.0f / baseFreq);
+		float overtoneLoudness = 1.0f;
+		float overallLoudness = 0.0f;
+		for (int i = 0; i < NUM_OVERTONES; i++)
+		{
+			if (i < maxOvertones)
+			{
+				outAmplitude[i % NUM_STEREO_VOICES] += (float)sin(fPhase[i]) * overtoneLoudness;
+				fPhase[i] += baseFreq * (i+1);
+				while (fPhase[i] > 2.0f * PI) fPhase[i] -= 2.0f * (float)PI;
+			}
+			overallLoudness += overtoneLoudness;
+			overtoneLoudness *= 1.0f;
+		}
+
+		// adjust amplitude
+		for (int i = 0; i < NUM_STEREO_VOICES; i++)
+		{
+			outAmplitude[i] /= overallLoudness;
+		}
+
+#if 0
 		int maxOvertones = (int)(3.0f / baseFreq);
 		float overtoneLoudness = 1.0f;
 		float overallLoudness = 0.0f;
@@ -299,26 +325,25 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			outAmplitude[j] *= 1.0f + (lowNoise[sampleID % RANDOM_BUFFER_SIZE] - 1.0f) * noiseAmount;
 		}
 
+#endif
+
 		// Put everything into the reverb buffers
 		int reverbPos = sampleID % MAX_DELAY_LENGTH;
-		for (int j = 0; j < NUM_Stereo_VOICES; j++)
+		for (int j = 0; j < NUM_STEREO_VOICES; j++)
 		{
-			reverbBuffer[reverbPos][j] = outAmplitude[j] * vol * fADSRVal + fRemainDC[j];
-			fRemainDC[j] *= REMAIN_DC_FALLOFF;
-			if (fRemainDC[j] < 1.0f / 65536.0f) fRemainDC[j] = 0.0f;
-			fLastOutput[j] = reverbBuffer[reverbPos][j];
+			reverbBuffer[reverbPos][j] = outAmplitude[j] * vol * fADSRVal * deathVolume;
 			
 			// Do the reverb feedback
-			int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
+			int fromBuffer = (j + 1) % NUM_STEREO_VOICES;
 			int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]) % 
 				MAX_DELAY_LENGTH;
-			reverbBuffer[reverbPos][j] += fDelayFeed * reverbBuffer[fromLocation][fromBuffer];
+			reverbBuffer[reverbPos][j] += curProgram->fDelayFeed * reverbBuffer[fromLocation][fromBuffer];
 			if (fabsf(reverbBuffer[reverbPos][j]) < 1.0e-12) reverbBuffer[reverbPos][j] = 0.0f;
 		}
 
 		*out1 = 0;
 		*out2 = 0;
-		for (int j = 0; j < NUM_Stereo_VOICES; j += 2)
+		for (int j = 0; j < NUM_STEREO_VOICES; j += 2)
 		{
 			//*out1 += outAmplitude[j];
 			//*out2 += outAmplitude[j + 1];
@@ -331,12 +356,8 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		//*out1 = moogFilter(filterFreq, fResoStart, *out1);
 		//*out2 = moogFilter(filterFreq, fResoStart, *out2);
 
-		*out1++;
-		*out2++;
-		fModulationPhase += fModulationSpeed / 512.0f;
-		fTimePoint += SAMPLE_TICK_DURATION;
-		if (fTimePoint > fDuration) fTimePoint = fDuration;
-		while (fModulationPhase > RANDOM_BUFFER_SIZE/2/NUM_OVERTONES) fModulationPhase -= RANDOM_BUFFER_SIZE/2/NUM_OVERTONES;
+		out1++;
+		out2++;
 
 		sampleID++;
 	}
@@ -367,23 +388,30 @@ VstInt32 VstXSynth::processEvents (VstEvents* ev)
 			{
 				if (!velocity && (note == currentNote))
 				{
-					midiDelayNote = -1; // delay note off
-					midiDelayVelocity = -1;
+					nextNote = 0; // delay note off
+					nextVelocity = 0;
 				}
 				else
 				{
-					midiDelayNote = note;
-					midiDelayVelocity = velocity;
+					nextNote = note;
+					nextVelocity = velocity;
 				}
 
-				midiDelaySamples = event->deltaFrames;				
-				if (midiDelaySamples <= 0) noteOn(midiDelayNote, midiDelayVelocity);
+				deathCounter = event->deltaFrames + DEATH_COUNTER_SAMPLES;
+				if (event->deltaFrames < 0)
+				{
+					deathCounter = DEATH_COUNTER_SAMPLES;
+				}
 			}
 		}
 		else if (status == 0xb0)
 		{
 			if (midiData[1] == 0x7e || midiData[1] == 0x7b)	// all notes off
-				noteOff ();
+			{
+				nextNote = 0;
+				nextVelocity = 0;
+				deathCounter = DEATH_COUNTER_SAMPLES;
+			}
 		}
 		event++;
 	}
@@ -391,7 +419,7 @@ VstInt32 VstXSynth::processEvents (VstEvents* ev)
 }
 
 //-----------------------------------------------------------------------------------------
-void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
+void VstXSynth::noteOn ()
 {
 #ifdef SAVE_MUSIC
 	if (firstNoteTime < 0 && velocity > 0) firstNoteTime = sampleID;
@@ -407,6 +435,21 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	}
 #endif
 
+	deathCounter = -1; // no more death counting
+	currentNote = nextNote;
+	currentVelocity = nextVelocity;
+	
+	// This is just for debugging
+	nextNote = 0;
+	nextVelocity = 0;
+
+	// reset instrument
+	for (int i = 0; i < NUM_OVERTONES; i++)
+	{
+		fPhase[i] = 0.0f;
+	}
+
+#if 0
 	midiDelaySamples = -1;
 	if (note != -1)
 	{
@@ -438,6 +481,7 @@ void VstXSynth::noteOn (VstInt32 note, VstInt32 velocity)
 	{
 		iADSR = 2;
 	}
+#endif
 
 	// Write everything out, we can overwrite at the next note.
 #ifdef SAVE_MUSIC

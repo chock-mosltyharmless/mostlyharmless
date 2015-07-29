@@ -36,6 +36,9 @@
 #define NUM_OVERTONES 16
 #define NUM_STEREO_VOICES 4
 
+// How long the death counter fades out the sound
+#define DEATH_COUNTER_SAMPLES 256
+
 #ifndef PI
 #define PI 3.1415926
 #endif
@@ -48,7 +51,6 @@ enum
 	kNumOutputs = 2,
 
 	kVolume = 0,
-	kDuration,
 	kDelayFeed, // Resonance at the start
 	kDelayLength,
 
@@ -138,19 +140,21 @@ private:
 	float reverbBuffer[MAX_DELAY_LENGTH][NUM_STEREO_VOICES];
 	int reverbBufferLength[NUM_STEREO_VOICES]; // Actual length taken for pull-out
 
+	// I don't understand... do I have more than one program?
 	VstXSynthProgram* programs;
 	VstInt32 channelPrograms[16];
+	VstXSynthProgram* curProgram;
 
 	// The next program will be turned to current when death counter goes to 0.
 	// Starting at 256, the death counter pulls down the volume.
 	int deathCounter;
 	VstInt32 currentNote;
 	VstInt32 currentVelocity; // That is the midi volume
-	VstInt32 nextNote;
-	VstInt32 nextVelocity;
+	VstInt32 nextNote; // -1 for no note?
+	VstInt32 nextVelocity; // 0 for note off?
 
 	void initProcess ();
-	void noteOn (VstInt32 note, VstInt32 velocity);
+	void noteOn (); // Copy from nextNote to currentNote, resetting deathCounter
 	void noteOff ();
 	void fillProgram (VstInt32 channel, VstInt32 prg, MidiProgramName* mpn);
 
