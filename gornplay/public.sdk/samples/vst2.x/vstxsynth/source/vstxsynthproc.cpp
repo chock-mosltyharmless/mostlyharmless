@@ -146,6 +146,7 @@ void VstXSynth::initProcess ()
 	currentNote = nextNote = 0;
 	currentVelocity = nextVelocity = 0;
 	sampleID = 0;
+	iADSR = 0;
 
 	// Initialize moog filter parameters
 	b0 = b1 = b2 = b3 = b4 = 0.0f;
@@ -206,7 +207,8 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 	float* out2 = outputs[1];
 
 	float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
-	float vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
+	//float vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
+	float vol = (float)((double)currentVelocity * midiScaler) * 4.0f;
 
 	// loop
 	while (--sampleFrames >= 0)
@@ -216,12 +218,12 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		{
 			noteOn();
 			baseFreq = freqtab[currentNote & 0x7f] * fScaler;
-			vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
+			//vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
+			vol = (float)((double)currentVelocity * midiScaler) * 4.0f;
 		}
 		if (deathCounter > 0) deathCounter--;
 
 		// Process ADSR envelope
-		fADSRVal = 1.0f;
 #if 0
 		switch (iADSR)
 		{
@@ -245,7 +247,22 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			break;
 		}
 		if (fADSRVal < 1.0f / 65536.0f) fADSRVal = 0.0f;
+#else
+		switch (iADSR)
+		{
+		case 0: // Attack
+			fADSRVal += (1.0f - fADSRVal) * (curProgram->fADSRSpeed[0] / 1024.0f);
+			break;
+		default: // Not needed at all
+			break;
+		}
+		// Go from attack to decay
+		if (iADSR == 0 && fADSRVal > 0.875) iADSR = 1;
 #endif
+
+		// interpolate volume according to ADSR envelope
+		adsrVolume += (curProgram->fVolume[iADSR + 1] - adsrVolume) *
+					  (curProgram->fADSRSpeed[iADSR] / 1024.0f);
 
 		// deathcounter volume
 		float deathVolume = 1.0f;
@@ -331,7 +348,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		int reverbPos = sampleID % MAX_DELAY_LENGTH;
 		for (int j = 0; j < NUM_STEREO_VOICES; j++)
 		{
-			reverbBuffer[reverbPos][j] = outAmplitude[j] * vol * fADSRVal * deathVolume;
+			reverbBuffer[reverbPos][j] = outAmplitude[j] * vol * adsrVolume * deathVolume;
 			
 			// Do the reverb feedback
 			int fromBuffer = (j + 1) % NUM_STEREO_VOICES;
@@ -388,19 +405,18 @@ VstInt32 VstXSynth::processEvents (VstEvents* ev)
 			{
 				if (!velocity && (note == currentNote))
 				{
-					nextNote = 0; // delay note off
-					nextVelocity = 0;
+					noteOff();
 				}
 				else
 				{
 					nextNote = note;
 					nextVelocity = velocity;
-				}
 
-				deathCounter = event->deltaFrames + DEATH_COUNTER_SAMPLES;
-				if (event->deltaFrames < 0)
-				{
-					deathCounter = DEATH_COUNTER_SAMPLES;
+					deathCounter = event->deltaFrames + DEATH_COUNTER_SAMPLES;
+					if (event->deltaFrames < 0)
+					{
+						deathCounter = DEATH_COUNTER_SAMPLES;
+					}
 				}
 			}
 		}
@@ -408,9 +424,7 @@ VstInt32 VstXSynth::processEvents (VstEvents* ev)
 		{
 			if (midiData[1] == 0x7e || midiData[1] == 0x7b)	// all notes off
 			{
-				nextNote = 0;
-				nextVelocity = 0;
-				deathCounter = DEATH_COUNTER_SAMPLES;
+				noteOff();
 			}
 		}
 		event++;
@@ -439,6 +453,11 @@ void VstXSynth::noteOn ()
 	currentNote = nextNote;
 	currentVelocity = nextVelocity;
 	
+	// Initialize ADSR and all interpolators
+	iADSR = 0;
+	fADSRVal = 0.0f;
+	adsrVolume = curProgram->fVolume[0];
+
 	// This is just for debugging
 	nextNote = 0;
 	nextVelocity = 0;

@@ -50,7 +50,13 @@ enum
 	kNumPrograms = 50,
 	kNumOutputs = 2,
 
-	kVolume = 0,
+	kAttack = 0,
+	kDecay,
+	kRelease,
+	kVolume1,
+	kVolume2,
+	kVolume3,
+	kVolume4,
 	kDelayFeed, // Resonance at the start
 	kDelayLength,
 
@@ -68,7 +74,8 @@ public:
 	~VstXSynthProgram () {}
 
 private:
-	float fVolume;
+	float fADSRSpeed[3];
+	float fVolume[4];
 	float fDelayFeed;
 	int iDelayLength;
 	char name[kVstMaxProgNameLen+1];
@@ -121,8 +128,8 @@ private:
 	float moogFilter(float frequency, float resonance, float in);
 	float b0, b1, b2, b3, b4; // moog filter parameters
 
-	int iADSR; // 0: Attack, 2: Decay, 3: Release
-	float fADSRVal; // Volume from ADSR envelope
+	int iADSR; // 0: Attack, 1: Decay, 2: Release
+	float fADSRVal; // Only used to determine when attack goes into decay.
 	float fPhase[NUM_OVERTONES]; // Phase of the instrument
 
 	float fScaler; // 2pi / sampleRate
@@ -152,6 +159,9 @@ private:
 	VstInt32 currentVelocity; // That is the midi volume
 	VstInt32 nextNote; // -1 for no note?
 	VstInt32 nextVelocity; // 0 for note off?
+
+	// Interpolated stuff according to ADSR envelope
+	float adsrVolume;
 
 	void initProcess ();
 	void noteOn (); // Copy from nextNote to currentNote, resetting deathCounter

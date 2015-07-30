@@ -33,24 +33,13 @@ AudioEffect* createEffectInstance (audioMasterCallback audioMaster)
 //-----------------------------------------------------------------------------------------
 VstXSynthProgram::VstXSynthProgram ()
 {
-	fVolume    = .25f;
-#if 0
-	fDuration = 0.2f;
-	fAttack = 0.3f;
-	fDecay = 0.2f;
-	fSustain = 0.0f;
-	fRelease = 0.6f;
-	fQuakinessStart = .5f;
-	fQuakinessEnd = 0.2f;
-	iSoundShapeStart = 0;
-	iSoundShapeEnd = 1;
-	fModulationAmount = 0.1f;
-	fModulationSpeed = 0.3f;
-	fDetune = 0.0f;
-	fStereo = 0.0f;
-	fNoiseStart = 0.0f;
-	fNoiseEnd = 0.0f;
-#endif
+	fADSRSpeed[0] = 0.05f;
+	fADSRSpeed[1] = 0.05f;
+	fADSRSpeed[2] = 0.05f;
+	fVolume[0] = 0.0f;
+	fVolume[1] = 0.25f;
+	fVolume[2] = 0.1f;
+	fVolume[3] = 0.0f;
 	fDelayFeed = 0.0f;
 	iDelayLength = 32;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
@@ -100,27 +89,6 @@ void VstXSynth::setProgram (VstInt32 program)
 	//VstXSynthProgram *ap = &programs[program];
 	curProgram = &(programs[program]);
 
-#if 0
-	fVolume    = ap->fVolume;
-	fDuration = ap->fDuration;
-	fAttack = ap->fAttack;
-	fDecay = ap->fDecay;
-	fSustain = ap->fSustain;
-	fRelease = ap->fRelease;
-	fQuakinessStart = ap->fQuakinessStart;
-	fQuakinessEnd = ap->fQuakinessEnd;
-	iSoundShapeStart = ap->iSoundShapeStart;
-	iSoundShapeEnd = ap->iSoundShapeEnd;
-	fModulationAmount = ap->fModulationAmount;
-	fModulationSpeed = ap->fModulationSpeed;
-	fDetune = ap->fDetune;
-	fStereo = ap->fStereo;
-	fNoiseStart = ap->fNoiseStart;
-	fNoiseEnd = ap->fNoiseEnd;
-	fDelayFeed = ap->fDelayFeed;
-	iDelayLength = ap->iDelayLength;
-#endif
-
 #ifdef SAVE_MUSIC
 	firstNoteTime = -1;
 #endif
@@ -143,7 +111,10 @@ void VstXSynth::getParameterLabel (VstInt32 index, char* label)
 {
 	switch (index)
 	{
-		case kVolume:
+		case kVolume1:
+		case kVolume2:
+		case kVolume3:
+		case kVolume4:
 			vst_strncpy (label, "dB", kVstMaxParamStrLen);
 			break;
 #if 0
@@ -167,24 +138,13 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 	text[0] = 0;
 	switch (index)
 	{
-		case kVolume:		dB2string (curProgram->fVolume, text, kVstMaxParamStrLen);	break;
-#if 0
-		case kDuration:		float2string (fDuration, text, kVstMaxParamStrLen); break;
-		case kAttack:		float2string (fAttack, text, kVstMaxParamStrLen); break;
-		case kDecay:	float2string(fDecay, text, kVstMaxParamStrLen); break;
-		case kSustain: float2string(fSustain, text, kVstMaxParamStrLen); break;
-		case kRelease:		float2string (fRelease, text, kVstMaxParamStrLen); break;
-		case kQuakinessStart: dB2string (fQuakinessStart * 2.0f, text, kVstMaxParamStrLen); break;
-		case kQuakinessEnd: dB2string (fQuakinessEnd * 2.0f, text, kVstMaxParamStrLen); break;
-		case kSoundShapeStart:   int2string (iSoundShapeStart, text, kVstMaxParamStrLen); break;
-		case kSoundShapeEnd: int2string (iSoundShapeEnd, text, kVstMaxParamStrLen); break;
-		case kModulationAmount: dB2string (fModulationAmount, text, kVstMaxParamStrLen); break;
-		case kModulationSpeed: float2string (fModulationSpeed, text, kVstMaxParamStrLen); break;
-		case kDetune: float2string(fDetune, text, kVstMaxParamStrLen); break;
-		case kStereo: float2string(fStereo, text, kVstMaxParamStrLen); break;
-		case kNoiseStart: float2string(fNoiseStart, text, kVstMaxParamStrLen); break;
-		case kNoiseEnd: float2string(fNoiseEnd, text, kVstMaxParamStrLen); break;
-#endif
+		case kVolume1: dB2string (curProgram->fVolume[0], text, kVstMaxParamStrLen); break;
+		case kVolume2: dB2string (curProgram->fVolume[1], text, kVstMaxParamStrLen); break;
+		case kVolume3: dB2string (curProgram->fVolume[2], text, kVstMaxParamStrLen); break;
+		case kVolume4: dB2string (curProgram->fVolume[3], text, kVstMaxParamStrLen); break;
+		case kAttack: float2string(curProgram->fADSRSpeed[0], text, kVstMaxParamStrLen); break;
+		case kDecay: float2string(curProgram->fADSRSpeed[1], text, kVstMaxParamStrLen); break;
+		case kRelease: float2string(curProgram->fADSRSpeed[2], text, kVstMaxParamStrLen); break;
 		case kDelayFeed: float2string(curProgram->fDelayFeed, text, kVstMaxParamStrLen); break;
 		case kDelayLength: int2string(curProgram->iDelayLength, text, kVstMaxParamStrLen); break;
 	}
@@ -195,24 +155,13 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 {
 	switch (index)
 	{
-		case kVolume: vst_strncpy (label, "Volume", kVstMaxParamStrLen);	break;
-#if 0
-		case kDuration: vst_strncpy(label, "Duration", kVstMaxParamStrLen); break;
-		case kAttack: vst_strncpy(label, "Attack", kVstMaxParamStrLen); break;
-		case kDecay: vst_strncpy(label, "Decay", kVstMaxParamStrLen); break;
-		case kSustain: vst_strncpy(label, "Sustain", kVstMaxParamStrLen); break;
-		case kRelease: vst_strncpy(label, "Release", kVstMaxParamStrLen); break;
-		case kQuakinessStart: vst_strncpy (label, "Quak start", kVstMaxParamStrLen);	break;
-		case kQuakinessEnd: vst_strncpy(label, "Quak end", kVstMaxParamStrLen); break;
-		case kSoundShapeStart: vst_strncpy (label, "Shape start", kVstMaxParamStrLen);	break;
-		case kSoundShapeEnd: vst_strncpy(label, "Shape end", kVstMaxParamStrLen); break;
-		case kModulationAmount: vst_strncpy(label, "Mod Amount", kVstMaxParamStrLen); break;
-		case kModulationSpeed: vst_strncpy(label, "Mod Speed", kVstMaxParamStrLen); break;
-		case kDetune: vst_strncpy(label, "Detune", kVstMaxParamStrLen); break;
-		case kStereo: vst_strncpy(label, "Stereo", kVstMaxParamStrLen); break;
-		case kNoiseStart: vst_strncpy(label, "Noise start", kVstMaxParamStrLen); break;
-		case kNoiseEnd: vst_strncpy(label, "Noise end", kVstMaxParamStrLen); break;
-#endif
+		case kAttack: vst_strncpy (label, "Attack", kVstMaxParamStrLen); break;
+		case kDecay: vst_strncpy (label, "Decay", kVstMaxParamStrLen); break;
+		case kRelease: vst_strncpy (label, "Release", kVstMaxParamStrLen); break;
+		case kVolume1: vst_strncpy (label, "Volume1", kVstMaxParamStrLen);	break;
+		case kVolume2: vst_strncpy (label, "Volume2", kVstMaxParamStrLen);	break;
+		case kVolume3: vst_strncpy (label, "Volume3", kVstMaxParamStrLen);	break;
+		case kVolume4: vst_strncpy (label, "Volume4", kVstMaxParamStrLen);	break;
 		case kDelayFeed: vst_strncpy(label, "Delay feed", kVstMaxParamStrLen); break;
 		case kDelayLength: vst_strncpy(label, "Delay length", kVstMaxParamStrLen); break;
 	}
@@ -225,24 +174,13 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 	VstXSynthProgram *ap = curProgram;
 	switch (index)
 	{
-		case kVolume: ap->fVolume		= value;	break;
-#if 0
-		case kDuration: fDuration = ap->fDuration = value; break;
-		case kAttack: fAttack = ap->fAttack = value; break;
-		case kDecay: fDecay = ap->fDecay = value; break;
-		case kSustain: fSustain = ap->fSustain = value; break;
-		case kRelease: fRelease = ap->fRelease = value; break;
-		case kQuakinessStart: fQuakinessStart = ap->fQuakinessStart = value;	break;
-		case kQuakinessEnd: fQuakinessEnd = ap->fQuakinessEnd = value; break;
-		case kSoundShapeStart: iSoundShapeStart = ap->iSoundShapeStart = (int)(value * 128.0f + 0.5f);	break;
-		case kSoundShapeEnd: iSoundShapeEnd = ap->iSoundShapeEnd = (int)(value * 128.0f + 0.5f); break;
-		case kModulationAmount: fModulationAmount = ap->fModulationAmount = value; break;
-		case kModulationSpeed: fModulationSpeed = ap->fModulationSpeed = value; break;
-		case kDetune: fDetune = ap->fDetune = value; break;
-		case kStereo: fStereo = ap->fStereo = value; break;
-		case kNoiseStart: fNoiseStart = ap->fNoiseStart = value; break;
-		case kNoiseEnd: fNoiseEnd = ap->fNoiseEnd = value; break;
-#endif
+		case kAttack: ap->fADSRSpeed[0] = value; break;
+		case kDecay: ap->fADSRSpeed[1] = value; break;
+		case kRelease: ap->fADSRSpeed[2] = value; break;
+		case kVolume1: ap->fVolume[0] = value; break;
+		case kVolume2: ap->fVolume[1] = value; break;
+		case kVolume3: ap->fVolume[2] = value; break;
+		case kVolume4: ap->fVolume[3] = value; break;
 		case kDelayFeed: ap->fDelayFeed = value; break;
 		case kDelayLength: ap->iDelayLength = (int)(value * 128.0f + 0.5f); break;
 	}
@@ -277,24 +215,13 @@ float VstXSynth::getParameter (VstInt32 index)
 	float value = 0;
 	switch (index)
 	{
-		case kVolume:		value = curProgram->fVolume;	break;
-#if 0
-		case kDuration: value = fDuration; break;
-		case kAttack: value = fAttack; break;
-		case kDecay : value = fDecay; break;
-		case kSustain: value = fSustain; break;
-		case kRelease: value = fRelease; break;
-		case kQuakinessStart:	value = fQuakinessStart;	break;
-		case kQuakinessEnd: value = fQuakinessEnd; break;
-		case kSoundShapeStart:	value = (float)iSoundShapeStart / 128.0f; break;
-		case kSoundShapeEnd: value = (float)iSoundShapeEnd / 128.0f; break;
-		case kModulationAmount: value = (float)fModulationAmount; break;
-		case kModulationSpeed: value = (float)fModulationSpeed; break;
-		case kDetune: value = fDetune; break;
-		case kStereo: value = fStereo; break;
-		case kNoiseStart: value = fNoiseStart; break;
-		case kNoiseEnd: value = fNoiseEnd; break;
-#endif
+		case kAttack: value = curProgram->fADSRSpeed[0]; break;
+		case kDecay: value = curProgram->fADSRSpeed[1]; break;
+		case kRelease: value = curProgram->fADSRSpeed[2]; break;
+		case kVolume1: value = curProgram->fVolume[0]; break;
+		case kVolume2: value = curProgram->fVolume[1]; break;
+		case kVolume3: value = curProgram->fVolume[2]; break;
+		case kVolume4: value = curProgram->fVolume[3]; break;
 		case kDelayFeed: value = curProgram->fDelayFeed; break;
 		case kDelayLength: value = (float)(curProgram->iDelayLength) / 128.0f; break;
 	}
