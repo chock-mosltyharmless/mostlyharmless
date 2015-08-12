@@ -147,6 +147,8 @@ void VstXSynth::initProcess ()
 	currentVelocity = nextVelocity = 0;
 	sampleID = 0;
 	iADSR = 0;
+	adsrVolume = 0.0f;
+	adsrQuak = 0.0f;
 
 	// Initialize moog filter parameters
 	b0 = b1 = b2 = b3 = b4 = 0.0f;
@@ -263,6 +265,8 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		// interpolate volume according to ADSR envelope
 		adsrVolume += (curProgram->fVolume[iADSR + 1] - adsrVolume) *
 					  (curProgram->fADSRSpeed[iADSR] / 1024.0f);
+		adsrQuak += (curProgram->fQuak[iADSR + 1] - adsrQuak) *
+					(curProgram->fADSRSpeed[iADSR] / 1024.0f);
 
 		// deathcounter volume
 		float deathVolume = 1.0f;
@@ -285,7 +289,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 				while (fPhase[i] > 2.0f * PI) fPhase[i] -= 2.0f * (float)PI;
 			}
 			overallLoudness += overtoneLoudness;
-			overtoneLoudness *= 1.0f;
+			overtoneLoudness *= adsrQuak * 2.0f;
 		}
 
 		// adjust amplitude
@@ -457,6 +461,7 @@ void VstXSynth::noteOn ()
 	iADSR = 0;
 	fADSRVal = 0.0f;
 	adsrVolume = curProgram->fVolume[0];
+	adsrQuak = curProgram->fQuak[0];
 
 	// This is just for debugging
 	nextNote = 0;

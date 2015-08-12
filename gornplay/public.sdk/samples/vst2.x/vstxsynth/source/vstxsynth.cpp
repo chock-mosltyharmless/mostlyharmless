@@ -40,6 +40,10 @@ VstXSynthProgram::VstXSynthProgram ()
 	fVolume[1] = 0.25f;
 	fVolume[2] = 0.1f;
 	fVolume[3] = 0.0f;
+	fQuak[0] = 0.1f;
+	fQuak[1] = 0.3f;
+	fQuak[2] = 0.1f;
+	fQuak[3] = 0.0f;
 	fDelayFeed = 0.0f;
 	iDelayLength = 32;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
@@ -115,6 +119,10 @@ void VstXSynth::getParameterLabel (VstInt32 index, char* label)
 		case kVolume2:
 		case kVolume3:
 		case kVolume4:
+		case kQuak1:
+		case kQuak2:
+		case kQuak3:
+		case kQuak4:
 			vst_strncpy (label, "dB", kVstMaxParamStrLen);
 			break;
 #if 0
@@ -142,6 +150,10 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 		case kVolume2: dB2string (curProgram->fVolume[1], text, kVstMaxParamStrLen); break;
 		case kVolume3: dB2string (curProgram->fVolume[2], text, kVstMaxParamStrLen); break;
 		case kVolume4: dB2string (curProgram->fVolume[3], text, kVstMaxParamStrLen); break;
+		case kQuak1: dB2string (curProgram->fQuak[0], text, kVstMaxParamStrLen); break;
+		case kQuak2: dB2string (curProgram->fQuak[1], text, kVstMaxParamStrLen); break;
+		case kQuak3: dB2string (curProgram->fQuak[2], text, kVstMaxParamStrLen); break;
+		case kQuak4: dB2string (curProgram->fQuak[3], text, kVstMaxParamStrLen); break;
 		case kAttack: float2string(curProgram->fADSRSpeed[0], text, kVstMaxParamStrLen); break;
 		case kDecay: float2string(curProgram->fADSRSpeed[1], text, kVstMaxParamStrLen); break;
 		case kRelease: float2string(curProgram->fADSRSpeed[2], text, kVstMaxParamStrLen); break;
@@ -162,6 +174,10 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 		case kVolume2: vst_strncpy (label, "Volume2", kVstMaxParamStrLen);	break;
 		case kVolume3: vst_strncpy (label, "Volume3", kVstMaxParamStrLen);	break;
 		case kVolume4: vst_strncpy (label, "Volume4", kVstMaxParamStrLen);	break;
+		case kQuak1: vst_strncpy (label, "Quak1", kVstMaxParamStrLen); break;
+		case kQuak2: vst_strncpy (label, "Quak2", kVstMaxParamStrLen); break;
+		case kQuak3: vst_strncpy (label, "Quak3", kVstMaxParamStrLen); break;
+		case kQuak4: vst_strncpy (label, "Quak4", kVstMaxParamStrLen); break;
 		case kDelayFeed: vst_strncpy(label, "Delay feed", kVstMaxParamStrLen); break;
 		case kDelayLength: vst_strncpy(label, "Delay length", kVstMaxParamStrLen); break;
 	}
@@ -181,6 +197,10 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kVolume2: ap->fVolume[1] = value; break;
 		case kVolume3: ap->fVolume[2] = value; break;
 		case kVolume4: ap->fVolume[3] = value; break;
+		case kQuak1: ap->fQuak[0] = value; break;
+		case kQuak2: ap->fQuak[1] = value; break;
+		case kQuak3: ap->fQuak[2] = value; break;
+		case kQuak4: ap->fQuak[3] = value; break;
 		case kDelayFeed: ap->fDelayFeed = value; break;
 		case kDelayLength: ap->iDelayLength = (int)(value * 128.0f + 0.5f); break;
 	}
@@ -222,6 +242,10 @@ float VstXSynth::getParameter (VstInt32 index)
 		case kVolume2: value = curProgram->fVolume[1]; break;
 		case kVolume3: value = curProgram->fVolume[2]; break;
 		case kVolume4: value = curProgram->fVolume[3]; break;
+		case kQuak1: value = curProgram->fQuak[0]; break;
+		case kQuak2: value = curProgram->fQuak[1]; break;
+		case kQuak3: value = curProgram->fQuak[2]; break;
+		case kQuak4: value = curProgram->fQuak[3]; break;
 		case kDelayFeed: value = curProgram->fDelayFeed; break;
 		case kDelayLength: value = (float)(curProgram->iDelayLength) / 128.0f; break;
 	}
