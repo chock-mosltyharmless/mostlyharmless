@@ -61,6 +61,10 @@ enum
 	kQuak2,
 	kQuak3,
 	kQuak4,
+	kDistort1,
+	kDistort2,
+	kDistort3,
+	kDistort4,
 	kDelayFeed, // Resonance at the start
 	kDelayLength,
 
@@ -81,6 +85,7 @@ private:
 	float fADSRSpeed[3];
 	float fVolume[4];
 	float fQuak[4];
+	float fDistort[4];
 	float fDelayFeed;
 	int iDelayLength;
 	char name[kVstMaxProgNameLen+1];
@@ -168,6 +173,7 @@ private:
 	// Interpolated stuff according to ADSR envelope
 	float adsrVolume;
 	float adsrQuak;
+	float adsrDistort;
 
 	void initProcess ();
 	void noteOn (); // Copy from nextNote to currentNote, resetting deathCounter

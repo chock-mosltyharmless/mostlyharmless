@@ -149,6 +149,7 @@ void VstXSynth::initProcess ()
 	iADSR = 0;
 	adsrVolume = 0.0f;
 	adsrQuak = 0.0f;
+	adsrDistort = 0.0f;
 
 	// Initialize moog filter parameters
 	b0 = b1 = b2 = b3 = b4 = 0.0f;
@@ -210,7 +211,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 
 	float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
 	//float vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
-	float vol = (float)((double)currentVelocity * midiScaler) * 4.0f;
+	float vol = (float)((double)currentVelocity * midiScaler);
 
 	// loop
 	while (--sampleFrames >= 0)
@@ -221,7 +222,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			noteOn();
 			baseFreq = freqtab[currentNote & 0x7f] * fScaler;
 			//vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
-			vol = (float)((double)currentVelocity * midiScaler) * 4.0f;
+			vol = (float)((double)currentVelocity * midiScaler);
 		}
 		if (deathCounter > 0) deathCounter--;
 
@@ -267,6 +268,8 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 					  (curProgram->fADSRSpeed[iADSR] / 1024.0f);
 		adsrQuak += (curProgram->fQuak[iADSR + 1] - adsrQuak) *
 					(curProgram->fADSRSpeed[iADSR] / 1024.0f);
+		adsrDistort += (curProgram->fDistort[iADSR + 1] - adsrDistort) *
+					   (curProgram->fADSRSpeed[iADSR] / 1024.0f);
 
 		// deathcounter volume
 		float deathVolume = 1.0f;
@@ -296,6 +299,11 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		for (int i = 0; i < NUM_STEREO_VOICES; i++)
 		{
 			outAmplitude[i] /= overallLoudness;
+
+			// Distort
+			float distortMult = exp(6.0f*adsrDistort);
+			outAmplitude[i] *= distortMult;
+			outAmplitude[i] = 2.0f * (1.0f / (1.0f + exp(-outAmplitude[i])) - 0.5f);
 		}
 
 #if 0
@@ -462,6 +470,7 @@ void VstXSynth::noteOn ()
 	fADSRVal = 0.0f;
 	adsrVolume = curProgram->fVolume[0];
 	adsrQuak = curProgram->fQuak[0];
+	adsrDistort = curProgram->fDistort[0];
 
 	// This is just for debugging
 	nextNote = 0;
@@ -472,6 +481,12 @@ void VstXSynth::noteOn ()
 	{
 		fPhase[i] = 0.0f;
 	}
+
+	// Set the reverberation buffer length at key start (no interpolation)
+	reverbBufferLength[0] = curProgram->iDelayLength * DELAY_MULTIPLICATOR + 1;
+	reverbBufferLength[1] = curProgram->iDelayLength * DELAY_MULTIPLICATOR * 7 / 17 + 1;
+	reverbBufferLength[2] = curProgram->iDelayLength * DELAY_MULTIPLICATOR * 13 / 23 + 1;
+	reverbBufferLength[3] = curProgram->iDelayLength * DELAY_MULTIPLICATOR * 11 / 13 + 1;
 
 #if 0
 	midiDelaySamples = -1;
