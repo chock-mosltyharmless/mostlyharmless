@@ -184,6 +184,15 @@ void VstXSynth::initProcess ()
 		oldVal = lowNoise[i % RANDOM_BUFFER_SIZE];
 	}
 
+	// Set null shapes
+	for (int j = 0; j < 4; j++)
+	{
+		for (int i = 0; i < NUM_OVERTONES; i++)
+		{
+			fShape[j][i] = 0.0f;
+		}
+	}
+
 	// Clear reverberation buffer
 	for (int i = 0; i < NUM_STEREO_VOICES; i++)
 	{
@@ -212,6 +221,15 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 	float baseFreq = freqtab[currentNote & 0x7f] * fScaler;
 	//float vol = (float)(curProgram->fVolume * (double)currentVelocity * midiScaler) * 4.0f;
 	float vol = (float)((double)currentVelocity * midiScaler);
+
+	// Some intermediate setting of shape stuff
+	for (int i = 0; i < NUM_OVERTONES; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			fShape[j][i] = expRandomBuffer[i + curProgram->iShape[j]*NUM_OVERTONES];
+		}
+	}
 
 	// loop
 	while (--sampleFrames >= 0)
@@ -260,7 +278,7 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			break;
 		}
 		// Go from attack to decay
-		if (iADSR == 0 && fADSRVal > 0.875) iADSR = 1;
+		if (iADSR == 0 && fADSRVal > 0.75) iADSR = 1;
 #endif
 
 		// interpolate volume according to ADSR envelope
@@ -270,6 +288,11 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 					(curProgram->fADSRSpeed[iADSR] / 1024.0f);
 		adsrDistort += (curProgram->fDistort[iADSR + 1] - adsrDistort) *
 					   (curProgram->fADSRSpeed[iADSR] / 1024.0f);
+		for (int i = 0; i < NUM_OVERTONES; i++)
+		{
+			adsrShape[i] += (fShape[iADSR + 1][i] - adsrShape[i]) *
+						    (curProgram->fADSRSpeed[iADSR] / 1042.0f);
+		}
 
 		// deathcounter volume
 		float deathVolume = 1.0f;
@@ -287,11 +310,12 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		{
 			if (i < maxOvertones)
 			{
-				outAmplitude[i % NUM_STEREO_VOICES] += (float)sin(fPhase[i]) * overtoneLoudness;
+				outAmplitude[i % NUM_STEREO_VOICES] += (float)sin(fPhase[i]) * overtoneLoudness *
+					adsrShape[i];
 				fPhase[i] += baseFreq * (i+1);
 				while (fPhase[i] > 2.0f * PI) fPhase[i] -= 2.0f * (float)PI;
 			}
-			overallLoudness += overtoneLoudness;
+			overallLoudness += overtoneLoudness * adsrShape[i];
 			overtoneLoudness *= adsrQuak * 2.0f;
 		}
 
@@ -487,6 +511,16 @@ void VstXSynth::noteOn ()
 	reverbBufferLength[1] = curProgram->iDelayLength * DELAY_MULTIPLICATOR * 7 / 17 + 1;
 	reverbBufferLength[2] = curProgram->iDelayLength * DELAY_MULTIPLICATOR * 13 / 23 + 1;
 	reverbBufferLength[3] = curProgram->iDelayLength * DELAY_MULTIPLICATOR * 11 / 13 + 1;
+
+	// Set the sound shape at the beginning
+	for (int i = 0; i < NUM_OVERTONES; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			fShape[j][i] = expRandomBuffer[i + curProgram->iShape[j]*NUM_OVERTONES];
+		}
+		adsrShape[i] = fShape[0][i];
+	}
 
 #if 0
 	midiDelaySamples = -1;

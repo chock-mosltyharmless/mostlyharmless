@@ -44,6 +44,10 @@ VstXSynthProgram::VstXSynthProgram ()
 	fQuak[1] = 0.3f;
 	fQuak[2] = 0.1f;
 	fQuak[3] = 0.0f;
+	iShape[0] = 0;
+	iShape[1] = 1;
+	iShape[2] = 2;
+	iShape[3] = 3;
 	fDistort[0] = 0.6f;
 	fDistort[1] = 0.8f;
 	fDistort[2] = 0.2f;
@@ -158,6 +162,10 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 		case kQuak2: dB2string (curProgram->fQuak[1], text, kVstMaxParamStrLen); break;
 		case kQuak3: dB2string (curProgram->fQuak[2], text, kVstMaxParamStrLen); break;
 		case kQuak4: dB2string (curProgram->fQuak[3], text, kVstMaxParamStrLen); break;
+		case kShape1: int2string (curProgram->iShape[0], text, kVstMaxParamStrLen); break;
+		case kShape2: int2string (curProgram->iShape[1], text, kVstMaxParamStrLen); break;
+		case kShape3: int2string (curProgram->iShape[2], text, kVstMaxParamStrLen); break;
+		case kShape4: int2string (curProgram->iShape[3], text, kVstMaxParamStrLen); break;
 		case kDistort1: dB2string (curProgram->fDistort[0], text, kVstMaxParamStrLen); break;
 		case kDistort2: dB2string (curProgram->fDistort[1], text, kVstMaxParamStrLen); break;
 		case kDistort3: dB2string (curProgram->fDistort[2], text, kVstMaxParamStrLen); break;
@@ -186,6 +194,10 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 		case kQuak2: vst_strncpy (label, "Quak2", kVstMaxParamStrLen); break;
 		case kQuak3: vst_strncpy (label, "Quak3", kVstMaxParamStrLen); break;
 		case kQuak4: vst_strncpy (label, "Quak4", kVstMaxParamStrLen); break;
+		case kShape1: vst_strncpy (label, "Shape1", kVstMaxParamStrLen); break;
+		case kShape2: vst_strncpy (label, "Shape2", kVstMaxParamStrLen); break;
+		case kShape3: vst_strncpy (label, "Shape3", kVstMaxParamStrLen); break;
+		case kShape4: vst_strncpy (label, "Shape4", kVstMaxParamStrLen); break;
 		case kDistort1: vst_strncpy (label, "Distort1", kVstMaxParamStrLen); break;
 		case kDistort2: vst_strncpy (label, "Distort2", kVstMaxParamStrLen); break;
 		case kDistort3: vst_strncpy (label, "Distort3", kVstMaxParamStrLen); break;
@@ -213,12 +225,16 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kQuak2: ap->fQuak[1] = value; break;
 		case kQuak3: ap->fQuak[2] = value; break;
 		case kQuak4: ap->fQuak[3] = value; break;
+		case kShape1: ap->iShape[0] = (int)(value * 127.0f + 0.5f); break;
+		case kShape2: ap->iShape[1] = (int)(value * 127.0f + 0.5f); break;
+		case kShape3: ap->iShape[2] = (int)(value * 127.0f + 0.5f); break;
+		case kShape4: ap->iShape[3] = (int)(value * 127.0f + 0.5f); break;
 		case kDistort1: ap->fDistort[0] = value; break;
 		case kDistort2: ap->fDistort[1] = value; break;
 		case kDistort3: ap->fDistort[2] = value; break;
 		case kDistort4: ap->fDistort[3] = value; break;
 		case kDelayFeed: ap->fDelayFeed = value; break;
-		case kDelayLength: ap->iDelayLength = (int)(value * 128.0f + 0.5f); break;
+		case kDelayLength: ap->iDelayLength = (int)(value * 127.0f + 0.5f); break;
 	}
 
 #ifdef SAVE_MUSIC
@@ -262,12 +278,16 @@ float VstXSynth::getParameter (VstInt32 index)
 		case kQuak2: value = curProgram->fQuak[1]; break;
 		case kQuak3: value = curProgram->fQuak[2]; break;
 		case kQuak4: value = curProgram->fQuak[3]; break;
+		case kShape1: value = (float)(curProgram->iShape[0]) / 127.0f; break;
+		case kShape2: value = (float)(curProgram->iShape[1]) / 127.0f; break;
+		case kShape3: value = (float)(curProgram->iShape[2]) / 127.0f; break;
+		case kShape4: value = (float)(curProgram->iShape[3]) / 127.0f; break;
 		case kDistort1: value = curProgram->fDistort[0]; break;
 		case kDistort2: value = curProgram->fDistort[1]; break;
 		case kDistort3: value = curProgram->fDistort[2]; break;
 		case kDistort4: value = curProgram->fDistort[3]; break;
 		case kDelayFeed: value = curProgram->fDelayFeed; break;
-		case kDelayLength: value = (float)(curProgram->iDelayLength) / 128.0f; break;
+		case kDelayLength: value = (float)(curProgram->iDelayLength) / 127.0f; break;
 	}
 	return value;
 }

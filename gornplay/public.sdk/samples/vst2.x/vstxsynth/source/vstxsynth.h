@@ -61,6 +61,10 @@ enum
 	kQuak2,
 	kQuak3,
 	kQuak4,
+	kShape1,
+	kShape2,
+	kShape3,
+	kShape4,
 	kDistort1,
 	kDistort2,
 	kDistort3,
@@ -85,6 +89,7 @@ private:
 	float fADSRSpeed[3];
 	float fVolume[4];
 	float fQuak[4];
+	int iShape[4];
 	float fDistort[4];
 	float fDelayFeed;
 	int iDelayLength;
@@ -173,6 +178,8 @@ private:
 	// Interpolated stuff according to ADSR envelope
 	float adsrVolume;
 	float adsrQuak;
+	float fShape[4][NUM_OVERTONES];
+	float adsrShape[NUM_OVERTONES];
 	float adsrDistort;
 
 	void initProcess ();
