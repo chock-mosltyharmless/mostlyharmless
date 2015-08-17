@@ -150,6 +150,7 @@ void VstXSynth::initProcess ()
 	adsrVolume = 0.0f;
 	adsrQuak = 0.0f;
 	adsrDistort = 0.0f;
+	adsrNoise = 0.0f;
 
 	// Initialize moog filter parameters
 	b0 = b1 = b2 = b3 = b4 = 0.0f;
@@ -288,6 +289,8 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 					(curProgram->fADSRSpeed[iADSR] / 1024.0f);
 		adsrDistort += (curProgram->fDistort[iADSR + 1] - adsrDistort) *
 					   (curProgram->fADSRSpeed[iADSR] / 1024.0f);
+		adsrNoise += (curProgram->fNoise[iADSR + 1] - adsrNoise) *
+					 (curProgram->fADSRSpeed[iADSR] / 1024.0f);
 		for (int i = 0; i < NUM_OVERTONES; i++)
 		{
 			adsrShape[i] += (fShape[iADSR + 1][i] - adsrShape[i]) *
@@ -317,6 +320,13 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			}
 			overallLoudness += overtoneLoudness * adsrShape[i];
 			overtoneLoudness *= adsrQuak * 2.0f;
+		}
+
+		// Ring modulation with noise
+		for (int i = 0; i < NUM_STEREO_VOICES; i++)
+		{
+			// Ring modulation with noise
+			outAmplitude[i] *= 1.0f + (lowNoise[sampleID % RANDOM_BUFFER_SIZE] - 1.0f) * adsrNoise;				
 		}
 
 		// adjust amplitude
@@ -388,9 +398,9 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			
 			// Do the reverb feedback
 			int fromBuffer = (j + 1) % NUM_STEREO_VOICES;
-			int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]) % 
-				MAX_DELAY_LENGTH;
-			reverbBuffer[reverbPos][j] += curProgram->fDelayFeed * reverbBuffer[fromLocation][fromBuffer];
+			int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]);
+			reverbBuffer[reverbPos][j] += 0.5f * curProgram->fDelayFeed * reverbBuffer[fromLocation % MAX_DELAY_LENGTH][fromBuffer];
+			reverbBuffer[reverbPos][j] += 0.5f * curProgram->fDelayFeed * reverbBuffer[(fromLocation+1) % MAX_DELAY_LENGTH][(fromBuffer + 1) % NUM_STEREO_VOICES];
 			if (fabsf(reverbBuffer[reverbPos][j]) < 1.0e-12) reverbBuffer[reverbPos][j] = 0.0f;
 		}
 
@@ -495,6 +505,7 @@ void VstXSynth::noteOn ()
 	adsrVolume = curProgram->fVolume[0];
 	adsrQuak = curProgram->fQuak[0];
 	adsrDistort = curProgram->fDistort[0];
+	adsrNoise = curProgram->fNoise[0];
 
 	// This is just for debugging
 	nextNote = 0;

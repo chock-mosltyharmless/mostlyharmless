@@ -52,6 +52,10 @@ VstXSynthProgram::VstXSynthProgram ()
 	fDistort[1] = 0.8f;
 	fDistort[2] = 0.2f;
 	fDistort[3] = 0.0f;
+	fNoise[0] = 0.0f;
+	fNoise[1] = 0.0f;
+	fNoise[2] = 0.0f;
+	fNoise[3] = 0.0f;
 	fDelayFeed = 0.0f;
 	iDelayLength = 32;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
@@ -170,6 +174,10 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 		case kDistort2: dB2string (curProgram->fDistort[1], text, kVstMaxParamStrLen); break;
 		case kDistort3: dB2string (curProgram->fDistort[2], text, kVstMaxParamStrLen); break;
 		case kDistort4: dB2string (curProgram->fDistort[3], text, kVstMaxParamStrLen); break;
+		case kNoise1: dB2string (curProgram->fNoise[0], text, kVstMaxParamStrLen); break;
+		case kNoise2: dB2string (curProgram->fNoise[1], text, kVstMaxParamStrLen); break;
+		case kNoise3: dB2string (curProgram->fNoise[2], text, kVstMaxParamStrLen); break;
+		case kNoise4: dB2string (curProgram->fNoise[3], text, kVstMaxParamStrLen); break;
 		case kAttack: float2string(curProgram->fADSRSpeed[0], text, kVstMaxParamStrLen); break;
 		case kDecay: float2string(curProgram->fADSRSpeed[1], text, kVstMaxParamStrLen); break;
 		case kRelease: float2string(curProgram->fADSRSpeed[2], text, kVstMaxParamStrLen); break;
@@ -202,6 +210,10 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 		case kDistort2: vst_strncpy (label, "Distort2", kVstMaxParamStrLen); break;
 		case kDistort3: vst_strncpy (label, "Distort3", kVstMaxParamStrLen); break;
 		case kDistort4: vst_strncpy (label, "Distort4", kVstMaxParamStrLen); break;
+		case kNoise1: vst_strncpy (label, "Noise1", kVstMaxParamStrLen); break;
+		case kNoise2: vst_strncpy (label, "Noise2", kVstMaxParamStrLen); break;
+		case kNoise3: vst_strncpy (label, "Noise3", kVstMaxParamStrLen); break;
+		case kNoise4: vst_strncpy (label, "Noise4", kVstMaxParamStrLen); break;
 		case kDelayFeed: vst_strncpy(label, "Delay feed", kVstMaxParamStrLen); break;
 		case kDelayLength: vst_strncpy(label, "Delay length", kVstMaxParamStrLen); break;
 	}
@@ -233,6 +245,10 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kDistort2: ap->fDistort[1] = value; break;
 		case kDistort3: ap->fDistort[2] = value; break;
 		case kDistort4: ap->fDistort[3] = value; break;
+		case kNoise1: ap->fNoise[0] = value; break;
+		case kNoise2: ap->fNoise[1] = value; break;
+		case kNoise3: ap->fNoise[2] = value; break;
+		case kNoise4: ap->fNoise[3] = value; break;
 		case kDelayFeed: ap->fDelayFeed = value; break;
 		case kDelayLength: ap->iDelayLength = (int)(value * 127.0f + 0.5f); break;
 	}
@@ -286,6 +302,10 @@ float VstXSynth::getParameter (VstInt32 index)
 		case kDistort2: value = curProgram->fDistort[1]; break;
 		case kDistort3: value = curProgram->fDistort[2]; break;
 		case kDistort4: value = curProgram->fDistort[3]; break;
+		case kNoise1: value = curProgram->fNoise[0]; break;
+		case kNoise2: value = curProgram->fNoise[1]; break;
+		case kNoise3: value = curProgram->fNoise[2]; break;
+		case kNoise4: value = curProgram->fNoise[3]; break;
 		case kDelayFeed: value = curProgram->fDelayFeed; break;
 		case kDelayLength: value = (float)(curProgram->iDelayLength) / 127.0f; break;
 	}
