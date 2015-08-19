@@ -56,6 +56,10 @@ VstXSynthProgram::VstXSynthProgram ()
 	fNoise[1] = 0.0f;
 	fNoise[2] = 0.0f;
 	fNoise[3] = 0.0f;
+	fDetune[0] = 0.0f;
+	fDetune[1] = 0.0f;
+	fDetune[2] = 0.0f;
+	fDetune[3] = 0.0f;
 	fDelayFeed = 0.0f;
 	iDelayLength = 32;
 	vst_strncpy (name, "Basic", kVstMaxProgNameLen);
@@ -178,6 +182,10 @@ void VstXSynth::getParameterDisplay (VstInt32 index, char* text)
 		case kNoise2: dB2string (curProgram->fNoise[1], text, kVstMaxParamStrLen); break;
 		case kNoise3: dB2string (curProgram->fNoise[2], text, kVstMaxParamStrLen); break;
 		case kNoise4: dB2string (curProgram->fNoise[3], text, kVstMaxParamStrLen); break;
+		case kDetune1: dB2string (curProgram->fDetune[0], text, kVstMaxParamStrLen); break;
+		case kDetune2: dB2string (curProgram->fDetune[1], text, kVstMaxParamStrLen); break;
+		case kDetune3: dB2string (curProgram->fDetune[2], text, kVstMaxParamStrLen); break;
+		case kDetune4: dB2string (curProgram->fDetune[3], text, kVstMaxParamStrLen); break;
 		case kAttack: float2string(curProgram->fADSRSpeed[0], text, kVstMaxParamStrLen); break;
 		case kDecay: float2string(curProgram->fADSRSpeed[1], text, kVstMaxParamStrLen); break;
 		case kRelease: float2string(curProgram->fADSRSpeed[2], text, kVstMaxParamStrLen); break;
@@ -214,6 +222,10 @@ void VstXSynth::getParameterName (VstInt32 index, char* label)
 		case kNoise2: vst_strncpy (label, "Noise2", kVstMaxParamStrLen); break;
 		case kNoise3: vst_strncpy (label, "Noise3", kVstMaxParamStrLen); break;
 		case kNoise4: vst_strncpy (label, "Noise4", kVstMaxParamStrLen); break;
+		case kDetune1: vst_strncpy (label, "Detune1", kVstMaxParamStrLen); break;
+		case kDetune2: vst_strncpy (label, "Detune2", kVstMaxParamStrLen); break;
+		case kDetune3: vst_strncpy (label, "Detune3", kVstMaxParamStrLen); break;
+		case kDetune4: vst_strncpy (label, "Detune4", kVstMaxParamStrLen); break;
 		case kDelayFeed: vst_strncpy(label, "Delay feed", kVstMaxParamStrLen); break;
 		case kDelayLength: vst_strncpy(label, "Delay length", kVstMaxParamStrLen); break;
 	}
@@ -249,6 +261,10 @@ void VstXSynth::setParameter (VstInt32 index, float value)
 		case kNoise2: ap->fNoise[1] = value; break;
 		case kNoise3: ap->fNoise[2] = value; break;
 		case kNoise4: ap->fNoise[3] = value; break;
+		case kDetune1: ap->fDetune[0] = value; break;
+		case kDetune2: ap->fDetune[1] = value; break;
+		case kDetune3: ap->fDetune[2] = value; break;
+		case kDetune4: ap->fDetune[3] = value; break;
 		case kDelayFeed: ap->fDelayFeed = value; break;
 		case kDelayLength: ap->iDelayLength = (int)(value * 127.0f + 0.5f); break;
 	}
@@ -306,6 +322,10 @@ float VstXSynth::getParameter (VstInt32 index)
 		case kNoise2: value = curProgram->fNoise[1]; break;
 		case kNoise3: value = curProgram->fNoise[2]; break;
 		case kNoise4: value = curProgram->fNoise[3]; break;
+		case kDetune1: value = curProgram->fDetune[0]; break;
+		case kDetune2: value = curProgram->fDetune[1]; break;
+		case kDetune3: value = curProgram->fDetune[2]; break;
+		case kDetune4: value = curProgram->fDetune[3]; break;
 		case kDelayFeed: value = curProgram->fDelayFeed; break;
 		case kDelayLength: value = (float)(curProgram->iDelayLength) / 127.0f; break;
 	}

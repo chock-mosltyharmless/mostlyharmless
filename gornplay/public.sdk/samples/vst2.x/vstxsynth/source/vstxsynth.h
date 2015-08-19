@@ -73,6 +73,10 @@ enum
 	kNoise2,
 	kNoise3,
 	kNoise4,
+	kDetune1,
+	kDetune2,
+	kDetune3,
+	kDetune4,
 	kDelayFeed, // Resonance at the start
 	kDelayLength,
 
@@ -96,6 +100,7 @@ private:
 	int iShape[4];
 	float fDistort[4];
 	float fNoise[4];
+	float fDetune[4];
 	float fDelayFeed;
 	int iDelayLength;
 	char name[kVstMaxProgNameLen+1];
@@ -187,6 +192,7 @@ private:
 	float adsrShape[NUM_OVERTONES];
 	float adsrDistort;
 	float adsrNoise;
+	float adsrDetune;
 
 	void initProcess ();
 	void noteOn (); // Copy from nextNote to currentNote, resetting deathCounter

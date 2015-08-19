@@ -151,6 +151,7 @@ void VstXSynth::initProcess ()
 	adsrQuak = 0.0f;
 	adsrDistort = 0.0f;
 	adsrNoise = 0.0f;
+	adsrDetune = 0.0f;
 
 	// Initialize moog filter parameters
 	b0 = b1 = b2 = b3 = b4 = 0.0f;
@@ -232,6 +233,12 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 		}
 	}
 
+	float detuneFactor[NUM_OVERTONES];
+	for (int i = 0; i < NUM_OVERTONES; i++)
+	{
+		detuneFactor[i] = (randomBuffer[i] - 0.5f);
+	}
+
 	// loop
 	while (--sampleFrames >= 0)
 	{
@@ -291,6 +298,8 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 					   (curProgram->fADSRSpeed[iADSR] / 1024.0f);
 		adsrNoise += (curProgram->fNoise[iADSR + 1] - adsrNoise) *
 					 (curProgram->fADSRSpeed[iADSR] / 1024.0f);
+		adsrDetune += (curProgram->fDetune[iADSR + 1] - adsrDetune) *
+					  (curProgram->fADSRSpeed[iADSR] / 1024.0f);
 		for (int i = 0; i < NUM_OVERTONES; i++)
 		{
 			adsrShape[i] += (fShape[iADSR + 1][i] - adsrShape[i]) *
@@ -315,7 +324,8 @@ void VstXSynth::processReplacing (float** inputs, float** outputs, VstInt32 samp
 			{
 				outAmplitude[i % NUM_STEREO_VOICES] += (float)sin(fPhase[i]) * overtoneLoudness *
 					adsrShape[i];
-				fPhase[i] += baseFreq * (i+1);
+				fPhase[i] += baseFreq * (i+1) *
+					(1.0f + adsrDetune * detuneFactor[i]);
 				while (fPhase[i] > 2.0f * PI) fPhase[i] -= 2.0f * (float)PI;
 			}
 			overallLoudness += overtoneLoudness * adsrShape[i];
@@ -506,6 +516,7 @@ void VstXSynth::noteOn ()
 	adsrQuak = curProgram->fQuak[0];
 	adsrDistort = curProgram->fDistort[0];
 	adsrNoise = curProgram->fNoise[0];
+	adsrDetune = curProgram->fDetune[0];
 
 	// This is just for debugging
 	nextNote = 0;
