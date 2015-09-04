@@ -5,12 +5,10 @@
 #define WIN32_LEAN_AND_MEAN
 #define WIN32_EXTRA_LEAN
 #include <windows.h>
+#include "config.h"
 
 #ifndef _INTRO_H_
 #define _INTRO_H_
-
-// Include this to get debug information in case of a shader failure
-#define SHADER_DEBUG
 
 void intro_init( void );
 void intro_do( long time );

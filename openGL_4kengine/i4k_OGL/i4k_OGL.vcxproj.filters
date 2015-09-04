@@ -24,16 +24,16 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\intro.cpp">
+    <ClCompile Include="src\intro.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\mzk.cpp">
+    <ClCompile Include="src\mzk.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\_windows\main_deb.cpp">
+    <ClCompile Include="src\_windows\main_deb.c">
       <Filter>Source Files\_windows</Filter>
     </ClCompile>
-    <ClCompile Include="src\_windows\main_rel.cpp">
+    <ClCompile Include="src\_windows\main_rel.c">
       <Filter>Source Files\_windows</Filter>
     </ClCompile>
   </ItemGroup>
