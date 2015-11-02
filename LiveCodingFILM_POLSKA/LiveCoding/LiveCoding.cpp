@@ -503,14 +503,26 @@ void intro_do(long t)
 	loc = glGetUniformLocation(programID, "slider9");
 	glUniform1f(loc, interpolatedParameters[13]);
 
+	// Set texture identifiers
+	GLint texture_location;
+	texture_location = glGetUniformLocation(programID, "Noise3DTexture");
+	glUniform1i(texture_location, 0);
+	texture_location = glGetUniformLocation(programID, "DepthSensorTexture");
+	glUniform1i(texture_location, 1);
+
 	// render to larger offscreen texture
-	textureManager.getTextureID("noise3D", &textureID, errorText);
+	glActiveTexture(GL_TEXTURE1);
+	textureManager.getTextureID(TM_DEPTH_SENSOR_NAME, &textureID, errorText);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glActiveTexture(GL_TEXTURE0);
+	textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_3D, textureID);
+
 	glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// Copy backbuffer to texture
-	textureManager.getTextureID("renderTarget", &textureID, errorText);
+	textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 

@@ -20,6 +20,7 @@
 #define TM_HIGHLIGHT_NAME "smallTarget"
 #define TM_NOISE_NAME "noise2D"
 #define TM_NOISE3D_NAME "noise3D"
+#define TM_DEPTH_SENSOR_NAME "depthSensor"
 
 // The noise texture dimension
 #define TM_NOISE_TEXTURE_SIZE 256
@@ -71,10 +72,6 @@ public: // functions
 	// That might either be a .tga or any of the special textures
 	int getTextureID(const char *name, GLuint *id, char *errorString);
 
-	// Initialize Kinect
-	// returns 0 if successfull, -1 otherwise.
-	int initializeDefaultSensor(char *errorString);
-
 private: // functions
 	void releaseAll(void);
 	int createRenderTargetTexture(char *errorString, int width, int height,
@@ -87,6 +84,9 @@ private: // functions
 	void generateNoiseTexture(void);
 	int createNoiseTexture(char *errorString, const char *name);
 	int createNoiseTexture3D(char *errorString, const char *name);
+	int initializeDefaultSensor(char *errorString);  // Initializes Kinect
+	int CreateSensorTexture(char *errorString, const char *name);
+	int UpdateSensorTexture(char *error_string, GLuint texture_index);
 	
 private: // data
 	int numTextures;
@@ -96,7 +96,9 @@ private: // data
 	int textureHeight[TM_MAX_NUM_TEXTURES];
 
 	// Kinect data
-	IKinectSensor *kinectSensor;
-	IDepthFrameReader *depthFrameReader;
+	IKinectSensor *kinect_sensor_;
+	IDepthFrameReader *depth_frame_reader_;
+	INT64 last_frame_time_;  // Last time that a kinect frame was aquired
+	unsigned char *cpu_depth_sensor_buffer_;
 };
 
