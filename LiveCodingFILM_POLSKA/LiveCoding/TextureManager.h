@@ -99,6 +99,6 @@ private: // data
 	IKinectSensor *kinect_sensor_;
 	IDepthFrameReader *depth_frame_reader_;
 	INT64 last_frame_time_;  // Last time that a kinect frame was aquired
-	unsigned char *cpu_depth_sensor_buffer_;
+	float *cpu_depth_sensor_buffer_;
 };
 

@@ -4,6 +4,7 @@
 #include "glext.h"
 #include "gl/glu.h"
 #include "GLNames.h"
+#include "Parameter.h"
 
 // Kinect Header files
 #include <Kinect.h>
@@ -478,6 +479,8 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
 	glBindTexture(GL_TEXTURE_2D, textureID[numTextures]);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	//gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
 	//	TM_NOISE_TEXTURE_SIZE, TM_NOISE_TEXTURE_SIZE,
 	//	GL_BGRA, GL_UNSIGNED_BYTE, noiseIntData);
@@ -515,12 +518,12 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
 	pFrameDescription->get_Height(&nHeight);
 
 	if (cpu_depth_sensor_buffer_) delete[] cpu_depth_sensor_buffer_;
-	cpu_depth_sensor_buffer_ = new unsigned char[nWidth * nHeight];
+	cpu_depth_sensor_buffer_ = new float[nWidth * nHeight];
 	memset(cpu_depth_sensor_buffer_, 0, nWidth * nHeight);
 
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED,
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,
 		nWidth, nHeight,
-		0, GL_RED, GL_UNSIGNED_BYTE, cpu_depth_sensor_buffer_);
+		0, GL_RED, GL_FLOAT, cpu_depth_sensor_buffer_);
 
 	textureWidth[numTextures] = nWidth;
 	textureHeight[numTextures] = nHeight;
@@ -565,10 +568,15 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	hr = depth_frame_interface->AccessUnderlyingBuffer(&buffer_size, &buffer);
 	// Transform it smartly into 8 Bit.
 	UINT16 *source_pointer = buffer;
-	unsigned char *dest_pointer = cpu_depth_sensor_buffer_;
+	float *dest_pointer = cpu_depth_sensor_buffer_;
+	float min_depth = 5.0f; // always?
+	float max_depth = (7000.0f * params.getParam(14, 0.5f)) + min_depth + 1.0f;
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
-			*dest_pointer = (unsigned char)((*source_pointer) >> 2);
+			float depth = (float)*source_pointer;
+			if (depth > max_depth) depth = max_depth;
+			if (depth < min_depth) depth = max_depth;
+			*dest_pointer = (max_depth - depth) / max_depth;
 			source_pointer++;
 			dest_pointer++;
 		}
@@ -579,7 +587,7 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	// Send data to GPU
 	glTexSubImage2D(GL_TEXTURE_2D, 0,
 		0, 0, width, height,
-		GL_RED, GL_UNSIGNED_BYTE, cpu_depth_sensor_buffer_);
+		GL_RED, GL_FLOAT, cpu_depth_sensor_buffer_);
 
 	return 0;
 }
