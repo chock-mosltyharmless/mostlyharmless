@@ -489,8 +489,8 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
 	glBindTexture(GL_TEXTURE_2D, textureID[numTextures]);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	//gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
 	//	TM_NOISE_TEXTURE_SIZE, TM_NOISE_TEXTURE_SIZE,
 	//	GL_BGRA, GL_UNSIGNED_BYTE, noiseIntData);
@@ -589,17 +589,21 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	UINT16 *source_pointer = buffer;
 	float *dest_pointer = cpu_depth_sensor_buffer_;
 	float min_depth = 5.0f; // always?
-	float max_depth = (7000.0f * params.getParam(14, 0.5f)) + min_depth + 1.0f;
+	float max_depth = (7000.0f * params.getParam(14, 0.2f)) + min_depth + 1.0f;
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			float depth = (float)*source_pointer;
 			if (depth > max_depth) depth = max_depth;
 			if (depth < min_depth) depth = max_depth;
 			depth = (max_depth - depth) / max_depth;  // Go to range 0..1
+#if 0
 			float y_to_border = fminf((float)y, (float)(height - y));
 			float x_to_border = fminf((float)x, (float)(width - x));
 			float distance_to_border = fminf(x_to_border, y_to_border);
 			float amount = fminf(distance_to_border / 64.0f, 1.0f);
+#else
+			float amount = 1.0f;
+#endif
 			*dest_pointer = depth * amount;
 			source_pointer++;
 			dest_pointer++;
@@ -608,18 +612,35 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	
 	depth_frame_interface->Release();
 
-	// Gravitate the depth buffer
-	const float cGravitate = 0.05f;
 	int next = next_smoothed_depth_sensor_buffer_;
 	int cur = 1 - next_smoothed_depth_sensor_buffer_;
+
+	// Set interpolated depth buffer to the max where it should be
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			int index = y * width + x;
+			if (smoothed_depth_sensor_buffer_[cur][index] < cpu_depth_sensor_buffer_[index]) {
+				smoothed_depth_sensor_buffer_[cur][index] = cpu_depth_sensor_buffer_[index];
+			}
+		}
+	}
+
+	// Gravitate the depth buffer
+	const float cGravitate = 0.02f;
 	for (int y = 1; y < height - 1; y++) {
 		for (int x = 1; x < width - 1; x++) {
 			int index = y * width + x;
-#if 0
+#if 1
 			float surround = fmaxf(fmaxf(smoothed_depth_sensor_buffer_[cur][index - 1],
 					  smoothed_depth_sensor_buffer_[cur][index + 1]),
 				fmaxf(smoothed_depth_sensor_buffer_[cur][index - width],
 				      smoothed_depth_sensor_buffer_[cur][index + width]));
+			surround += smoothed_depth_sensor_buffer_[cur][index - 1] +
+				smoothed_depth_sensor_buffer_[cur][index + 1] +
+				smoothed_depth_sensor_buffer_[cur][index - width] +
+				smoothed_depth_sensor_buffer_[cur][index + width];
+			surround /= 5.0;
+			
 #else
 			float surround = smoothed_depth_sensor_buffer_[cur][index - 1] +
 				smoothed_depth_sensor_buffer_[cur][index + 1] +
@@ -633,12 +654,9 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	}
 
 	// Set interpolated depth buffer to the max where it should be
-	for (int y = 1; y < height - 1; y++) {
-		for (int x = 1; x < width - 1; x++) {
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
 			int index = y * width + x;
-			if (smoothed_depth_sensor_buffer_[next][index] < cpu_depth_sensor_buffer_[index]) {
-				smoothed_depth_sensor_buffer_[next][index] = cpu_depth_sensor_buffer_[index];
-			}
 			if (smoothed_depth_sensor_buffer_[next][index] < 0.0f) {
 				smoothed_depth_sensor_buffer_[next][index] = 0.0f;
 			}

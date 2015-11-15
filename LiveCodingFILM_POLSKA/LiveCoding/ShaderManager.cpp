@@ -25,7 +25,7 @@ const char *Shader::jlslHeader =
 "}                                                                     "
 "float sDepth(vec2 pos) {"
 "  return texture2D(DepthSensorTexture,"
-"                   vec2(0.5*pos.x+0.5, 0.5 - 0.5*pos.y)).r;"
+"                   vec2(0.25*pos.x + 0.5, 0.5 - 0.25*pos.y)).r;"
 "}"
 "vec4 vnoise3(vec3 pos, float reduction) {                              "
 "float intensity = 1.;                                                 "
