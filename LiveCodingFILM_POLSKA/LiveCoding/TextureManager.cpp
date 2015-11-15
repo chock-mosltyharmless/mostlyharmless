@@ -8,6 +8,7 @@
 
 // Kinect Header files
 #include <Kinect.h>
+#include <math.h>
 
 static float noiseData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
 static unsigned char noiseIntData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
@@ -19,6 +20,9 @@ TextureManager::TextureManager(void)
 	kinect_sensor_ = NULL;
 	depth_frame_reader_ = NULL;
 	cpu_depth_sensor_buffer_ = NULL;
+	smoothed_depth_sensor_buffer_[0] = NULL;
+	smoothed_depth_sensor_buffer_[1] = NULL;
+	next_smoothed_depth_sensor_buffer_ = 0;
 }
 
 TextureManager::~TextureManager(void)
@@ -47,6 +51,12 @@ void TextureManager::releaseAll(void)
 	if (cpu_depth_sensor_buffer_) {
 		delete[] cpu_depth_sensor_buffer_;
 		cpu_depth_sensor_buffer_ = NULL;
+	}
+
+	if (smoothed_depth_sensor_buffer_[0]) {
+		delete[] smoothed_depth_sensor_buffer_[0];
+		delete[] smoothed_depth_sensor_buffer_[1];
+		smoothed_depth_sensor_buffer_[0] = NULL;
 	}
 }
 
@@ -520,10 +530,18 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
 	if (cpu_depth_sensor_buffer_) delete[] cpu_depth_sensor_buffer_;
 	cpu_depth_sensor_buffer_ = new float[nWidth * nHeight];
 	memset(cpu_depth_sensor_buffer_, 0, nWidth * nHeight);
+	if (smoothed_depth_sensor_buffer_[0]) {
+		delete[] smoothed_depth_sensor_buffer_[0];
+		delete[] smoothed_depth_sensor_buffer_[1];
+	}
+	smoothed_depth_sensor_buffer_[0] = new float[nWidth * nHeight];
+	smoothed_depth_sensor_buffer_[1] = new float[nWidth * nHeight];
+	memset(smoothed_depth_sensor_buffer_[0], 0, nWidth*nHeight);
+	memset(smoothed_depth_sensor_buffer_[1], 0, nWidth*nHeight);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,
 		nWidth, nHeight,
-		0, GL_RED, GL_FLOAT, cpu_depth_sensor_buffer_);
+		0, GL_RED, GL_FLOAT, smoothed_depth_sensor_buffer_[0]);
 
 	textureWidth[numTextures] = nWidth;
 	textureHeight[numTextures] = nHeight;
@@ -566,7 +584,8 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	UINT16 *buffer = NULL;
 
 	hr = depth_frame_interface->AccessUnderlyingBuffer(&buffer_size, &buffer);
-	// Transform it smartly into 8 Bit.
+	
+	// Transform depth buffer to 32-bit float with range 0..1
 	UINT16 *source_pointer = buffer;
 	float *dest_pointer = cpu_depth_sensor_buffer_;
 	float min_depth = 5.0f; // always?
@@ -576,7 +595,12 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 			float depth = (float)*source_pointer;
 			if (depth > max_depth) depth = max_depth;
 			if (depth < min_depth) depth = max_depth;
-			*dest_pointer = (max_depth - depth) / max_depth;
+			depth = (max_depth - depth) / max_depth;  // Go to range 0..1
+			float y_to_border = fminf((float)y, (float)(height - y));
+			float x_to_border = fminf((float)x, (float)(width - x));
+			float distance_to_border = fminf(x_to_border, y_to_border);
+			float amount = fminf(distance_to_border / 64.0f, 1.0f);
+			*dest_pointer = depth * amount;
 			source_pointer++;
 			dest_pointer++;
 		}
@@ -584,10 +608,51 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	
 	depth_frame_interface->Release();
 
+	// Gravitate the depth buffer
+	const float cGravitate = 0.05f;
+	int next = next_smoothed_depth_sensor_buffer_;
+	int cur = 1 - next_smoothed_depth_sensor_buffer_;
+	for (int y = 1; y < height - 1; y++) {
+		for (int x = 1; x < width - 1; x++) {
+			int index = y * width + x;
+#if 0
+			float surround = fmaxf(fmaxf(smoothed_depth_sensor_buffer_[cur][index - 1],
+					  smoothed_depth_sensor_buffer_[cur][index + 1]),
+				fmaxf(smoothed_depth_sensor_buffer_[cur][index - width],
+				      smoothed_depth_sensor_buffer_[cur][index + width]));
+#else
+			float surround = smoothed_depth_sensor_buffer_[cur][index - 1] +
+				smoothed_depth_sensor_buffer_[cur][index + 1] +
+				smoothed_depth_sensor_buffer_[cur][index - width] +
+					smoothed_depth_sensor_buffer_[cur][index + width];
+			surround /= 4.0;
+#endif
+			smoothed_depth_sensor_buffer_[next][index] =
+				surround - cGravitate;
+		}
+	}
+
+	// Set interpolated depth buffer to the max where it should be
+	for (int y = 1; y < height - 1; y++) {
+		for (int x = 1; x < width - 1; x++) {
+			int index = y * width + x;
+			if (smoothed_depth_sensor_buffer_[next][index] < cpu_depth_sensor_buffer_[index]) {
+				smoothed_depth_sensor_buffer_[next][index] = cpu_depth_sensor_buffer_[index];
+			}
+			if (smoothed_depth_sensor_buffer_[next][index] < 0.0f) {
+				smoothed_depth_sensor_buffer_[next][index] = 0.0f;
+			}
+			if (smoothed_depth_sensor_buffer_[next][index] > 1.0f) {
+				smoothed_depth_sensor_buffer_[next][index] = 1.0f;
+			}
+		}
+	}
+	next_smoothed_depth_sensor_buffer_ = cur;
+
 	// Send data to GPU
 	glTexSubImage2D(GL_TEXTURE_2D, 0,
 		0, 0, width, height,
-		GL_RED, GL_FLOAT, cpu_depth_sensor_buffer_);
+		GL_RED, GL_FLOAT, smoothed_depth_sensor_buffer_[next]);
 
 	return 0;
 }

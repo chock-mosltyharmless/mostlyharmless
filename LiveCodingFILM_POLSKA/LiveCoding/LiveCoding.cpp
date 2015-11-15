@@ -530,7 +530,8 @@ void intro_do(long t)
 	int xres = windowRect.right - windowRect.left;
 	int yres = windowRect.bottom - windowRect.top;
 	glViewport(0, 0, xres, yres);
-	shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
+	//shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
+	shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
 	glUseProgram(programID);
 	loc = glGetUniformLocation(programID, "time");
 	glUniform1f(loc, (float)(t * 0.001f));
