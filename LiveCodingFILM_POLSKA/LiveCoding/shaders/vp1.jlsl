@@ -15,5 +15,6 @@ vec3 normal = normalize(cross(dx, dy));
 float brightness = dot(lightDir, normal) * 2.0 - 0.3;                 
                                                                       
 gl_FragColor = vec4(vec3(brightness), 1.0);                           
+gl_FragColor *= pow(max(0.,min(1., 0.99- length(ppos))),0.3);
 }                                                                     
                                                                       

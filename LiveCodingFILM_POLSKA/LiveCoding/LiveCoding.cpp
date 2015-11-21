@@ -518,20 +518,33 @@ void intro_do(long t)
 	textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_3D, textureID);
 
-	glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+	if (usedIndex > 4) {
+		glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+	} else {
+		glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+	}
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// Copy backbuffer to texture
-	textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+	if (usedIndex > 4) {
+		textureManager.getTextureID(TM_HIGHLIGHT_NAME, &textureID, errorText);
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+	} else {
+		textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+	}
 
 	// Copy backbuffer to front (so far no improvement)
 	int xres = windowRect.right - windowRect.left;
 	int yres = windowRect.bottom - windowRect.top;
 	glViewport(0, 0, xres, yres);
-	//shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
-	shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+	if (usedIndex > 4) {
+		shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
+	} else {
+		shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+	}
 	glUseProgram(programID);
 	loc = glGetUniformLocation(programID, "time");
 	glUniform1f(loc, (float)(t * 0.001f));

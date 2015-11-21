@@ -10,8 +10,8 @@
 // The resolution of the background stuff
 #define X_OFFSCREEN XRES
 #define Y_OFFSCREEN YRES
-#define X_HIGHLIGHT 128
-#define Y_HIGHLIGHT 64
+#define X_HIGHLIGHT 400
+#define Y_HIGHLIGHT 300
 
 // The maximum number of chars in an error message.
 // Make error fields one larger!
