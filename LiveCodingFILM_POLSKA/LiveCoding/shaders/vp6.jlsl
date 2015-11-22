@@ -5,38 +5,39 @@ vec3 rayDir = normalize(vec3(ppos, 2.));
 vec3 totalColor = vec3(0.);                                           
 float totalDensity = 0.;                                              
                                                                       
-rayDir.xz = rotate(rayDir.xz, time);                                  
-rayDir.xy = rotate(rayDir.xy, time);                                  
-rayPos.xz = rotate(rayPos.xz, time);                                  
-rayPos.xy = rotate(rayPos.xy, time);                                  
+rayDir.xz = rotate(rayDir.xz, time*.3);                               
+rayDir.xy = rotate(rayDir.xy, time*.3);                               
+rayPos.xz = rotate(rayPos.xz, time*.3);                               
+rayPos.xy = rotate(rayPos.xy, time*.3);                               
                                                                       
-for (int i = 0; i < 100 && length(rayPos) < 12. &&                    
+for (int i = 0; i < 100 && length(rayPos) < 40. &&                    
 totalDensity < 0.95; i++) {                                           
                                                                       
-float distort = vnoise1(rayPos*0.02).g;                               
-float smoothness = vnoise1(rayPos*0.01).x*5.;                         
-float bumper = 0.5;                                                   
-bumper += spike*4.*knob1+0.5;                                       
-vec3 noisePos = rayPos +
-bumper*vnoise5(rayPos*0.1*distort*slider1 +
-vec3(time*0.04), slider2).xyz;                                        
-float implicit = length(noisePos) - 3.*slider3;
-implicit += vnoise1(rayPos*0.04*slider4).b*8.*slider5;
+vec3 noisePos = rayPos +                                              
+1.*vnoise3(rayPos*0.4*slider1 + vec3(time*0.1), slider2).xyz;         
+float implicit = length(rayPos +                                      
+sin(rayPos.x+time*3. + spike*knob1) * slider5 *                       
+10. * vnoise3(noisePos*0.04*slider3,slider4).xyz) - 3.;               
                                                                       
-float density = smoothstep(0., -0.3, implicit);                       
+float density = smoothstep(0.2, -0.5, abs(implicit));                 
+totalColor += 0.1*knob2 * (1. - totalDensity) *                       
+mix(vec3(.0, 2., 3.), vec3(3., 1., 1.0),                              
+4.*knob4*vnoise1(rayPos*0.01).r + 0.5 + spike*0.3*knob1);             
+totalColor -= (1.-totalDensity) * density * density * 20. * knob3;    
 totalDensity += (1. - totalDensity) * density;                        
 totalDensity += 0.01;                                                 
-totalColor += 4.*mix(vec3(0.01,0.013,0.014), vec3(0.014,0.012,0.009), 
-sin(noisePos.x*2.*noisePos.z));                                       
                                                                       
-rayPos += rayDir * max(0.05, abs(implicit)*1.*(1.1-slider9));
+rayPos += rayDir * max(0.03, abs(implicit) * (1.1 - slider9));
 }                                                                     
                                                                       
-color = mix(vec3(0.3,0.2,0.1), vec3(0.2,0.2,0.4),                     
-rayDir.z*rayDir.x*2.);                                                
+color = mix(vec3(0.1, -0.4, 0.1), vec3(-0.4, -0.2, 0.0),              
+rayDir.y+0.5);                                                        
 color = mix(color, totalColor, totalDensity);                         
-color *= (1. - knob9);                                                
-color = mix(color, vec3(dot(color, vec3(0.3,0.5, 0.2))), knob8*1.3);  
+                                                                      
+// Desaturate;                                                        
+color = max(color, vec3(0.));                                         
+color = mix(color, vec3(dot(color,vec3(0.3,0.5,0.2))), knob8);        
+color *= (1. - knob9);
 gl_FragColor = vec4(color, 1.0);                                      
 }                                                                     
                                                                       

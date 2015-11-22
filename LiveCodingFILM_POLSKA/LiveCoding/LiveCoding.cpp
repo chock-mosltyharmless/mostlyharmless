@@ -509,8 +509,13 @@ void intro_do(long t)
 	glUniform1i(texture_location, 0);
 	texture_location = glGetUniformLocation(programID, "DepthSensorTexture");
 	glUniform1i(texture_location, 1);
+	texture_location = glGetUniformLocation(programID, "BGTexture");
+	glUniform1i(texture_location, 2);
 
 	// render to larger offscreen texture
+	glActiveTexture(GL_TEXTURE2);
+	textureManager.getTextureID("hermaniak.tga", &textureID, errorText);
+	glBindTexture(GL_TEXTURE_2D, textureID);
 	glActiveTexture(GL_TEXTURE1);
 	textureManager.getTextureID(TM_DEPTH_SENSOR_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_2D, textureID);
