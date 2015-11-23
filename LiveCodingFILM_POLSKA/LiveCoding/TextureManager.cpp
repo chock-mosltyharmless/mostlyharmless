@@ -588,12 +588,12 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	hr = depth_frame_interface->AccessUnderlyingBuffer(&buffer_size, &buffer);
 	
 	// Transform depth buffer to 32-bit float with range 0..1
-	UINT16 *source_pointer = buffer;
-	float *dest_pointer = cpu_depth_sensor_buffer_;
-	float min_depth = 5.0f; // always?
+	float min_depth = 3.0f; // always?
 	float max_depth = (7000.0f * params.getParam(14, 0.2f)) + min_depth + 1.0f;
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
+	for (int y = 1; y < height-1; y++) {
+		UINT16 *source_pointer = buffer + width * y;
+		float *dest_pointer = cpu_depth_sensor_buffer_ + width * y;
+		for (int x = 1; x < width-1; x++) {
 			float depth = (float)*source_pointer;
 			if (depth > max_depth) depth = max_depth;
 			if (depth < min_depth) depth = max_depth;
@@ -606,7 +606,19 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 #else
 			float amount = 1.0f;
 #endif
-			*dest_pointer = depth * amount;
+
+			// Ignore singular pixels
+			int active = 0;
+			if (*(source_pointer - width) > (int)min_depth) active++;
+			if (*(source_pointer + width) > (int)min_depth) active++;
+			if (*(source_pointer + 1) > (int)min_depth) active++;
+			if (*(source_pointer - 1) > (int)min_depth) active++;
+			if (active > 3) {
+				*dest_pointer = depth * amount;
+			} else {
+				*dest_pointer -= 0.003f;
+				if (*dest_pointer < 0) *dest_pointer = 0;
+			}
 			source_pointer++;
 			dest_pointer++;
 		}
