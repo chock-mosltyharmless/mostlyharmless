@@ -1,17 +1,18 @@
 void main(void) {                                                     
 float depth = sDepth(ppos);                                           
 vec2 npos = ppos;                                                     
-npos /= depth + 1.;                                                   
-npos.y -= 0.3*depth;                                                  
-float amount = 1.-pow(abs(sin(npos.y*50.-spike*slider1)),0.5);        
-vec4 n1 = vnoise3(npos.xyx*0.05+vec3(0.,0.,time*0.02),0.7);           
-amount += n1.r-0.2;                                                   
-amount *= depth + 1.;                                                 
+npos /= depth + 1.0;                                                  
+npos.y -= depth * 0.4;                                                
+npos += vnoise3(ppos.yxy*0.07+vec3(0.,0.,time)*0.01, 0.5).rg * 0.3    
+* spike * slider1;                                                    
+float amount = 1. - pow(abs(sin(npos.y*50.)), 0.7);                   
 amount += depth*0.7;                                                  
-vec3 color = vnoise1(npos.yyy).rgb;                                   
-gl_FragColor = vec4(1.2*vec3(amount)*                                 
-vec3(0.8,0.9,1.1)+color*0.6,0.);                                      
-gl_FragColor *= max(0.,1.4 - length(ppos));                           
+vec4 n1 = vnoise3(npos.xyx*0.1 + vec3(0.,0.,0.02*time), 0.5);         
+amount += n1.r;                                                       
+vec3 ynoise = vnoise1(npos.yyy +                                      
+vec3(time*0.1 + spike*0.1) * slider2).rgb;                            
+gl_FragColor = vec4(1.2 * amount *                                    
+(vec3(0.8, 1.1, 1.2) + ynoise*0.8), 1.);                              
+gl_FragColor.rgb *= max(0.,1.5 - length(ppos));                       
 }                                                                     
-                                                                      
                                                                       
