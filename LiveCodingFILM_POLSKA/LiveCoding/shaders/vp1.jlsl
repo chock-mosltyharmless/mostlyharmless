@@ -1,31 +1,21 @@
 void main(void) {                                                     
-float d = 0.005;                                                      
-float md = 0.1;                                                       
-float a = 0.2;                                                        
-vec3 lightDir = vec3(0.3, 0.5, 0.5);                                  
+vec2 npos = ppos;                                                     
                                                                       
-vec3 dx = vec3(a, 0.0, min(max(-md,                                   
-sDepth(ppos + vec2(d,0.0)) - sDepth(ppos - vec2(d,0.0))), md));       
-dx = normalize(dx);                                                   
-vec3 dy = vec3(0.0, a, min(max(-md,                                   
-sDepth(ppos + vec2(0.0,d)) - sDepth(ppos - vec2(0.0,d))), md));       
-dy = normalize(dy);                                                   
-vec3 normal = normalize(cross(dx, dy));                               
+vec3 n1 = vnoise3(ppos.xyy*0.1 + vec3(time*0.01,0.,time*-0.02),       
+0.5).rgb;                                                             
                                                                       
-float brightness = dot(lightDir, normal) * 2.0 - 0.3;                 
-                                                                      
-gl_FragColor = vec4(vec3(brightness), 1.0);                           
-gl_FragColor *= pow(max(0.,min(1., 0.99- length(ppos))),0.3);         
-                                                                      
-vec2 bgpos = ppos;                                                    
-bgpos += vec2(sDepth(ppos)) * slider3 * 5.;                           
-vec3 bg = background(bgpos);                                          
-vec3 bgdx = abs(background(bgpos+vec2(0.01,0.)) -                     
-background(bgpos-vec2(0.01,0.)))*5.;                                  
-                                                                      
-bg = mix(bg, bgdx, slider1);                                          
-bg += normal*vec3(1.5,1.5,0.5) * slider2;                             
-                                                                      
-gl_FragColor.rgb *= bg;                                               
+for (int i = 0; i < 8; i++) {                                         
+npos *= 1. - (sDepth(npos)*0.5*slider1 - slider1*0.1)*                
+(1.+spike*slider4);                                                   
+float rot = slider2 * float(i) * sDepth(npos) - slider3*spike*0.1-    
+time*0.1;                                                             
+npos = mat2(cos(rot),sin(rot),-sin(rot),cos(rot))*npos;               
 }                                                                     
                                                                       
+float depth = sDepth(npos);                                           
+                                                                      
+vec3 color = mix(vec3(0.1,0.2,0.4), vec3(1.5,0.9,0.7),depth)*2.;      
+gl_FragColor = vec4(color, 1.0);                                      
+gl_FragColor *= max(0., 1.4 - length(ppos))*1.5;                      
+}                                                                     
+           
