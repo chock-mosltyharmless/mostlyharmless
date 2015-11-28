@@ -4,7 +4,7 @@ vec2 npos = ppos;
                                                                       
 for (int i = 0; i < 12; i++) {                                        
 npos *= 1. - (0.05 - sDepth(npos)*0.5);                               
-float rot = sDepth(npos) - time * 0.07 + float(i);                    
+float rot = sDepth(npos) + time * 0.07 + float(i);                    
 npos = mat2(cos(rot),sin(rot),-sin(rot),cos(rot))*npos;               
 }                                                                     
                                                                       
