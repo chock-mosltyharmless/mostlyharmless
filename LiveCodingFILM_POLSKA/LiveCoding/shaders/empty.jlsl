@@ -4,13 +4,18 @@ vec2 npos = ppos;
                                                                       
 npos *= slider1*0.3*sin(npos.x + time) + 1.5;                         
                                                                       
-vec3 color = background(npos)*max(0.,(1.-slider3));                   
+vec3 color = background(npos)*max(0.,(1.-slider2));                   
 if (abs(npos.x)>1. || abs(npos.y)>1.) {                               
 color = vec3(0.);                                                     
 }                                                                     
                                                                       
-color = mix(color,vec3(1.7,1.4,0.9),                                  
-slider2*sDepth(ppos)*2.);                                             
+vec2 lpos = ppos;                                                     
+lpos /= 1. + spike*slider8*0.2*sDepth(ppos);                          
+color = mix(color,vec3(1.4,1.2,0.9),slider3*sDepth(lpos)*2.);         
+                                                                      
+vec3 spos = vec3(ppos, sDepth(ppos)*10. + slider9*spike + time);      
+vec3 n1 = vnoise5(spos*0.1,0.4).rgb;                                  
+color *= mix(vec3(1.), n1+0.7, slider4);                              
                                                                       
 gl_FragColor = vec4(color,1.);                                        
 gl_FragColor *= max(0., 1.5-length(ppos));                            

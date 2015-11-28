@@ -640,7 +640,7 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	}
 
 	// Gravitate the depth buffer
-	const float cGravitate = 0.2f * params.getParam(15, 0.2f);
+	const float cGravitate = 0.2f * params.getParam(15, 0.5f) * params.getParam(15, 0.5f);
 	for (int y = 1; y < height - 1; y++) {
 		for (int x = 1; x < width - 1; x++) {
 			int index = y * width + x;
