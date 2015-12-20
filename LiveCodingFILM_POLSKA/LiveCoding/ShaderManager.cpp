@@ -26,7 +26,7 @@ const char *Shader::jlslHeader =
 "}                                                                     "
 "float sDepth(vec2 pos) {"
 "  return texture2D(DepthSensorTexture,"
-"                   vec2(0.36*pos.x + 0.5, 0.5 - 0.48*pos.y)).r;"
+"                   vec2(-0.32*pos.x + 0.5, 0.5 - 0.44*pos.y)).r;"
 "}"
 "vec3 background(vec2 pos) {"
 "  return texture2D(BGTexture,"
