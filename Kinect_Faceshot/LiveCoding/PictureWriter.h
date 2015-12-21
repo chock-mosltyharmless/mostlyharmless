@@ -46,8 +46,7 @@ public:
     // Coordinates are in range [0..1] from top left
     // Radius is in width-space
     void FillCircle(float x, float y, float radius,
-                    unsigned char red, unsigned char green,
-                    unsigned char blue, unsigned char alpha);
+                    int red, int green, int blue, int alpha);
 
 	// Get a pointer to the data
 	typedef unsigned char(*PointerToImage)[3];

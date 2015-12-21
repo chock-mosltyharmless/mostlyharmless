@@ -32,8 +32,7 @@ void PictureWriter::FillColor(unsigned char red, unsigned char green,
 }
 
 void PictureWriter::FillCircle(float x, float y, float radius,
-                               unsigned char red, unsigned char green,
-                               unsigned char blue, unsigned char alpha) {
+                               int red, int green, int blue, int alpha) {
     x *= width_;
     y *= height_;
     radius *= width_;

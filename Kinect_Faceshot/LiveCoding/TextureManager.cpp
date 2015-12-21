@@ -639,8 +639,8 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 		for (int x = 0; x < width; x++) {
 			int index = y * width + x;
 			smoothed_depth_sensor_buffer_[next][index] =
-				0.8f * smoothed_depth_sensor_buffer_[cur][index] +
-				0.2f * cpu_depth_sensor_buffer_[index];
+				0.7f * smoothed_depth_sensor_buffer_[cur][index] +
+				0.3f * cpu_depth_sensor_buffer_[index];
 		}
 	}
 
@@ -668,17 +668,124 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 
 void TextureManager::CreatePicture(const char *filename) {
     picture_writer_.FillColor(255, 255, 255, 0);
+    //picture_writer_.FillColor(0, 0, 0, 0);
 
     //picture_writer_.FillCircle(0.3f, 0.3f, 0.03f, 120, 50, 30, 100);
 
-    float *depth_buffer = smoothed_depth_sensor_buffer_[next_smoothed_depth_sensor_buffer_];
+    float *orig_depth = smoothed_depth_sensor_buffer_[next_smoothed_depth_sensor_buffer_];
     int width = depth_sensor_width_;
     int height = depth_sensor_height_;
 
+    // Scale depth in range 0..1
+    float *depth_buffer = new float[width*height];
+    float min_depth = 1.0f;
+    float max_depth = 0.0f;
+    for (int i = 0; i < width * height; i++) {
+        if (orig_depth[i] < min_depth && orig_depth[i] > 0) min_depth = orig_depth[i];
+        if (orig_depth[i] > max_depth) max_depth = orig_depth[i];
+    }
+    for (int i = 0; i < width * height; i++) {
+        float val = (orig_depth[i] - min_depth) / (max_depth - min_depth);
+        if (val < 0.0f) val = 0.0f;
+        depth_buffer[i] = val;
+    }
+
+    const float min_shader_depth = 0.02f;
+
+    // Low-pass filtered depth
+    float *lp_depth_2 = new float[width*height];
+    float *lp_depth = new float[width*height];
+    int filter_width = 3;
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            float sum_depth = 0.f;
+            int accumulated = 0;
+            for (int xd = -filter_width; xd <= filter_width; xd++) {
+                if (x + xd > 0 && x + xd < width) {
+                    if (depth_buffer[y * width + x + xd] > min_shader_depth) {
+                        sum_depth += depth_buffer[y * width + x + xd];
+                        accumulated++;
+                    }
+                }
+                if (accumulated > 0) lp_depth_2[y * width + x] = sum_depth / accumulated;
+                else lp_depth_2[y * width + x] = 0.0f;
+            }
+        }
+    }
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            float sum_depth = 0.f;
+            int accumulated = 0;
+            for (int yd = -filter_width; yd <= filter_width; yd++) {
+                if (y + yd > 0 && y + yd < height) {
+                    if (lp_depth_2[(y+yd) * width + x] > min_shader_depth) {
+                        sum_depth += lp_depth_2[(y+yd) * width + x];
+                        accumulated++;
+                    }
+                }
+                if (accumulated > 0) lp_depth[y * width + x] = sum_depth / accumulated;
+                else lp_depth[y * width + x] = 0.;
+            }
+        }
+    }
+
 #if 1
     // draw some stars
-    const float pos_noise = 3.0f / TGA_WIDTH;
-    float size_noise = 0.6f;
+    const float pos_noise = 5.0f / TGA_WIDTH;
+    const float size_noise = 10.0f / TGA_WIDTH;
+    const float stand_out_factor = 60.0f;
+    const float stand_out_noise = 0.03f;
+    const float depth_noise_amount = 20.0f;
+    for (int i = 0; i < 500000; i++) {
+        float st_noise = frand();
+        st_noise = pow(st_noise, 4.0f);
+        st_noise *= frand() - 0.5f;
+        st_noise *= stand_out_noise;
+
+        float what = float(rand() % 100000) * 1.0f / 100000.0f;
+
+        int px = abs(rand() % width);
+        int py = abs(rand() % height);
+        float depth = depth_buffer[py * width + px];
+        float tex_x = (float)px / (float)width;
+        float tex_y = (float)py / (float)height;
+        tex_x += frand() * pos_noise;
+        tex_y += frand() * pos_noise;
+        if (depth < min_shader_depth) depth += st_noise * depth_noise_amount;
+        if (depth < 0.0f) depth = 0.0f;
+        int red = 200 + (int)(pow(depth, 1.5) * 55);
+        int green = 240 - (int)(pow(depth, 1.) * 150);
+        int blue = 255 - (int)(pow(depth, 0.5) * 255);
+        float stand_out = depth - lp_depth[py * width + px];
+        if (stand_out < -0.1f) stand_out = -0.1f;
+        if (stand_out > 0.1f) stand_out = 0.1f;
+
+        float brightness = 0.5f + stand_out_factor * stand_out;
+        //if (depth < min_shader_depth) brightness = 0.5f + st_noise * stand_out_factor;
+        brightness = depth * brightness + (1.0f - depth) + st_noise * stand_out_factor;
+        red = (int)(red * brightness);
+        green = (int)(green * brightness);
+        blue = (int)(blue * brightness);
+        if (red > 255) red = 255;
+        if (red < 0) red = 0;
+        if (green > 255) green = 255;
+        if (green < 0) green = 0;
+        if (blue > 255) blue = 255;
+        if (blue < 0) blue = 0;
+        float radius = 0.;
+        if (depth > min_shader_depth) radius = fabsf(stand_out) * 100.0f / TGA_WIDTH;
+        else radius = fabsf(st_noise) * 30.0f / TGA_WIDTH;
+        float sn = frand();
+        sn = (float)pow(sn, 80.0f);
+        radius += sn * size_noise + 1.0f / TGA_WIDTH;
+        if (radius > 0.4f / TGA_WIDTH) {
+            picture_writer_.FillCircle(tex_x, tex_y, radius, red, green, blue, 255);
+        }
+    }
+#else
+    // draw some stars
+    const float pos_noise = 12.0f / TGA_WIDTH;
+    const float star_size = 0.7f / TGA_WIDTH;
     for (int i = 0; i < 200000; i++) {
         int px = abs(rand() % width);
         int py = abs(rand() % height);
@@ -688,32 +795,25 @@ void TextureManager::CreatePicture(const char *filename) {
         tex_x += float(rand() % 100000) * pos_noise * 1.0f / 100000.0f;
         tex_y += float(rand() % 100000) * pos_noise * 1.0f / 100000.0f;
         if (depth < 0.0f) depth = 0.0f;
-        int red = 220 - (int)(pow(depth, 0.5) * 50);
-        int green = 240 - (int)(pow(depth, 1.) * 220);
-        int blue = 255 - (int)(pow(depth, 1.5) * 400);
+        int red = (int)(pow(depth, 1.5) * 600) + 50;
+        int green = (int)(pow(depth, 1.) * 350) + 50;
+        int blue = (int)(pow(depth, 0.5) * 200) + 50;
         if (red > 255) red = 255;
         if (red < 0) red = 0;
         if (green > 255) green = 255;
         if (green < 0) green = 0;
         if (blue > 255) blue = 255;
         if (blue < 0) blue = 0;
-        float radius = depth * 5.0 / TGA_WIDTH;
-        float sn = float(rand()%100000) * size_noise * 1.0f / 100000.0f;
-        sn *= sn;
-        sn *= sn;
-        radius += sn;
+        float radius = star_size;
         if (radius > 0.4f / TGA_WIDTH) {
-            picture_writer_.FillCircle(tex_x, tex_y, radius, red, green, blue, 255);
-        }
-    }
-#else
-    for (float x = 0; x < 1; x+= 0.02) {
-        for (float y = 0; y < 1; y += 0.02) {
-            picture_writer_.FillCircle(x, y, 1.5f / TGA_WIDTH,
-                   (int)(x*255), (int)(y*255), 0, 0);
+            picture_writer_.FillCircle(tex_x, tex_y, radius, red, green, blue, 0);
         }
     }
 #endif
 
     picture_writer_.Save(filename);
+
+    delete [] depth_buffer;
+    delete [] lp_depth_2;
+    delete [] lp_depth;
 }
