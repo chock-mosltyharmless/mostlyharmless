@@ -35,7 +35,7 @@ typedef HGLRC (APIENTRY *PFNWGLCREATECONTEXTATTRIBSARB)(HDC hdc,
 #ifdef SHADER_DEBUG
 #define NUM_GL_NAMES 19
 #else
-#define NUM_GL_NAMES 18
+#define NUM_GL_NAMES 16
 #endif
 
 typedef void (*GenFP)(void); // pointer to openGL functions
