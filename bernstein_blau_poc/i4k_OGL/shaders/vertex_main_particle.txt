@@ -15,8 +15,9 @@ float GetImplicit(vec3 pos) {
     pos.y -= cos(time*0.4)*0.2;
     pos.z -= sin(time*0.5)*0.2;
 
-    pos.x -= sin(pos.y*0.5);
-    pos.y -= sin(pos.x*.25);
+    pos.z -= sin(pos.y*0.3)*0.3;
+    pos.x -= sin(pos.z*0.5)*0.3;
+    pos.y -= sin(pos.x*.25)*0.3;
 
     float implicit = length(pos) - sin(12.0*length(pos)) / 12.0 - .75 - 0.2 * sin(time*0.);
     return implicit;
@@ -42,7 +43,9 @@ void main(void) {
     f.y += 12.*sin(time*0.21) * sin(position_.x*5.) * dy_implicit * amount;
     f.z += 12.*sin(time*0.37) * sin(position_.y*6.) * dz_implicit * amount;
     f.x *= 0.56;
-    f.z += .6 + 0.2 * sin(time*0.2);
+    f.z += .7 + 0.7 * sin(time*0.2);
+    f.x -= 0.1;
+    f.y += 0.1;
 	gl_Position = vec4(f, f.z);
     particle_magic_ = color_.a;
 
@@ -61,6 +64,9 @@ void main(void) {
     float darkener = abs(sin(position_.x * 7.) + cos(position_.z * 5.));
     particle_color_.a += darkener * 3.;
     particle_color_.rgb -= vec3(darkener);
+
+    // flashing
+    //particle_color_.rgb *= 1. + pow(abs(sin(time*2.)), 10.) / (length(position_.xyz) + 0.1);
 
     particle_color_.rgb = max(vec3(0.), particle_color_.rgb);
 
