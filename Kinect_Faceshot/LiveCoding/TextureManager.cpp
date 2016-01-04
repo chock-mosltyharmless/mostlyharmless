@@ -667,9 +667,6 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 }
 
 void TextureManager::CreatePicture(const char *filename) {
-    picture_writer_.FillColor(255, 255, 255, 0);
-    //picture_writer_.FillColor(0, 0, 0, 0);
-
     //picture_writer_.FillCircle(0.3f, 0.3f, 0.03f, 120, 50, 30, 100);
 
     float *orig_depth = smoothed_depth_sensor_buffer_[next_smoothed_depth_sensor_buffer_];
@@ -729,7 +726,8 @@ void TextureManager::CreatePicture(const char *filename) {
         }
     }
 
-#if 1
+#if 0
+    picture_writer_.FillColor(255, 255, 255, 0);
     // draw some stars
     const float pos_noise = 5.0f / TGA_WIDTH;
     const float size_noise = 10.0f / TGA_WIDTH;
@@ -783,30 +781,52 @@ void TextureManager::CreatePicture(const char *filename) {
         }
     }
 #else
+    picture_writer_.FillColor(0, 0, 0, 0);
     // draw some stars
-    const float pos_noise = 12.0f / TGA_WIDTH;
-    const float star_size = 0.7f / TGA_WIDTH;
-    for (int i = 0; i < 200000; i++) {
-        int px = abs(rand() % width);
-        int py = abs(rand() % height);
+    const float star_size = 1.4f / TGA_WIDTH;
+    const float rot_alpha = 0.5f;
+    const float rot_cos_alpha = (float)cos(rot_alpha);
+    const float rot_sin_alpha = (float)sin(rot_alpha);
+    const float depth_factor = 0.23f;
+    const float max_stand_out = 0.005f;
+    for (int i = 0; i < 100000; i++) {
+        float tex_x = frand();
+        float tex_y = frand();
+        int px = (int)(tex_x * width);
+        int py = (int)(tex_y * height);
+        if (px < 0) px = 0;
+        if (px >= width) px = width - 1;
+        if (py < 0) py = 0;
+        if (py >= height) py = height - 1;
         float depth = depth_buffer[py * width + px];
-        float tex_x = (float)px / (float)width;
-        float tex_y = (float)py / (float)height;
-        tex_x += float(rand() % 100000) * pos_noise * 1.0f / 100000.0f;
-        tex_y += float(rand() % 100000) * pos_noise * 1.0f / 100000.0f;
+        float stand_out = depth - lp_depth[py * width + px];
+        if (stand_out < -max_stand_out) stand_out = -max_stand_out;
+        if (stand_out > max_stand_out) stand_out = max_stand_out;
+        stand_out /= max_stand_out;
         if (depth < 0.0f) depth = 0.0f;
-        int red = (int)(pow(depth, 1.5) * 600) + 50;
-        int green = (int)(pow(depth, 1.) * 350) + 50;
-        int blue = (int)(pow(depth, 0.5) * 200) + 50;
-        if (red > 255) red = 255;
-        if (red < 0) red = 0;
-        if (green > 255) green = 255;
-        if (green < 0) green = 0;
-        if (blue > 255) blue = 255;
-        if (blue < 0) blue = 0;
-        float radius = star_size;
-        if (radius > 0.4f / TGA_WIDTH) {
-            picture_writer_.FillCircle(tex_x, tex_y, radius, red, green, blue, 0);
+
+        if (depth > min_shader_depth) {
+
+            // rotate a little
+            tex_x = rot_cos_alpha * (tex_x - 0.5f) + 0.5f + rot_sin_alpha * depth * depth_factor;
+
+            float normalized_stand_out = stand_out * 0.4f + 0.4f + depth * 0.2f;
+            int red = (int)(pow(normalized_stand_out, 1.5) * 300) + 50;
+            int green = (int)(pow(normalized_stand_out, 0.5) * 80) + 50;
+            int blue = 250 - (int)(pow(normalized_stand_out, 0.5) * 250);
+            if (red > 255) red = 255;
+            if (red < 0) red = 0;
+            if (green > 255) green = 255;
+            if (green < 0) green = 0;
+            if (blue > 255) blue = 255;
+            if (blue < 0) blue = 0;
+            
+            float some_rand = frand();
+            some_rand *= some_rand * some_rand;
+            float radius = star_size + some_rand * some_rand * 6.0f / TGA_WIDTH;
+            if (radius > 0.4f / TGA_WIDTH) {
+                picture_writer_.FillCircle(tex_x, tex_y, radius, red, green, blue, 0);
+            }
         }
     }
 #endif

@@ -12,8 +12,8 @@
 #define Y_OFFSCREEN YRES
 #define X_HIGHLIGHT 400
 #define Y_HIGHLIGHT 300
-#define TGA_WIDTH (512 * 4)
-#define TGA_HEIGHT (424 * 4)
+#define TGA_WIDTH (512 * 8)
+#define TGA_HEIGHT (424 * 8)
 
 // The maximum number of chars in an error message.
 // Make error fields one larger!
