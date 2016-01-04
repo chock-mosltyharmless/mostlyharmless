@@ -232,6 +232,27 @@ void intro_do( long itime )
 	// Set the render matrix
 	float parameterMatrix[4][4];
 	parameterMatrix[0][0] = itime / 44100.0f;
+
+    // Set parameters to other locations
+    parameterMatrix[0][1] = params.getParam(2, 0.5f);
+    parameterMatrix[0][2] = params.getParam(3, 0.5f);
+    parameterMatrix[0][3] = params.getParam(4, 0.5f);
+
+    parameterMatrix[1][0] = params.getParam(5, 0.5f);
+    parameterMatrix[1][1] = params.getParam(6, 0.5f);
+    parameterMatrix[1][2] = params.getParam(8, 0.5f);
+    parameterMatrix[1][3] = params.getParam(9, 0.5f);
+
+    parameterMatrix[2][0] = params.getParam(12, 0.5f);
+    parameterMatrix[2][1] = params.getParam(13, 0.5f);
+    parameterMatrix[2][2] = params.getParam(14, 0.5f);
+    parameterMatrix[2][3] = params.getParam(15, 0.5f);
+
+    parameterMatrix[3][0] = params.getParam(16, 0.5f);
+    parameterMatrix[3][1] = params.getParam(17, 0.5f);
+    parameterMatrix[3][2] = params.getParam(18, 0.5f);
+    parameterMatrix[3][3] = params.getParam(19, 0.5f);
+
 	int location = glGetUniformLocation(shaderPrograms[0], "r");
 	glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
     // render
