@@ -1,0 +1,41 @@
+#version 330 core
+
+layout(points) in;
+layout(triangle_strip, max_vertices=4) out;
+
+in vec4 particle_color_[];
+in float particle_magic_[];
+out vec4 sprite_color_;
+out vec2 sprite_pos_;
+
+uniform mat4 r;
+
+void main() {
+	vec4 pos = gl_in[0].gl_Position;
+	float radius = .001 + abs(pos.z - .5) * .03;
+	float luminance = .001 / radius;
+	radius = min(radius, 0.1 * pos.w);  // Maximum radius not too big
+	//float b=(.15+.5*smoothstep(.003,.0,abs(sin(r[0][0]*.02)-sin(particle_color_[0].r*100.))))*pow(l,2.);
+	float brightness = 1. * pow(luminance, 2.);
+	float c = pow(luminance, 1.);
+	brightness *= smoothstep(c, .5 * c, particle_magic_[0]) / c;
+	if (particle_magic_[0] <= c && brightness >.02) {
+		gl_Position = pos + vec4(-.56 * radius, radius, .0, .0);
+		sprite_pos_ = vec2(-1.,1.);
+		sprite_color_ = brightness * particle_color_[0];
+		EmitVertex();
+		gl_Position = pos + vec4(.56 * radius, radius,.0,.0);
+		sprite_pos_ = vec2(1.,1.);
+		sprite_color_ = brightness * particle_color_[0];
+		EmitVertex();
+		gl_Position = pos + vec4(-.56 * radius, -radius,.0,.0);
+		sprite_pos_ = vec2(-1.,-1.);
+		sprite_color_ = brightness * particle_color_[0];
+		EmitVertex();
+		gl_Position = pos + vec4(.56 * radius, -radius,.0,.0);
+		sprite_pos_ = vec2(1.,-1.);
+		sprite_color_ = brightness * particle_color_[0];
+		EmitVertex();
+	}
+	EndPrimitive();
+}
