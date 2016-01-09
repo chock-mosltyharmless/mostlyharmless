@@ -18,6 +18,10 @@
 
 // Seed value that is used to create the parameters for the effect
 short random_parameters_seed_;
+int num_saved_parameters_seeds_ = 0;
+int saved_parameters_seeds_index_ = 0;
+int saved_parameters_seeds_[65536];
+
 
 typedef struct
 {
@@ -142,11 +146,26 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case VK_RIGHT:
             random_parameters_seed_++;
             break;
+        case VK_UP:
+            saved_parameters_seeds_index_ =
+                (saved_parameters_seeds_index_ + num_saved_parameters_seeds_ - 1) %
+                num_saved_parameters_seeds_;
+            random_parameters_seed_ = saved_parameters_seeds_[saved_parameters_seeds_index_];
+            break;
+        case VK_DOWN:
+            saved_parameters_seeds_index_ = (saved_parameters_seeds_index_ + 1) %
+                num_saved_parameters_seeds_;
+            random_parameters_seed_ = saved_parameters_seeds_[saved_parameters_seeds_index_];
+            break;
         case 's':
         case 'S':
             fid = fopen("saved_seeds.txt", "a");
             fprintf(fid, "%d\n", (int)random_parameters_seed_);
             fclose(fid);
+            if (num_saved_parameters_seeds_ < 65535) {
+                saved_parameters_seeds_[num_saved_parameters_seeds_] = (int)random_parameters_seed_;
+                num_saved_parameters_seeds_++;
+            }
             break;
         default:
             break;
@@ -280,6 +299,13 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // Initialize the seed value that is used for effect generation based on
     // start time
     random_parameters_seed_ = (short)timeGetTime();
+    num_saved_parameters_seeds_ = 0;
+    FILE *fid = fopen("saved_seeds.txt", "r");
+    while (fscanf(fid, "%d\n", &(saved_parameters_seeds_[num_saved_parameters_seeds_])) > 0) {
+        num_saved_parameters_seeds_++;
+    }
+    fclose(fid);
+    saved_parameters_seeds_index_ = 0;
 
 	// open audio device
 	if (waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 
