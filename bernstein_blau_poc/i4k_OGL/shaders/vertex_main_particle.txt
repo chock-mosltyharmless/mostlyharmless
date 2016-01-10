@@ -22,10 +22,11 @@ float GetImplicit(vec3 pos) {
     pos.y -= cos(time * cos(pos.x * 0.5) * 0.4) * first_amount * 0.1;
     pos.z -= sin(time * sin(pos.y * 0.2) * 0.5) * first_amount * 0.1;
 
-	float dist = r[0][3] * 25.0;
-	float dist2 = r[1][0];
+	float dist = r[3][1] * 25.0;
+	float dist2 = r[3][2] * 5.0;
+	float dist3 = r[3][3];
 
-    float implicit = length(pos) - sin(dist * length(pos)) / dist - dist2 - 0.2 * sin(time*0.);
+    float implicit = length(pos) - sin(dist * length(pos)) * dist2 - dist3 - 0.2 * sin(time*0.);
     return implicit;
 }
 
@@ -46,12 +47,12 @@ void main(void) {
     float dz_implicit = GetImplicit(pos.xyz + vec3(0., 0., dd)) - implicit;
 
 	vec3 f = pos.xyz * 0.45;
-    f.x += 12.*sin(time*0.19) * sin(pos.z*7.) * dx_implicit * amount;
-    f.y += 12.*sin(time*0.21) * sin(pos.x*5.) * dy_implicit * amount;
-    f.z += 12.*sin(time*0.37) * sin(pos.y*6.) * dz_implicit * amount;
-    //f.x += dx_implicit * amount;
-    //f.y += dy_implicit * amount;
-    //f.z += dz_implicit * amount;
+    f.x += 12. * (r[1][0] * sin(time*0.49) * sin(pos.z*7.) + 1. - r[1][0]) * dx_implicit * amount * r[0][3];
+    f.y += 12. * (r[1][0] * sin(time*0.31) * sin(pos.x*5.) + 1. - r[1][0]) * dy_implicit * amount * r[0][3];
+    f.z += 12. * (r[1][0] * sin(time*0.37) * sin(pos.y*6.) + 1. - r[1][0]) * dz_implicit * amount * r[0][3];
+    //f.x += dx_implicit * r[0][3] * 2.0;
+    //f.y += dy_implicit * r[0][3] * 2.0;
+    //f.z += dz_implicit * r[0][3] * 2.0;
 	f.xz = f.xz * yrotmat;
     f.x *= 0.56;
     f.z += 1.5 - 2. * r[2][2];
@@ -72,7 +73,7 @@ void main(void) {
 
     particle_color_.a = 1.0;
 
-    float darkener = abs(sin(pos.x * r[1][2] * 3.) + cos(pos.z * r[1][3] * 3.) - sin(pos.y * r[2][0] * 3.));
+    float darkener = abs(sin(pos.x * r[1][2] * 8.) + cos(pos.z * r[1][3] * 8.) - sin(pos.y * r[2][0] * 8.));
     particle_color_.a += darkener * r[2][1];
     particle_color_.rgb -= vec3(darkener) * r[2][1] * 3.0;
 
