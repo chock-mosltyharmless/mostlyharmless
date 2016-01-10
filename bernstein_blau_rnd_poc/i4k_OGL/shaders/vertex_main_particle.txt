@@ -56,8 +56,9 @@ void main(void) {
 	f.xz = f.xz * yrotmat;
     f.x *= 0.56;
     f.z += 1.5 - 2. * r[2][2];
+	//f.z -= fract(time*0.4) * 0.5 - 0.1;
     f.x += 0.25 - 0.5 * r[2][3];
-    f.y += 0.25 - 0.5 * r[3][0];
+    f.y += 0.25 - 0.5 * r[3][0];	
 	gl_Position = vec4(f, f.z);
     particle_magic_ = color_.a;
 

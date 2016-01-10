@@ -228,8 +228,13 @@ static int window_init( WININFO *info )
     }
     else
     {
+#ifdef FULLSCREEN
+        dwExStyle = WS_EX_APPWINDOW;
+        dwStyle = WS_POPUP|WS_VISIBLE|WS_MAXIMIZE;
+#else
         dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
         dwStyle   = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
+#endif
     }
 
     rec.left   = 0;
@@ -294,6 +299,10 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #ifdef USEDGRAPHICS
     intro_init();
+#endif
+
+#ifdef FULLSCREEN
+    ShowCursor(false);
 #endif
 
     // Initialize the seed value that is used for effect generation based on

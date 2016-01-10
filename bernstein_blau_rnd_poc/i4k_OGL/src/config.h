@@ -17,4 +17,6 @@
 
 #define SHADER_DEBUG
 
+//#define FULLSCREEN
+
 #endif
