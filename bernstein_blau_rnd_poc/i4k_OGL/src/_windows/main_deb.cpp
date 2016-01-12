@@ -167,6 +167,12 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
                 num_saved_parameters_seeds_++;
             }
             break;
+        case 'p':
+        case 'P':
+            fid = fopen("saved_seeds_p.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
         default:
             break;
         }

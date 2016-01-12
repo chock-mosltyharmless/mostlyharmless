@@ -6,9 +6,11 @@ out vec4 out_color_;
 
 void main(void) {
 	//out_color_ =vec4(vec3(smoothstep(1.,.7,length(sprite_pos_)))*particle_color_.xyz,1.);
-	float alpha = 0.8;
-	float ca = cos(alpha);
-	float sa = sin(alpha);
+	//float alpha = 0.8;
+	//float ca = cos(alpha);
+	//float sa = sin(alpha);
+	float ca = 0.7;
+	float sa = 0.7;
 	vec2 rot_pos = mat2(ca, -sa, sa, ca) * sprite_pos_;
 	float dist1 = max(abs(rot_pos.x), abs(rot_pos.y));
 	float dist2 = max(abs(sprite_pos_.x), abs(sprite_pos_.y));
