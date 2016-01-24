@@ -21,7 +21,9 @@ short random_parameters_seed_;
 int num_saved_parameters_seeds_ = 0;
 int saved_parameters_seeds_index_ = 0;
 int saved_parameters_seeds_[65536];
-
+int last_effect_reset_time_ = 0;
+bool was_effect_reset_ = false;
+int movement_speed_ = 0;
 
 typedef struct
 {
@@ -140,19 +142,31 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     FILE *fid;
     if (uMsg == WM_KEYDOWN) {
         switch(wParam) {
+        case 'w':
+        case 'W':
+            movement_speed_++;
+            break;
+        case 'q':
+        case 'Q':
+            movement_speed_--;
+            break;
         case VK_LEFT:
+            was_effect_reset_ = true;
             random_parameters_seed_--;
             break;
         case VK_RIGHT:
+            was_effect_reset_ = true;
             random_parameters_seed_++;
             break;
         case VK_UP:
+            was_effect_reset_ = true;
             saved_parameters_seeds_index_ =
                 (saved_parameters_seeds_index_ + num_saved_parameters_seeds_ - 1) %
                 num_saved_parameters_seeds_;
             random_parameters_seed_ = saved_parameters_seeds_[saved_parameters_seeds_index_];
             break;
         case VK_DOWN:
+            was_effect_reset_ = true;
             saved_parameters_seeds_index_ = (saved_parameters_seeds_index_ + 1) %
                 num_saved_parameters_seeds_;
             random_parameters_seed_ = saved_parameters_seeds_[saved_parameters_seeds_index_];
@@ -347,6 +361,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     {
 		waveOutGetPosition(hWaveOut, &timer, sizeof(timer));
 		DWORD t = timer.u.sample;
+        if (was_effect_reset_) last_effect_reset_time_ = t;
+        was_effect_reset_ = false;
 
         while (PeekMessage(&msg,0,0,0,PM_REMOVE))
         {

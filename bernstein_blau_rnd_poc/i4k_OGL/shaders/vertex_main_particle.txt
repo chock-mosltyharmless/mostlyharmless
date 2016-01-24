@@ -33,7 +33,7 @@ float GetImplicit(vec3 pos) {
 void main(void) {
     float time = r[0][0];
 
-    float yrot = cos(time*0.15)*0.5;
+    float yrot = sin(time*0.15)*0.5;
     mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));
 
 	vec3 pos = position_.xyz;
@@ -56,7 +56,7 @@ void main(void) {
 	f.xz = f.xz * yrotmat;
     f.x *= 0.56;
     f.z += 1.5 - 2. * r[2][2];
-	//f.z -= fract(time*0.3) * 0.8 - 0.1;
+	//f.z -= fract(time*0.5) * 0.8 - 0.1;
     f.x += 0.25 - 0.5 * r[2][3];
     f.y += 0.25 - 0.5 * r[3][0];	
 	gl_Position = vec4(f, f.z);

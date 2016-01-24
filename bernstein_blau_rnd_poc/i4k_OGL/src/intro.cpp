@@ -31,6 +31,8 @@
 
 // Seed value that is used to create the parameters for the effect
 extern short random_parameters_seed_;
+extern int last_effect_reset_time_;
+extern int movement_speed_;
 
 // This is only used if SHADER_DEBUG is on, but I will leave it for now.
 HWND hWnd;
@@ -224,10 +226,14 @@ void intro_do( long itime )
 	static int lastTime = 0;
 	static int timeDiff = 0;
 
+#if 0
 	// smooth the time
 	timeDiff = (100 * timeDiff + (itime - lastTime) * 28) / 128;
 	itime = lastTime + timeDiff;
 	lastTime = itime;
+#else
+    itime -= last_effect_reset_time_;
+#endif
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -250,6 +256,10 @@ void intro_do( long itime )
     parameterMatrix[2][0] = params.getParam(12, frand(&seed));
     parameterMatrix[2][1] = params.getParam(13, frand(&seed));
     parameterMatrix[2][2] = params.getParam(14, frand(&seed));
+
+    //parameterMatrix[2][2] += (itime - last_effect_reset_time_) * 0.000001f * movement_speed_;
+    parameterMatrix[2][2] += (itime) * 0.000001f * movement_speed_;
+
     parameterMatrix[2][3] = params.getParam(15, frand(&seed));
 
     parameterMatrix[3][0] = params.getParam(16, frand(&seed));
