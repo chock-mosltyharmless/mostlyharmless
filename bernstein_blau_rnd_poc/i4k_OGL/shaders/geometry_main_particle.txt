@@ -20,22 +20,21 @@ void main() {
 	//float c = pow(luminance, .75);
 	float c = luminance;
 	brightness *= smoothstep(c, 0., particle_magic_[0]) / c;
-	if (/*particle_magic_[0] <= 8.*c &&*/ brightness >.01) {
-		gl_Position = pos + vec4(-.56 * radius, radius, .0, .0);
+	
+	mat2 rot = radius * mat2(.55, .2, -.1, .98);
+	sprite_color_ = brightness * particle_color_[0];
+	if (brightness >.01) {
 		sprite_pos_ = vec2(-1.,1.);
-		sprite_color_ = brightness * particle_color_[0];
+		gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);	
 		EmitVertex();
-		gl_Position = pos + vec4(.56 * radius, radius,.0,.0);
 		sprite_pos_ = vec2(1.,1.);
-		sprite_color_ = brightness * particle_color_[0];
+		gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);
 		EmitVertex();
-		gl_Position = pos + vec4(-.56 * radius, -radius,.0,.0);
 		sprite_pos_ = vec2(-1.,-1.);
-		sprite_color_ = brightness * particle_color_[0];
+		gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);
 		EmitVertex();
-		gl_Position = pos + vec4(.56 * radius, -radius,.0,.0);
 		sprite_pos_ = vec2(1.,-1.);
-		sprite_color_ = brightness * particle_color_[0];
+		gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);
 		EmitVertex();
 	}
 	EndPrimitive();

@@ -9,11 +9,18 @@ void main(void) {
 	//float alpha = 0.8;
 	//float ca = cos(alpha);
 	//float sa = sin(alpha);
-	float ca = 0.7;
-	float sa = 0.7;
-	vec2 rot_pos = mat2(ca, -sa, sa, ca) * sprite_pos_;
-	float dist1 = max(abs(rot_pos.x), abs(rot_pos.y));
-	float dist2 = max(abs(sprite_pos_.x), abs(sprite_pos_.y));
-	float dist = max(dist1, dist2);
-	out_color_ = vec4(smoothstep(1.,.9,dist)) * sprite_color_.rgba;
+	
+//	float ca = 0.7;
+//	float sa = 0.7;
+//	vec2 rot_pos = mat2(ca, -sa, sa, ca) * sprite_pos_;
+//	float dist1 = max(abs(rot_pos.x), abs(rot_pos.y));
+//	float dist2 = max(abs(sprite_pos_.x), abs(sprite_pos_.y));
+//	float dist = max(dist1, dist2);
+//	out_color_ = vec4(smoothstep(1.,.9,dist)) * sprite_color_.rgba;
+
+	vec2 abs_pos = abs(sprite_pos_);
+	float dist1 = 0.9 - abs_pos.x;
+	float dist2 = 0.9 - 0.9 * abs_pos.y - 0.5 * abs_pos.x;
+	float dist = min(dist1, dist2);
+	out_color_ = vec4(smoothstep(0.0, 0.1, dist)) * sprite_color_.rgba;
 }
