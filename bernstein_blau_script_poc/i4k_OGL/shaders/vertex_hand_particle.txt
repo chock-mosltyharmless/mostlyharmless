@@ -1,0 +1,110 @@
+#version 330 core
+
+layout (location=0) in vec4 position_;
+layout (location=1) in vec4 color_;
+
+out vec4 particle_color_;
+out float particle_magic_;
+
+uniform mat4 r;
+
+bool circle(vec2 pixel, vec2 pos, float size) {
+  return (length(pixel-pos)<size);
+}
+
+bool rect(vec2 pixel, vec2 topright, vec2 bottomright) {
+  return (pixel.x < topright.x && pixel.y < topright.y && pixel.x > bottomright.x && pixel.y > bottomright.y);
+}
+
+bool srect(vec2 pixel, vec4 coords) {
+  return (pixel.x+pixel.y > coords.x && pixel.x+pixel.y < coords.y && pixel.x-pixel.y > coords.z && pixel.x-pixel.y < coords.w);
+}
+
+bool fotze(vec2 pixel, float size) {
+  return (pixel.x > -size && pixel.x < size && pixel.y > -size && pixel.y < size && pixel.x-pixel.y < 1.4*size && pixel.x-pixel.y > -1.4*size);
+}
+
+/*+void main(void)\n\^M
++{\n\^M
++  float time = p[3][2];\n\^M
++  vec3 col = vec3(.8);\n\^M
++  vec2 q = o.xy;\n\^M
++  q.y *= 0.6;\n\^M
++  if (circle(q, vec2(0.), 0.2)) {col = vec3(0.2);}\n\^M
++  if (circle(q, vec2(-0.15, 0.3), 0.05)) {col = vec3(0.2);}\n\^M
++  if (rect(q, vec2(-0.1, 0.3), vec2(-0.2, 0.))) {col = vec3(0.2);}\n\^M
++  if (srect(q, vec4(0., 0.6, -0.28, -0.155))) {col = vec3(0.2);}\n\^M
++  if (srect(q, vec4(0., 0.65, -0.135, -0.01))) {col = vec3(0.2);}\n\^M
++  if (srect(q, vec4(0., 0.65, 0.01, 0.135))) {col = vec3(0.2);}\n\^M
++  if (srect(q, vec4(0., 0.58, 0.155, 0.28))) {col = vec3(0.2);}\n\^M
++  if (fotze(q, 0.1)) {col = vec3(0.8);}\n\^M
++  if (fotze(q, 0.08)) {col = vec3(0.8,0.2,0.2);}\n\^M
++  gl_FragColor=vec4(col, 1.) * smoothstep(60.0, 40.0, time);\n\^M
++}";^M
++^M*/
+
+
+float GetImplicit(vec3 pos) {
+    float time = r[0][0];
+
+	float first_amount = r[0][1];
+	float second_amount = r[0][2];
+
+    pos.z -= sin(pos.y * cos(pos.x * 0.4) * 0.3) * second_amount * 5.5;
+    pos.x -= sin(pos.z*0.5) * second_amount * 5.5;
+    pos.y -= sin(pos.x*.25) * second_amount * 5.5;
+
+    pos.x -= sin(time * cos(pos.x * 2.1) * 0.3) * first_amount * 0.1;
+    pos.y -= cos(time * cos(pos.x * 0.5) * 0.4) * first_amount * 0.1;
+    pos.z -= sin(time * sin(pos.y * 0.2) * 0.5) * first_amount * 0.1;
+
+	float dist = r[3][1] * 25.0;
+	float dist2 = r[3][2] * 5.0;
+	float dist3 = r[3][3];
+
+    float implicit = length(pos) - sin(dist * length(pos)) * dist2 - dist3 - 0.2 * sin(time*0.);
+    return implicit;
+}
+
+void main(void) {
+    float time = r[0][0];
+
+    float yrot = sin(time*0.1)*1.;
+    //yrot = smoothstep(0.0, 1.0, yrot);
+    yrot = 1.2 - 1.5 * abs(yrot);
+    mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));
+
+	vec3 pos = position_.xyz;
+
+    vec2 q = pos.xy * 0.5 + vec2(0.1, 0.1);
+    float alpha = max(0., 1.2 - length(pos.xy));
+    vec3 color = vec3(0.3,0.5,0.8);
+
+    if (circle(q, vec2(0.), 0.2)) {color = vec3(1.0); alpha = 1.;}
+    if (circle(q, vec2(-0.15, 0.3), 0.05)) {color = vec3(1.0); alpha = 1.;}
+    if (rect(q, vec2(-0.1, 0.3), vec2(-0.2, 0.))) {color = vec3(1.0); alpha = 1.;}
+    if (srect(q, vec4(0., 0.6, -0.28, -0.155))) {color = vec3(1.0); alpha = 1.;}
+    if (srect(q, vec4(0., 0.65, -0.135, -0.01))) {color = vec3(1.0); alpha = 1.;}
+    if (srect(q, vec4(0., 0.65, 0.01, 0.135))) {color = vec3(1.0); alpha = 1.;}
+    if (srect(q, vec4(0., 0.58, 0.155, 0.28))) {color = vec3(1.0); alpha = 1.;}
+    if (fotze(q, 0.1)) {color = vec3(0.2); alpha = 1.;}
+    if (fotze(q, 0.08)) {color = vec3(0.9,0.4,0.3); alpha = 1.;}
+
+    //alpha *= 1. - abs(pos.z);
+    alpha *= smoothstep(1., 0.5, abs(pos.z));
+
+    float explode = smoothstep(7., 40., time);
+
+    pos.x += 0.01 * cos(pos.z * 45234. + time) + explode * sin(pos.z*23525.);
+    pos.y += 0.01 * sin(pos.z * 13523. + time) + explode * cos(pos.z*20623.);
+    pos.z = pos.z * (0.03 + explode);
+    pos.xy = pos.xy * vec2(0.6, 0.7);
+    pos.xz = pos.xz * yrotmat;
+    pos.z += 0.5 - .3 * yrot; 
+	gl_Position = vec4(pos.xyz, pos.z);
+    particle_magic_ = color_.a;
+
+    alpha = alpha * color_.a;
+    particle_color_.rgb = color * alpha / (10. * pow(color_.a + .1*abs(sin(time*0.1+color_.a*100.)), 2.3) + 0.01);
+    particle_color_.a = alpha;
+}
