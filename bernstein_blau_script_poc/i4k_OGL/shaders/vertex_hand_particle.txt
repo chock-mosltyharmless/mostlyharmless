@@ -93,14 +93,15 @@ void main(void) {
     //alpha *= 1. - abs(pos.z);
     alpha *= smoothstep(1., 0.5, abs(pos.z));
 
-    float explode = smoothstep(7., 40., time);
+    float explode = smoothstep(7., 20., time);
 
-    pos.x += 0.01 * cos(pos.z * 45234. + time) + explode * sin(pos.z*23525.);
-    pos.y += 0.01 * sin(pos.z * 13523. + time) + explode * cos(pos.z*20623.);
+    pos.x += 0.01 * cos(pos.z * 454. + time) + explode * sin(pos.z*225.);
+    pos.y += 0.01 * sin(pos.z * 133. + time) + explode * cos(pos.z*203.);
     pos.z = pos.z * (0.03 + explode);
     pos.xy = pos.xy * vec2(0.6, 0.7);
     pos.xz = pos.xz * yrotmat;
     pos.z += 0.5 - .3 * yrot; 
+	pos.z -= 0.1 * time - .8;
 	gl_Position = vec4(pos.xyz, pos.z);
     particle_magic_ = color_.a;
 

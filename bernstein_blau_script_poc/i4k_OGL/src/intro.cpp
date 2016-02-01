@@ -41,7 +41,7 @@ HWND hWnd;
 char err[4097];
 #endif
 
-static GLuint shaderPrograms[1];
+static GLuint shaderPrograms[2];
 // The vertex array and vertex buffer
 unsigned int vaoID;
 // 0 is for particle positions, 1 is for particle colors
@@ -122,11 +122,16 @@ void intro_init( void ) {
 	GLuint vMainParticle = glCreateShader(GL_VERTEX_SHADER);
 	GLuint gMainParticle = glCreateShader(GL_GEOMETRY_SHADER_EXT);
 	GLuint fMainParticle = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint vHandParticle = glCreateShader(GL_VERTEX_SHADER);
 	shaderPrograms[0] = glCreateProgram();
+    shaderPrograms[1] = glCreateProgram();
 	// compile sources:
 	const int kMaxShaderLength = 1000000;
 	GLchar *shader_text = new char[kMaxShaderLength + 1];
 	LoadTextFile("shaders/vertex_hand_particle.txt", shader_text, kMaxShaderLength);
+    glShaderSource(vHandParticle, 1, (const GLchar**)&shader_text, NULL);
+    glCompileShader(vHandParticle);
+    LoadTextFile("shaders/vertex_main_particle.txt", shader_text, kMaxShaderLength);
 	glShaderSource(vMainParticle, 1, (const GLchar**)&shader_text, NULL);
 	glCompileShader(vMainParticle);
 	LoadTextFile("shaders/geometry_main_particle.txt", shader_text, kMaxShaderLength);
@@ -148,6 +153,14 @@ void intro_init( void ) {
 		MessageBox(hWnd, err, "vMainParticle shader error", MB_OK);
 		return;
 	}
+    glGetShaderiv(vHandParticle, GL_COMPILE_STATUS, &tmp);
+    if (!tmp)
+    {
+        glGetShaderInfoLog(vHandParticle, 4096, &tmp2, err);
+        err[tmp2]=0;
+        MessageBox(hWnd, err, "vHandParticle shader error", MB_OK);
+        return;
+    }
 	glGetShaderiv(gMainParticle, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
 	{
@@ -171,6 +184,10 @@ void intro_init( void ) {
 	glAttachShader(shaderPrograms[0], gMainParticle);
 	glAttachShader(shaderPrograms[0], fMainParticle);
 	glLinkProgram(shaderPrograms[0]);
+    glAttachShader(shaderPrograms[1], vHandParticle);
+    glAttachShader(shaderPrograms[1], gMainParticle);
+    glAttachShader(shaderPrograms[1], fMainParticle);
+    glLinkProgram(shaderPrograms[1]);
 
 #ifdef SHADER_DEBUG
 	int programStatus;
@@ -180,6 +197,12 @@ void intro_init( void ) {
 		MessageBox(hWnd, "Could not link program", "Shader 0 error", MB_OK);
 		return;
 	}
+    glGetProgramiv(shaderPrograms[1], GL_LINK_STATUS, &programStatus);
+    if (programStatus == GL_FALSE)
+    {
+        MessageBox(hWnd, "Could not link program", "Shader 1 error", MB_OK);
+        return;
+    }
 #endif
 
     // Fill the vertices_ and colors_ array with reasonable values
@@ -263,7 +286,8 @@ void intro_do( long itime )
 	parameterMatrix[0][0] = itime / 44100.0f;
 
     // Set parameters to other locations, using seed stuff
-    unsigned int seed = script_[scene_id][1];
+    unsigned int start_seed = script_[scene_id][1]; 
+    unsigned int seed = start_seed;
     parameterMatrix[0][1] = params.getParam(2, frand(&seed));
     parameterMatrix[0][2] = params.getParam(3, frand(&seed));
     parameterMatrix[0][3] = params.getParam(4, frand(&seed));
@@ -298,7 +322,8 @@ void intro_do( long itime )
 	//glGetIntegerv(GL_VIEWPORT, viewport);
 	//glViewport(0, 0, XRES, YRES);
 	
-	glUseProgram(shaderPrograms[0]);
+    // Set program 1 on seed == 0
+	glUseProgram(shaderPrograms[start_seed == 0]);
 
     glDrawArrays(GL_POINTS, 0, TOTAL_NUM_PARTICLES);
 }
