@@ -62,9 +62,9 @@ void main(void) {
 	gl_Position = vec4(f, f.z);
     particle_magic_ = color_.a;
 
-    particle_color_.r = 0.5 + length(pos.xyz) * .4;
-    particle_color_.g = 1.3 - length(pos.xyz) * 0.6;
-    particle_color_.b = max(0., 1.5 - length(pos.xyz) * 1.3);
+    particle_color_.r = 0.6 + length(pos.xyz) * .3;
+    particle_color_.g = 1.1 - length(pos.xyz) * 0.4;
+    particle_color_.b = max(0., 1.3 - length(pos.xyz) * 1.);
     //particle_color_.g = 0.3 + length(pos.xyz) * .4;
     //particle_color_.r = 1.5 - length(pos.xyz) * .8;
     //particle_color_.b = max(0., 1.5 - length(pos.xyz) * .7);
