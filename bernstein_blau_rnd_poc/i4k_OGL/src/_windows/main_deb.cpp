@@ -187,6 +187,51 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             fprintf(fid, "%d\n", (int)random_parameters_seed_);
             fclose(fid);
             break;
+        case '1':
+            fid = fopen("saved_seeds_1.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
+        case '2':
+            fid = fopen("saved_seeds_2.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
+        case '3':
+            fid = fopen("saved_seeds_3.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
+        case '4':
+            fid = fopen("saved_seeds_4.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
+        case '5':
+            fid = fopen("saved_seeds_5.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
+        case '6':
+            fid = fopen("saved_seeds_6.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
+        case '7':
+            fid = fopen("saved_seeds_7.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
+        case '8':
+            fid = fopen("saved_seeds_8.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
+        case '9':
+            fid = fopen("saved_seeds_9.txt", "a");
+            fprintf(fid, "%d\n", (int)random_parameters_seed_);
+            fclose(fid);
+            break;
         default:
             break;
         }
