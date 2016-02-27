@@ -45,6 +45,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VC_IncludePath)/include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\Joachim\Documents\mostlyharmless.git\hot_particle\executable\chockNgt\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -109,6 +111,16 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TextureManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\avcodec.lib" />
+    <Library Include="lib\avdevice.lib" />
+    <Library Include="lib\avfilter.lib" />
+    <Library Include="lib\avformat.lib" />
+    <Library Include="lib\avutil.lib" />
+    <Library Include="lib\postproc.lib" />
+    <Library Include="lib\swresample.lib" />
+    <Library Include="lib\swscale.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -11,9 +11,17 @@
 
 #pragma once
 
+extern "C" {
+#include "libavcodec/avcodec.h"
+#include "libavformat/avformat.h"
+#include "libavutil/imgutils.h"
+#include "libavutil/samplefmt.h"
+#include "libswscale/swscale.h"
+}
+
 #define TM_DIRECTORY "textures/"
 #define TM_SHADER_WILDCARD "*.tga"
-#define TM_VIDEO_WILDCARD "*.avi"
+#define TM_VIDEO_WILDCARD "*.wmv"
 #define TM_MAX_NUM_TEXTURES 128
 #define TM_MAX_NUM_VIDEOS 16
 #define TM_MAX_FILENAME_LENGTH 1024
@@ -99,7 +107,7 @@ private: // data
 	GLuint videoTextureID[TM_MAX_NUM_VIDEOS];
 	int videoWidth[TM_MAX_NUM_VIDEOS];
 	int videoHeight[TM_MAX_NUM_VIDEOS];
-	int videoNumFrames[TM_MAX_NUM_VIDEOS];
+#if 0
 	AVISTREAMINFO psi[TM_MAX_NUM_VIDEOS];
 	PAVISTREAM pavi[TM_MAX_NUM_VIDEOS];
 	PGETFRAME pgf[TM_MAX_NUM_VIDEOS];
@@ -107,5 +115,17 @@ private: // data
 	unsigned char *videoData[TM_MAX_NUM_VIDEOS];
 	HDRAWDIB hdd; // Used for scaling/drawing the avi to a RAM buffer
 	HDC hdc;
+#else
+    AVFormatContext *video_format_context_[TM_MAX_NUM_VIDEOS];
+    AVCodecContext *video_codec_context_[TM_MAX_NUM_VIDEOS];
+    AVCodecContext *video_codec_context_orig_[TM_MAX_NUM_VIDEOS];
+    AVCodec *video_codec_[TM_MAX_NUM_VIDEOS];
+    AVFrame *video_frame_[TM_MAX_NUM_VIDEOS];
+    AVFrame *video_frame_rgb_[TM_MAX_NUM_VIDEOS];
+    int video_stream_[TM_MAX_NUM_VIDEOS];
+    unsigned char *video_buffer_[TM_MAX_NUM_VIDEOS];
+    AVPacket video_packet_[TM_MAX_NUM_VIDEOS];
+    AVPacket video_packet_orig_[TM_MAX_NUM_VIDEOS];
+#endif
 };
 

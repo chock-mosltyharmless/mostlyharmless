@@ -1,0 +1,7 @@
+hot_particle.sdf
+hot_particle.opensdf
+ipch
+Debug
+.vs
+chockNgt/*.dll
+*.exe

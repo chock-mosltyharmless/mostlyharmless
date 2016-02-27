@@ -167,6 +167,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
 
+        // Draw video background
+        GLuint texID;
+        if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &texID, errorString, 0) < 0) {
+            MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, texID);
+        drawQuad(-0.5f, 0.5f, 0.7f, -0.7f, 0.0f, 1.0f, 1.0f);
+
 		//if (whatIsShown == SHOW_ENDING)
 		{
             float end_start_time = 1.0f;
@@ -174,7 +183,6 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 			// Draw icon
-			GLuint texID;
 			if (textureManager.getTextureID("icon.tga", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);

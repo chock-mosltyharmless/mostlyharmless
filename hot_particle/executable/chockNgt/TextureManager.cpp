@@ -8,6 +8,46 @@ float noiseData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
 unsigned char noiseIntData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
 float noiseData3D[TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE_TEXTURE_SIZE * 4];
 
+static int open_codec_context(int *stream_idx,
+    AVFormatContext *fmt_ctx, enum AVMediaType type)
+{
+    int ret, stream_index;
+    AVStream *st;
+    AVCodecContext *dec_ctx = NULL;
+    AVCodec *dec = NULL;
+    AVDictionary *opts = NULL;
+
+    ret = av_find_best_stream(fmt_ctx, type, -1, -1, NULL, 0);
+    if (ret < 0) {
+        //fprintf(stderr, "Could not find %s stream in input file '%s'\n",
+        //    av_get_media_type_string(type), src_filename);
+        return ret;
+    } else {
+        stream_index = ret;
+        st = fmt_ctx->streams[stream_index];
+
+        /* find decoder for the stream */
+        dec_ctx = st->codec;
+        dec = avcodec_find_decoder(dec_ctx->codec_id);
+        if (!dec) {
+            //fprintf(stderr, "Failed to find %s codec\n",
+            //    av_get_media_type_string(type));
+            return AVERROR(EINVAL);
+        }
+
+        /* Init the decoders, with or without reference counting */
+        av_dict_set(&opts, "refcounted_frames", "0", 0);
+        if ((ret = avcodec_open2(dec_ctx, dec, &opts)) < 0) {
+            //fprintf(stderr, "Failed to open %s codec\n",
+            //    av_get_media_type_string(type));
+            return ret;
+        }
+        *stream_idx = stream_index;
+    }
+
+    return 0;
+}
+
 TextureManager::TextureManager(void)
 {
 	numTextures = 0;
@@ -16,7 +56,6 @@ TextureManager::TextureManager(void)
 
 TextureManager::~TextureManager(void)
 {
-	AVIFileExit();
 }
 
 void TextureManager::releaseAll(void)
@@ -26,12 +65,17 @@ void TextureManager::releaseAll(void)
 
 	for (int i = 0; i < numVideos; i++)
 	{
-		AVIStreamGetFrameClose(pgf[i]);
-		AVIStreamRelease(pavi[i]);
-		DeleteObject(hBitmap);
+        // Free the RGB image
+        av_free(video_buffer_[i]);
+        av_free(video_frame_rgb_[i]);
+        // Free the YUV frame
+        av_free(video_frame_[i]);
+        // Close the codecs
+        avcodec_close(video_codec_context_[i]);
+        avcodec_close(video_codec_context_orig_[i]);
+        // Close the video file
+        avformat_close_input(&video_format_context_[numVideos]);
 	}
-	DrawDibClose(hdd);
-	DeleteDC(hdc);
 	glDeleteTextures(numVideos, videoTextureID);
 	numVideos = 0;
 }
@@ -42,42 +86,68 @@ int TextureManager::loadAVI(const char *filename, char *errorString)
 	sprintf_s(combinedName, TM_MAX_FILENAME_LENGTH,
 			  TM_DIRECTORY "%s", filename);
 
-	if (numTextures >= TM_MAX_NUM_TEXTURES)
-	{
+	if (numTextures >= TM_MAX_NUM_TEXTURES) {
 		sprintf_s(errorString, MAX_ERROR_LENGTH, "Too many textures.");
 		return -1;
 	}
 
-	if (AVIStreamOpenFromFile(&(pavi[numVideos]), combinedName, streamtypeVIDEO, 0, OF_READ, NULL))
-	{
-		return -1;
-	}
-	AVIStreamInfo(pavi[numVideos], &(psi[numVideos]), sizeof(psi[numVideos])); // Reads stream info
-	videoWidth[numVideos] = psi[numVideos].rcFrame.right - psi[numVideos].rcFrame.left;
-	videoHeight[numVideos] = psi[numVideos].rcFrame.bottom - psi[numVideos].rcFrame.top;
-	videoNumFrames[numVideos] = AVIStreamLength(pavi[numVideos]);
+    // Open video file
+    if (avformat_open_input(&video_format_context_[numVideos], combinedName, NULL, NULL) != 0) {
+        sprintf_s(errorString, MAX_ERROR_LENGTH, "Could not open video file '%s'", filename);
+        return -1; // Couldn't open file
+    }
+    // Retrieve stream information
+    if (avformat_find_stream_info(video_format_context_[numVideos], NULL) < 0) {
+        sprintf_s(errorString, MAX_ERROR_LENGTH, "Could not retrieve stream information from %s",
+                filename);
+        return -1; // Couldn't find stream information
+    }
 
-	BITMAPINFOHEADER bmih;
-	bmih.biSize = sizeof(BITMAPINFOHEADER);
-	bmih.biPlanes = 1;
-	bmih.biBitCount = 24;
-	bmih.biWidth = videoWidth[numVideos];
-	bmih.biHeight = videoHeight[numVideos];
-	bmih.biCompression = BI_RGB;
-	hBitmap[numVideos] = CreateDIBSection(hdc, (BITMAPINFO*)(&bmih), DIB_RGB_COLORS, (void**)(&(videoData[numVideos])), NULL, NULL);
-	SelectObject(hdc, hBitmap);
-	GdiFlush();
+    if (open_codec_context(&video_stream_[numVideos], video_format_context_[numVideos],
+            AVMEDIA_TYPE_VIDEO) < 0) {
+        sprintf_s(errorString, MAX_ERROR_LENGTH, "Could not find video codec in %s", filename);
+        return -1;
+    }
 
-	pgf[numVideos] = AVIStreamGetFrameOpen(pavi[numVideos], NULL);
-	if (pgf == NULL)
-	{
-		sprintf_s(errorString, MAX_ERROR_LENGTH, "Could not open AVI stream for %s", filename);
-		return -1;
-	}
+    video_codec_context_[numVideos] = video_format_context_[numVideos]->streams[video_stream_[numVideos]]->codec;
+
+    /* allocate image where the decoded image will be put */
+    videoWidth[numVideos] = video_codec_context_[numVideos]->width;
+    videoHeight[numVideos] = video_codec_context_[numVideos]->height;
+#if 0
+    ret = av_image_alloc(video_dst_data, video_dst_linesize,
+            width, height, pix_fmt, 1);
+        if (ret < 0) {
+            fprintf(stderr, "Could not allocate raw video buffer\n");
+            goto end;
+        }
+        video_dst_bufsize = ret;
+    }
+#endif
+
+    // Allocate video frame
+    video_frame_[numVideos] = av_frame_alloc();
+    // Allocate an AVFrame structure
+    video_frame_rgb_[numVideos] = av_frame_alloc();    
+    int num_bytes;
+    // Determine required buffer size and allocate buffer
+    videoWidth[numVideos] = video_codec_context_[numVideos]->width;
+    videoHeight[numVideos] = video_codec_context_[numVideos]->height; 
+    num_bytes = avpicture_get_size(AV_PIX_FMT_RGB24, video_codec_context_[numVideos]->width,
+        video_codec_context_[numVideos]->height);
+    video_buffer_[numVideos] = (unsigned char *)av_malloc(num_bytes * sizeof(unsigned char));
+    // Assign appropriate parts of buffer to image planes in pFrameRGB
+    // Note that pFrameRGB is an AVFrame, but AVFrame is a superset of AVPicture
+    avpicture_fill((AVPicture *)video_frame_rgb_[numVideos], video_buffer_[numVideos],
+        AV_PIX_FMT_RGB24, video_codec_context_[numVideos]->width, video_codec_context_[numVideos]->height);
+
+    /* initialize packet, set data to NULL, let the demuxer fill it */
+    av_init_packet(&(video_packet_[numVideos]));
+    video_packet_[numVideos].data = NULL;
+    video_packet_[numVideos].size = 0;
 
 	// create openGL texture
-	int textureSize = videoWidth[numVideos] * videoHeight[numVideos] * 4;
-	unsigned char *textureData = new unsigned char[textureSize];
+	int textureSize = videoWidth[numVideos] * videoHeight[numVideos] * 3;
 	glGenTextures(1, &videoTextureID[numVideos]);
 	glBindTexture(GL_TEXTURE_2D, videoTextureID[numVideos]);
 	glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
@@ -87,8 +157,7 @@ int TextureManager::loadAVI(const char *filename, char *errorString)
 	glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 				 videoWidth[numVideos], videoHeight[numVideos],
-				 0, GL_BGRA, GL_UNSIGNED_BYTE, textureData);
-	delete [] textureData;
+				 0, GL_BGR, GL_UNSIGNED_BYTE, video_buffer_[numVideos]);
 	strcpy_s(videoName[numVideos], TM_MAX_FILENAME_LENGTH, filename);
 
 	numVideos++;
@@ -174,9 +243,7 @@ int TextureManager::init(char *errorString, HDC mainDC)
 	releaseAll();
 
 	// Initialize video rendering
-	hdd = DrawDibOpen(); // Used for scaling/drawing the avi to a RAM buffer
-	hdc = CreateCompatibleDC(mainDC);
-	AVIFileInit(); // Opens the AVIFile Library
+    av_register_all();
 
 	// create small and large rendertarget texture
 	createRenderTargetTexture(errorString, X_OFFSCREEN, Y_OFFSCREEN, TM_OFFSCREEN_NAME);
@@ -234,15 +301,64 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
 	{
 		if (strcmp(name, videoName[i]) == 0)
 		{
-			if (frameID >= videoNumFrames[i])
-			{
-				int retVal = getTextureID("black.tga", id, errorString);
-				if (retVal < 0) return retVal;
-				else return 1; // mark finished
-			}
-
 			*id = videoTextureID[i];
 
+            // Decode and re-format single frame
+            struct SwsContext *sws_ctx = NULL;
+            // initialize SWS context for software scaling
+            sws_ctx = sws_getContext(video_codec_context_[i]->width,
+                video_codec_context_[i]->height,
+                video_codec_context_[i]->pix_fmt,
+                video_codec_context_[i]->width,
+                video_codec_context_[i]->height,
+                AV_PIX_FMT_RGB24,
+                SWS_BILINEAR,
+                NULL,
+                NULL,
+                NULL);
+
+            int frameFinished = 0;
+            while (!frameFinished) {
+                if (video_packet_[i].size <= 0) {
+                    if (av_read_frame(video_format_context_[i], &(video_packet_[i])) < 0) {
+                        // Could not get frame from video, use black instead.
+                        int retVal = getTextureID("black.tga", id, errorString);
+                        if (retVal < 0) return retVal;
+                        else return 1; // mark finished
+                    }
+                    video_packet_orig_[i] = video_packet_[i];
+                }
+                if (video_packet_[i].stream_index == video_stream_[i]) {
+                    // Decode video frame
+                    int ret = avcodec_decode_video2(video_codec_context_[i], video_frame_[i],
+                        &frameFinished, &video_packet_[i]);
+                    if (ret < 0) {
+                        sprintf_s(errorString, MAX_ERROR_LENGTH, "Error decoding stream in '%s'", name);
+                        return -1;
+                    }
+
+                    // Did we get a video frame?
+                    if(frameFinished) {
+                        // Convert the image from its native format to RGB
+                        sws_scale(sws_ctx, (uint8_t const * const *)video_frame_[i]->data,
+                            video_frame_[i]->linesize, 0, video_codec_context_[i]->height,
+                            video_frame_rgb_[i]->data, video_frame_rgb_[i]->linesize);
+                    }
+
+                    video_packet_[i].data += ret;
+                    video_packet_[i].size -= ret;
+                    if (video_packet_[i].size <= 0) {
+                        av_packet_unref(&video_packet_orig_[i]);
+                        video_packet_[i].size = 0;
+                    }
+                } else {
+                    // Un-reference unused audio packet
+                    av_packet_unref(&video_packet_orig_[i]);
+                    video_packet_[i].size = 0;  // mark as empty
+                }
+            }
+
+#if 0
 			LPBITMAPINFOHEADER lpbi;
 			lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(pgf[i], frameID % videoNumFrames[i]);
 			char *pdata = (char *)lpbi + lpbi->biSize + lpbi->biClrUsed * sizeof(RGBQUAD); // Skip header info to get to data
@@ -252,10 +368,13 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
 			SelectObject(hdc, hBitmap[i]);
 			DrawDibDraw(hdd, hdc, 0, 0, width, height, lpbi, pdata, 0, 0, width, height, 0);
 			GdiFlush();
-			// create openGL texture
+
+#endif
+			// write openGL texture
 			glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
 			glBindTexture(GL_TEXTURE_2D, *id);
-			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, videoData[i]);
+			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, videoWidth[i], videoHeight[i],
+                GL_RGB, GL_UNSIGNED_BYTE, video_frame_rgb_[i]->data[0]);
 
 			return 0;
 		}
