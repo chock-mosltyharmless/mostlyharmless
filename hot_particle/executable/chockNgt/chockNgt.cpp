@@ -178,26 +178,23 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         glBindTexture(GL_TEXTURE_2D, tex_id);
         drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
 
+        float videoTime = fCurTime;
+        if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
+            MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
         char *lighting_fname = "zimmer_layer_3.tga";
         if (fCurTime < 12.0f) {
             // Video to the right
-            float videoTime = fCurTime;
-            if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
-                MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
-                return -1;
-            }
-            glBindTexture(GL_TEXTURE_2D, tex_id);
             drawQuad(0.37f, 0.78f, 0.65f, 0.21f, 0.0f, 1.0f, 1.0f);
-        } else {
+        } else if (fCurTime < 24.0f) {
             lighting_fname = "zimmer_layer_3_tv.tga";
             // Video in the TV
-            float videoTime = fCurTime;
-            if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
-                MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
-                return -1;
-            }
-            glBindTexture(GL_TEXTURE_2D, tex_id);
             drawQuad(-0.36f, -0.09f, 0.15f, -0.17f, 0.0f, 1.0f, 1.0f);
+        } else {
+            // Video to the left
+            drawQuad(-0.75f, -0.37f, 0.34f, -0.1f, 0.0f, 1.0f, 1.0f);
         }
 
         if (textureManager.getTextureID("zimmer_layer_2.tga", &tex_id, errorString)) {

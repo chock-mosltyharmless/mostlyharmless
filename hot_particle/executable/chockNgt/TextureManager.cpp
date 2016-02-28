@@ -311,6 +311,14 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
                 NULL,
                 NULL);
 
+            if (!sws_ctx) {
+                // Could not get frame from video, use black instead?
+                int retVal = getTextureID("black.tga", id, errorString);
+                if (retVal < 0) return retVal;
+                else return 1; // mark finished
+                // TODO (jhofer): Or should I just use break to use the last frame.
+            }
+
             // TODO: Does this work for me
             AVRational time_base = video_format_context_[i]->streams[video_stream_[i]]->time_base;
             //int64_t current_frame_pts = video_frame_[i]->best_effort_timestamp;
