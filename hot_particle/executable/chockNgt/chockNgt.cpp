@@ -166,9 +166,39 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
+        GLuint tex_id;
 
+        // Draw example room
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (textureManager.getTextureID("zimmer_layer_1.tga", &tex_id, errorString)) {
+            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        if (textureManager.getTextureID("zimmer_layer_2.tga", &tex_id, errorString)) {
+            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        glBlendFunc(GL_DST_COLOR, GL_ZERO);
+        if (textureManager.getTextureID("zimmer_layer_3.tga", &tex_id, errorString)) {
+            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        if (textureManager.getTextureID("vignette.tga", &tex_id, errorString)) {
+            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+
+#if 0
         // Draw video background
-        GLuint texID;
         float videoTime = fCurTime;
         if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &texID, errorString, videoTime) < 0) {
             MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
@@ -256,6 +286,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 			glDisable(GL_BLEND);
 		}
+#endif
 
 		// draw background
 		//drawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
