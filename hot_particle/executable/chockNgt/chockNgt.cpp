@@ -171,12 +171,35 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         // Draw example room
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if (textureManager.getTextureID("zimmer_layer_1.tga", &tex_id, errorString)) {
+        if (textureManager.getTextureID("zimmer_layer_1_night.tga", &tex_id, errorString)) {
             MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
         drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+
+        char *lighting_fname = "zimmer_layer_3.tga";
+        if (fCurTime < 12.0f) {
+            // Video to the right
+            float videoTime = fCurTime;
+            if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
+                MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
+                return -1;
+            }
+            glBindTexture(GL_TEXTURE_2D, tex_id);
+            drawQuad(0.37f, 0.78f, 0.65f, 0.21f, 0.0f, 1.0f, 1.0f);
+        } else {
+            lighting_fname = "zimmer_layer_3_tv.tga";
+            // Video in the TV
+            float videoTime = fCurTime;
+            if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
+                MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
+                return -1;
+            }
+            glBindTexture(GL_TEXTURE_2D, tex_id);
+            drawQuad(-0.36f, -0.09f, 0.15f, -0.17f, 0.0f, 1.0f, 1.0f);
+        }
+
         if (textureManager.getTextureID("zimmer_layer_2.tga", &tex_id, errorString)) {
             MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
             return -1;
@@ -184,7 +207,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         glBindTexture(GL_TEXTURE_2D, tex_id);
         drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        if (textureManager.getTextureID("zimmer_layer_3.tga", &tex_id, errorString)) {
+        if (textureManager.getTextureID(lighting_fname, &tex_id, errorString)) {
             MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
             return -1;
         }
