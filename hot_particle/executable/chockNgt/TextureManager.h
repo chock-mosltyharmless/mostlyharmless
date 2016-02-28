@@ -79,7 +79,9 @@ public: // functions
 	int getTextureID(const char *name, GLuint *id, char *errorString);
 
 	// Get the texture ID from a named video (this also sets the video texture in openGL)
-	int getVideoID(const char *name, GLuint *id, char *errorString, int frameID);
+    // Time is the current time in the video, you get a frame after that time.
+    // Time must rise (no back-paddeling)
+	int getVideoID(const char *name, GLuint *id, char *errorString, float frame_time);
 
 private: // functions
 	void releaseAll(void);
@@ -126,6 +128,7 @@ private: // data
     unsigned char *video_buffer_[TM_MAX_NUM_VIDEOS];
     AVPacket video_packet_[TM_MAX_NUM_VIDEOS];
     AVPacket video_packet_orig_[TM_MAX_NUM_VIDEOS];
+    int video_next_frame_index_[TM_MAX_NUM_VIDEOS];
 #endif
 };
 

@@ -114,17 +114,7 @@ int TextureManager::loadAVI(const char *filename, char *errorString)
     /* allocate image where the decoded image will be put */
     videoWidth[numVideos] = video_codec_context_[numVideos]->width;
     videoHeight[numVideos] = video_codec_context_[numVideos]->height;
-#if 0
-    ret = av_image_alloc(video_dst_data, video_dst_linesize,
-            width, height, pix_fmt, 1);
-        if (ret < 0) {
-            fprintf(stderr, "Could not allocate raw video buffer\n");
-            goto end;
-        }
-        video_dst_bufsize = ret;
-    }
-#endif
-
+    
     // Allocate video frame
     video_frame_[numVideos] = av_frame_alloc();
     // Allocate an AVFrame structure
@@ -133,18 +123,22 @@ int TextureManager::loadAVI(const char *filename, char *errorString)
     // Determine required buffer size and allocate buffer
     videoWidth[numVideos] = video_codec_context_[numVideos]->width;
     videoHeight[numVideos] = video_codec_context_[numVideos]->height; 
-    num_bytes = avpicture_get_size(AV_PIX_FMT_RGB24, video_codec_context_[numVideos]->width,
-        video_codec_context_[numVideos]->height);
+    num_bytes = av_image_get_buffer_size(AV_PIX_FMT_RGB24,
+        videoWidth[numVideos], videoHeight[numVideos], 1);
     video_buffer_[numVideos] = (unsigned char *)av_malloc(num_bytes * sizeof(unsigned char));
     // Assign appropriate parts of buffer to image planes in pFrameRGB
     // Note that pFrameRGB is an AVFrame, but AVFrame is a superset of AVPicture
-    avpicture_fill((AVPicture *)video_frame_rgb_[numVideos], video_buffer_[numVideos],
-        AV_PIX_FMT_RGB24, video_codec_context_[numVideos]->width, video_codec_context_[numVideos]->height);
+    av_image_fill_arrays(video_frame_rgb_[numVideos]->data, video_frame_rgb_[numVideos]->linesize,
+                         video_buffer_[numVideos], AV_PIX_FMT_RGB24,
+                         videoWidth[numVideos], videoHeight[numVideos], 1);
 
     /* initialize packet, set data to NULL, let the demuxer fill it */
     av_init_packet(&(video_packet_[numVideos]));
     video_packet_[numVideos].data = NULL;
     video_packet_[numVideos].size = 0;
+
+    // Signal that we are at the beginning of the stream
+    video_next_frame_index_[numVideos] = 0;
 
 	// create openGL texture
 	int textureSize = videoWidth[numVideos] * videoHeight[numVideos] * 3;
@@ -295,7 +289,7 @@ int TextureManager::init(char *errorString, HDC mainDC)
 	return 0;
 }
 
-int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, int frameID)
+int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, float frame_time)
 {	
 	for (int i = 0; i < numVideos; i++)
 	{
@@ -317,45 +311,77 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
                 NULL,
                 NULL);
 
-            int frameFinished = 0;
-            while (!frameFinished) {
-                if (video_packet_[i].size <= 0) {
-                    if (av_read_frame(video_format_context_[i], &(video_packet_[i])) < 0) {
-                        // Could not get frame from video, use black instead.
-                        int retVal = getTextureID("black.tga", id, errorString);
-                        if (retVal < 0) return retVal;
-                        else return 1; // mark finished
-                    }
-                    video_packet_orig_[i] = video_packet_[i];
-                }
-                if (video_packet_[i].stream_index == video_stream_[i]) {
-                    // Decode video frame
-                    int ret = avcodec_decode_video2(video_codec_context_[i], video_frame_[i],
-                        &frameFinished, &video_packet_[i]);
-                    if (ret < 0) {
-                        sprintf_s(errorString, MAX_ERROR_LENGTH, "Error decoding stream in '%s'", name);
-                        return -1;
-                    }
+            // TODO: Does this work for me
+            AVRational time_base = video_format_context_[i]->streams[video_stream_[i]]->time_base;
+            //int64_t current_frame_pts = video_frame_[i]->best_effort_timestamp;
+            int64_t current_frame_pts = av_frame_get_best_effort_timestamp(video_frame_[i]);
+            float current_frame_time = (float)(time_base.num) * (float)current_frame_pts /
+                (float)(time_base.den);
+            int64_t desired_time_stamp = (int64_t)(frame_time * time_base.den / time_base.num);
 
-                    // Did we get a video frame?
-                    if(frameFinished) {
-                        // Convert the image from its native format to RGB
-                        sws_scale(sws_ctx, (uint8_t const * const *)video_frame_[i]->data,
-                            video_frame_[i]->linesize, 0, video_codec_context_[i]->height,
-                            video_frame_rgb_[i]->data, video_frame_rgb_[i]->linesize);
-                    }
+            const float kMaxFrameTimeError = 1.0f / 2.0f;
+            if (current_frame_pts >= 0 &&
+                current_frame_time > frame_time + kMaxFrameTimeError) {
+                // the displayed frame is ahead of what we want to show
+                av_seek_frame(video_format_context_[i], video_stream_[i],
+                              desired_time_stamp, AVSEEK_FLAG_BACKWARD);
+                current_frame_pts = -1;  // Mark that we are way off
+            }
+            if (current_frame_pts >= 0 &&
+                current_frame_time < frame_time - kMaxFrameTimeError) {
+                // the displayed frame is way behind of what we want to show
+                av_seek_frame(video_format_context_[i], video_stream_[i],
+                    desired_time_stamp, 0);
+                current_frame_pts = -1;  // Mark that we are way off
+            }
 
-                    video_packet_[i].data += ret;
-                    video_packet_[i].size -= ret;
+            while (current_frame_pts < 0 || current_frame_time < frame_time) {
+                // We have to decode up to 1/10th of a second, or are at a no-idea frame
+                int frameFinished = 0;
+                while (!frameFinished) {
                     if (video_packet_[i].size <= 0) {
-                        av_packet_unref(&video_packet_orig_[i]);
-                        video_packet_[i].size = 0;
+                        if (av_read_frame(video_format_context_[i], &(video_packet_[i])) < 0) {
+                            // Could not get frame from video, use black instead?
+                            int retVal = getTextureID("black.tga", id, errorString);
+                            if (retVal < 0) return retVal;
+                            else return 1; // mark finished
+                            // TODO (jhofer): Or should I just use break to use the last frame.
+                        }
+                        video_packet_orig_[i] = video_packet_[i];
                     }
-                } else {
-                    // Un-reference unused audio packet
-                    av_packet_unref(&video_packet_orig_[i]);
-                    video_packet_[i].size = 0;  // mark as empty
+                    if (video_packet_[i].stream_index == video_stream_[i]) {
+                        // Decode video frame
+                        int ret = avcodec_decode_video2(video_codec_context_[i], video_frame_[i],
+                            &frameFinished, &video_packet_[i]);
+                        if (ret < 0) {
+                            sprintf_s(errorString, MAX_ERROR_LENGTH, "Error decoding stream in '%s'", name);
+                            return -1;
+                        }
+
+                        // Did we get a video frame?
+                        if(frameFinished) {
+                            // Convert the image from its native format to RGB
+                            sws_scale(sws_ctx, (uint8_t const * const *)video_frame_[i]->data,
+                                video_frame_[i]->linesize, 0, video_codec_context_[i]->height,
+                                video_frame_rgb_[i]->data, video_frame_rgb_[i]->linesize);
+                        }
+
+                        video_packet_[i].data += ret;
+                        video_packet_[i].size -= ret;
+                        if (video_packet_[i].size <= 0) {
+                            av_packet_unref(&video_packet_orig_[i]);
+                            video_packet_[i].size = 0;
+                        }
+                    } else {
+                        // Un-reference unused audio packet
+                        av_packet_unref(&video_packet_orig_[i]);
+                        video_packet_[i].size = 0;  // mark as empty
+                    }
                 }
+
+                current_frame_pts = av_frame_get_best_effort_timestamp(video_frame_[i]);
+                current_frame_time = (float)(time_base.num) * (float)current_frame_pts /
+                    (float)(time_base.den);
             }
 
 #if 0

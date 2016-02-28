@@ -169,7 +169,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         // Draw video background
         GLuint texID;
-        if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &texID, errorString, 0) < 0) {
+        float videoTime = fCurTime;
+        if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &texID, errorString, videoTime) < 0) {
             MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
             return -1;
         }
