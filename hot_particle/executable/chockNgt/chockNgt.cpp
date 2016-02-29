@@ -168,7 +168,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glDisable(GL_LIGHTING);
         GLuint tex_id;
 
-        // Draw example room
+#if 0
+        // Draw example living room
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         if (textureManager.getTextureID("zimmer_layer_1_night.tga", &tex_id, errorString)) {
@@ -216,6 +217,49 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
         drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+#else
+        // draw example karaoke bar
+        // Draw example living room
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        float videoTime = fCurTime;
+        if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
+            MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        // Video in the fish tank
+        drawQuad(-0.40f, -0.02f, 0.18f, -0.23f, 0.0f, 1.0f, 1.0f);
+
+        // Adjust for overlapping nightmare...
+        if (textureManager.getTextureID("karaoke_layer_1_no_tv.tga", &tex_id, errorString)) {
+            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        
+        if (textureManager.getTextureID("karaoke_layer_2.tga", &tex_id, errorString)) {
+            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        glBlendFunc(GL_DST_COLOR, GL_ZERO);
+        if (textureManager.getTextureID("karaoke_layer_3.tga", &tex_id, errorString)) {
+            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        if (textureManager.getTextureID("vignette.tga", &tex_id, errorString)) {
+            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+#endif
 
 #if 0
         // Draw video background
