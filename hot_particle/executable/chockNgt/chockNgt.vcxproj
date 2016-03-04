@@ -97,6 +97,7 @@
     <ClInclude Include="mathhelpers.h" />
     <ClInclude Include="MovingPapers.h" />
     <ClInclude Include="Parameter.h" />
+    <ClInclude Include="Prolog.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="stdafx.h" />
@@ -108,6 +109,7 @@
     <ClCompile Include="mathhelpers.cpp" />
     <ClCompile Include="MovingPapers.cpp" />
     <ClCompile Include="Parameter.cpp" />
+    <ClCompile Include="Prolog.cpp" />
     <ClCompile Include="Snippets.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

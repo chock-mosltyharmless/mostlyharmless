@@ -5,11 +5,20 @@
 
 Zimmer::Zimmer()
 {
+    ToBeginning();
 }
 
 
 Zimmer::~Zimmer()
 {
+}
+
+void Zimmer::ToBeginning(void) {
+    draw_kenchiro_ = false;
+    kenchiro_id_ = 0;
+    kenchiro_start_time_ = last_call_time_;
+    has_light_ = false;
+    brightness_ = 0.0f;
 }
 
 int Zimmer::Draw(float time) {
@@ -64,7 +73,8 @@ int Zimmer::Draw(float time) {
 
     // Kenshiro behind the clock
     if (draw_kenchiro_) {
-        if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id, error_string, video_time) < 0) {
+        if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
+                                      error_string, video_time + 0.5f) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
             return -1;
         }

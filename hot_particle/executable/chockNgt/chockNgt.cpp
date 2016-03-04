@@ -7,6 +7,7 @@
 #include "TextureManager.h"
 #include "Configuration.h"
 #include "Zimmer.h"
+#include "Prolog.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -39,6 +40,12 @@ static int *creditsTexData[1024*1024];
 
 TextureManager textureManager;
 Zimmer zimmer_;
+Prolog prolog_;
+enum SCENE {
+    PROLOG,
+    ZIMMER
+};
+SCENE scene_to_show_ = PROLOG;
 
 void glInit()
 {
@@ -184,8 +191,12 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glDisable(GL_LIGHTING);
         GLuint tex_id;
 
-        if (zimmer_.Draw(fCurTime) < 0) {
-            return -1;
+        switch (scene_to_show_) {
+        case PROLOG:
+            if (prolog_.Draw(fCurTime) < 0) return -1;
+            break;
+        case ZIMMER:
+            if (zimmer_.Draw(fCurTime) < 0) return -1;
         }
 
 #if 0
@@ -422,53 +433,84 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		switch(wParam)
 		{
 			// change what is shown
-		case 'o':
-		case 'O':
-			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
-			break;
+        case 'q':
+        case 'Q':
+            prolog_.ToBeginning();
+            scene_to_show_ = PROLOG;
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
+        case 'w':
+        case 'W':
+            zimmer_.ToBeginning();
+            scene_to_show_ = ZIMMER;
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
+
         case '1':
             zimmer_.StartKenchiro(0);
             zimmer_.StartLight();
-            PlaySound("textures/S1_wachauf02_nr_nomisa.wav", NULL, SND_ASYNC);
+            if (scene_to_show_ == ZIMMER) {
+                PlaySound("textures/S1_wachauf02_nr_nomisa.wav", NULL, SND_ASYNC);
+            }
+            prolog_.StartVideo();
+            if (scene_to_show_ == PROLOG) {
+                PlaySound("textures/Fukushima-Fahrt_small.wav", NULL, SND_ASYNC);
+            }
             break;
         case '2':
             zimmer_.StartKenchiro(1);
             zimmer_.StartLight();
-            PlaySound("textures/S20_Kitchomu_nr_nomisa.wav", NULL, SND_ASYNC);
+            if (scene_to_show_ == ZIMMER) {
+                PlaySound("textures/S20_Kitchomu_nr_nomisa.wav", NULL, SND_ASYNC);
+            }
             break;
         case '3':
             zimmer_.StartKenchiro(2);
             zimmer_.StartLight();
-            PlaySound("textures/S23_Picasso03_nr_nomisa.wav", NULL, SND_ASYNC);
+            if (scene_to_show_ == ZIMMER) {
+                PlaySound("textures/S23_Picasso03_nr_nomisa.wav", NULL, SND_ASYNC);
+            }
             break;
         case '4':
             zimmer_.StartKenchiro(3);
             zimmer_.StartLight();
-            PlaySound("textures/S27_schwimmen03_nr_nomisa.wav", NULL, SND_ASYNC);
+            if (scene_to_show_ == ZIMMER) {
+                PlaySound("textures/S27_schwimmen03_nr_nomisa.wav", NULL, SND_ASYNC);
+            }
             break;
         case '5':
             zimmer_.StartKenchiro(4);
             zimmer_.StartLight();
-            PlaySound("textures/S28_wasma02_nr_nomisa.wav", NULL, SND_ASYNC);
+            if (scene_to_show_ == ZIMMER) {
+                PlaySound("textures/S28_wasma02_nr_nomisa.wav", NULL, SND_ASYNC);
+            }
             break;
         case '6':
             zimmer_.StartKenchiro(5);
             zimmer_.StartLight();
-            PlaySound("textures/S29_Kobe02_nr_nomisa.wav", NULL, SND_ASYNC);
+            if (scene_to_show_ == ZIMMER) {
+                PlaySound("textures/S29_Kobe02_nr_nomisa.wav", NULL, SND_ASYNC);
+            }
             break;
+        
         case 'a':
         case 'A':
             zimmer_.StartLight();
+            prolog_.StartLight();
             break;
         case 'k':
         case 'K':
             zimmer_.EndKenchiro();
+            prolog_.EndVideo();
+            prolog_.EndVideo();
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
         case 'l':
         case 'L':
             zimmer_.EndLight();
             zimmer_.EndKenchiro();
+            prolog_.EndLight();
+            prolog_.EndVideo();
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
 		default:
