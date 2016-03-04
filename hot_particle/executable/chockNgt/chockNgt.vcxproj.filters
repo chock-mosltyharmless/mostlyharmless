@@ -54,6 +54,9 @@
     <ClInclude Include="Parameter.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Zimmer.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -75,6 +78,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Parameter.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Zimmer.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

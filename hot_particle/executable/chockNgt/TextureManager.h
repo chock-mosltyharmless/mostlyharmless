@@ -128,6 +128,7 @@ private: // data
     unsigned char *video_buffer_[TM_MAX_NUM_VIDEOS];
     AVPacket video_packet_[TM_MAX_NUM_VIDEOS];
     AVPacket video_packet_orig_[TM_MAX_NUM_VIDEOS];
+    struct SwsContext *sws_ctx_[TM_MAX_NUM_VIDEOS];
     int video_next_frame_index_[TM_MAX_NUM_VIDEOS];
 #endif
 };

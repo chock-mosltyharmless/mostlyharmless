@@ -2,6 +2,8 @@
 #define CONFIGURATION_H
 #pragma once
 
+#define PIF 3.1415926f
+
 // This header contains all the configuration macros that are
 // used to set the resolution and so on.
 #define XRES 800

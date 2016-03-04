@@ -6,6 +6,7 @@
 #include "mathhelpers.h"
 #include "TextureManager.h"
 #include "Configuration.h"
+#include "Zimmer.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -37,6 +38,7 @@ static GLuint creditsTexture;
 static int *creditsTexData[1024*1024];
 
 TextureManager textureManager;
+Zimmer zimmer_;
 
 void glInit()
 {
@@ -60,32 +62,46 @@ void glUnInit()
 	ReleaseDC(mainWnd, mainDC);
 }
 
+void DrawQuadColor(float startX, float endX, float startY, float endY,
+                   float startU, float endU, float startV, float endV,
+                   float red, float green, float blue, float alpha) {
+    // set up matrices
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glEnable(GL_TEXTURE_2D);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
 
-void drawQuad(float startX, float endX, float startY, float endY, float startV, float endV, float alpha)
-{
-		// set up matrices
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		glEnable(GL_TEXTURE_2D);
-		glDepthMask(GL_FALSE);
-		glDisable(GL_DEPTH_TEST);
+    glColor4f(red, green, blue, alpha);
+    glBegin(GL_QUADS);
+    glTexCoord2f(startU, endV);
+    glVertex3f(startX, endY, 0.99f);
+    glTexCoord2f(endU, endV);
+    glVertex3f(endX, endY, 0.99f);
+    glTexCoord2f(endU, startV);
+    glVertex3f(endX, startY, 0.99f);
+    glTexCoord2f(startU, startV);
+    glVertex3f(startX, startY, 0.99f);
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+}
 
-	glColor4f(1.0f, 1.0f, 1.0f, alpha);
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, endV);
-	glVertex3f(startX, endY, 0.99f);
-	glTexCoord2f(1.0f, endV);
-	glVertex3f(endX, endY, 0.99f);
-	glTexCoord2f(1.0f, startV);
-	glVertex3f(endX, startY, 0.99f);
-	glTexCoord2f(0.0, startV);
-	glVertex3f(startX, startY, 0.99f);
-	glEnd();
-	glDisable(GL_TEXTURE_2D);
-			glDepthMask(GL_TRUE);
-			glEnable(GL_DEPTH_TEST);
+void DrawQuadColor(float startX, float endX, float startY, float endY, float red, float green, float blue, float alpha) {
+    DrawQuadColor(startX, endX, startY, endY, 0.0f, 1.0f, 0.0f, 1.0f, red, green, blue, alpha);
+}
+
+void DrawQuad(float startX, float endX, float startY, float endY, float startU, float endU, float startV, float endV, float alpha) {
+    DrawQuadColor(startX, endX, startY, endY, startU, endU, startV, endV, 1.0f, 1.0f, 1.0f, alpha);
+}
+void DrawQuad(float startX, float endX, float startY, float endY, float startV, float endV, float alpha) {
+    DrawQuad(startX, endX, startY, endY, 0.0f, 1.0f, startV, endV, alpha);
+}
+void DrawQuad(float startX, float endX, float startY, float endY, float alpha) {
+    DrawQuad(startX, endX, startY, endY, 0.0f, 1.0f, 0.0f, 1.0f, alpha);
 }
 
 //WinMain -- Main Window
@@ -168,6 +184,10 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glDisable(GL_LIGHTING);
         GLuint tex_id;
 
+        if (zimmer_.Draw(fCurTime) < 0) {
+            return -1;
+        }
+
 #if 0
         // Draw example living room
         glEnable(GL_BLEND);
@@ -177,7 +197,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
 
         float videoTime = fCurTime;
         if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
@@ -188,14 +208,14 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         char *lighting_fname = "zimmer_layer_3.tga";
         if (fCurTime < 12.0f) {
             // Video to the right
-            drawQuad(0.37f, 0.78f, 0.65f, 0.21f, 0.0f, 1.0f, 1.0f);
+            DrawQuad(0.37f, 0.78f, 0.65f, 0.21f, 0.0f, 1.0f, 1.0f);
         } else if (fCurTime < 24.0f) {
             lighting_fname = "zimmer_layer_3_tv.tga";
             // Video in the TV
-            drawQuad(-0.36f, -0.09f, 0.15f, -0.17f, 0.0f, 1.0f, 1.0f);
+            DrawQuad(-0.36f, -0.09f, 0.15f, -0.17f, 0.0f, 1.0f, 1.0f);
         } else {
             // Video to the left
-            drawQuad(-0.75f, -0.37f, 0.34f, -0.1f, 0.0f, 1.0f, 1.0f);
+            DrawQuad(-0.75f, -0.37f, 0.34f, -0.1f, 0.0f, 1.0f, 1.0f);
         }
 
         if (textureManager.getTextureID("zimmer_layer_2.tga", &tex_id, errorString)) {
@@ -203,34 +223,35 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         if (textureManager.getTextureID(lighting_fname, &tex_id, errorString)) {
             MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
         if (textureManager.getTextureID("vignette.tga", &tex_id, errorString)) {
             MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-#else
+        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+#endif
+#if 0
         // draw example karaoke bar
         // Draw example living room
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         float videoTime = fCurTime;
-        if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
+        if (textureManager.getVideoID("S1_wachauf02.wmv", &tex_id, errorString, videoTime) < 0) {
             MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
         // Video in the fish tank
-        drawQuad(-0.40f, -0.02f, 0.18f, -0.23f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-0.40f, -0.02f, 0.18f, -0.23f, 0.0f, 1.0f, 1.0f);
 
         // Adjust for overlapping nightmare...
         if (textureManager.getTextureID("karaoke_layer_1_no_tv.tga", &tex_id, errorString)) {
@@ -238,27 +259,27 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
         
         if (textureManager.getTextureID("karaoke_layer_2.tga", &tex_id, errorString)) {
             MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
         glBlendFunc(GL_DST_COLOR, GL_ZERO);
         if (textureManager.getTextureID("karaoke_layer_3.tga", &tex_id, errorString)) {
             MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
         if (textureManager.getTextureID("vignette.tga", &tex_id, errorString)) {
             MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        drawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
 #endif
 
 #if 0
@@ -269,7 +290,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, texID);
-        drawQuad(-0.5f, 0.5f, 0.7f, -0.7f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-0.5f, 0.5f, 0.7f, -0.7f, 0.0f, 1.0f, 1.0f);
 
 		//if (whatIsShown == SHOW_ENDING)
 		{
@@ -287,7 +308,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			float alpha;
 			if (fCurTime - end_start_time < 0.4f) alpha = 0.0f;
 			else alpha = 1.0f;
-			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
 
 			// Draw first highlight
 			if (textureManager.getTextureID("icon_highlight1.tga", &texID, errorString))
@@ -301,7 +322,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			if (alpha < 0.0f) alpha = 0.0f;
 			if (alpha > 1.0f) alpha = 1.0f;
 			alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
-			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
+			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
 
 			// Draw second highlight
 			if (textureManager.getTextureID("icon_highlight2.tga", &texID, errorString))
@@ -316,7 +337,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			if (alpha > 1.0f) alpha = 1.0f;
 			alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
 			alpha *= 0.75f;
-			drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
+			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
 
 			// draw some sparkles
 			if (textureManager.getTextureID("sparkle.tga", &texID, errorString))
@@ -341,7 +362,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 					centerY += (0.5f+0.2f*sinf(i*6.8f+3.0f)) * iconDistance / sparkleDuration * sparkleTime * ASPECT_RATIO -
 							   0.4f * sparkleTime*sparkleTime/sparkleDuration/sparkleDuration;
 					float width = iconDistance * 0.25f;
-					drawQuad(centerX - width, centerX + width,
+					DrawQuad(centerX - width, centerX + width,
 							 centerY - width * ASPECT_RATIO, centerY + width * ASPECT_RATIO,
 							 0.0f, 1.0f, amount);
 				}
@@ -353,7 +374,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 #endif
 
 		// draw background
-		//drawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
+		//DrawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
 		//glEnable(GL_DEPTH_TEST);
 
 		// Draw the black borders around the Schraenke
@@ -405,6 +426,51 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		case 'O':
 			PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 			break;
+        case '1':
+            zimmer_.StartKenchiro(0);
+            zimmer_.StartLight();
+            PlaySound("textures/S1_wachauf02_nr_nomisa.wav", NULL, SND_ASYNC);
+            break;
+        case '2':
+            zimmer_.StartKenchiro(1);
+            zimmer_.StartLight();
+            PlaySound("textures/S20_Kitchomu_nr_nomisa.wav", NULL, SND_ASYNC);
+            break;
+        case '3':
+            zimmer_.StartKenchiro(2);
+            zimmer_.StartLight();
+            PlaySound("textures/S23_Picasso03_nr_nomisa.wav", NULL, SND_ASYNC);
+            break;
+        case '4':
+            zimmer_.StartKenchiro(3);
+            zimmer_.StartLight();
+            PlaySound("textures/S27_schwimmen03_nr_nomisa.wav", NULL, SND_ASYNC);
+            break;
+        case '5':
+            zimmer_.StartKenchiro(4);
+            zimmer_.StartLight();
+            PlaySound("textures/S28_wasma02_nr_nomisa.wav", NULL, SND_ASYNC);
+            break;
+        case '6':
+            zimmer_.StartKenchiro(5);
+            zimmer_.StartLight();
+            PlaySound("textures/S29_Kobe02_nr_nomisa.wav", NULL, SND_ASYNC);
+            break;
+        case 'a':
+        case 'A':
+            zimmer_.StartLight();
+            break;
+        case 'k':
+        case 'K':
+            zimmer_.EndKenchiro();
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
+        case 'l':
+        case 'L':
+            zimmer_.EndLight();
+            zimmer_.EndKenchiro();
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
 		default:
 			break;
 		}

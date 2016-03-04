@@ -101,6 +101,7 @@
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="TextureManager.h" />
+    <ClInclude Include="Zimmer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chockNgt.cpp" />
@@ -113,6 +114,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="TextureManager.cpp" />
+    <ClCompile Include="Zimmer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\avcodec.lib" />

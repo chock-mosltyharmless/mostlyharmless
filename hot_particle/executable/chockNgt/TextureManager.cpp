@@ -140,6 +140,18 @@ int TextureManager::loadAVI(const char *filename, char *errorString)
     // Signal that we are at the beginning of the stream
     video_next_frame_index_[numVideos] = 0;
 
+    // initialize SWS context for software scaling
+    sws_ctx_[numVideos] = sws_getContext(video_codec_context_[numVideos]->width,
+        video_codec_context_[numVideos]->height,
+        video_codec_context_[numVideos]->pix_fmt,
+        video_codec_context_[numVideos]->width,
+        video_codec_context_[numVideos]->height,
+        AV_PIX_FMT_RGB24,
+        SWS_BILINEAR,
+        NULL,
+        NULL,
+        NULL);
+
 	// create openGL texture
 	int textureSize = videoWidth[numVideos] * videoHeight[numVideos] * 3;
 	glGenTextures(1, &videoTextureID[numVideos]);
@@ -298,20 +310,7 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
 			*id = videoTextureID[i];
 
             // Decode and re-format single frame
-            struct SwsContext *sws_ctx = NULL;
-            // initialize SWS context for software scaling
-            sws_ctx = sws_getContext(video_codec_context_[i]->width,
-                video_codec_context_[i]->height,
-                video_codec_context_[i]->pix_fmt,
-                video_codec_context_[i]->width,
-                video_codec_context_[i]->height,
-                AV_PIX_FMT_RGB24,
-                SWS_BILINEAR,
-                NULL,
-                NULL,
-                NULL);
-
-            if (!sws_ctx) {
+            if (!sws_ctx_[i]) {
                 // Could not get frame from video, use black instead?
                 int retVal = getTextureID("black.tga", id, errorString);
                 if (retVal < 0) return retVal;
@@ -369,7 +368,7 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
                         // Did we get a video frame?
                         if(frameFinished) {
                             // Convert the image from its native format to RGB
-                            sws_scale(sws_ctx, (uint8_t const * const *)video_frame_[i]->data,
+                            sws_scale(sws_ctx_[i], (uint8_t const * const *)video_frame_[i]->data,
                                 video_frame_[i]->linesize, 0, video_codec_context_[i]->height,
                                 video_frame_rgb_[i]->data, video_frame_rgb_[i]->linesize);
                         }
@@ -390,21 +389,10 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
                 current_frame_pts = av_frame_get_best_effort_timestamp(video_frame_[i]);
                 current_frame_time = (float)(time_base.num) * (float)current_frame_pts /
                     (float)(time_base.den);
+                //av_frame_unref(video_frame_[i]);
             }
 
-#if 0
-			LPBITMAPINFOHEADER lpbi;
-			lpbi = (LPBITMAPINFOHEADER)AVIStreamGetFrame(pgf[i], frameID % videoNumFrames[i]);
-			char *pdata = (char *)lpbi + lpbi->biSize + lpbi->biClrUsed * sizeof(RGBQUAD); // Skip header info to get to data
-			// Convert data to requested bitmap format
-			int width = videoWidth[i];
-			int height = videoHeight[i];
-			SelectObject(hdc, hBitmap[i]);
-			DrawDibDraw(hdd, hdc, 0, 0, width, height, lpbi, pdata, 0, 0, width, height, 0);
-			GdiFlush();
-
-#endif
-			// write openGL texture
+            // write openGL texture
 			glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
 			glBindTexture(GL_TEXTURE_2D, *id);
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, videoWidth[i], videoHeight[i],
