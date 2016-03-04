@@ -94,6 +94,7 @@
     <ClInclude Include="chockNgt.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="glext.h" />
+    <ClInclude Include="Karaoke.h" />
     <ClInclude Include="mathhelpers.h" />
     <ClInclude Include="MovingPapers.h" />
     <ClInclude Include="Parameter.h" />
@@ -106,6 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chockNgt.cpp" />
+    <ClCompile Include="Karaoke.cpp" />
     <ClCompile Include="mathhelpers.cpp" />
     <ClCompile Include="MovingPapers.cpp" />
     <ClCompile Include="Parameter.cpp" />

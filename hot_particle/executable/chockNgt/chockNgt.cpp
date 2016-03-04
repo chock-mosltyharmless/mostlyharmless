@@ -8,6 +8,7 @@
 #include "Configuration.h"
 #include "Zimmer.h"
 #include "Prolog.h"
+#include "Karaoke.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -41,9 +42,11 @@ static int *creditsTexData[1024*1024];
 TextureManager textureManager;
 Zimmer zimmer_;
 Prolog prolog_;
+Karaoke karaoke_;
 enum SCENE {
     PROLOG,
-    ZIMMER
+    ZIMMER,
+    KARAOKE,
 };
 SCENE scene_to_show_ = PROLOG;
 
@@ -197,101 +200,13 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             break;
         case ZIMMER:
             if (zimmer_.Draw(fCurTime) < 0) return -1;
+            break;
+        case KARAOKE:
+            if (karaoke_.Draw(fCurTime) < 0) return -1;
+            break;
+        default:
+            break;
         }
-
-#if 0
-        // Draw example living room
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        if (textureManager.getTextureID("zimmer_layer_1_night.tga", &tex_id, errorString)) {
-            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-
-        float videoTime = fCurTime;
-        if (textureManager.getVideoID("Kenshiro20_vonoben.wmv", &tex_id, errorString, videoTime) < 0) {
-            MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        char *lighting_fname = "zimmer_layer_3.tga";
-        if (fCurTime < 12.0f) {
-            // Video to the right
-            DrawQuad(0.37f, 0.78f, 0.65f, 0.21f, 0.0f, 1.0f, 1.0f);
-        } else if (fCurTime < 24.0f) {
-            lighting_fname = "zimmer_layer_3_tv.tga";
-            // Video in the TV
-            DrawQuad(-0.36f, -0.09f, 0.15f, -0.17f, 0.0f, 1.0f, 1.0f);
-        } else {
-            // Video to the left
-            DrawQuad(-0.75f, -0.37f, 0.34f, -0.1f, 0.0f, 1.0f, 1.0f);
-        }
-
-        if (textureManager.getTextureID("zimmer_layer_2.tga", &tex_id, errorString)) {
-            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-        glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        if (textureManager.getTextureID(lighting_fname, &tex_id, errorString)) {
-            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-        if (textureManager.getTextureID("vignette.tga", &tex_id, errorString)) {
-            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-#endif
-#if 0
-        // draw example karaoke bar
-        // Draw example living room
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        float videoTime = fCurTime;
-        if (textureManager.getVideoID("S1_wachauf02.wmv", &tex_id, errorString, videoTime) < 0) {
-            MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        // Video in the fish tank
-        DrawQuad(-0.40f, -0.02f, 0.18f, -0.23f, 0.0f, 1.0f, 1.0f);
-
-        // Adjust for overlapping nightmare...
-        if (textureManager.getTextureID("karaoke_layer_1_no_tv.tga", &tex_id, errorString)) {
-            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-        
-        if (textureManager.getTextureID("karaoke_layer_2.tga", &tex_id, errorString)) {
-            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-        glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        if (textureManager.getTextureID("karaoke_layer_3.tga", &tex_id, errorString)) {
-            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-        if (textureManager.getTextureID("vignette.tga", &tex_id, errorString)) {
-            MessageBox(mainWnd, errorString, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f, 1.0f);
-#endif
 
 #if 0
         // Draw video background
@@ -445,6 +360,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             scene_to_show_ = ZIMMER;
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
+        case 'e':
+        case 'E':
+            karaoke_.ToBeginning();
+            scene_to_show_ = KARAOKE;
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
 
         case '1':
             zimmer_.StartKenchiro(0);
@@ -455,6 +376,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             prolog_.StartVideo();
             if (scene_to_show_ == PROLOG) {
                 PlaySound("textures/Fukushima-Fahrt_small.wav", NULL, SND_ASYNC);
+            }
+            karaoke_.StartKenchiro();
+            if (scene_to_show_ == KARAOKE) {
+                PlaySound("textures/S22_fight02_nr_nomisa.wav", NULL, SND_ASYNC);
             }
             break;
         case '2':
@@ -503,6 +428,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             zimmer_.EndKenchiro();
             prolog_.EndVideo();
             prolog_.EndVideo();
+            karaoke_.EndKenchiro();
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
         case 'l':
@@ -511,6 +437,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             zimmer_.EndKenchiro();
             prolog_.EndLight();
             prolog_.EndVideo();
+            karaoke_.EndKenchiro();
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
 		default:
