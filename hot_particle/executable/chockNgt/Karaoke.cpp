@@ -138,9 +138,11 @@ int Karaoke::Draw(float time) {
 void Karaoke::StartKenchiro(void) {
     draw_kenchiro_ = true;
     kenchiro_start_time_ = last_call_time_;
+    PlaySound("textures/S22_fight02_nr_nomisa_skip0.wav", NULL, SND_ASYNC);
 }
 
 void Karaoke::EndKenchiro(void) {
     draw_kenchiro_ = false;
+    PlaySound("textures/silence.wav", NULL, SND_ASYNC);
 }
 

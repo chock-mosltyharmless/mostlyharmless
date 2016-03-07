@@ -380,10 +380,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             if (scene_to_show_ == PROLOG) {
                 PlaySound("textures/Fukushima-Fahrt_small.wav", NULL, SND_ASYNC);
             }
-            karaoke_.StartKenchiro();
-            if (scene_to_show_ == KARAOKE) {
-                PlaySound("textures/S22_fight02_nr_nomisa_skip0.wav", NULL, SND_ASYNC);
-            }
             if (scene_to_show_ == PROBE) {
                 zimmer_.StartScene(PROBERAUM);
             }
@@ -399,11 +395,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             break;
         case '5':
             zimmer_.StartScene(APRIL_21);
-
-            //zimmer_.StartKenchiro(4);
-            if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S28_wasma02_nr_nomisa_skip7.wav", NULL, SND_ASYNC);
-            }
             break;
         case '6':
             zimmer_.StartScene(MAI_10);
@@ -434,12 +425,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             break;
 
         case 'K':
-            zimmer_.StartKenchiro();
+            if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
+            if (scene_to_show_ == PROBERAUM) zimmer_.StartKenchiro();
+            if (scene_to_show_ == KARAOKE) karaoke_.StartKenchiro();
             break;
         case 'M':
             zimmer_.EndKenchiro();
             zimmer_.EndScene();
             prolog_.EndVideo();
+            prolog_.EndLight();
             karaoke_.EndKenchiro();
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
