@@ -3,6 +3,7 @@
 #include "Configuration.h"
 #include "glext.h"
 #include "gl/glu.h"
+#include "stb_image.h"
 
 float noiseData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
 unsigned char noiseIntData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
@@ -243,6 +244,49 @@ int TextureManager::loadTGA(const char *filename, char *errorString)
 	return 0;
 }
 
+int TextureManager::loadPNG(const char *filename, char *errorString)
+{
+    char combinedName[TM_MAX_FILENAME_LENGTH+1];
+
+    sprintf_s(combinedName, TM_MAX_FILENAME_LENGTH,
+        TM_DIRECTORY "%s", filename);
+
+    if (numTextures >= TM_MAX_NUM_TEXTURES) {
+        sprintf_s(errorString, MAX_ERROR_LENGTH, "Too many textures.");
+        return -1;
+    }
+
+    int width, height, num_components;
+    unsigned char *data = stbi_load(combinedName, &width, &height, &num_components, 4);
+
+    // create openGL texture
+    glGenTextures(1, &textureID[numTextures]);
+    textureWidth[numTextures] = width;
+    textureHeight[numTextures] = height;
+    glBindTexture(GL_TEXTURE_2D, textureID[numTextures]);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
+    glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
+#if 0 // Use simple mipmap generation	
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+        textureWidth[numTextures], textureHeight[numTextures],
+        0, GL_BGRA, GL_UNSIGNED_BYTE, textureData);
+#else
+    gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
+        textureWidth[numTextures], textureHeight[numTextures],
+        GL_BGRA, GL_UNSIGNED_BYTE, data);
+#endif
+    
+    stbi_image_free(data);
+
+    strcpy_s(textureName[numTextures], TM_MAX_FILENAME_LENGTH, filename);
+    numTextures++;
+
+    return 0;
+}
+
 int TextureManager::init(char *errorString, HDC mainDC)
 {
 	// Free everything if there was something before.
@@ -274,7 +318,7 @@ int TextureManager::init(char *errorString, HDC mainDC)
 	do
 	{		
 		// Note that the number of textures is increased automatically
-		int retVal = loadTGA(ffd.cFileName, errorString);
+		int retVal = loadPNG(ffd.cFileName, errorString);
 		if (retVal) return retVal;
 	} while (FindNextFile(hFind, &ffd));
 
@@ -312,7 +356,7 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
             // Decode and re-format single frame
             if (!sws_ctx_[i]) {
                 // Could not get frame from video, use black instead?
-                int retVal = getTextureID("black.tga", id, errorString);
+                int retVal = getTextureID("black.png", id, errorString);
                 if (retVal < 0) return retVal;
                 else return 1; // mark finished
                 // TODO (jhofer): Or should I just use break to use the last frame.
@@ -349,7 +393,7 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
                     if (video_packet_[i].size <= 0) {
                         if (av_read_frame(video_format_context_[i], &(video_packet_[i])) < 0) {
                             // Could not get frame from video, use black instead?
-                            int retVal = getTextureID("black.tga", id, errorString);
+                            int retVal = getTextureID("black.png", id, errorString);
                             if (retVal < 0) return retVal;
                             else return 1; // mark finished
                             // TODO (jhofer): Or should I just use break to use the last frame.

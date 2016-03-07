@@ -47,12 +47,12 @@ int Prolog::Draw(float time) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    if (textureManager.getTextureID("white.tga", &tex_id, error_string)) {
+    if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuadColor(-1.0f, 1.0f, -1.0f, 1.0f, brightness_, brightness_, brightness_, 1.0f);
+    DrawQuadColor(-1.0f, 1.0f, -1.0f, 1.0f, brightness_, brightness_*0.97, brightness_*0.85, 1.0f);
 
     if (show_video_) {
         float alpha = video_time;
@@ -72,12 +72,12 @@ int Prolog::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 0.1f, 0.9f, 0.0f, 1.0f, alpha);
+        DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, alpha);
     }
 
     // Darkening borders
     glBlendFunc(GL_DST_COLOR, GL_ZERO);
-    if (textureManager.getTextureID("vignette.tga", &tex_id, error_string)) {
+    if (textureManager.getTextureID("vignette.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }

@@ -139,9 +139,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	// Create the window
 #ifdef FULLSCREEN
-    //mainWnd = CreateWindow(wc.lpszClassName,"hot particle",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+    mainWnd = CreateWindow(wc.lpszClassName,"hot particle",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 #else
-	mainWnd = CreateWindow(wc.lpszClassName,"hot particle",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,1024,768,0,0,hInstance,0);
+	mainWnd = CreateWindow(wc.lpszClassName,"hot particle",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,XRES,YRES,0,0,hInstance,0);
 #endif
 	
 	RECT windowRect;
@@ -371,7 +371,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             zimmer_.StartKenchiro(0);
             zimmer_.StartLight();
             if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S1_wachauf02_nr_nomisa.wav", NULL, SND_ASYNC);
+                PlaySound("textures/S1_wachauf02_nr_nomisa_skip6.wav", NULL, SND_ASYNC);
             }
             prolog_.StartVideo();
             if (scene_to_show_ == PROLOG) {
@@ -379,42 +379,42 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             }
             karaoke_.StartKenchiro();
             if (scene_to_show_ == KARAOKE) {
-                PlaySound("textures/S22_fight02_nr_nomisa.wav", NULL, SND_ASYNC);
+                PlaySound("textures/S22_fight02_nr_nomisa_skip0.wav", NULL, SND_ASYNC);
             }
             break;
         case '2':
             zimmer_.StartKenchiro(1);
             zimmer_.StartLight();
             if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S20_Kitchomu_nr_nomisa.wav", NULL, SND_ASYNC);
+                PlaySound("textures/S20_Kitchomu_nr_nomisa_skip7.wav", NULL, SND_ASYNC);
             }
             break;
         case '3':
             zimmer_.StartKenchiro(2);
             zimmer_.StartLight();
             if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S23_Picasso03_nr_nomisa.wav", NULL, SND_ASYNC);
+                PlaySound("textures/S23_Picasso03_nr_nomisa_skip5.5.wav", NULL, SND_ASYNC);
             }
             break;
         case '4':
             zimmer_.StartKenchiro(3);
             zimmer_.StartLight();
             if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S27_schwimmen03_nr_nomisa.wav", NULL, SND_ASYNC);
+                PlaySound("textures/S27_schwimmen03_nr_nomisa_skip14.wav", NULL, SND_ASYNC);
             }
             break;
         case '5':
             zimmer_.StartKenchiro(4);
             zimmer_.StartLight();
             if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S28_wasma02_nr_nomisa.wav", NULL, SND_ASYNC);
+                PlaySound("textures/S28_wasma02_nr_nomisa_skip7.wav", NULL, SND_ASYNC);
             }
             break;
         case '6':
             zimmer_.StartKenchiro(5);
             zimmer_.StartLight();
             if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S29_Kobe02_nr_nomisa.wav", NULL, SND_ASYNC);
+                PlaySound("textures/S29_Kobe02_nr_nomisa_skip6.5.wav", NULL, SND_ASYNC);
             }
             break;
         

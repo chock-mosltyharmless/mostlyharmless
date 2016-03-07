@@ -26,14 +26,31 @@ int Zimmer::Draw(float time) {
     GLuint tex_id;
     const char *texture_name;
 
-    float kFrameOpenTimes[6] = {7.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-    float kFrameCloseTimes[6] = {151.0f, 95.0f, 300.0f, 80.0f, 72.0f, 320.0f};
+    float kFrameSkipTimes[6] = {6.0f, 7.0f, 5.5f, 14.0f, 7.0f, 6.5f};
+    float kFrameOpenTimes[6] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
+    float kFrameCloseTimes[6] = {152.5f, 100.5f, 305.0f, 85.0f, 73.0f, 313.0f};
+    const char *kRoomTextures[6] = {
+        "zuhause_room_maerz_two.png",
+        "zuhause_room_maerz_two.png",
+        "zuhause_room_maerz_two.png",
+        "zuhause_room_maerz_two.png",
+        "proberaum_room.png",
+        "zuhause_room_maerz_two.png"
+    };
+    const char *kRoomNoClockTextures[6] = {
+        "zuhause_room_maerz_noclock.png",
+        "zuhause_room_maerz_noclock.png",
+        "zuhause_room_maerz_noclock.png",
+        "zuhause_room_maerz_noclock.png",
+        "proberaum_room_noclock.png",
+        "zuhause_room_maerz_noclock.png"
+    };
     const char *kKenchiroVideos[6] = {
-        "S1_wachauf02.wmv",
-        "S20_Kitchomu.wmv",
-        "S23_Picasso03.wmv",
-        "S27_schwimmen03.wmv",
-        "S28_wasma02.wmv",
+        "S1_wachauf02_hell.wmv",
+        "S20_Kitchomu_hell.wmv",
+        "S23_Picasso03_hell.wmv",
+        "S27_schwimmen03_hell.wmv",
+        "S28_wasma02_hell.wmv",
         "S29_Kobe02.wmv"
     };
 
@@ -64,51 +81,50 @@ int Zimmer::Draw(float time) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Adjust for overlapping nightmare...
-    if (textureManager.getTextureID("zimmer_layer_1_night.tga", &tex_id, error_string)) {
+    if (textureManager.getTextureID("zuhause_drawings_maerz_night.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f);
+    DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Kenshiro behind the clock
     if (draw_kenchiro_) {
-        if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
-                                      error_string, video_time + 0.5f) < 0) {
+        if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id, error_string,
+                                      video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        //DrawQuad(-0.7f, -0.4f, 0.7f, 0.35f, 0.3f, 0.7f, 0.25f, 0.8f, 1.0f);
-        DrawQuad(-0.686f, -0.429f, 0.704f, 0.369f, 0.3f, 0.7f, 0.25f, 0.8f, 1.0f);
+        DrawQuad(-0.665f, -0.46f, 0.814f, 0.476f, 0.3f, 0.65f, 0.25f, 0.8f, 1.0f);
     }
 
     // Room
-    texture_name = "zimmer_layer_2.tga";
-    if (start_kenchiro) texture_name = "zimmer_layer_2_noclock.tga";
+    texture_name = kRoomTextures[kenchiro_id_];
+    if (start_kenchiro) texture_name = kRoomNoClockTextures[kenchiro_id_];
     if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f);
+    DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Night lighting of the room
     glBlendFunc(GL_DST_COLOR, GL_ZERO);
-    if (textureManager.getTextureID("zimmer_layer_3.tga", &tex_id, error_string)) {
+    if (textureManager.getTextureID("zuahuse_lighting.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f);
+    DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Darkening borders
-    if (textureManager.getTextureID("vignette.tga", &tex_id, error_string)) {
+    if (textureManager.getTextureID("vignette.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f);
+    DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Draw opened lid
     if (start_kenchiro) {
@@ -117,7 +133,7 @@ int Zimmer::Draw(float time) {
         float open_time = video_time - kFrameOpenTime;
         if (open_time * speed <= 1.0f) open_rad = sinf(open_time * speed * PIF * 0.5f);
         if (open_time * speed > 1.0f) open_rad = sinf(1.0f * PIF * 0.5f);
-        speed = 0.8f;  // close time is slower
+        speed = 1.2f;  // close time is slower
         float close_time = video_time - kFrameCloseTime;
         if (close_time > 0.0f && close_time * speed <= 1.0f) {
             open_rad = 1.0f - sinf(close_time * speed * PIF * 0.5f);
@@ -128,16 +144,16 @@ int Zimmer::Draw(float time) {
         }
         open_rad *= 0.75f * PIF;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        texture_name = "zimmer_layer_2_clock.tga";
-        if (open_rad > 0.5f * 3.1415f) texture_name = "zimmer_layer_2_clock_back.tga";
+        texture_name = "zuhause_clock_two.png";
+        if (open_rad > 0.5f * 3.1415f) texture_name = "zuhause_clock_blank.png";
         if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        float brightness = 0.8f - sinf(open_rad)*0.3f;
-        if (open_rad > 3.1415f * 0.5f) brightness = 0.5f + 0.4f * sinf(open_rad);
-        DrawQuadColor(-0.685f, -0.685f + cosf(open_rad)*0.255f, 0.37f, 0.703f,
+        float brightness = 0.48f - sinf(open_rad)*0.2f;
+        if (open_rad > 3.1415f * 0.5f) brightness = 0.4f + 0.2f * sinf(open_rad);
+        DrawQuadColor(-0.665f, -0.665f + cosf(open_rad)*0.205f, 0.814f, 0.476f,
                       brightness, brightness, brightness, 1.0f);
     }
 

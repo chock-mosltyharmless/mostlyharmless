@@ -20,7 +20,7 @@ extern "C" {
 }
 
 #define TM_DIRECTORY "textures/"
-#define TM_SHADER_WILDCARD "*.tga"
+#define TM_SHADER_WILDCARD "*.png"
 #define TM_VIDEO_WILDCARD "*.wmv"
 #define TM_MAX_NUM_TEXTURES 128
 #define TM_MAX_NUM_VIDEOS 16
@@ -88,6 +88,7 @@ private: // functions
 	int createRenderTargetTexture(char *errorString, int width, int height,
 								  const char *name);
 	int loadTGA(const char *filename, char *errorString);
+    int loadPNG(const char *filename, char *errorString);
 	int loadAVI(const char *filename, char *errorString);
 	float frand(void);
 	void normalizeKernel(float *kernel, int kernelLength);
@@ -109,15 +110,6 @@ private: // data
 	GLuint videoTextureID[TM_MAX_NUM_VIDEOS];
 	int videoWidth[TM_MAX_NUM_VIDEOS];
 	int videoHeight[TM_MAX_NUM_VIDEOS];
-#if 0
-	AVISTREAMINFO psi[TM_MAX_NUM_VIDEOS];
-	PAVISTREAM pavi[TM_MAX_NUM_VIDEOS];
-	PGETFRAME pgf[TM_MAX_NUM_VIDEOS];
-	HBITMAP hBitmap[TM_MAX_NUM_VIDEOS]; // Bitmap that holds the video texture
-	unsigned char *videoData[TM_MAX_NUM_VIDEOS];
-	HDRAWDIB hdd; // Used for scaling/drawing the avi to a RAM buffer
-	HDC hdc;
-#else
     AVFormatContext *video_format_context_[TM_MAX_NUM_VIDEOS];
     AVCodecContext *video_codec_context_[TM_MAX_NUM_VIDEOS];
     AVCodecContext *video_codec_context_orig_[TM_MAX_NUM_VIDEOS];
@@ -130,6 +122,5 @@ private: // data
     AVPacket video_packet_orig_[TM_MAX_NUM_VIDEOS];
     struct SwsContext *sws_ctx_[TM_MAX_NUM_VIDEOS];
     int video_next_frame_index_[TM_MAX_NUM_VIDEOS];
-#endif
 };
 
