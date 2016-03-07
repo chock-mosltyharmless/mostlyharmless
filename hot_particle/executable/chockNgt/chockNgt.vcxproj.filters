@@ -60,6 +60,12 @@
     <ClInclude Include="Prolog.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Karaoke.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -87,6 +93,12 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Prolog.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Karaoke.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image.c">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

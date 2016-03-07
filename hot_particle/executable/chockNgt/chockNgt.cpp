@@ -47,8 +47,10 @@ enum SCENE {
     PROLOG,
     ZIMMER,
     KARAOKE,
+    PROBE,
 };
 SCENE scene_to_show_ = PROLOG;
+SCENE scene_to_draw_ = PROLOG;  // may be previous scene due to whatever.
 
 void glInit()
 {
@@ -199,6 +201,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             if (prolog_.Draw(fCurTime) < 0) return -1;
             break;
         case ZIMMER:
+        case PROBE:
             if (zimmer_.Draw(fCurTime) < 0) return -1;
             break;
         case KARAOKE:
@@ -348,30 +351,30 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 		switch(wParam)
 		{
 			// change what is shown
-        case 'q':
         case 'Q':
             prolog_.ToBeginning();
             scene_to_show_ = PROLOG;
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
-        case 'w':
         case 'W':
             zimmer_.ToBeginning();
             scene_to_show_ = ZIMMER;
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
-        case 'e':
         case 'E':
             karaoke_.ToBeginning();
             scene_to_show_ = KARAOKE;
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
+        case 'R':
+            zimmer_.ToBeginning();
+            scene_to_show_ = PROBE;
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
 
         case '1':
-            zimmer_.StartKenchiro(0);
-            zimmer_.StartLight();
             if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S1_wachauf02_nr_nomisa_skip6.wav", NULL, SND_ASYNC);
+                zimmer_.StartScene(MAERZ_11);
             }
             prolog_.StartVideo();
             if (scene_to_show_ == PROLOG) {
@@ -381,61 +384,61 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             if (scene_to_show_ == KARAOKE) {
                 PlaySound("textures/S22_fight02_nr_nomisa_skip0.wav", NULL, SND_ASYNC);
             }
+            if (scene_to_show_ == PROBE) {
+                zimmer_.StartScene(PROBERAUM);
+            }
             break;
         case '2':
-            zimmer_.StartKenchiro(1);
-            zimmer_.StartLight();
-            if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S20_Kitchomu_nr_nomisa_skip7.wav", NULL, SND_ASYNC);
-            }
+            zimmer_.StartScene(ARPIL_09);
             break;
         case '3':
-            zimmer_.StartKenchiro(2);
-            zimmer_.StartLight();
-            if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S23_Picasso03_nr_nomisa_skip5.5.wav", NULL, SND_ASYNC);
-            }
+            zimmer_.StartScene(APRIL_16);
             break;
         case '4':
-            zimmer_.StartKenchiro(3);
-            zimmer_.StartLight();
-            if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S27_schwimmen03_nr_nomisa_skip14.wav", NULL, SND_ASYNC);
-            }
+            zimmer_.StartScene(APRIL_17);
             break;
         case '5':
-            zimmer_.StartKenchiro(4);
-            zimmer_.StartLight();
+            zimmer_.StartScene(APRIL_21);
+
+            //zimmer_.StartKenchiro(4);
             if (scene_to_show_ == ZIMMER) {
                 PlaySound("textures/S28_wasma02_nr_nomisa_skip7.wav", NULL, SND_ASYNC);
             }
             break;
         case '6':
-            zimmer_.StartKenchiro(5);
-            zimmer_.StartLight();
-            if (scene_to_show_ == ZIMMER) {
-                PlaySound("textures/S29_Kobe02_nr_nomisa_skip6.5.wav", NULL, SND_ASYNC);
-            }
+            zimmer_.StartScene(MAI_10);
             break;
-        
-        case 'a':
-        case 'A':
-            zimmer_.StartLight();
-            prolog_.StartLight();
+        case '7':
+            zimmer_.StartScene(JUNI_01);
             break;
-        case 'k':
+        case '8':
+            zimmer_.StartScene(JUNI_04);
+            break;
+        case '9':
+            zimmer_.StartScene(JUNI_05);
+            break;
+        case '0':
+            zimmer_.StartScene(JUNI_12);
+            break;
+        case 'Z':
+            zimmer_.StartScene(JULI_29);
+            break;
+        case 'X':
+            zimmer_.StartScene(AUGUST_15);
+            break;
+        case 'C':
+            zimmer_.StartScene(MAERZ_11_END);
+            break;
+        case 'V':
+            zimmer_.StartScene(UNKNOWN);
+            break;
+
         case 'K':
-            zimmer_.EndKenchiro();
-            prolog_.EndVideo();
-            prolog_.EndVideo();
-            karaoke_.EndKenchiro();
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            zimmer_.StartKenchiro();
             break;
-        case 'l':
-        case 'L':
-            zimmer_.EndLight();
+        case 'M':
             zimmer_.EndKenchiro();
-            prolog_.EndLight();
+            zimmer_.EndScene();
             prolog_.EndVideo();
             karaoke_.EndKenchiro();
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);

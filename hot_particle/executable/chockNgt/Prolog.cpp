@@ -28,7 +28,6 @@ void Prolog::StartVideo(void) {
 int Prolog::Draw(float time) {
     char error_string[MAX_ERROR_LENGTH + 1];
     GLuint tex_id;
-    const char *texture_name;
 
     // Adjust brightness according to time difference
     if (has_light_) {
@@ -52,7 +51,7 @@ int Prolog::Draw(float time) {
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuadColor(-1.0f, 1.0f, -1.0f, 1.0f, brightness_, brightness_*0.97, brightness_*0.85, 1.0f);
+    DrawQuadColor(-1.0f, 1.0f, -1.0f, 1.0f, brightness_, brightness_*0.97f, brightness_*0.85f, 1.0f);
 
     if (show_video_) {
         float alpha = video_time;
