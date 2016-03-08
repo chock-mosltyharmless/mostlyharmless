@@ -177,7 +177,7 @@ int Zimmer::Draw(float time) {
 
     bool start_kenchiro = false;
     float kFrameOpenTime = kFrameOpenTimes[kenchiro_id_];
-    float kFrameCloseTime = kFrameCloseTimes[kenchiro_id_];
+    float kFrameCloseTime = kFrameCloseTimes[kenchiro_id_] - kFrameSkipTimes[kenchiro_id_];
     if (draw_kenchiro_) {
         if (video_time > kFrameOpenTime) {
             start_kenchiro = true;
