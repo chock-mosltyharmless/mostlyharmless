@@ -375,6 +375,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 'R':
             zimmer_.ToBeginning();
             scene_to_show_ = PROBE;
+            zimmer_.StartScene(PROBERAUM);
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
         case 'T':
@@ -440,7 +441,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             break;
         case 'K':
             if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
-            if (scene_to_show_ == PROBERAUM) zimmer_.StartKenchiro();
+            if (scene_to_show_ == PROBE) zimmer_.StartKenchiro();
             if (scene_to_show_ == KARAOKE) karaoke_.StartKenchiro();
             break;
         case 'M':
