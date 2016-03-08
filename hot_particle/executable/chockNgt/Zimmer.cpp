@@ -82,7 +82,7 @@ int Zimmer::Draw(float time) {
         "zuhause_room_juli_29.png",  // JULI_29,
         "zuhause_room_august_15.png",  // AUGUST_15,
         "zuhause_room_maerz_11.png",  // MARZ_11_END,
-        "zuhause_room_mai_10.png",  // UNKNOWN
+        "zuhause_room_september_14.png",  // UNKNOWN
         "proberaum_room.png",  // PROBERAUM
     };
     const char *kRoomNoClockTextures[] = {
@@ -99,7 +99,7 @@ int Zimmer::Draw(float time) {
         "zuhause_room_juli_29_noclock.png",  // JULI_29,
         "zuhause_room_august_15_noclock.png",  // AUGUST_15,
         "zuhause_room_maerz_11_noclock.png",  // MARZ_11_END,
-        "zuhause_room_mai_10_noclock.png",  // UNKNOWN
+        "zuhause_room_september_14_noclock.png",  // UNKNOWN
         "proberaum_room_noclock.png",  // PROBERAUM
     };
     const char *kRoomDrawingsTextures[] = {
@@ -116,7 +116,7 @@ int Zimmer::Draw(float time) {
         "zuhause_drawings_juli_night.png",  // JULI_29,
         "zuhause_drawings_august_night.png",  // AUGUST_15,
         "zuhause_drawings_maerz_night.png",  // MARZ_11_END,
-        "zuhause_drawings_mai.png",  // UNKNOWN
+        "zuhause_drawings_september_night.png",  // UNKNOWN
         "zuhause_drawings_mai.png",  // PROBERAUM
     };
     const char *kRoomLightings[] = {
@@ -150,7 +150,7 @@ int Zimmer::Draw(float time) {
         "zuhause_clock_juli_29.png",  // JULI_29,
         "zuhause_clock_august_15.png",  // AUGUST_15,
         "zuhause_clock_maerz_11.png",  // MARZ_11_END,
-        "zuhause_clock_mai_10.png",  // UNKNOWN
+        "zuhause_clock_september_14.png",  // UNKNOWN
         "zuhause_clock_maerz_11.png",  // PROBERAUM
     };
 
