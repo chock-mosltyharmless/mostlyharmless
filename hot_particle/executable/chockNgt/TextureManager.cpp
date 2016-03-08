@@ -276,7 +276,7 @@ int TextureManager::loadPNG(const char *filename, char *errorString)
 #else
     gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
         textureWidth[numTextures], textureHeight[numTextures],
-        GL_BGRA, GL_UNSIGNED_BYTE, data);
+        GL_RGBA, GL_UNSIGNED_BYTE, data);
 #endif
     
     stbi_image_free(data);

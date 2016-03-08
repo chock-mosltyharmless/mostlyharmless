@@ -9,6 +9,7 @@
 #include "Zimmer.h"
 #include "Prolog.h"
 #include "Karaoke.h"
+#include "Smartphones.h" 
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -43,11 +44,13 @@ TextureManager textureManager;
 Zimmer zimmer_;
 Prolog prolog_;
 Karaoke karaoke_;
+Smartphones smartphones_;
 enum SCENE {
     PROLOG,
     ZIMMER,
     KARAOKE,
     PROBE,
+    SMARTPHONES
 };
 SCENE scene_to_show_ = PROLOG;
 SCENE scene_to_draw_ = PROLOG;  // may be previous scene due to whatever.
@@ -206,6 +209,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             break;
         case KARAOKE:
             if (karaoke_.Draw(fCurTime) < 0) return -1;
+            break;
+        case SMARTPHONES:
+            if (smartphones_.Draw(fCurTime) < 0) return -1;
             break;
         default:
             break;
@@ -371,6 +377,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             scene_to_show_ = PROBE;
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;
+        case 'T':
+            smartphones_.ToBeginning();
+            scene_to_show_ = SMARTPHONES;
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
 
         case '1':
             if (scene_to_show_ == ZIMMER) {
@@ -424,6 +435,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             zimmer_.StartScene(UNKNOWN);
             break;
 
+        case 'N':
+            if (scene_to_show_ == SMARTPHONES) smartphones_.TakeNextPicture();
+            break;
         case 'K':
             if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
             if (scene_to_show_ == PROBERAUM) zimmer_.StartKenchiro();
