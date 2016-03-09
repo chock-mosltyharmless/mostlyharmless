@@ -487,6 +487,7 @@ void EndCurrentScene(void) {
     karaoke_.EndKenchiro();
     karaoke_.EndScene();
     cafe_.EndScene();
+    cafe_.EndVideo();
     PlaySound("textures/silence.wav", NULL, SND_ASYNC);
     end_current_scene_ = true;
 }
@@ -746,6 +747,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
             if (scene_to_show_ == PROBE) zimmer_.StartKenchiro();
             if (scene_to_show_ == KARAOKE) karaoke_.StartKenchiro();
+            if (scene_to_show_ == CAFE) cafe_.StartVideo();
             break;
         case 'C':
             EndCurrentScene();

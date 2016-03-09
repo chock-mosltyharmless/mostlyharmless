@@ -17,6 +17,8 @@ Cafe::~Cafe()
 void Cafe::ToBeginning(void) {
     has_white_fade_ = false;
     to_white_ = 1.0f;
+    draw_video_ = false;
+    video_start_time_ = last_call_time_;
 }
 
 int Cafe::Draw(float time) {
@@ -36,6 +38,13 @@ int Cafe::Draw(float time) {
         if (to_white_ < 0.0f) to_white_ = 0.0f;
     }
 
+    float video_time = time - video_start_time_;
+    if (video_time < 0.0f) video_time = 0.0f;
+
+    float kFrameSkipTime = 0.0f;
+    float kFrameOpenTime = 0.0f;
+    float kFrameCloseTime = 480.0f;
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -46,6 +55,18 @@ int Cafe::Draw(float time) {
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
+
+    // Video to the left
+    if (draw_video_) {
+        if (textureManager.getVideoID("Sawa_5.wmv", &tex_id,
+            error_string, video_time + 0.5f + kFrameSkipTime) < 0) {
+            MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(-0.69f, -0.44f, 0.4f, -0.12f, 0.22f, 0.78f, 0.0f, 1.0f, 1.0f);
+        if (video_time > kFrameCloseTime) draw_video_ = false;
+    }
 
     // Room
     texture_name = "cafe_room.png";

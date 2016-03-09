@@ -223,7 +223,7 @@ int Zimmer::Draw(float time) {
         DrawQuad(-0.665f, -0.46f, 0.814f, 0.476f, 0.3f, 0.65f, 0.25f, 0.8f, 1.0f);
     }
 
-    // Kenchiro in main frame
+    // Video in main frame
     if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 1) {
         if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
             error_string, video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
@@ -231,7 +231,7 @@ int Zimmer::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-0.3f, 0.339f, 0.7f, -0.1, 1.0f, 0.0f, 0.1f, 0.9f, 1.0f);
+        DrawQuad(-0.3f, 0.339f, 0.7f, -0.1f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f);
         if (video_time > kFrameCloseTime) draw_kenchiro_ = false;
         
         // Block TV
