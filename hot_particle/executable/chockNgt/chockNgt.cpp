@@ -266,9 +266,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     zimmer_.StartScene(APRIL_16);
                     break;
                 case 5:  // Bahnhof
-                    cafe_.ToBeginning();
-                    scene_to_show_ = CAFE;
-                    cafe_.StartScene(0);
+                    karaoke_.ToBeginning();
+                    scene_to_show_ = KARAOKE;
+                    karaoke_.StartScene(BAHNHOF_BAR);
                     break;
                 case 6:
                     zimmer_.ToBeginning();

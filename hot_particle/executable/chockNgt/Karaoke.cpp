@@ -19,6 +19,8 @@ void Karaoke::ToBeginning(void) {
     kenchiro_start_time_ = last_call_time_;
     has_white_fade_ = false;
     to_white_ = 1.0f;
+    kenchiro_id_ = 0;
+    scene_ = TRENNUNG;
 }
 
 int Karaoke::Draw(float time) {
@@ -27,18 +29,30 @@ int Karaoke::Draw(float time) {
     const char *texture_name;
     bool is_scene_finished = false;    
 
+    float kFrameSkipTimes[3] = {0.0f, 0.0f, 0.0f};
+    float kFrameOpenTimes[3] = {0.0f, 0.0f, 0.0f};
+    float kFrameCloseTimes[3] = {749.0f, 64.0f, 156.5f};
+    // 0: Clock
+    // 1: Center frame
+    int kVideoPosition[3] = {1, 1, 0};
+    const char *kKenchiroVideos[3] = {
+        "Naka_Kneipe_02.wmv",
+        "Naka_Udagawa_01.wmv",
+        "S22_fight02_hell.wmv",
+    };
+
     float video_time = time - kenchiro_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
 
     bool start_kenchiro = false;
-    float kFrameOpenTime = 0.0f;
-    float kFrameCloseTime = 156.5f;
+    float kFrameOpenTime = kFrameOpenTimes[kenchiro_id_];
+    float kFrameCloseTime = kFrameCloseTimes[kenchiro_id_] - kFrameSkipTimes[kenchiro_id_];
     if (draw_kenchiro_) {
         if (video_time > kFrameOpenTime) {
             start_kenchiro = true;
         }
-    }
-    
+    }    
+
     if (has_white_fade_) {
         to_white_ += (time - last_call_time_) * 1.0f;
         if (to_white_ > 1.75f) {
@@ -62,9 +76,9 @@ int Karaoke::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Kenshiro behind the clock
-    if (draw_kenchiro_) {
-        if (textureManager.getVideoID("S22_fight02_hell.wmv", &tex_id,
-            error_string, video_time + 0.5f) < 0) {
+    if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 0) {
+        if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
+            error_string, video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
             return -1;
         }
@@ -72,9 +86,21 @@ int Karaoke::Draw(float time) {
         DrawQuad(-0.665f, -0.46f, 0.814f, 0.476f, 0.3f, 0.65f, 0.25f, 0.8f, 1.0f);
     }
 
+    // Kenchiro in main frame
+    if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 1) {
+        if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
+            error_string, video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
+            MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(-0.3f, 0.339f, 0.7f, -0.1, 1.0f, 0.0f, 0.1f, 0.9f, 1.0f);
+        if (video_time > kFrameCloseTime) draw_kenchiro_ = false;
+    }
+
     // Room
-    texture_name = "kneipe_room.png";
-    if (start_kenchiro) texture_name = "kneipe_room_noclock.png";
+    texture_name = "kneipe_room_notv.png";
+    if (start_kenchiro && kVideoPosition[kenchiro_id_] == 0) texture_name = "kneipe_room_noclock.png";
     if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
@@ -115,7 +141,7 @@ int Karaoke::Draw(float time) {
     float glow_x = -0.665f + cosf(0.0f)*0.1025f;
 
     // Draw opened lid
-    if (start_kenchiro) {
+    if (start_kenchiro && kVideoPosition == 0) {
         float open_rad = 0.0f;
         float speed = 1.8f;
         float open_time = video_time - kFrameOpenTime;
@@ -165,7 +191,21 @@ int Karaoke::Draw(float time) {
 void Karaoke::StartKenchiro(void) {
     draw_kenchiro_ = true;
     kenchiro_start_time_ = last_call_time_;
-    PlaySound("textures/S22_fight02_nr_nomisa_skip0.wav", NULL, SND_ASYNC);
+
+    switch (scene_) {
+    case TRENNUNG:
+        kenchiro_id_ = 0;
+        PlaySound("textures/Naka_Kneipe_02.wav", NULL, SND_ASYNC);
+        break;
+    case BAHNHOF_BAR:
+        kenchiro_id_ = 1;
+        PlaySound("textures/Naka_Udagawa_01.wav", NULL, SND_ASYNC);
+        break;
+    case MITARBEITER:
+    case SEKUHARA:
+        kenchiro_id_ = 2;
+        PlaySound("textures/S22_fight02_nr_nomisa_skip0.wav", NULL, SND_ASYNC);
+    }
 }
 
 void Karaoke::EndKenchiro(void) {
