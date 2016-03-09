@@ -58,16 +58,29 @@ int Zimmer::Draw(float time) {
     const char *texture_name;
     bool is_scene_finished = false;  // Set to true if it completely faded away
 
-    float kFrameSkipTimes[6] = {6.0f, 7.0f, 5.5f, 14.0f, 7.0f, 6.5f};
-    float kFrameOpenTimes[6] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
-    float kFrameCloseTimes[6] = {152.5f, 100.5f, 305.0f, 85.0f, 73.0f, 313.0f};
-    const char *kKenchiroVideos[6] = {
+    float kFrameSkipTimes[8] = {6.0f, 7.0f, 5.5f, 14.0f, 7.0f, 6.5f,  // kenchiro
+                                0.0f, 0.0f,  // Nakaba
+    };
+    float kFrameOpenTimes[8] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // kenchiro
+                                0.0f, 0.0f,  // Nakaba
+    };
+    float kFrameCloseTimes[8] = {152.5f, 100.5f, 305.0f, 85.0f, 73.0f, 313.0f,  // kenchiro
+                                 58.0f, 97.0f  // Nakaba
+    };
+    // 0: clock
+    // 1: center
+    int kVideoPosition[8] = {0, 0, 0, 0, 0, 0,  // Kenshiro
+                             1, 1,  // Nakaba
+    };
+    const char *kKenchiroVideos[8] = {
         "S1_wachauf02_hell.wmv",
         "S20_Kitchomu_hell.wmv",
         "S23_Picasso03_hell.wmv",
         "S27_schwimmen03_hell.wmv",
         "S28_wasma02_hell.wmv",
-        "S29_Kobe02_hell.wmv"
+        "S29_Kobe02_hell.wmv",
+        "Naka_Erdbeben_01.wmv",
+        "Naka_Zuhause_02.wmv"
     };
     const char *kRoomTextures[] = {
         "zuhause_room_maerz_11.png",  // MAERZ_11 = 0,
@@ -200,7 +213,7 @@ int Zimmer::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Kenshiro behind the clock
-    if (draw_kenchiro_) {
+    if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 0) {
         if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id, error_string,
                                       video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
@@ -210,9 +223,29 @@ int Zimmer::Draw(float time) {
         DrawQuad(-0.665f, -0.46f, 0.814f, 0.476f, 0.3f, 0.65f, 0.25f, 0.8f, 1.0f);
     }
 
+    // Kenchiro in main frame
+    if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 1) {
+        if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
+            error_string, video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
+            MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(-0.3f, 0.339f, 0.7f, -0.1, 1.0f, 0.0f, 0.1f, 0.9f, 1.0f);
+        if (video_time > kFrameCloseTime) draw_kenchiro_ = false;
+        
+        // Block TV
+        if (textureManager.getTextureID("zuhause_block_tv.png", &tex_id, error_string)) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
+    }
+
     // Room
     texture_name = kRoomTextures[scene_];
-    if (start_kenchiro) texture_name = kRoomNoClockTextures[scene_];
+    if (start_kenchiro && kVideoPosition[kenchiro_id_] == 0) texture_name = kRoomNoClockTextures[scene_];
     if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
@@ -250,7 +283,7 @@ int Zimmer::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Draw opened lid
-    if (start_kenchiro) {
+    if (start_kenchiro && kVideoPosition[kenchiro_id_] == 0) {
         float open_rad = 0.0f;
         float speed = 1.8f;
         float open_time = video_time - kFrameOpenTime;
@@ -302,10 +335,16 @@ void Zimmer::StartKenchiro(void) {
     case MAERZ_11:
     case APRIL_09:
     case APRIL_16:
-    case APRIL_17:
-    case APRIL_21:
         kenchiro_id_ = 0;  // APRIL_21,
         PlaySound("textures/S1_wachauf02_nr_nomisa_skip6.wav", NULL, SND_ASYNC);
+        break;
+    case APRIL_17:
+        kenchiro_id_ = 6;  // Naka Erdbeben
+        PlaySound("textures/Naka_Erdbeben_01.wav", NULL, SND_ASYNC);
+        break;
+    case APRIL_21:
+        kenchiro_id_ = 7;  // Naka Zuhause
+        PlaySound("textures/Naka_Zuhause_02.wav", NULL, SND_ASYNC);
         break;
     case MAI_10:
     case JUNI_01:
