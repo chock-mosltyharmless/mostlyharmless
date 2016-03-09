@@ -63,7 +63,7 @@ int Smartphones::Draw(float time) {
         float picture_time = time - last_picture_take_time_;
         float x_shift = 0.0f;
         float y_shift = 0.0f;
-        const float kSeekTime = 0.8f;
+        const float kSeekTime = 0.5f;
         const float kFlashTime = 0.2f;
         if (picture_time < kSeekTime) {
             x_shift = (1.0f - picture_time / kSeekTime) * 0.025f * sinf(time * 2.3f) + 0.01f * cosf(time * 7.3f) - 0.005f * cosf(time * 23.5f);
@@ -115,5 +115,7 @@ int Smartphones::Draw(float time) {
 
     last_call_time_ = time;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    return 1;  // no fade-out so far.
     return 0;
 }

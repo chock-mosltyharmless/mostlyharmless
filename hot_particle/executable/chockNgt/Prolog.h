@@ -7,6 +7,7 @@ public:
 
     void ToBeginning(void);
     int Draw(float time);
+    void UpdateTime(float time) { last_call_time_ = time; }
 
     void StartVideo(void);
     void EndVideo(void) { show_video_ = false; }

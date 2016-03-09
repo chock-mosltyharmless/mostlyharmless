@@ -56,6 +56,7 @@ int Zimmer::Draw(float time) {
     char error_string[MAX_ERROR_LENGTH + 1];
     GLuint tex_id;
     const char *texture_name;
+    bool is_scene_finished = false;  // Set to true if it completely faded away
 
     float kFrameSkipTimes[6] = {6.0f, 7.0f, 5.5f, 14.0f, 7.0f, 6.5f};
     float kFrameOpenTimes[6] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
@@ -164,7 +165,10 @@ int Zimmer::Draw(float time) {
     }
     if (has_white_fade_) {
         to_white_ += (time - last_call_time_) * 1.0f;
-        if (to_white_ > 1.0f) to_white_ = 1.0f;
+        if (to_white_ > 1.75f) {
+            to_white_ = 2.0f;
+            is_scene_finished = true;
+        }
     } else {
         to_white_ -= time - last_call_time_;
         if (to_white_ < 0.0f) to_white_ = 0.0f;
@@ -286,7 +290,8 @@ int Zimmer::Draw(float time) {
     DrawQuadColor(-1.0f, 1.0f, 1.0f, -1.0f,
                     0.0f, 0.0f, 0.0f, 0.0f,
                     0.0f, 0.0f, 0.0f, 1.0f - brightness_);
-
+    
+    if (is_scene_finished) return 1;
     return 0;  // no error
 }
 
@@ -295,7 +300,7 @@ void Zimmer::StartKenchiro(void) {
     kenchiro_start_time_ = last_call_time_;
     switch (scene_) {
     case MAERZ_11:
-    case ARPIL_09:
+    case APRIL_09:
     case APRIL_16:
     case APRIL_17:
     case APRIL_21:

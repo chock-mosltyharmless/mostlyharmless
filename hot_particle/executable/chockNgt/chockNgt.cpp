@@ -45,15 +45,16 @@ Zimmer zimmer_;
 Prolog prolog_;
 Karaoke karaoke_;
 Smartphones smartphones_;
-enum SCENE {
+enum SETTING {
     PROLOG,
     ZIMMER,
     KARAOKE,
     PROBE,
     SMARTPHONES
 };
-SCENE scene_to_show_ = PROLOG;
-SCENE scene_to_draw_ = PROLOG;  // may be previous scene due to whatever.
+int next_scene_id_ = 0;  // Go to this after the current scene is finished
+bool end_current_scene_ = false;  // Wait for current scene to end...
+SETTING scene_to_show_ = PROLOG;  // What is rendered
 
 void glInit()
 {
@@ -199,22 +200,153 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glDisable(GL_LIGHTING);
         GLuint tex_id;
 
+        int return_value = 1;  // Assume we are finished
         switch (scene_to_show_) {
         case PROLOG:
-            if (prolog_.Draw(fCurTime) < 0) return -1;
+            return_value = prolog_.Draw(fCurTime);
             break;
         case ZIMMER:
         case PROBE:
-            if (zimmer_.Draw(fCurTime) < 0) return -1;
+            return_value = zimmer_.Draw(fCurTime);
             break;
         case KARAOKE:
-            if (karaoke_.Draw(fCurTime) < 0) return -1;
+            return_value = karaoke_.Draw(fCurTime);
             break;
         case SMARTPHONES:
-            if (smartphones_.Draw(fCurTime) < 0) return -1;
+            return_value = smartphones_.Draw(fCurTime);
             break;
         default:
             break;
+        }
+
+        // Check for error
+        if (return_value < 0) return -1;
+
+        // Check for end of scene to switch it
+        if (end_current_scene_) {
+            if (return_value == 1) {
+                zimmer_.UpdateTime(fCurTime);
+                prolog_.UpdateTime(fCurTime);
+                karaoke_.UpdateTime(fCurTime);
+                smartphones_.UpdateTime(fCurTime);
+                // It has ended, start a new one
+                PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+                end_current_scene_ = false;
+                switch(next_scene_id_) {
+                case 0:
+                    prolog_.ToBeginning();
+                    scene_to_show_ = PROLOG;
+                    break;
+                case 1:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(MAERZ_11);
+                    break;
+                case 2:
+                    karaoke_.ToBeginning();
+                    scene_to_show_ = KARAOKE;
+                    karaoke_.StartScene(TRENNUNG);
+                    break;
+                case 3:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(APRIL_09);
+                    break;
+                case 4:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(APRIL_16);
+                    break;
+                case 5:  // Bahnhof
+                    break;
+                case 6:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(APRIL_17);
+                    break;
+                case 7:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(APRIL_21);
+                    break;
+                case 8:
+                case 9:
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                case 14:
+                case 15:
+                case 16:  // map all fahrt to kuehe
+                    smartphones_.ToBeginning();
+                    scene_to_show_ = SMARTPHONES;
+                    break;
+                case 17:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(MAI_10);
+                    break;
+                case 18:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(JUNI_01);
+                    break;
+                case 19:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(JUNI_04);
+                    break;
+                case 20:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(JUNI_05);
+                    break;
+                case 21:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(JUNI_12);
+                    break;
+                case 22:
+                    karaoke_.ToBeginning();
+                    scene_to_show_ = KARAOKE;
+                    karaoke_.StartScene(MITARBEITER);
+                    break;
+                case 23:
+                    karaoke_.ToBeginning();
+                    scene_to_show_ = KARAOKE;
+                    karaoke_.StartScene(SEKUHARA);
+                    break;
+                case 24:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(JULI_29);
+                    break;
+                case 25:  // CAFE
+                    break;
+                case 26:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(AUGUST_15);
+                    break;
+                case 27:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(PROBERAUM);
+                    break;
+                case 28:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(MAERZ_11_END);
+                    break;
+                case 29:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(UNKNOWN);
+                    break;
+                default:
+                    break;  // Ignore that scene, it's not implemented
+                }
+            }
         }
 
 #if 0
@@ -333,6 +465,17 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     return msg.wParam;
 }
 
+void EndCurrentScene(void) {
+    zimmer_.EndKenchiro();
+    zimmer_.EndScene();
+    prolog_.EndVideo();
+    prolog_.EndLight();
+    karaoke_.EndKenchiro();
+    karaoke_.EndScene();
+    PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+    end_current_scene_ = true;
+}
+
 //Main Window Procedure WindowProc
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -356,6 +499,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 	case WM_KEYDOWN:
 		switch(wParam)
 		{
+#if 0
 			// change what is shown
         case 'Q':
             prolog_.ToBeginning();
@@ -444,14 +588,155 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             if (scene_to_show_ == PROBE) zimmer_.StartKenchiro();
             if (scene_to_show_ == KARAOKE) karaoke_.StartKenchiro();
             break;
-        case 'M':
-            zimmer_.EndKenchiro();
-            zimmer_.EndScene();
-            prolog_.EndVideo();
-            prolog_.EndLight();
-            karaoke_.EndKenchiro();
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+#endif
+
+        case '1':
+            EndCurrentScene();
+            next_scene_id_ = 0;
             break;
+        case '2':
+            EndCurrentScene();
+            next_scene_id_ = 1;
+            break;
+        case '3':
+            EndCurrentScene();
+            next_scene_id_ = 2;
+            break;
+        case '4':
+            EndCurrentScene();
+            next_scene_id_ = 3;
+            break;
+        case '5':
+            EndCurrentScene();
+            next_scene_id_ = 4;
+            break;
+        case '6':
+            EndCurrentScene();
+            next_scene_id_ = 5;
+            break;
+        case '7':
+            EndCurrentScene();
+            next_scene_id_ = 6;
+            break;
+        case '8':
+            EndCurrentScene();
+            next_scene_id_ = 7;
+            break;
+        case '9':
+            EndCurrentScene();
+            next_scene_id_ = 8;
+            break;
+        case '0':
+            EndCurrentScene();
+            next_scene_id_ = 9;
+            break;
+        case 'Q':
+            EndCurrentScene();
+            next_scene_id_ = 10;
+            break;
+        case 'W':
+            EndCurrentScene();
+            next_scene_id_ = 11;
+            break;
+        case 'E':
+            EndCurrentScene();
+            next_scene_id_ = 12;
+            break;
+        case 'R':
+            EndCurrentScene();
+            next_scene_id_ = 13;
+            break;
+        case 'T':
+            EndCurrentScene();
+            next_scene_id_ = 14;
+            break;
+        case 'Y':
+            EndCurrentScene();
+            next_scene_id_ = 15;
+            break;
+        case 'U':
+            EndCurrentScene();
+            next_scene_id_ = 16;
+            break;
+        case 'I':
+            EndCurrentScene();
+            next_scene_id_ = 17;
+            break;
+        case 'O':
+            EndCurrentScene();
+            next_scene_id_ = 18;
+            break;
+        case 'P':
+            EndCurrentScene();
+            next_scene_id_ = 19;
+            break;
+        case 'A':
+            EndCurrentScene();
+            next_scene_id_ = 20;
+            break;
+        case 'S':
+            EndCurrentScene();
+            next_scene_id_ = 21;
+            break;
+        case 'D':
+            EndCurrentScene();
+            next_scene_id_ = 22;
+            break;
+        case 'F':
+            EndCurrentScene();
+            next_scene_id_ = 23;
+            break;
+        case 'G':
+            EndCurrentScene();
+            next_scene_id_ = 24;
+            break;
+        case 'H':
+            EndCurrentScene();
+            next_scene_id_ = 25;
+            break;
+        case 'J':
+            EndCurrentScene();
+            next_scene_id_ = 26;
+            break;
+        case 'K':
+            EndCurrentScene();
+            next_scene_id_ = 27;
+            break;
+        case 'L':
+            EndCurrentScene();
+            next_scene_id_ = 28;
+            break;
+        case 'Z':
+            EndCurrentScene();
+            next_scene_id_ = 29;
+            break;
+
+        case 'M':
+            EndCurrentScene();
+            next_scene_id_++;
+            if (next_scene_id_ > 29) next_scene_id_ = 29;
+            break;
+        case 'X':
+            EndCurrentScene();
+            next_scene_id_--;
+            if (next_scene_id_ < 0) next_scene_id_ = 0;
+            break;
+
+        case 'N':
+            if (scene_to_show_ == SMARTPHONES) smartphones_.TakeNextPicture();
+            if (scene_to_show_ == PROLOG) {
+                prolog_.StartVideo();
+                PlaySound("textures/Fukushima-Fahrt_small.wav", NULL, SND_ASYNC);
+            }
+            if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
+            if (scene_to_show_ == PROBE) zimmer_.StartKenchiro();
+            if (scene_to_show_ == KARAOKE) karaoke_.StartKenchiro();
+            break;
+        case 'C':
+            EndCurrentScene();
+            break;
+
+
 		default:
 			break;
 		}

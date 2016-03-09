@@ -1,7 +1,7 @@
 #pragma once
 enum ZIMMER_SCENE {
     MAERZ_11 = 0,
-    ARPIL_09,
+    APRIL_09,
     APRIL_16,
     APRIL_17,
     APRIL_21,
@@ -25,6 +25,7 @@ public:
 
     void ToBeginning(void);
     int Draw(float time);  // returns 1 if fade-out has finished
+    void UpdateTime(float time) { last_call_time_ = time; }
 
     void StartScene(ZIMMER_SCENE scene);
     void EndScene(void);

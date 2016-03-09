@@ -7,6 +7,7 @@ public:
 
     void ToBeginning(void);
     int Draw(float time);  // returns 1 if fade-out has finished
+    void UpdateTime(float time) { last_call_time_ = time; }
 
     void TakeNextPicture();  // Next cow picture
     void NoMorePictures();  // Remove cow picture

@@ -28,6 +28,7 @@ void Prolog::StartVideo(void) {
 int Prolog::Draw(float time) {
     char error_string[MAX_ERROR_LENGTH + 1];
     GLuint tex_id;
+    bool is_scene_finished = false;
 
     // Adjust brightness according to time difference
     if (has_light_) {
@@ -35,7 +36,10 @@ int Prolog::Draw(float time) {
         if (brightness_ > 1.0f) brightness_ = 1.0f;
     } else {
         brightness_ -= (time - last_call_time_) * 2.5f;
-        if (brightness_ < 0.0f) brightness_ = 0.0f;
+        if (brightness_ < 0.0f) {
+            brightness_ = 0.0f;
+            is_scene_finished = true;
+        }
     }
 
     last_call_time_ = time;
@@ -84,5 +88,7 @@ int Prolog::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, -1.0f, 1.0f, 1.0f);
 
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    if (is_scene_finished) return 1;
     return 0;
 }
