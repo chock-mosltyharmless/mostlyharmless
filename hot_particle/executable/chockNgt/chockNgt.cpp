@@ -9,6 +9,7 @@
 #include "Zimmer.h"
 #include "Prolog.h"
 #include "Karaoke.h"
+#include "Cafe.h"
 #include "Smartphones.h" 
 
 int X_OFFSCREEN = 512;
@@ -44,11 +45,14 @@ TextureManager textureManager;
 Zimmer zimmer_;
 Prolog prolog_;
 Karaoke karaoke_;
+Cafe cafe_;
 Smartphones smartphones_;
 enum SETTING {
     PROLOG,
     ZIMMER,
     KARAOKE,
+    CAFE,
+    BAHNHOF,
     PROBE,
     SMARTPHONES
 };
@@ -212,6 +216,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         case KARAOKE:
             return_value = karaoke_.Draw(fCurTime);
             break;
+        case CAFE:
+            return_value = cafe_.Draw(fCurTime);
+            break;
         case SMARTPHONES:
             return_value = smartphones_.Draw(fCurTime);
             break;
@@ -228,6 +235,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 zimmer_.UpdateTime(fCurTime);
                 prolog_.UpdateTime(fCurTime);
                 karaoke_.UpdateTime(fCurTime);
+                cafe_.UpdateTime(fCurTime);
                 smartphones_.UpdateTime(fCurTime);
                 // It has ended, start a new one
                 PlaySound("textures/silence.wav", NULL, SND_ASYNC);
@@ -258,6 +266,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     zimmer_.StartScene(APRIL_16);
                     break;
                 case 5:  // Bahnhof
+                    cafe_.ToBeginning();
+                    scene_to_show_ = CAFE;
+                    cafe_.StartScene(0);
                     break;
                 case 6:
                     zimmer_.ToBeginning();
@@ -322,6 +333,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     zimmer_.StartScene(JULI_29);
                     break;
                 case 25:  // CAFE
+                    cafe_.ToBeginning();
+                    scene_to_show_ = CAFE;
+                    cafe_.StartScene(0);
                     break;
                 case 26:
                     zimmer_.ToBeginning();
@@ -472,6 +486,7 @@ void EndCurrentScene(void) {
     prolog_.EndLight();
     karaoke_.EndKenchiro();
     karaoke_.EndScene();
+    cafe_.EndScene();
     PlaySound("textures/silence.wav", NULL, SND_ASYNC);
     end_current_scene_ = true;
 }

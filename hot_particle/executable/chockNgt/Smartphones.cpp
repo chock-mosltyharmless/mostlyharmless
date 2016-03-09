@@ -5,6 +5,7 @@
 
 Smartphones::Smartphones()
 {
+    ToBeginning();
 }
 
 
