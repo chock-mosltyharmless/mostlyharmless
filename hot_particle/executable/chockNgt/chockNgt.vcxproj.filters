@@ -72,6 +72,9 @@
     <ClInclude Include="Cafe.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Car.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -111,6 +114,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Cafe.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Car.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
