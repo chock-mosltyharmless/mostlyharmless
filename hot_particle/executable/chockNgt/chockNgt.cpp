@@ -10,7 +10,8 @@
 #include "Prolog.h"
 #include "Karaoke.h"
 #include "Cafe.h"
-#include "Smartphones.h" 
+#include "Smartphones.h"
+#include "Car.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -47,6 +48,7 @@ Prolog prolog_;
 Karaoke karaoke_;
 Cafe cafe_;
 Smartphones smartphones_;
+Car car_;
 enum SETTING {
     PROLOG,
     ZIMMER,
@@ -54,7 +56,8 @@ enum SETTING {
     CAFE,
     BAHNHOF,
     PROBE,
-    SMARTPHONES
+    SMARTPHONES,
+    CAR
 };
 int next_scene_id_ = 0;  // Go to this after the current scene is finished
 bool end_current_scene_ = false;  // Wait for current scene to end...
@@ -222,6 +225,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         case SMARTPHONES:
             return_value = smartphones_.Draw(fCurTime);
             break;
+        case CAR:
+            return_value = car_.Draw(fCurTime);
+            break;
         default:
             break;
         }
@@ -236,6 +242,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 prolog_.UpdateTime(fCurTime);
                 karaoke_.UpdateTime(fCurTime);
                 cafe_.UpdateTime(fCurTime);
+                car_.UpdateTime(fCurTime);
                 smartphones_.UpdateTime(fCurTime);
                 // It has ended, start a new one
                 PlaySound("textures/silence.wav", NULL, SND_ASYNC);
@@ -281,16 +288,44 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     zimmer_.StartScene(APRIL_21);
                     break;
                 case 8:
+                    car_.ToBeginning();
+                    scene_to_show_ = CAR;
+                    car_.StartScene(BEGRUSSUNG);
+                    break;
                 case 9:
+                    car_.ToBeginning();
+                    scene_to_show_ = CAR;
+                    car_.StartScene(TOMOBE);
+                    break;
                 case 10:
-                case 11:
+                    car_.ToBeginning();
+                    scene_to_show_ = CAR;
+                    car_.StartScene(SIEVERT);
+                    break;
+                case 11:  // deleted scene
                 case 12:
+                    car_.ToBeginning();
+                    scene_to_show_ = CAR;
+                    car_.StartScene(TAMURA);
+                    break;
                 case 13:
+                    car_.ToBeginning();
+                    scene_to_show_ = CAR;
+                    car_.StartScene(KATSURAO13);
+                    break;
                 case 14:
-                case 15:
-                case 16:  // map all fahrt to kuehe
+                    car_.ToBeginning();
+                    scene_to_show_ = CAR;
+                    car_.StartScene(KATSURAO14);
+                    break;
+                case 15:  // Minnamisoma is smartphones only
                     smartphones_.ToBeginning();
                     scene_to_show_ = SMARTPHONES;
+                    break;
+                case 16:
+                    car_.ToBeginning();
+                    scene_to_show_ = CAR;
+                    car_.StartScene(ABSCHIED);
                     break;
                 case 17:
                     zimmer_.ToBeginning();
@@ -488,6 +523,8 @@ void EndCurrentScene(void) {
     karaoke_.EndScene();
     cafe_.EndScene();
     cafe_.EndVideo();
+    // What do I do with car and smartphones???
+    car_.EndScene();
     PlaySound("textures/silence.wav", NULL, SND_ASYNC);
     end_current_scene_ = true;
 }

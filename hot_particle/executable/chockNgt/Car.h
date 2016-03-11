@@ -1,8 +1,18 @@
 #pragma once
 
 enum CAR_SCENE {
-    BEGRUSSUNG = 0,
-
+    BEGRUSSUNG = 0,  // Automatically moves on to Zahnarzt
+    TOMOBE,
+    SIEVERT,  // Automatically moves on to Polizei
+    TAMURA,
+    KATSURAO13, // Automatically moves on to Kuhe
+    KATSURAO14, // Automatically moves on to Wohin
+    // Minnamisoma mache ich direkt mit Smartphones.
+    ABSCHIED,
+    ZAHNARZT,
+    POLIZEI,
+    KUHE,
+    WOHIN
 };
 
 class Car
@@ -21,6 +31,31 @@ public:
         to_white_ = 1.0f;
         // Start Video imidiately.
         video_start_time_ = last_call_time_;
+
+        // Play audio
+        switch (scene) {
+        case BEGRUSSUNG:
+            PlaySound("textures/Begrussung_N1Y1R3.wav", NULL, SND_ASYNC);
+            break;
+        case TOMOBE:
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
+        case SIEVERT:
+            PlaySound("textures/Sievert_N1Y1R1.wav", NULL, SND_ASYNC);
+            break;
+        case TAMURA:
+            PlaySound("textures/Tamura_N3Y1R1.wav", NULL, SND_ASYNC);
+            break;
+        case KATSURAO13:
+            PlaySound("textures/13Katsurao_N1Y3R3.wav", NULL, SND_ASYNC);
+            break;
+        case KATSURAO14:
+            PlaySound("textures/14Katsurao_N1Y4R1.wav", NULL, SND_ASYNC);
+            break;
+        default:  // This is a bug
+            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            break;
+        }
     }
     void EndScene(void) {
         has_white_fade_ = true;
