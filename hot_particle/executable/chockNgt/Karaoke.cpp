@@ -141,7 +141,7 @@ int Karaoke::Draw(float time) {
     float glow_x = -0.665f + cosf(0.0f)*0.1025f;
 
     // Draw opened lid
-    if (start_kenchiro && kVideoPosition == 0) {
+    if (start_kenchiro && kVideoPosition[kenchiro_id_] == 0) {
         float open_rad = 0.0f;
         float speed = 1.8f;
         float open_time = video_time - kFrameOpenTime;

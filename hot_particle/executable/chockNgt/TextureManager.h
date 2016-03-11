@@ -23,7 +23,7 @@ extern "C" {
 #define TM_SHADER_WILDCARD "*.png"
 #define TM_VIDEO_WILDCARD "*.wmv"
 #define TM_MAX_NUM_TEXTURES 128
-#define TM_MAX_NUM_VIDEOS 16
+#define TM_MAX_NUM_VIDEOS 128
 #define TM_MAX_FILENAME_LENGTH 1024
 
 #define TM_OFFSCREEN_NAME "renderTarget"

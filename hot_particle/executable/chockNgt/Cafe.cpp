@@ -43,7 +43,7 @@ int Cafe::Draw(float time) {
 
     float kFrameSkipTime = 0.0f;
     float kFrameOpenTime = 0.0f;
-    float kFrameCloseTime = 480.0f;
+    float kFrameCloseTime = 479.0f;
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
