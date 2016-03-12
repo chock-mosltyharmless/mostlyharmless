@@ -318,8 +318,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     scene_to_show_ = CAR;
                     car_.StartScene(KATSURAO14);
                     break;
-                case 15:  // Minnamisoma is smartphones only
+                case 15:  // Minamisoma is smartphones only
                     smartphones_.ToBeginning();
+                    smartphones_.StartScene(SM_MINAMISOMA);
                     scene_to_show_ = SMARTPHONES;
                     break;
                 case 16:
@@ -525,6 +526,7 @@ void EndCurrentScene(void) {
     cafe_.EndVideo();
     // What do I do with car and smartphones???
     car_.EndScene();
+    smartphones_.EndScene();
     PlaySound("textures/silence.wav", NULL, SND_ASYNC);
     end_current_scene_ = true;
 }

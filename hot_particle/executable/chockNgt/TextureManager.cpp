@@ -353,22 +353,22 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
 		{
 			*id = videoTextureID[i];
 
-            // Decode and re-format single frame
-            if (!sws_ctx_[i]) {
-                // Could not get frame from video, use black instead?
-                int retVal = getTextureID("black.png", id, errorString);
-                if (retVal < 0) return retVal;
-                else return 1; // mark finished
-                // TODO (jhofer): Or should I just use break to use the last frame.
-            }
-
-            // TODO: Does this work for me
             AVRational time_base = video_format_context_[i]->streams[video_stream_[i]]->time_base;
             //int64_t current_frame_pts = video_frame_[i]->best_effort_timestamp;
             int64_t current_frame_pts = av_frame_get_best_effort_timestamp(video_frame_[i]);
             float current_frame_time = (float)(time_base.num) * (float)current_frame_pts /
                 (float)(time_base.den);
             int64_t desired_time_stamp = (int64_t)(frame_time * time_base.den / time_base.num);
+
+            // Decode and re-format single frame
+            if (!sws_ctx_[i] ||
+                desired_time_stamp > video_format_context_[i]->streams[video_stream_[i]]->duration) {
+                // Could not get frame from video, use black instead?
+                int retVal = getTextureID("black.png", id, errorString);
+                if (retVal < 0) return retVal;
+                else return 1; // mark finished
+                // TODO (jhofer): Or should I just use break to use the last frame.
+            } 
 
             const float kMaxFrameTimeError = 1.0f / 2.0f;
             if (current_frame_pts >= 0 &&
