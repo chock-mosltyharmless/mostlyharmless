@@ -25,8 +25,9 @@ public:
         // Play audio
         switch (scene) {
         case SM_KUHE:
+            next_picture_id_ = kNumCowPictures - 1;
             for (int i = 0; i < 4; i++) {
-                next_picture_id_[i] = 10; // Go to beginning of pictures
+                current_picture_id_[i] = kNumCowPictures - 1; // Go to beginning of pictures
                 // turn back time so that the picture is already static
                 last_picture_take_time_[i] = last_call_time_ - 10.0f;
             }
@@ -57,7 +58,8 @@ private:
     bool has_white_fade_ = false;
     float video_start_time_;
     float to_white_ = 0.0f;
-    int next_picture_id_[4] = { 10, 10, 10, 10 };
+    int next_picture_id_ = 10;
+    int current_picture_id_[4] = { 10, 10, 10, 10 };
     float last_picture_take_time_[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     const static int kNumCowPictures = 8;
     bool show_pictures_[4] = { true, true, true, true };

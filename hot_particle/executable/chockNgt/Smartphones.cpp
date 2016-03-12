@@ -14,8 +14,9 @@ Smartphones::~Smartphones()
 }
 
 void Smartphones::ToBeginning(void) {
+    next_picture_id_ = kNumCowPictures - 1;
     for (int i = 0; i < 4; i++) {
-        next_picture_id_[i] = kNumCowPictures - 1;
+        current_picture_id_[i] = kNumCowPictures - 1;
         last_picture_take_time_[i] = last_call_time_;
         show_pictures_[i] = false;
         has_flashed_[i] = false;
@@ -28,8 +29,9 @@ void Smartphones::ToBeginning(void) {
 
 void Smartphones::TakeNextPicture(int position) {
     show_pictures_[position] = true;
-    next_picture_id_[position]++;
-    if (next_picture_id_[position] >= kNumCowPictures) next_picture_id_[position] = 0;
+    next_picture_id_++;
+    if (next_picture_id_ >= kNumCowPictures) next_picture_id_ = 0;
+    current_picture_id_[position] = next_picture_id_;
     last_picture_take_time_[position] = last_call_time_;
     has_flashed_[position] = false;
 }
@@ -122,7 +124,7 @@ int Smartphones::Draw(float time) {
                 x_shift = (1.0f - picture_time / kSeekTime) * 0.025f * sinf(time * 2.3f) + 0.01f * cosf(time * 7.3f) - 0.005f * cosf(time * 23.5f);
                 y_shift = (1.0f - picture_time / kSeekTime) * 0.025f * cosf(time * 3.1f) - 0.01f * sinf(time * 8.1f) + 0.005f * sinf(time * 27.4f);
             }
-            if (textureManager.getTextureID(kCowTextures[next_picture_id_[picture_position]], &tex_id, error_string)) {
+            if (textureManager.getTextureID(kCowTextures[current_picture_id_[picture_position]], &tex_id, error_string)) {
                 MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
                 return -1;
             }
@@ -130,10 +132,30 @@ int Smartphones::Draw(float time) {
             float border_size = 0.04f;
             // Use texture coordinates for shaking
             switch (picture_position) {
-            default: // TODO: other positions
+            case 0:  // CENTER
+            default:
                 DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f,
                     border_size + x_shift, 1.0f - border_size + x_shift, border_size + y_shift, 1.0f - border_size + y_shift,
                     1.0f);
+                break;
+            case 1:  // LEFT
+                DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f,
+                    0.175f + border_size + x_shift, 0.825f - border_size + x_shift,
+                    border_size + y_shift, 1.0f - border_size + y_shift,
+                    1.0f);
+                break;
+            case 2:  // BOTTOM
+                DrawQuad(-0.418f, -0.08f, 0.212f, -0.453f,
+                    0.2f + border_size + x_shift, 0.8f - border_size + x_shift,
+                    border_size + y_shift, 1.0f - border_size + y_shift,
+                    1.0f);
+                break;
+            case 3:  // RIGHT
+                DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f,
+                    0.2f + border_size + x_shift, 0.8f - border_size + x_shift,
+                    border_size + y_shift, 1.0f - border_size + y_shift,
+                    1.0f);
+                break;
             }
 
             float white_alpha = 0.0f;
@@ -150,6 +172,22 @@ int Smartphones::Draw(float time) {
                 return -1;
             }
             glBindTexture(GL_TEXTURE_2D, tex_id);
+            switch (picture_position) {
+            case 0:  // CENTER
+            default:
+                DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f, white_alpha);
+                break;
+            case 1:  // LEFT
+                DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f, white_alpha);
+                break;
+            case 2:  // BOTTOM
+                DrawQuad(-0.418f, -0.08f, 0.212f, -0.453f, white_alpha);
+                break;
+            case 3:  // RIGHT
+                DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f, white_alpha);
+                break;
+            }
+
             DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f, white_alpha);
         }
     }
@@ -162,52 +200,33 @@ int Smartphones::Draw(float time) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
-    } else {
-        if (textureManager.getTextureID("black.png", &tex_id, error_string) < 0) {
-            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-    }
-    glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f,
-             0.175f, 0.825f, 0.0f, 1.0f,
-             1.0f);
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f,
+            0.175f, 0.825f, 0.0f, 1.0f,
+            1.0f);
 
-    // Bottom
-    if (scene_ == SM_KUHE) {
+        // Bottom
         if (textureManager.getVideoID(kBottomVideo, &tex_id, error_string,
             video_time + kVideoSkip[1]) < 0) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
-    } else {
-        if (textureManager.getTextureID("black.png", &tex_id, error_string) < 0) {
-            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-    }
-    glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(-0.418f, -0.08f, 0.212f, -0.453f,
-        0.2f, 0.8f, 0.0f, 1.0f,
-        1.0f);
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(-0.418f, -0.08f, 0.212f, -0.453f,
+            0.2f, 0.8f, 0.0f, 1.0f,
+            1.0f);
 
-    // Right
-    if (scene_ == SM_KUHE) {
+        // Right
         if (textureManager.getVideoID(kRightVideo, &tex_id, error_string,
             video_time + kVideoSkip[2]) < 0) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
-    } else {
-        if (textureManager.getTextureID("black.png", &tex_id, error_string) < 0) {
-            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-            return -1;
-        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f,
+            0.2f, 0.8f, 0.0f, 1.0f,
+            1.0f);
     }
-    glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f,
-        0.2f, 0.8f, 0.0f, 1.0f,
-        1.0f);
 
     // Draw the phones (exclude bottom):
     //if (textureManager.getTextureID("smartphones_room_nobottom.png", &tex_id, error_string)) {
