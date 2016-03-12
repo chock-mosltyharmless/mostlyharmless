@@ -35,7 +35,7 @@ public:
             PlaySound("textures/Kuhe_N4Y3R4.wav", NULL, SND_ASYNC);
             break;
         case SM_MINAMISOMA:
-            PlaySound("textures/minamisoma.wav", NULL, SND_ASYNC); // I need it...
+            PlaySound("textures/Minamisoma.wav", NULL, SND_ASYNC); // I need it...
             break;
         default:  // This is a bug
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
@@ -46,7 +46,6 @@ public:
     void EndScene(void) {
         has_white_fade_ = true;
     }
-
 
     void TakeNextPicture(int position = 0);  // Next picture, 0 center; 1 left; 2 bottom; 3 right
     void NoMorePictures();  // Remove cow picture

@@ -191,14 +191,6 @@ int Car::Draw(float time) {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Default background is white or gray
-#if 0
-    if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
-        MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-        return -1;
-    }
-    glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
-#else
     float brightness = 1.0f;
     switch (scene_) {
     case BEGRUSSUNG:
@@ -221,7 +213,6 @@ int Car::Draw(float time) {
     }
     glClearColor(brightness, brightness, brightness, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-#endif
 
     // Driver Video (always do it?)
     if (kDriverVideo[scene_] && video_time > kVideoStartDelay[scene_][1] &&

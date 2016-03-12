@@ -59,14 +59,14 @@ int Smartphones::Draw(float time) {
         "cows_8.png",
     };
     const char *kMinaTextures[kNumCowPictures] = {
-        "cows_1.png",
-        "cows_2.png",
-        "cows_3.png",
-        "cows_4.png",
-        "cows_5.png",
-        "cows_6.png",
-        "cows_7.png",
-        "cows_8.png",
+        "Minamisoma_08.png",
+        "Minamisoma_02.png",
+        "Minamisoma_03.png",
+        "Minamisoma_04.png",
+        "Minamisoma_05.png",
+        "Minamisoma_06.png",
+        "Minamisoma_01.png",
+        "Minamisoma_07.png",
     };
     const float kCowShotTimes[kNumCowPictures] = {
         //-10.0f,  // Shot was taken before scene starts
@@ -74,28 +74,28 @@ int Smartphones::Draw(float time) {
         23.5f,
         32.5f,
         46.0f,
-        53.0f,
-        65.0f,
+        54.0f,
+        60.0f,
         72.0f,
         1000.0f, // whateffs
     };
     const float kMinaShowTime[kNumCowPictures] = {
-        7.0f,
-        12.0f,
-        21.0f,
-        25.0f,
-        32.0f,
-        41.0f,
-        48.0f,
-        51.0f
+        8.5f,
+        27.0f,
+        34.0f,
+        38.5f,
+        42.0f,
+        69.0f,
+        72.0f,
+        74.5f
     };
     const int kMinaPicturePosition[kNumCowPictures] = {
-        0,
         1,
         0,
         2,
-        1,
+        3,
         0,
+        1,
         3,
         2
     };
@@ -103,7 +103,7 @@ int Smartphones::Draw(float time) {
     // Videos only during Cows
     // left, bottom, right
     const float kVideoSkip[3] = { 4.63f, 4.80f, 3.41f };
-    const float kVideoDuration = 80.0f;
+    const float kVideoDuration[2] = {80.0f, 85.0f};
     const char *kLeftVideo = "Kuhe_N4.wmv";
     const char *kBottomVideo = "Kuhe_R4.wmv";
     const char *kRightVideo = "Kuhe_Y3.wmv";
@@ -123,17 +123,18 @@ int Smartphones::Draw(float time) {
     }
 
     float video_time = time - video_start_time_;
+    float last_video_time = last_call_time_ - video_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
 
     if (scene_ == SM_KUHE) {
         for (int i = 0; i < kNumCowPictures; i++) {
-            if (time >= kCowShotTimes[i] && last_call_time_ < kCowShotTimes[i]) {
+            if (video_time >= kCowShotTimes[i] && last_video_time < kCowShotTimes[i]) {
                 TakeNextPicture();
             }
         }
     } else {
         for (int i = 0; i < kNumCowPictures; i++) {
-            if (time >= kMinaShowTime[i] && last_call_time_ < kMinaShowTime[i]) {
+            if (video_time >= kMinaShowTime[i] && last_video_time < kMinaShowTime[i]) {
                 TakeNextPicture(kMinaPicturePosition[i]);
             }
         }
@@ -178,19 +179,19 @@ int Smartphones::Draw(float time) {
             break;
         case 1:  // LEFT
             DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f,
-                0.175f + border_size + x_shift, 0.825f - border_size + x_shift,
+                border_size + x_shift, 1.0f - border_size + x_shift,
                 border_size + y_shift, 1.0f - border_size + y_shift,
                 1.0f);
             break;
         case 2:  // BOTTOM
             DrawQuad(-0.418f, -0.081f, 0.212f, -0.453f,
-                0.2f + border_size + x_shift, 0.8f - border_size + x_shift,
+                border_size + x_shift, 1.0f - border_size + x_shift,
                 border_size + y_shift, 1.0f - border_size + y_shift,
                 1.0f);
             break;
         case 3:  // RIGHT
             DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f,
-                0.2f + border_size + x_shift, 0.8f - border_size + x_shift,
+                border_size + x_shift, 1.0f - border_size + x_shift,
                 border_size + y_shift, 1.0f - border_size + y_shift,
                 1.0f);
             break;
@@ -292,7 +293,9 @@ int Smartphones::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
-    if (video_time > kVideoDuration) {
+    float video_duration = kVideoDuration[0];
+    if (scene_ == SM_MINAMISOMA) video_duration = kVideoDuration[1];
+    if (video_time > video_duration) {
         has_white_fade_ = true;
     }
 
