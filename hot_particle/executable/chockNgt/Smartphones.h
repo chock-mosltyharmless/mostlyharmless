@@ -39,6 +39,7 @@ public:
             break;
         }
     }
+
     void EndScene(void) {
         has_white_fade_ = true;
     }

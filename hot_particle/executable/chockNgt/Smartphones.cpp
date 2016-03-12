@@ -40,7 +40,7 @@ void Smartphones::NoMorePictures(void) {
 int Smartphones::Draw(float time) {
     char error_string[MAX_ERROR_LENGTH + 1];
     GLuint tex_id;
-    bool is_scene_finished;
+    bool is_scene_finished = false;
 
     const char *kCowTextures[kNumCowPictures] = {
         "cows_1.png",
