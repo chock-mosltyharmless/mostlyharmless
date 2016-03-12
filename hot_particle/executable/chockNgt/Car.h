@@ -72,5 +72,7 @@ private:
     bool draw_video_ = true;
     float video_start_time_ = 0.0f;
     bool has_white_fade_ = true;
+    bool show_gps_ = true;
+    float gps_start_time_ = 0.0f;
 };
 

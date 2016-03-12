@@ -20,6 +20,8 @@ void Car::ToBeginning(void) {
     video_start_time_ = last_call_time_;
     scene_ = BEGRUSSUNG;
     next_scene_ = END_IT;
+    show_gps_ = false;
+    gps_start_time_ = last_call_time_ - 100.0f;  // Make sure that GPS isn't showing
 }
 
 int Car::Draw(float time) {
@@ -32,6 +34,16 @@ int Car::Draw(float time) {
         last_call_time_ = time;
         return smartphones_.Draw(time);
     }
+
+    // Time spent on GPS before it's size reduced
+    const float kGPSDurations[] = {
+        12.0f,  // Beginning draw Fukushima Daiishi
+        6.0f,  // Kreuze no speech
+    };
+    const float kGPSFadeOutDuration[] = {
+        1.0f,  // Beginning to avoid seek stutter
+        6.0f,  // Polizei "Kreuze"
+    };
 
     // left, center, right
     const float kVideoStartDelay[][3] = {
@@ -126,13 +138,13 @@ int Car::Draw(float time) {
                 smartphones_.UpdateTime(time);
                 smartphones_.StartScene(SM_KUHE);
                 break;
-            case ZAHNARZT:
+            case ZAHNARZT:  // Probably not used due to GPS
                 scene_ = ZAHNARZT;
                 video_start_time_ = time;
                 has_white_fade_ = false;
                 PlaySound("textures/Zahnarzt_N1Y1R2.wav", NULL, SND_ASYNC);
                 break;
-            case POLIZEI:
+            case POLIZEI:  // Probably not used due to GPS
                 scene_ = POLIZEI;
                 video_start_time_ = time;
                 has_white_fade_ = false;
@@ -147,6 +159,29 @@ int Car::Draw(float time) {
     } else {
         to_white_ -= time - last_call_time_;
         if (to_white_ < 0.0f) to_white_ = 0.0f;
+    }
+
+    float gps_size = 0.0f;
+    float gps_time = time - gps_start_time_;
+    if (show_gps_) {
+        gps_size = gps_time * 0.5f;
+        if (gps_size > 1.0f) gps_size = 1.0f;
+        gps_size = 0.5f - cosf(gps_size * PIF) * 0.5f;  // Make it smooth
+    } else {
+        float delay = kGPSFadeOutDuration[0];
+        switch(scene_) {
+        case ZAHNARZT:
+        default:
+            delay = kGPSFadeOutDuration[0];
+            break;
+        case POLIZEI:
+            delay = kGPSFadeOutDuration[1];
+            break;
+        }
+        gps_size = gps_time * 0.5f - delay;
+        if (gps_size < 0.0f) gps_size = 0.0f;
+        if (gps_size > 1.0f) gps_size = 1.0f;
+        gps_size = 0.5f + cosf(gps_size * PIF) * 0.5f;  // Make it smooth
     }
 
     float video_time = time - video_start_time_;
@@ -214,8 +249,7 @@ int Car::Draw(float time) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
-    }
-    else {
+    } else {
         if (textureManager.getTextureID("black.png", &tex_id, error_string) < 0) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
@@ -236,6 +270,52 @@ int Car::Draw(float time) {
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
+
+    // GPS
+    float l = gps_size * -0.9f + (1.0f - gps_size) * -0.3475f;
+    float r = gps_size * 0.9f + (1.0f - gps_size) * -0.0325f;
+    float t = gps_size * 0.95f + (1.0f - gps_size) * -0.052f;
+    float b = gps_size * -0.85f + (1.0f - gps_size) * -0.364f;
+    //if (textureManager.getTextureID("map_5_10_platt_small.png", &tex_id, error_string) < 0) {
+    if (textureManager.getTextureID("map_5_10_platt_blur.png", &tex_id, error_string) < 0) {
+    //if (textureManager.getTextureID("gps_schrift.png", &tex_id, error_string) < 0) {
+        MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+        return -1;
+    }
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    float large_alpha = 8.0f * gps_size;
+    if (large_alpha > 1.0f) large_alpha = 1.0f;
+    DrawQuad(l, r, t, b, 1.0f);  // The small version of the GPS
+    if (textureManager.getTextureID("map_5_10_platt.png", &tex_id, error_string) < 0) {
+        MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+        return -1;
+    }
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    DrawQuad(l, r, t, b, large_alpha);  // The large version of the GPS
+    // Draw the flashing Fukushima for destination
+    if (scene_ == BEGRUSSUNG) {
+        float blinking = 0.0f;
+        if (gps_time > 4.0f) blinking = 0.5f - cosf((gps_time - 4.0f) * 4.0f);
+        if (textureManager.getTextureID("map_5_10_platt_nodaiishi.png", &tex_id, error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(l, r, t, b, large_alpha * blinking);  // The large version of the GPS
+    }
+    // Draw Kreuze
+    // Draw the flashing Fukushima for destination
+    if (scene_ == SIEVERT || scene_ == POLIZEI) {
+        float blinking = 0.0f;
+        blinking = 0.5f - cosf((gps_time - 4.0f) * 4.0f);
+        blinking = 0.6f + 0.4f * blinking;  // don't blink so much
+        if (textureManager.getTextureID("map_5_10_platt_kreuze.png", &tex_id, error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(l, r, t, b, large_alpha * blinking);  // The large version of the GPS
+    }
 
     // Fade to white
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -265,12 +345,38 @@ int Car::Draw(float time) {
     if (video_time > kVideoDuration[scene_]) {
         switch (scene_) {
         case BEGRUSSUNG:  // Automatically moves on to Zahnarzt
-            has_white_fade_ = true;
-            next_scene_ = ZAHNARZT;
+            if (!show_gps_) {
+                show_gps_ = true;
+                gps_start_time_ = time;
+            } else {
+                if (gps_time > kGPSDurations[0]) {
+                    show_gps_ = false;
+                    gps_start_time_ = time;
+                    scene_ = ZAHNARZT;
+                    video_start_time_ = time;
+                    has_white_fade_ = false;
+                    PlaySound("textures/Zahnarzt_N1Y1R2.wav", NULL, SND_ASYNC);
+                    break;
+                }
+            }
             break;
         case SIEVERT:  // Automatically moves on to Polizei
-            has_white_fade_ = true;
-            next_scene_ = POLIZEI;
+            //has_white_fade_ = true;
+            //next_scene_ = POLIZEI;
+            if (!show_gps_) {
+                show_gps_ = true;
+                gps_start_time_ = time;
+            } else {
+                if (gps_time > kGPSDurations[1]) {
+                    show_gps_ = false;
+                    gps_start_time_ = time;
+                    scene_ = POLIZEI;
+                    video_start_time_ = time;
+                    has_white_fade_ = false;
+                    PlaySound("textures/Polizei_Y5R5.wav", NULL, SND_ASYNC);
+                    break;
+                }
+            }
             break;
         case KATSURAO13: // Automatically moves on to Kuhe
             has_white_fade_ = true;
