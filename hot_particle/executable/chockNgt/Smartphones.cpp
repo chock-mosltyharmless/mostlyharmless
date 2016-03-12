@@ -14,26 +14,30 @@ Smartphones::~Smartphones()
 }
 
 void Smartphones::ToBeginning(void) {
-    next_picture_id_ = kNumCowPictures - 1;
+    for (int i = 0; i < 4; i++) {
+        next_picture_id_[i] = kNumCowPictures - 1;
+        last_picture_take_time_[i] = last_call_time_;
+        show_pictures_[i] = false;
+        has_flashed_[i] = false;
+    }
     scene_ = SM_KUHE;
-    last_picture_take_time_ = last_call_time_;
-    show_pictures_ = false;
-    has_flashed_ = false;
     has_white_fade_ = false;
     to_white_ = 0.0f;
     video_start_time_ = last_call_time_;
 }
 
-void Smartphones::TakeNextPicture(void) {
-    show_pictures_ = true;
-    next_picture_id_++;
-    if (next_picture_id_ >= kNumCowPictures) next_picture_id_ = 0;
-    last_picture_take_time_ = last_call_time_;
-    has_flashed_ = false;
+void Smartphones::TakeNextPicture(int position) {
+    show_pictures_[position] = true;
+    next_picture_id_[position]++;
+    if (next_picture_id_[position] >= kNumCowPictures) next_picture_id_[position] = 0;
+    last_picture_take_time_[position] = last_call_time_;
+    has_flashed_[position] = false;
 }
 
 void Smartphones::NoMorePictures(void) {
-    show_pictures_ = false;
+    for (int i = 0; i < 4; i++) {
+        show_pictures_[i] = false;
+    }
 }
 
 
@@ -107,41 +111,47 @@ int Smartphones::Draw(float time) {
 
     // Draw the cow picture
     // Maybe I show these after the videos and cut them perfectly (not needed)
-    if (show_pictures_) {
-        float picture_time = time - last_picture_take_time_;
-        float x_shift = 0.0f;
-        float y_shift = 0.0f;
-        const float kSeekTime = 0.8f;
-        const float kFlashTime = 0.2f;
-        if (picture_time < kSeekTime) {
-            x_shift = (1.0f - picture_time / kSeekTime) * 0.025f * sinf(time * 2.3f) + 0.01f * cosf(time * 7.3f) - 0.005f * cosf(time * 23.5f);
-            y_shift = (1.0f - picture_time / kSeekTime) * 0.025f * cosf(time * 3.1f) - 0.01f * sinf(time * 8.1f) + 0.005f * sinf(time * 27.4f);
-        }
-        if (textureManager.getTextureID(kCowTextures[next_picture_id_], &tex_id, error_string)) {
-            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        float border_size = 0.04f;
-        DrawQuad(-0.285f - border_size + x_shift, 0.28f + border_size + x_shift,
-                 0.762f + border_size + y_shift, -0.052f - border_size + y_shift,
-                 1.0f);
-
-        float white_alpha = 0.0f;
-        if (picture_time >= kSeekTime) {
-            white_alpha = 1.0f - (picture_time - kSeekTime) / kFlashTime;
-            if (!has_flashed_) {
-                //PlaySound("textures/flash.wav", NULL, SND_ASYNC);
-                has_flashed_ = true;
+    for (int picture_position = 0; picture_position < 4; picture_position++) {
+        if (show_pictures_[picture_position]) {
+            float picture_time = time - last_picture_take_time_[picture_position];
+            float x_shift = 0.0f;
+            float y_shift = 0.0f;
+            const float kSeekTime = 0.8f;
+            const float kFlashTime = 0.2f;
+            if (picture_time < kSeekTime) {
+                x_shift = (1.0f - picture_time / kSeekTime) * 0.025f * sinf(time * 2.3f) + 0.01f * cosf(time * 7.3f) - 0.005f * cosf(time * 23.5f);
+                y_shift = (1.0f - picture_time / kSeekTime) * 0.025f * cosf(time * 3.1f) - 0.01f * sinf(time * 8.1f) + 0.005f * sinf(time * 27.4f);
             }
+            if (textureManager.getTextureID(kCowTextures[next_picture_id_[picture_position]], &tex_id, error_string)) {
+                MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+                return -1;
+            }
+            glBindTexture(GL_TEXTURE_2D, tex_id);
+            float border_size = 0.04f;
+            // Use texture coordinates for shaking
+            switch (picture_position) {
+            default: // TODO: other positions
+                DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f,
+                    border_size + x_shift, 1.0f - border_size + x_shift, border_size + y_shift, 1.0f - border_size + y_shift,
+                    1.0f);
+            }
+
+            float white_alpha = 0.0f;
+            if (picture_time >= kSeekTime) {
+                white_alpha = 1.0f - (picture_time - kSeekTime) / kFlashTime;
+                if (!has_flashed_[picture_position]) {
+                    //PlaySound("textures/flash.wav", NULL, SND_ASYNC);
+                    has_flashed_[picture_position] = true;
+                }
+            }
+            if (white_alpha < 0.0f) white_alpha = 0.0f;
+            if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
+                MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+                return -1;
+            }
+            glBindTexture(GL_TEXTURE_2D, tex_id);
+            DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f, white_alpha);
         }
-        if (white_alpha < 0.0f) white_alpha = 0.0f;
-        if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
-            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f, white_alpha);
     }
 
     // Draw the videos from Kuhe
@@ -153,7 +163,7 @@ int Smartphones::Draw(float time) {
             return -1;
         }
     } else {
-        if (textureManager.getTextureID("white.png", &tex_id, error_string) < 0) {
+        if (textureManager.getTextureID("black.png", &tex_id, error_string) < 0) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
@@ -170,9 +180,8 @@ int Smartphones::Draw(float time) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
-    }
-    else {
-        if (textureManager.getTextureID("white.png", &tex_id, error_string) < 0) {
+    } else {
+        if (textureManager.getTextureID("black.png", &tex_id, error_string) < 0) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
@@ -189,9 +198,8 @@ int Smartphones::Draw(float time) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
-    }
-    else {
-        if (textureManager.getTextureID("white.png", &tex_id, error_string) < 0) {
+    } else {
+        if (textureManager.getTextureID("black.png", &tex_id, error_string) < 0) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }

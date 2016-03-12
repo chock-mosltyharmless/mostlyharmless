@@ -18,17 +18,19 @@ public:
     void StartScene(SMARTPHONE_SCENE scene) {
         scene_ = scene;
         has_white_fade_ = false;
-        to_white_ = 1.0f;
+        to_white_ = 2.0f;
         // Start Video imidiately.
         video_start_time_ = last_call_time_;
 
         // Play audio
         switch (scene) {
         case SM_KUHE:
-            next_picture_id_ = 10; // Go to beginning of pictures
+            for (int i = 0; i < 4; i++) {
+                next_picture_id_[i] = 10; // Go to beginning of pictures
+                // turn back time so that the picture is already static
+                last_picture_take_time_[i] = last_call_time_ - 10.0f;
+            }
             TakeNextPicture();
-            // turn back time so that the picture is already static
-            last_picture_take_time_ = last_call_time_ - 10.0f;
             PlaySound("textures/Kuhe_N4Y3R4.wav", NULL, SND_ASYNC);
             break;
         case SM_MINAMISOMA:
@@ -45,7 +47,7 @@ public:
     }
 
 
-    void TakeNextPicture();  // Next cow picture
+    void TakeNextPicture(int position = 0);  // Next picture, 0 center; 1 left; 2 bottom; 3 right
     void NoMorePictures();  // Remove cow picture
 
 private:
@@ -55,9 +57,9 @@ private:
     bool has_white_fade_ = false;
     float video_start_time_;
     float to_white_ = 0.0f;
-    int next_picture_id_ = 10;
-    float last_picture_take_time_ = 0.0f;
+    int next_picture_id_[4] = { 10, 10, 10, 10 };
+    float last_picture_take_time_[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
     const static int kNumCowPictures = 8;
-    bool show_pictures_ = true;
-    bool has_flashed_ = true;
+    bool show_pictures_[4] = { true, true, true, true };
+    bool has_flashed_[4] = { true, true, true, true };
 };

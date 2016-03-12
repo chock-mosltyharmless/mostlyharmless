@@ -29,7 +29,7 @@ public:
     void StartScene(CAR_SCENE scene) {
         scene_ = scene;
         has_white_fade_ = false;
-        to_white_ = 1.0f;
+        to_white_ = 2.0f;
         // Start Video imidiately.
         video_start_time_ = last_call_time_;
         next_scene_ = END_IT;
