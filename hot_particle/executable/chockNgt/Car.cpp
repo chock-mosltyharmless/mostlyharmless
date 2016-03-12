@@ -53,8 +53,8 @@ int Car::Draw(float time) {
         80.0f,  // TOMOBE,
         137.0f,  // SIEVERT
         73.0f,  // TAMURA,
-        199.0f,  // KATSURAO13
-        159.0f,  // KATSURAO14
+        187.0f,  // KATSURAO13
+        175.0f,  // KATSURAO14
         6.0f,  // ABSCHIED,
         162.0f,  // ZAHNARZT,
         331.0f,  // POLIZEI,
