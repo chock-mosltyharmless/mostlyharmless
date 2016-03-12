@@ -190,13 +190,38 @@ int Car::Draw(float time) {
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // Default background is white
+    // Default background is white or gray
+#if 0
     if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
+#else
+    float brightness = 1.0f;
+    switch (scene_) {
+    case BEGRUSSUNG:
+    case TOMOBE:
+    case SIEVERT:
+    case ABSCHIED:
+    case ZAHNARZT:
+    case POLIZEI:
+        brightness = 120.0f / 255.0f;
+        break;
+    case TAMURA:
+    case KATSURAO13:
+    case KATSURAO14:
+    case KUHE:
+    case WOHIN:
+    case END_IT:
+    default:
+        brightness = 1.0f;
+        break;
+    }
+    glClearColor(brightness, brightness, brightness, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+#endif
 
     // Driver Video (always do it?)
     if (kDriverVideo[scene_] && video_time > kVideoStartDelay[scene_][1] &&
@@ -263,7 +288,25 @@ int Car::Draw(float time) {
         1.0f);
 
     // Room
-    texture_name = "car_room.png";
+    switch (scene_) {
+    case BEGRUSSUNG:
+    case TOMOBE:
+    case SIEVERT:
+    case ABSCHIED:
+    case ZAHNARZT:
+    case POLIZEI:
+        texture_name = "car_room_night.png";
+        break;
+    case TAMURA:
+    case KATSURAO13:
+    case KATSURAO14:
+    case KUHE:
+    case WOHIN:
+    case END_IT:
+    default:
+        texture_name = "car_room.png";
+        break;
+    }
     if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
