@@ -12,7 +12,8 @@ enum CAR_SCENE {
     ZAHNARZT,
     POLIZEI,
     KUHE,
-    WOHIN
+    WOHIN,
+    END_IT,  // no following scene
 };
 
 class Car
@@ -31,6 +32,7 @@ public:
         to_white_ = 1.0f;
         // Start Video imidiately.
         video_start_time_ = last_call_time_;
+        next_scene_ = END_IT;
 
         // Play audio
         switch (scene) {
@@ -59,11 +61,13 @@ public:
     }
     void EndScene(void) {
         has_white_fade_ = true;
+        next_scene_ = END_IT;
     }
 
 private:
     float last_call_time_ = 0.0f;
     CAR_SCENE scene_ = BEGRUSSUNG;
+    CAR_SCENE next_scene_ = END_IT;
     float to_white_ = 3.0f;  // fade to white
     bool draw_video_ = true;
     float video_start_time_ = 0.0f;

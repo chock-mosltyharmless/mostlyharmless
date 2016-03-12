@@ -15,13 +15,17 @@ Smartphones::~Smartphones()
 
 void Smartphones::ToBeginning(void) {
     next_picture_id_ = kNumCowPictures - 1;
+    scene_ = SM_KUHE;
     last_picture_take_time_ = last_call_time_;
-    show_cows_ = false;
+    show_pictures_ = false;
     has_flashed_ = false;
+    has_white_fade_ = false;
+    to_white_ = 0.0f;
+    video_start_time_ = last_call_time_;
 }
 
 void Smartphones::TakeNextPicture(void) {
-    show_cows_ = true;
+    show_pictures_ = true;
     next_picture_id_++;
     if (next_picture_id_ >= kNumCowPictures) next_picture_id_ = 0;
     last_picture_take_time_ = last_call_time_;
@@ -29,13 +33,14 @@ void Smartphones::TakeNextPicture(void) {
 }
 
 void Smartphones::NoMorePictures(void) {
-    show_cows_ = false;
+    show_pictures_ = false;
 }
 
 
 int Smartphones::Draw(float time) {
     char error_string[MAX_ERROR_LENGTH + 1];
     GLuint tex_id;
+    bool is_scene_finished;
 
     const char *kCowTextures[kNumCowPictures] = {
         "cows_1.png",
@@ -47,9 +52,50 @@ int Smartphones::Draw(float time) {
         "cows_7.png",
         "cows_8.png",
     };
+    const float kCowShotTimes[kNumCowPictures] = {
+        //-10.0f,  // Shot was taken before scene starts
+        16.0f,
+        23.5f,
+        32.5f,
+        46.0f,
+        53.0f,
+        65.0f,
+        72.0f,
+        1000.0f, // whateffs
+    };
+
+    // Videos only during Cows
+    // left, bottom, right
+    const float kVideoSkip[3] = { 4.63f, 4.80f, 3.41f };
+    const float kVideoDuration = 80.0f;
+    const char *kLeftVideo = "Kuhe_N4.wmv";
+    const char *kBottomVideo = "Kuhe_R4.wmv";
+    const char *kRightVideo = "Kuhe_Y3.wmv";
     
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    if (has_white_fade_) {
+        to_white_ += (time - last_call_time_) * 1.0f;
+        if (to_white_ > 1.75f) {
+            to_white_ = 2.0f;
+            is_scene_finished = true;
+        }
+    } else {
+        to_white_ -= time - last_call_time_;
+        if (to_white_ < 0.0f) to_white_ = 0.0f;
+    }
+
+    float video_time = time - video_start_time_;
+    if (video_time < 0.0f) video_time = 0.0f;
+
+    if (scene_ == SM_KUHE) {
+        for (int i = 0; i < kNumCowPictures; i++) {
+            if (time >= kCowShotTimes[i] && last_call_time_ < kCowShotTimes[i]) {
+                TakeNextPicture();
+            }
+        }
+    }
 
     // Adjust for overlapping nightmare...
     if (textureManager.getTextureID("smartphones_drawings_one.png", &tex_id, error_string)) {
@@ -60,11 +106,12 @@ int Smartphones::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Draw the cow picture
-    if (show_cows_) {
+    // Maybe I show these after the videos and cut them perfectly (not needed)
+    if (show_pictures_) {
         float picture_time = time - last_picture_take_time_;
         float x_shift = 0.0f;
         float y_shift = 0.0f;
-        const float kSeekTime = 0.5f;
+        const float kSeekTime = 0.8f;
         const float kFlashTime = 0.2f;
         if (picture_time < kSeekTime) {
             x_shift = (1.0f - picture_time / kSeekTime) * 0.025f * sinf(time * 2.3f) + 0.01f * cosf(time * 7.3f) - 0.005f * cosf(time * 23.5f);
@@ -84,7 +131,7 @@ int Smartphones::Draw(float time) {
         if (picture_time >= kSeekTime) {
             white_alpha = 1.0f - (picture_time - kSeekTime) / kFlashTime;
             if (!has_flashed_) {
-                PlaySound("textures/flash.wav", NULL, SND_ASYNC);
+                //PlaySound("textures/flash.wav", NULL, SND_ASYNC);
                 has_flashed_ = true;
             }
         }
@@ -97,13 +144,82 @@ int Smartphones::Draw(float time) {
         DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f, white_alpha);
     }
 
+    // Draw the videos from Kuhe
+    // Left
+    if (scene_ == SM_KUHE) {
+        if (textureManager.getVideoID(kLeftVideo, &tex_id, error_string,
+            video_time + kVideoSkip[0]) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+    } else {
+        if (textureManager.getTextureID("white.png", &tex_id, error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+    }
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f,
+             0.175f, 0.825f, 0.0f, 1.0f,
+             1.0f);
+
+    // Bottom
+    if (scene_ == SM_KUHE) {
+        if (textureManager.getVideoID(kBottomVideo, &tex_id, error_string,
+            video_time + kVideoSkip[1]) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+    }
+    else {
+        if (textureManager.getTextureID("white.png", &tex_id, error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+    }
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    DrawQuad(-0.418f, -0.08f, 0.212f, -0.453f,
+        0.2f, 0.8f, 0.0f, 1.0f,
+        1.0f);
+
+    // Right
+    if (scene_ == SM_KUHE) {
+        if (textureManager.getVideoID(kRightVideo, &tex_id, error_string,
+            video_time + kVideoSkip[2]) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+    }
+    else {
+        if (textureManager.getTextureID("white.png", &tex_id, error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+    }
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f,
+        0.2f, 0.8f, 0.0f, 1.0f,
+        1.0f);
+
     // Draw the phones (exclude bottom):
-    if (textureManager.getTextureID("smartphones_room_nobottom.png", &tex_id, error_string)) {
+    //if (textureManager.getTextureID("smartphones_room_nobottom.png", &tex_id, error_string)) {
+    if (textureManager.getTextureID("smartphones_room.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
+
+    // Fade to white
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
+        MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+        return -1;
+    }
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    DrawQuadColor(-1.0f, 1.0f, 1.0f, -1.0f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.5f, 0.5f, 0.5f, to_white_);
 
     // Darkening borders
     glBlendFunc(GL_DST_COLOR, GL_ZERO);
@@ -114,9 +230,13 @@ int Smartphones::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
+    if (video_time > kVideoDuration) {
+        has_white_fade_ = true;
+    }
+
     last_call_time_ = time;
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
-    return 1;  // no fade-out so far.
+    if (is_scene_finished) return 1;
     return 0;
 }

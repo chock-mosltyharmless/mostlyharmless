@@ -19,6 +19,7 @@ void Car::ToBeginning(void) {
     draw_video_ = false;
     video_start_time_ = last_call_time_;
     scene_ = BEGRUSSUNG;
+    next_scene_ = END_IT;
 }
 
 int Car::Draw(float time) {
@@ -26,6 +27,11 @@ int Car::Draw(float time) {
     GLuint tex_id;
     const char *texture_name;
     bool is_scene_finished = false;    
+
+    if (scene_ == KUHE) {
+        last_call_time_ = time;
+        return smartphones_.Draw(time);
+    }
 
     // left, center, right
     const float kVideoStartDelay[][3] = {
@@ -109,7 +115,34 @@ int Car::Draw(float time) {
         to_white_ += (time - last_call_time_) * 1.0f;
         if (to_white_ > 1.75f) {
             to_white_ = 2.0f;
-            is_scene_finished = true;
+            switch (next_scene_) {
+            case WOHIN:
+                scene_ = WOHIN;
+                video_start_time_ = time;
+                has_white_fade_ = false;
+                PlaySound("textures/Wohin_N6Y6R5.wav", NULL, SND_ASYNC);
+            case KUHE:
+                scene_ = KUHE;
+                smartphones_.UpdateTime(time);
+                smartphones_.StartScene(SM_KUHE);
+                break;
+            case ZAHNARZT:
+                scene_ = ZAHNARZT;
+                video_start_time_ = time;
+                has_white_fade_ = false;
+                PlaySound("textures/Zahnarzt_N1Y1R2.wav", NULL, SND_ASYNC);
+                break;
+            case POLIZEI:
+                scene_ = POLIZEI;
+                video_start_time_ = time;
+                has_white_fade_ = false;
+                PlaySound("textures/Polizei_Y5R5.wav", NULL, SND_ASYNC);
+                break;
+            case END_IT:
+            default:
+                is_scene_finished = true;
+                break;
+            }
         }
     } else {
         to_white_ -= time - last_call_time_;
@@ -132,7 +165,7 @@ int Car::Draw(float time) {
 
     // Driver Video (always do it?)
     if (kDriverVideo[scene_] && video_time > kVideoStartDelay[scene_][1] &&
-        video_time <= kVideoDuration[scene_]) {
+        video_time <= kVideoDuration[scene_] + 2.0f) {
         texture_name = kDriverVideo[scene_];
         if (textureManager.getVideoID(texture_name, &tex_id, error_string,
             video_time - kVideoStartDelay[scene_][1] + kVideoSkip[scene_][1]) < 0) {
@@ -151,7 +184,7 @@ int Car::Draw(float time) {
 
     // Left Video (always do it?)
     if (kLeftVideo[scene_] && video_time > kVideoStartDelay[scene_][0] &&
-        video_time <= kVideoDuration[scene_]) {
+        video_time <= kVideoDuration[scene_] + 2.0f) {
         texture_name = kLeftVideo[scene_];
         if (textureManager.getVideoID(texture_name, &tex_id, error_string,
             video_time - kVideoStartDelay[scene_][0] + kVideoSkip[scene_][0]) < 0) {
@@ -174,7 +207,7 @@ int Car::Draw(float time) {
 
     // Right Video (always do it?)
     if (kRightVideo[scene_] && video_time > kVideoStartDelay[scene_][2] &&
-        video_time <= kVideoDuration[scene_]) {
+        video_time <= kVideoDuration[scene_] + 2.0f) {
         texture_name = kRightVideo[scene_];
         if (textureManager.getVideoID(texture_name, &tex_id, error_string,
             video_time - kVideoStartDelay[scene_][2] + kVideoSkip[scene_][2]) < 0) {
@@ -232,44 +265,30 @@ int Car::Draw(float time) {
     if (video_time > kVideoDuration[scene_]) {
         switch (scene_) {
         case BEGRUSSUNG:  // Automatically moves on to Zahnarzt
-            scene_ = ZAHNARZT;
-            video_start_time_ = time;
-            PlaySound("textures/Zahnarzt_N1Y1R2.wav", NULL, SND_ASYNC);
-            break;
-        case TOMOBE:
             has_white_fade_ = true;
+            next_scene_ = ZAHNARZT;
             break;
         case SIEVERT:  // Automatically moves on to Polizei
-            scene_ = POLIZEI;
-            video_start_time_ = time;
-            PlaySound("textures/Polizei_Y5R5.wav", NULL, SND_ASYNC);
-            break;
-        case TAMURA:
             has_white_fade_ = true;
+            next_scene_ = POLIZEI;
             break;
         case KATSURAO13: // Automatically moves on to Kuhe
-            scene_ = KUHE;
-            video_start_time_ = time;
-            PlaySound("textures/Kuhe_N4Y3R4.wav", NULL, SND_ASYNC);
+            has_white_fade_ = true;
+            next_scene_ = KUHE;
             break;
         case KATSURAO14: // Automatically moves on to Wohin
-            scene_ = WOHIN;
-            video_start_time_ = time;
-            PlaySound("textures/Wohin_N6Y6R5.wav", NULL, SND_ASYNC);
+            has_white_fade_ = true;
+            next_scene_ = WOHIN;
             break;
+        case TAMURA:
+        case TOMOBE:
         case ABSCHIED:
-            has_white_fade_ = true;
-            break;
         case ZAHNARZT:
-            has_white_fade_ = true;
-            break;
         case POLIZEI:
-            has_white_fade_ = true;
-            break;
         case KUHE:
-            has_white_fade_ = true;
-            break;
         case WOHIN:
+        default:
+            next_scene_ = END_IT;
             has_white_fade_ = true;
             break;
         }
