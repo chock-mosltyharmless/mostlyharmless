@@ -58,6 +58,16 @@ int Smartphones::Draw(float time) {
         "cows_7.png",
         "cows_8.png",
     };
+    const char *kMinaTextures[kNumCowPictures] = {
+        "cows_1.png",
+        "cows_2.png",
+        "cows_3.png",
+        "cows_4.png",
+        "cows_5.png",
+        "cows_6.png",
+        "cows_7.png",
+        "cows_8.png",
+    };
     const float kCowShotTimes[kNumCowPictures] = {
         //-10.0f,  // Shot was taken before scene starts
         16.0f,
@@ -68,6 +78,26 @@ int Smartphones::Draw(float time) {
         65.0f,
         72.0f,
         1000.0f, // whateffs
+    };
+    const float kMinaShowTime[kNumCowPictures] = {
+        7.0f,
+        12.0f,
+        21.0f,
+        25.0f,
+        32.0f,
+        41.0f,
+        48.0f,
+        51.0f
+    };
+    const int kMinaPicturePosition[kNumCowPictures] = {
+        0,
+        1,
+        0,
+        2,
+        1,
+        0,
+        3,
+        2
     };
 
     // Videos only during Cows
@@ -101,6 +131,12 @@ int Smartphones::Draw(float time) {
                 TakeNextPicture();
             }
         }
+    } else {
+        for (int i = 0; i < kNumCowPictures; i++) {
+            if (time >= kMinaShowTime[i] && last_call_time_ < kMinaShowTime[i]) {
+                TakeNextPicture(kMinaPicturePosition[i]);
+            }
+        }
     }
 
     // Adjust for overlapping nightmare...
@@ -114,81 +150,80 @@ int Smartphones::Draw(float time) {
     // Draw the cow picture
     // Maybe I show these after the videos and cut them perfectly (not needed)
     for (int picture_position = 0; picture_position < 4; picture_position++) {
-        if (show_pictures_[picture_position]) {
-            float picture_time = time - last_picture_take_time_[picture_position];
-            float x_shift = 0.0f;
-            float y_shift = 0.0f;
-            const float kSeekTime = 0.8f;
-            const float kFlashTime = 0.2f;
-            if (picture_time < kSeekTime) {
-                x_shift = (1.0f - picture_time / kSeekTime) * 0.025f * sinf(time * 2.3f) + 0.01f * cosf(time * 7.3f) - 0.005f * cosf(time * 23.5f);
-                y_shift = (1.0f - picture_time / kSeekTime) * 0.025f * cosf(time * 3.1f) - 0.01f * sinf(time * 8.1f) + 0.005f * sinf(time * 27.4f);
-            }
-            if (textureManager.getTextureID(kCowTextures[current_picture_id_[picture_position]], &tex_id, error_string)) {
-                MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-                return -1;
-            }
-            glBindTexture(GL_TEXTURE_2D, tex_id);
-            float border_size = 0.04f;
-            // Use texture coordinates for shaking
-            switch (picture_position) {
-            case 0:  // CENTER
-            default:
-                DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f,
-                    border_size + x_shift, 1.0f - border_size + x_shift, border_size + y_shift, 1.0f - border_size + y_shift,
-                    1.0f);
-                break;
-            case 1:  // LEFT
-                DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f,
-                    0.175f + border_size + x_shift, 0.825f - border_size + x_shift,
-                    border_size + y_shift, 1.0f - border_size + y_shift,
-                    1.0f);
-                break;
-            case 2:  // BOTTOM
-                DrawQuad(-0.418f, -0.08f, 0.212f, -0.453f,
-                    0.2f + border_size + x_shift, 0.8f - border_size + x_shift,
-                    border_size + y_shift, 1.0f - border_size + y_shift,
-                    1.0f);
-                break;
-            case 3:  // RIGHT
-                DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f,
-                    0.2f + border_size + x_shift, 0.8f - border_size + x_shift,
-                    border_size + y_shift, 1.0f - border_size + y_shift,
-                    1.0f);
-                break;
-            }
+        float picture_time = time - last_picture_take_time_[picture_position];
+        float x_shift = 0.0f;
+        float y_shift = 0.0f;
+        const float kSeekTime = 0.8f;
+        const float kFlashTime = 0.2f;
+        if (picture_time < kSeekTime) {
+            x_shift = (1.0f - picture_time / kSeekTime) * 0.025f * sinf(time * 2.3f) + 0.01f * cosf(time * 7.3f) - 0.005f * cosf(time * 23.5f);
+            y_shift = (1.0f - picture_time / kSeekTime) * 0.025f * cosf(time * 3.1f) - 0.01f * sinf(time * 8.1f) + 0.005f * sinf(time * 27.4f);
+        }
+        const char *textureName = kCowTextures[current_picture_id_[picture_position]];
+        if (scene_ != SM_KUHE) textureName = kMinaTextures[current_picture_id_[picture_position]];
+        if (!show_pictures_[picture_position]) textureName = "black.png";
+        if (textureManager.getTextureID(textureName, &tex_id, error_string)) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        float border_size = 0.04f;
+        // Use texture coordinates for shaking
+        switch (picture_position) {
+        case 0:  // CENTER
+        default:
+            DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f,
+                border_size + x_shift, 1.0f - border_size + x_shift, border_size + y_shift, 1.0f - border_size + y_shift,
+                1.0f);
+            break;
+        case 1:  // LEFT
+            DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f,
+                0.175f + border_size + x_shift, 0.825f - border_size + x_shift,
+                border_size + y_shift, 1.0f - border_size + y_shift,
+                1.0f);
+            break;
+        case 2:  // BOTTOM
+            DrawQuad(-0.418f, -0.081f, 0.212f, -0.453f,
+                0.2f + border_size + x_shift, 0.8f - border_size + x_shift,
+                border_size + y_shift, 1.0f - border_size + y_shift,
+                1.0f);
+            break;
+        case 3:  // RIGHT
+            DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f,
+                0.2f + border_size + x_shift, 0.8f - border_size + x_shift,
+                border_size + y_shift, 1.0f - border_size + y_shift,
+                1.0f);
+            break;
+        }
 
-            float white_alpha = 0.0f;
-            if (picture_time >= kSeekTime) {
-                white_alpha = 1.0f - (picture_time - kSeekTime) / kFlashTime;
-                if (!has_flashed_[picture_position]) {
-                    //PlaySound("textures/flash.wav", NULL, SND_ASYNC);
-                    has_flashed_[picture_position] = true;
-                }
+        float white_alpha = 0.0f;
+        if (picture_time >= kSeekTime) {
+            white_alpha = 1.0f - (picture_time - kSeekTime) / kFlashTime;
+            if (!has_flashed_[picture_position]) {
+                //PlaySound("textures/flash.wav", NULL, SND_ASYNC);
+                has_flashed_[picture_position] = true;
             }
-            if (white_alpha < 0.0f) white_alpha = 0.0f;
-            if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
-                MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-                return -1;
-            }
-            glBindTexture(GL_TEXTURE_2D, tex_id);
-            switch (picture_position) {
-            case 0:  // CENTER
-            default:
-                DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f, white_alpha);
-                break;
-            case 1:  // LEFT
-                DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f, white_alpha);
-                break;
-            case 2:  // BOTTOM
-                DrawQuad(-0.418f, -0.08f, 0.212f, -0.453f, white_alpha);
-                break;
-            case 3:  // RIGHT
-                DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f, white_alpha);
-                break;
-            }
-
+        }
+        if (white_alpha < 0.0f) white_alpha = 0.0f;
+        if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        switch (picture_position) {
+        case 0:  // CENTER
+        default:
             DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f, white_alpha);
+            break;
+        case 1:  // LEFT
+            DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f, white_alpha);
+            break;
+        case 2:  // BOTTOM
+            DrawQuad(-0.418f, -0.081f, 0.212f, -0.453f, white_alpha);
+            break;
+        case 3:  // RIGHT
+            DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f, white_alpha);
+            break;
         }
     }
 
@@ -212,7 +247,7 @@ int Smartphones::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-0.418f, -0.08f, 0.212f, -0.453f,
+        DrawQuad(-0.418f, -0.081f, 0.212f, -0.453f,
             0.2f, 0.8f, 0.0f, 1.0f,
             1.0f);
 
