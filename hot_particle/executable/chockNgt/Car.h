@@ -29,7 +29,17 @@ public:
     void StartScene(CAR_SCENE scene) {
         scene_ = scene;
         has_white_fade_ = false;
-        to_white_ = 2.0f;
+        switch (scene) {
+        case BEGRUSSUNG:
+            to_white_ = 1.5f;
+            break;
+        case ABSCHIED:
+            to_white_ = 1.0f;
+            break;
+        default:
+            to_white_ = 2.0f;
+            break;
+        }
         // Start Video imidiately.
         video_start_time_ = last_call_time_;
         next_scene_ = END_IT;
@@ -63,6 +73,7 @@ public:
         }
     }
     void EndScene(void) {
+        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
         has_white_fade_ = true;
         next_scene_ = END_IT;
     }

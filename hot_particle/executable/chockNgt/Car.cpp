@@ -157,7 +157,7 @@ int Car::Draw(float time) {
             }
         }
     } else {
-        to_white_ -= time - last_call_time_;
+        to_white_ -= (time - last_call_time_) * 0.5f;
         if (to_white_ < 0.0f) to_white_ = 0.0f;
     }
 
@@ -360,7 +360,7 @@ int Car::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuadColor(-1.0f, 1.0f, 1.0f, -1.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, to_white_);
+        NO_SCENE_BRIGHTNESS, NO_SCENE_BRIGHTNESS, NO_SCENE_BRIGHTNESS, to_white_);
 
     // Darkening borders
     glBlendFunc(GL_DST_COLOR, GL_ZERO);

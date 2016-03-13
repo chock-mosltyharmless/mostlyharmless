@@ -23,6 +23,7 @@ public:
         to_white_ = 1.0f;
     }
     void EndScene(void) {
+        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
         has_white_fade_ = true;
     }
 

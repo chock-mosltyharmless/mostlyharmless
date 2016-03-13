@@ -10,7 +10,10 @@ public:
     void UpdateTime(float time) { last_call_time_ = time; }
 
     void StartVideo(void);
-    void EndVideo(void) { show_video_ = false; }
+    void EndVideo(void) {
+        show_video_ = false;
+        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+    }
     void StartLight(void) { has_light_ = true; }
     void EndLight(void) { has_light_ = false; }
 

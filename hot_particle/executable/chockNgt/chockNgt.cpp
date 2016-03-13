@@ -515,7 +515,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     return msg.wParam;
 }
 
-void EndCurrentScene(void) {
+void EndCurrentScene(bool switch_to_next_scene) {
     zimmer_.EndKenchiro();
     zimmer_.EndScene();
     prolog_.EndVideo();
@@ -528,7 +528,7 @@ void EndCurrentScene(void) {
     car_.EndScene();
     smartphones_.EndScene();
     PlaySound("textures/silence.wav", NULL, SND_ASYNC);
-    end_current_scene_ = true;
+    end_current_scene_ = switch_to_next_scene;
 }
 
 //Main Window Procedure WindowProc
@@ -646,134 +646,136 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 #endif
 
         case '1':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 0;
             break;
         case '2':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 1;
             break;
         case '3':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 2;
             break;
         case '4':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 3;
             break;
         case '5':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 4;
             break;
         case '6':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 5;
             break;
         case '7':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 6;
             break;
         case '8':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 7;
             break;
         case '9':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 8;
             break;
         case '0':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 9;
             break;
         case 'Q':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 10;
             break;
         case 'W':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 11;
             break;
         case 'E':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 12;
             break;
         case 'R':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 13;
             break;
         case 'T':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 14;
             break;
         case 'Y':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 15;
             break;
         case 'U':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 16;
             break;
         case 'I':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 17;
             break;
         case 'O':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 18;
             break;
         case 'P':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 19;
             break;
         case 'A':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 20;
             break;
         case 'S':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 21;
             break;
         case 'D':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 22;
             break;
         case 'F':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 23;
             break;
         case 'G':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 24;
             break;
         case 'H':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 25;
             break;
         case 'J':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 26;
             break;
         case 'K':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 27;
             break;
         case 'L':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 28;
             break;
         case 'Z':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_ = 29;
             break;
 
         case 'M':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_++;
+            if (next_scene_id_ == 11) next_scene_id_++;  // Kawauchi no longer exists
             if (next_scene_id_ > 29) next_scene_id_ = 29;
             break;
         case 'X':
-            EndCurrentScene();
+            EndCurrentScene(true);
             next_scene_id_--;
+            if (next_scene_id_ == 11) next_scene_id_--;  // Kawauchi no longer exists
             if (next_scene_id_ < 0) next_scene_id_ = 0;
             break;
 
@@ -789,7 +791,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             if (scene_to_show_ == CAFE) cafe_.StartVideo();
             break;
         case 'C':
-            EndCurrentScene();
+            EndCurrentScene(false);
             break;
 
 

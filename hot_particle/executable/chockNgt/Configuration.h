@@ -21,6 +21,8 @@ extern int Y_OFFSCREEN;
 // Make error fields one larger!
 #define MAX_ERROR_LENGTH (32*1024)
 
+#define NO_SCENE_BRIGHTNESS 0.3f
+
 //#define FULLSCREEN
 
 #endif

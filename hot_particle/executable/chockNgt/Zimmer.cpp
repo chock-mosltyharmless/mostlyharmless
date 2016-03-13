@@ -46,10 +46,19 @@ void Zimmer::StartScene(ZIMMER_SCENE scene) {
 
 void Zimmer::EndScene(void) {
     PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+    if (scene_ == UNKNOWN) {
+        has_white_fade_ = false;
+        has_light_ = false;
+    } else {
+        has_white_fade_ = true;
+    }
+    
+    // Leave everything as it was
+#if 0
     has_light_ = true;
-    has_white_fade_ = true;
     brightness_ = 1.0f;
     to_white_ = 0.0f;
+#endif
 }
 
 int Zimmer::Draw(float time) {
@@ -183,7 +192,7 @@ int Zimmer::Draw(float time) {
             is_scene_finished = true;
         }
     } else {
-        to_white_ -= time - last_call_time_;
+        to_white_ -= (time - last_call_time_) * 0.5f;
         if (to_white_ < 0.0f) to_white_ = 0.0f;
     }
 
@@ -271,7 +280,7 @@ int Zimmer::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuadColor(-1.0f, 1.0f, 1.0f, -1.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, to_white_);
+        NO_SCENE_BRIGHTNESS, NO_SCENE_BRIGHTNESS, NO_SCENE_BRIGHTNESS, to_white_);
 
     // Darkening borders
     glBlendFunc(GL_DST_COLOR, GL_ZERO);

@@ -44,6 +44,7 @@ public:
     }
 
     void EndScene(void) {
+        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
         has_white_fade_ = true;
     }
 

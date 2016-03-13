@@ -58,7 +58,7 @@ int Prolog::Draw(float time) {
     DrawQuadColor(-1.0f, 1.0f, -1.0f, 1.0f, brightness_, brightness_*0.97f, brightness_*0.85f, 1.0f);
 
     if (show_video_) {
-        float alpha = video_time;
+        float alpha = video_time * 0.5f;
         if (alpha > 1.0f) {
             StartLight();
             alpha = 1.0f;
