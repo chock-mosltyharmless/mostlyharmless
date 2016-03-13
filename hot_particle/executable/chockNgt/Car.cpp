@@ -47,13 +47,13 @@ int Car::Draw(float time) {
 
     // left, center, right
     const float kVideoStartDelay[][3] = {
-        {23.1f, 0.0f, 10.35f},
+        {23.1f, 0.0f, 11.0f},
         {0.0f, 0.0f, 0.0f},  // No more delays happen after this
     };
 
     // left, center, right
     const float kVideoSkip[][3] = {
-        {0.0f, 0.0f, 1.0f},  // Begruessung needs start delay...
+        {0.0f, 0.0f, 0.0f},  // Begruessung needs start delay...
         {0.0f, 0.0f, 0.0f},  // Tomobe has no sound... need to find proper delays
         {9.35f, 8.09f, 7.80f},  // SIEVERT
         {4.00f /* Random guess */, 11.25f, 9.86f},  // TAMURA
@@ -61,7 +61,7 @@ int Car::Draw(float time) {
         {5.20f, 6.4f, 5.11f},  // 14 Katsurao
         {0.0f, 3.0f /*3.27f / 2.27?*/, 3.65f},  // Abschied
         {10.25f, 8.38f, 9.04f},  // Zahnarzt
-        {0.0f /* FEHLT */, 5.63f, 6.90f},  // Polizei
+        {4.0f, 5.63f, 6.90f},  // Polizei
         {0.0f, 0.0f, 0.0f},  // Kühe
         {0.16f, 4.825f, 3.42f}
     };
@@ -69,7 +69,7 @@ int Car::Draw(float time) {
     const float kVideoDuration[] = {
         43.0f,  //BEGRUSSUNG = 0
         80.0f,  // TOMOBE,
-        137.0f,  // SIEVERT
+        3,//137.0f,  // SIEVERT
         73.0f,  // TAMURA,
         187.0f,  // KATSURAO13
         175.0f,  // KATSURAO14
@@ -83,7 +83,7 @@ int Car::Draw(float time) {
     // The video in the center
     const char *kDriverVideo[] = {
         "Begrussung_R3.wmv",  //BEGRUSSUNG = 0
-        "Tomobe_R1.wmv",  // TOMOBE,
+        "Tomobe_R2.wmv",  // TOMOBE,
         "Sievert_R1.wmv",  // SIEVERT
         "Tamura_N3.wmv",  // TAMURA,
         "13Katsurao_N1.wmv",  // KATSURAO13
@@ -104,13 +104,13 @@ int Car::Draw(float time) {
         "14Katsurao_R1.wmv",
         "Abschied_N1.wmv",
         "Zahnarzt_N1.wmv",
-        NULL, // not done yet
+        "Polizei_N3.wmv",
         NULL, // KUHE
         "Wohin_R5.wmv"
     };
 
     const char *kRightVideo[] = {
-        "Begrussung_Y1.wmv",
+        "Begrussung_Y2.wmv",
         "Tomobe_Y2.wmv",
         "Sievert_Y1.wmv",
         "Tamura_Y1.wmv",
