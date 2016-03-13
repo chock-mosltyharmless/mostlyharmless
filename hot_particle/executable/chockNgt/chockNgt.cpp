@@ -5,6 +5,7 @@
 //#include "bass.h"
 #include "mathhelpers.h"
 #include "TextureManager.h"
+#include "Audio.h"
 #include "Configuration.h"
 #include "Zimmer.h"
 #include "Prolog.h"
@@ -43,6 +44,7 @@ static GLuint creditsTexture;
 static int *creditsTexData[1024*1024];
 
 TextureManager textureManager;
+Audio audio_;
 Zimmer zimmer_;
 Prolog prolog_;
 Karaoke karaoke_;
@@ -77,6 +79,10 @@ void glInit()
 		MessageBox(mainWnd, errorString, "Texture Manager Load", MB_OK);
 		return;
 	}
+    if (audio_.Init(errorString)) {
+        MessageBox(mainWnd, errorString, "Audio Initialization", MB_OK);
+        return;
+    }
 }
 
 void glUnInit()
@@ -131,8 +137,6 @@ void DrawQuad(float startX, float endX, float startY, float endY, float alpha) {
 int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                      LPSTR lpCmdLine, int nCmdShow )
 {
-	char errorString[MAX_ERROR_LENGTH + 1];
-
     MSG msg;
 	msg.message = WM_CREATE;
 
@@ -205,7 +209,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
-        GLuint tex_id;
+        //GLuint tex_id;
 
         int return_value = 1;  // Assume we are finished
         switch (scene_to_show_) {
@@ -535,6 +539,7 @@ void EndCurrentScene(bool switch_to_next_scene) {
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HINSTANCE hInstance = GetModuleHandle(NULL);
+    char error_string[MAX_ERROR_LENGTH + 1];
 
 	switch (message)                  /* handle the messages */
     {
@@ -777,6 +782,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             next_scene_id_--;
             if (next_scene_id_ == 11) next_scene_id_--;  // Kawauchi no longer exists
             if (next_scene_id_ < 0) next_scene_id_ = 0;
+            break;
+
+        case 'V':
+            zimmer_.GoToErdbeben();
             break;
 
         case 'N':

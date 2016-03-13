@@ -22,12 +22,14 @@ void Zimmer::ToBeginning(void) {
     brightness_ = 0.0f;
     to_white_ = 0.0f;
     scene_ = MAERZ_11;
+    erdbeben_started_ = false;
 }
 
 void Zimmer::StartScene(ZIMMER_SCENE scene) {
     PlaySound("textures/silence.wav", NULL, SND_ASYNC);
     scene_ = scene;
     EndKenchiro();
+    erdbeben_started_ = false;
     switch(scene_) {
     case MAERZ_11:
         has_light_ = true;
@@ -45,6 +47,7 @@ void Zimmer::StartScene(ZIMMER_SCENE scene) {
 }
 
 void Zimmer::EndScene(void) {
+    erdbeben_started_ = false;
     PlaySound("textures/silence.wav", NULL, SND_ASYNC);
     if (scene_ == UNKNOWN) {
         has_white_fade_ = false;
@@ -68,7 +71,7 @@ int Zimmer::Draw(float time) {
     bool is_scene_finished = false;  // Set to true if it completely faded away
 
     float kFrameSkipTimes[8] = {6.0f, 7.0f, 5.5f, 14.0f, 7.0f, 6.5f,  // kenchiro
-                                0.0f, 0.0f,  // Nakaba
+                                10.0f, 0.0f,  // Nakaba
     };
     float kFrameOpenTimes[8] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // kenchiro
                                 0.0f, 0.0f,  // Nakaba
@@ -183,7 +186,10 @@ int Zimmer::Draw(float time) {
         if (brightness_ > 1.0f) brightness_ = 1.0f;
     } else {
         brightness_ -= time - last_call_time_;
-        if (brightness_ < 0.0f) brightness_ = 0.0f;
+        if (brightness_ < 0.0f) {
+            brightness_ = 0.0f;
+            is_scene_finished = true;
+        }
     }
     if (has_white_fade_) {
         to_white_ += (time - last_call_time_) * 1.0f;
@@ -200,6 +206,11 @@ int Zimmer::Draw(float time) {
 
     float video_time = time - kenchiro_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
+
+    if (!erdbeben_started_ && video_time > kErdbebenStart &&
+        kenchiro_id_ == 6) {
+        video_time = kErdbebenStart;
+    }
 
     bool start_kenchiro = false;
     float kFrameOpenTime = kFrameOpenTimes[kenchiro_id_];

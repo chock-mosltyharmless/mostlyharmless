@@ -75,6 +75,9 @@
     <ClInclude Include="Car.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Audio.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -117,6 +120,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Car.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Audio.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
