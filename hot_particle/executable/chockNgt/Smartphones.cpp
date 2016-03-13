@@ -220,7 +220,7 @@ int Smartphones::Draw(float time) {
             DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f, white_alpha);
             break;
         case 2:  // BOTTOM
-            DrawQuad(-0.418f, -0.081f, 0.212f, -0.453f, white_alpha);
+            DrawQuad(-0.418f, -0.0815f, 0.212f, -0.453f, white_alpha);
             break;
         case 3:  // RIGHT
             DrawQuad(0.424f, 0.7075f, 0.73f, 0.136f, white_alpha);
@@ -248,7 +248,7 @@ int Smartphones::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-0.418f, -0.081f, 0.212f, -0.453f,
+        DrawQuad(-0.418f, -0.0815f, 0.212f, -0.453f,
             0.2f, 0.8f, 0.0f, 1.0f,
             1.0f);
 

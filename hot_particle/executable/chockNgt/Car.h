@@ -54,6 +54,9 @@ public:
         case KATSURAO14:
             PlaySound("textures/14Katsurao_N1Y4R1.wav", NULL, SND_ASYNC);
             break;
+        case ABSCHIED:
+            PlaySound("textures/Abschied_N1Y1R2.wav", NULL, SND_ASYNC);
+            break;
         default:  // This is a bug
             PlaySound("textures/silence.wav", NULL, SND_ASYNC);
             break;

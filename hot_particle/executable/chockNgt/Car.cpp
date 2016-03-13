@@ -59,7 +59,7 @@ int Car::Draw(float time) {
         {4.00f /* Random guess */, 11.25f, 9.86f},  // TAMURA
         {17.18f, 14.80f, 12.80f},  // 13Katsurao
         {5.20f, 6.4f, 5.11f},  // 14 Katsurao
-        {0.0f, 3.27f /*2.27?*/, 3.65f},  // Abschied
+        {0.0f, 3.0f /*3.27f / 2.27?*/, 3.65f},  // Abschied
         {10.25f, 8.38f, 9.04f},  // Zahnarzt
         {0.0f /* FEHLT */, 5.63f, 6.90f},  // Polizei
         {0.0f, 0.0f, 0.0f},  // Kühe
