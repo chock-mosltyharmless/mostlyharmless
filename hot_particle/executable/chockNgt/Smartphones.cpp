@@ -25,6 +25,8 @@ void Smartphones::ToBeginning(void) {
     has_white_fade_ = false;
     to_white_ = 0.0f;
     video_start_time_ = last_call_time_;
+    current_panya_id_ = -1;
+    panya_start_time_ = last_call_time_;
 }
 
 void Smartphones::TakeNextPicture(int position) {
@@ -283,6 +285,41 @@ int Smartphones::Draw(float time) {
     DrawQuadColor(-1.0f, 1.0f, 1.0f, -1.0f,
         0.0f, 0.0f, 0.0f, 0.0f,
         NO_SCENE_BRIGHTNESS, NO_SCENE_BRIGHTNESS, NO_SCENE_BRIGHTNESS, to_white_);
+
+    // Panya in the watch
+    switch (scene_) {
+    case SM_KUHE:
+        if (video_time >= 4.0f && last_video_time < 4.0f) NextPanya();
+        if (video_time >= 9.0f && last_video_time < 9.0f) NextPanya();
+        break;
+    case SM_MINAMISOMA:
+        if (video_time >= 32.5f && last_video_time < 32.5f) NextPanya();
+        break;
+    }
+    if (current_panya_id_ >= 0) {
+        const char *texture_name = "panya_ok.png";
+        if (scene_ == SM_KUHE) texture_name = "panya_begeistert.png";
+        if (textureManager.getTextureID(texture_name, &tex_id,
+            error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        float panya_time = time - panya_start_time_;
+        float size = panya_time * 4.0f - 1.5f;
+        if (size < 0.0f) size = 0.0f;
+        if (size > 1.0f) size = 1.0f;
+        float cx = 0.5f * (-0.665f + -0.46f);
+        float cy = 0.5f * (0.814f + 0.476f);
+        float l = (1.0f - size) * cx + size * -0.665f;
+        float r = (1.0f - size) * cx + size * -0.46f;
+        float t = (1.0f - size) * cy + size * 0.814f;
+        float b = (1.0f - size) * cy + size * 0.476f;
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        float alpha = (4.0f - panya_time);
+        if (alpha < 0) alpha = 0;
+        if (alpha > 1) alpha = 1;
+        DrawQuad(l, r, t, b, alpha);
+    }
 
     // Darkening borders
     glBlendFunc(GL_DST_COLOR, GL_ZERO);

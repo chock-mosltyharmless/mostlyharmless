@@ -21,6 +21,8 @@ public:
         to_white_ = 2.0f;
         // Start Video imidiately.
         video_start_time_ = last_call_time_;
+        current_panya_id_ = -1;
+        panya_start_time_ = last_call_time_;
 
         // Play audio
         switch (scene) {
@@ -51,6 +53,13 @@ public:
     void TakeNextPicture(int position = 0);  // Next picture, 0 center; 1 left; 2 bottom; 3 right
     void NoMorePictures();  // Remove cow picture
 
+    void NextPanya() {
+        // I don't care about panya ID because there is only one
+        // per scene
+        current_panya_id_ = 1;
+        panya_start_time_ = last_call_time_;
+    }
+
 private:
     // State machine (initialized incorrectly to test toBeginning()
     float last_call_time_ = 0.0f;
@@ -64,4 +73,7 @@ private:
     const static int kNumCowPictures = 8;
     bool show_pictures_[4] = { true, true, true, true };
     bool has_flashed_[4] = { true, true, true, true };
+
+    int current_panya_id_ = -1;
+    float panya_start_time_ = 0.0f;
 };
