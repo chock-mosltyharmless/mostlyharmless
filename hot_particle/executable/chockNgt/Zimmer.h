@@ -39,6 +39,14 @@ public:
         kenchiro_start_time_ = last_call_time_ - kErdbebenStart;
         erdbeben_started_ = true;
     }
+    void NextPanya(void) {
+        if (scene_ == APRIL_21) {
+            current_panya_id_++;
+            panya_start_time_ = last_call_time_;
+            // No change after third panya
+            if (current_panya_id_ > 2) current_panya_id_ = 2;
+        }
+    }
 
 private:
     // State machine (initialized incorrectly to test toBeginning()

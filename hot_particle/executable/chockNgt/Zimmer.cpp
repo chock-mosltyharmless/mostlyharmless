@@ -23,6 +23,8 @@ void Zimmer::ToBeginning(void) {
     to_white_ = 0.0f;
     scene_ = MAERZ_11;
     erdbeben_started_ = false;
+    current_panya_id_ = -1;
+    panya_start_time_ = last_call_time_;
 }
 
 void Zimmer::StartScene(ZIMMER_SCENE scene) {
@@ -30,6 +32,8 @@ void Zimmer::StartScene(ZIMMER_SCENE scene) {
     scene_ = scene;
     EndKenchiro();
     erdbeben_started_ = false;
+    current_panya_id_ = -1;
+    panya_start_time_;
     switch(scene_) {
     case MAERZ_11:
         has_light_ = true;
@@ -69,6 +73,12 @@ int Zimmer::Draw(float time) {
     GLuint tex_id;
     const char *texture_name;
     bool is_scene_finished = false;  // Set to true if it completely faded away
+
+    const char *panya_names[3] = {
+        "panya_begrussung.png",
+        "panya_begeistert.png",
+        "panya_begeistert.png"
+    };
 
     float kFrameSkipTimes[8] = {6.0f, 7.0f, 5.5f, 14.0f, 7.0f, 6.5f,  // kenchiro
                                 10.0f, 0.0f,  // Nakaba
@@ -261,6 +271,49 @@ int Zimmer::Draw(float time) {
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
         DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
+    }
+
+    // Panya in the TV
+    // 526,429 - 701,582
+    // 542,437 - 691,565
+    float tvl = -0.3425f;
+    float tvr = -0.12375f;
+    float tvt = 0.142f;
+    float tvb = -0.164f;
+    if (current_panya_id_ >= 0) {
+        float panya_time = time - panya_start_time_;
+
+        if (current_panya_id_ > 0) {
+            // draw the old panya, scrolled up
+            float scroll = panya_time * panya_time * 2.0f;
+            if (scroll > 0.6f) scroll = 0.7f;
+            if (textureManager.getTextureID(panya_names[current_panya_id_ - 1],
+                &tex_id, error_string) < 0) {
+                MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+                return -1;
+            }
+            glBindTexture(GL_TEXTURE_2D, tex_id);
+            DrawQuad(tvl, tvr, tvt, scroll*tvt + (1.0f - scroll) * tvb,
+                0.0f, 1.0f, scroll, 1.0f,
+                1.0f);
+        }
+
+        if (textureManager.getTextureID(panya_names[current_panya_id_],
+            &tex_id, error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        float size = panya_time * 4.0f - 1.5f;
+        if (size < 0.0f) size = 0.0f;
+        if (size > 1.0f) size = 1.0f;
+        float cx = 0.5f * (-0.3425f + -0.12375f);
+        float cy = 0.5f * (0.142f + -0.164f);
+        float l = (1.0f - size) * cx + size * tvl;
+        float r = (1.0f - size) * cx + size * tvr;
+        float t = (1.0f - size) * cy + size * tvt;
+        float b = (1.0f - size) * cy + size * tvb;
+        DrawQuad(l, r, t, b, 1.0f);
     }
 
     // Room
