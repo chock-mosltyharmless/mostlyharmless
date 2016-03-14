@@ -183,7 +183,10 @@ int Zimmer::Draw(float time) {
         if (brightness_ > 1.0f) brightness_ = 1.0f;
     } else {
         brightness_ -= time - last_call_time_;
-        if (brightness_ < 0.0f) brightness_ = 0.0f;
+        if (brightness_ < 0.0f) {
+            brightness_ = 0.0f;
+            is_scene_finished = true;
+        }
     }
     if (has_white_fade_) {
         to_white_ += (time - last_call_time_) * 1.0f;

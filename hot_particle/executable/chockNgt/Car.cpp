@@ -69,7 +69,7 @@ int Car::Draw(float time) {
     const float kVideoDuration[] = {
         43.0f,  //BEGRUSSUNG = 0
         80.0f,  // TOMOBE,
-        3,//137.0f,  // SIEVERT
+        137.0f,  // SIEVERT
         73.0f,  // TAMURA,
         187.0f,  // KATSURAO13
         175.0f,  // KATSURAO14
@@ -133,6 +133,7 @@ int Car::Draw(float time) {
                 video_start_time_ = time;
                 has_white_fade_ = false;
                 PlaySound("textures/Wohin_N6Y6R5.wav", NULL, SND_ASYNC);
+                break;
             case KUHE:
                 scene_ = KUHE;
                 smartphones_.UpdateTime(time);
