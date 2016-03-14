@@ -83,14 +83,16 @@ int Zimmer::Draw(float time) {
         "panya_begeistert.png"
     };
 
+    float kVideoDelays[8] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 9.0f};
     float kFrameSkipTimes[8] = {6.0f, 7.0f, 5.5f, 14.0f, 7.0f, 6.5f,  // kenchiro
-                                10.0f, 0.0f,  // Nakaba
+                                10.0f, 4.5f,  // Nakaba
     };
     float kFrameOpenTimes[8] = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,  // kenchiro
                                 0.0f, 0.0f,  // Nakaba
     };
     float kFrameCloseTimes[8] = {152.5f, 100.5f, 305.0f, 85.0f, 73.0f, 313.0f,  // kenchiro
-                                 58.0f, 97.0f  // Nakaba
+                                 56.0f, 97.0f  // Nakaba
     };
     // 0: clock
     // 1: center
@@ -219,6 +221,7 @@ int Zimmer::Draw(float time) {
 
     float video_time = time - kenchiro_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
+    video_time -= kVideoDelays[kenchiro_id_];
 
     if (!erdbeben_started_ && video_time > kErdbebenStart &&
         kenchiro_id_ == 6) {
@@ -257,7 +260,7 @@ int Zimmer::Draw(float time) {
     }
 
     // Video in main frame
-    if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 1) {
+    if (video_time >= 0.0f && draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 1) {
         if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
             error_string, video_time + 0.3f + kFrameSkipTimes[kenchiro_id_]) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
@@ -421,12 +424,13 @@ void Zimmer::StartKenchiro(void) {
         break;
     case APRIL_17:
         kenchiro_id_ = 6;  // Naka Erdbeben
-        audio_.PlaySound("Naka_Erdbeben_01.wav", 0, false, -1, error_string);
+        //audio_.PlaySound("Naka_Erdbeben_01.wav", 0, false, -1, error_string);
         kenchiro_start_time_ = last_call_time_;
         draw_kenchiro_ = true;
         break;
     case APRIL_21:
         kenchiro_id_ = 7;  // Naka Zuhause
+        audio_.PlaySound("nakaba_21april_anrufbeginn.wav", 1, false, -1, error_string);
         audio_.PlaySound("Naka_Zuhause_02.wav", 0, false, -1, error_string);
         kenchiro_start_time_ = last_call_time_;
         draw_kenchiro_ = true;
