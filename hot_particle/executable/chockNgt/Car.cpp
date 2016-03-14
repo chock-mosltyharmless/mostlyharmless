@@ -49,7 +49,7 @@ int Car::Draw(float time) {
 
     // left, center, right
     const float kVideoStartDelay[][3] = {
-        {23.1f, 0.0f, 11.0f},
+        {22.8f, 0.0f, 11.0f},
         {0.0f, 0.0f, 0.0f},  // No more delays happen after this
     };
 

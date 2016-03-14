@@ -65,6 +65,9 @@ int next_scene_id_ = 0;  // Go to this after the current scene is finished
 bool end_current_scene_ = false;  // Wait for current scene to end...
 SETTING scene_to_show_ = PROLOG;  // What is rendered
 
+bool music_is_playing = false;
+bool noise_is_playing = false;
+
 void glInit()
 {
 	mainDC = GetDC(mainWnd);
@@ -184,7 +187,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     {
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 		{
-			if (!IsDialogMessage(mainWnd, &msg))
+			//if (!IsDialogMessage(mainWnd, &msg))
 			{
 				TranslateMessage (&msg);
 				DispatchMessage (&msg);
@@ -536,6 +539,10 @@ void EndCurrentScene(bool switch_to_next_scene) {
     char error_string[MAX_ERROR_LENGTH+1];
     audio_.StopSound(0, 36.0f, error_string);    
     end_current_scene_ = switch_to_next_scene;
+    audio_.StopSound(2, 18.0f, error_string);
+    audio_.StopSound(3, 18.0f, error_string);
+    music_is_playing = false;
+    noise_is_playing = false;
 }
 
 //Main Window Procedure WindowProc
@@ -560,6 +567,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
       break;
 
 	case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
 		switch(wParam)
 		{
         case '1':
@@ -699,6 +707,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 'V':
             zimmer_.GoToErdbeben();
             zimmer_.NextPanya();
+            if (scene_to_show_ == CAR) {
+                audio_.PlaySound("panya_klingelton.wav", 1, false, -1, error_string);
+            }
             break;
 
         case 'N':
@@ -716,6 +727,40 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             EndCurrentScene(false);
             break;
 
+        case VK_UP:
+            audio_.PlaySound("punch.wav", 0, false, -1, error_string);
+            break;
+        case VK_LEFT:
+            if (!music_is_playing) {
+                audio_.PlaySound("Fukushima-Fahrt_small.wav", 2, true, -1, error_string);
+                audio_.StopSound(3, 18.0f, error_string);
+                noise_is_playing = false;
+                music_is_playing = true;
+            } else {
+                audio_.StopSound(2, 18.0f, error_string);
+                music_is_playing = false;
+            }
+            break;
+        case VK_RIGHT:
+            if (!noise_is_playing) {
+                audio_.StopSound(2, 18.0f, error_string);
+                music_is_playing = false;
+                noise_is_playing = true;
+                switch (scene_to_show_) {
+                case CAFE:
+                    audio_.PlaySound("cafe.wav", 3, true, 24.0f, error_string, 0.05f);
+                    break;
+                case KARAOKE:
+                    audio_.PlaySound("kneipe.wav", 3, true, 24.0f, error_string, 0.05f);
+                    break;
+                case CAR:
+                    audio_.PlaySound("fahrt.wav", 3, true, 24.0f, error_string, 0.02f);
+                    break;
+                }
+            } else {
+                audio_.StopSound(3, 36.0f, error_string);
+                noise_is_playing = false;
+            }
 
 		default:
 			break;

@@ -41,7 +41,8 @@ public:
     // it is overwritten. channel must be in the range 0..AU_NUM_CHANNELS-1
     // loop does not cross-fade, so make sure that your audio loops correctly.
     // fade_in is in dB per second, a negative number means instant
-    int PlaySound(const char *name, int channel, bool loop, float fade_in, char *error_string);
+    int PlaySound(const char *name, int channel, bool loop, float fade_in, char *error_string,
+        float volume = 1.0f);
 
     // Stops whatever is playing in the given channel. May be called multiple times without
     // PlaySound inbetween, this has no effect unless fade_out speed is changed
@@ -79,6 +80,7 @@ private:
     float channel_fade_in_[AU_NUM_CHANNELS];  // in dB / s, negative if no in-fading
     float channel_fade_out_[AU_NUM_CHANNELS];  // in dB / s, negative if no out-fading
     bool channel_loop_[AU_NUM_CHANNELS];
+    float channel_max_volume_[AU_NUM_CHANNELS];
 
     // Audio playback data
     // Audio playback stuff

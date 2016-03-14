@@ -101,7 +101,8 @@ int Audio::Init(char * error_string) {
     return 0;
 }
 
-int Audio::PlaySound(const char *name, int channel, bool loop, float fade_in, char *error_string) {
+int Audio::PlaySound(const char *name, int channel, bool loop, float fade_in, char *error_string,
+    float volume) {
     if (channel < 0 || channel >= AU_NUM_CHANNELS) {
         sprintf_s(error_string, MAX_ERROR_LENGTH,
             "Channel %d not supported", channel);
@@ -123,8 +124,9 @@ int Audio::PlaySound(const char *name, int channel, bool loop, float fade_in, ch
     channel_position_[channel] = 0;
     channel_loop_[channel] = loop;
     channel_fade_out_[channel] = -1.0f;
+    channel_max_volume_[channel] = volume;
     if (fade_in < 0.0f) {
-        channel_volume_[channel] = 1.0f;
+        channel_volume_[channel] = volume;
         channel_fade_in_[channel] = -1.0f;
     } else {
         // start sound with -70dB
@@ -248,6 +250,7 @@ void Audio::RenderSamples(float *mix, int num_samples) {
             float fade_in = channel_fade_in_[channel];
             float fade_out = channel_fade_out_[channel];
             float fade_multiply = 1.0f;
+            float max_volume = channel_max_volume_[channel];
             const float *wave = wave_data_[wave_id];
             if (fade_in >= 0.0f) {
                 // fade_in of 6 equals fade_multiply of 2.0f
@@ -270,7 +273,7 @@ void Audio::RenderSamples(float *mix, int num_samples) {
                     }
                 }
                 volume *= fade_multiply;
-                if (volume > 1.0f) volume = 1.0f;
+                if (volume > max_volume) volume = max_volume;
                 if (volume < 1e-10f) volume = 0.0f;  // Avoid denormal floats
 
                 mix[sample] += volume * wave[position];
