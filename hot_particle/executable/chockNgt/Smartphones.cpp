@@ -315,7 +315,7 @@ int Smartphones::Draw(float time) {
         float t = (1.0f - size) * cy + size * 0.844f;
         float b = (1.0f - size) * cy + size * 0.506f;
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        float alpha = (4.0f - panya_time);
+        float alpha = (6.0f - panya_time);
         if (alpha < 0) alpha = 0;
         if (alpha > 1) alpha = 1;
         DrawQuad(l, r, t, b, alpha);

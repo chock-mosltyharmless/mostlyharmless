@@ -40,10 +40,12 @@ public:
     // Goes to the place in the Nakaba video where he wakes up to "Erdbeben"
     void GoToErdbeben(void) {
         // Re-write history so that we go to the right place
-        char error_string[MAX_ERROR_LENGTH+1];
-        kenchiro_start_time_ = last_call_time_ - kErdbebenStart;
-        audio_.PlaySound("Naka_Erdbeben_01.wav", 0, false, -1, error_string);
-        erdbeben_started_ = true;
+        if (scene_ == APRIL_17) {
+            char error_string[MAX_ERROR_LENGTH+1];
+            kenchiro_start_time_ = last_call_time_ - kErdbebenStart;
+            audio_.PlaySound("Naka_Erdbeben_01.wav", 0, false, -1, error_string);
+            erdbeben_started_ = true;
+        }
     }
     void NextPanya(void) {
         if (scene_ == APRIL_21) {
