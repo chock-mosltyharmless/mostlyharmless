@@ -78,7 +78,7 @@ int Karaoke::Draw(float time) {
     // Kenshiro behind the clock
     if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 0) {
         if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
-            error_string, video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
+            error_string, video_time + 0.3f + kFrameSkipTimes[kenchiro_id_]) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
             return -1;
         }
@@ -89,7 +89,7 @@ int Karaoke::Draw(float time) {
     // Video in main frame
     if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 1) {
         if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
-            error_string, video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
+            error_string, video_time + 0.3f + kFrameSkipTimes[kenchiro_id_]) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
             return -1;
         }
@@ -155,6 +155,9 @@ int Karaoke::Draw(float time) {
         if (close_time * speed > 1.0f) {
             open_rad = 0.0f;
             EndKenchiro();
+            if (scene_ == MITARBEITER) {
+                audio_.PlaySound("07jun_ausgerissen.wav", 0, false, -1, error_string);
+            }
         }
         open_rad *= 0.75f * PIF;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

@@ -248,7 +248,7 @@ int Zimmer::Draw(float time) {
     // Kenshiro behind the clock
     if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 0) {
         if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id, error_string,
-                                      video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
+                                      video_time + 0.3f + kFrameSkipTimes[kenchiro_id_]) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
             return -1;
         }
@@ -259,7 +259,7 @@ int Zimmer::Draw(float time) {
     // Video in main frame
     if (draw_kenchiro_ && kVideoPosition[kenchiro_id_] == 1) {
         if (textureManager.getVideoID(kKenchiroVideos[kenchiro_id_], &tex_id,
-            error_string, video_time + 0.5f + kFrameSkipTimes[kenchiro_id_]) < 0) {
+            error_string, video_time + 0.3f + kFrameSkipTimes[kenchiro_id_]) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
             return -1;
         }
@@ -405,48 +405,92 @@ int Zimmer::Draw(float time) {
 }
 
 void Zimmer::StartKenchiro(void) {
-    draw_kenchiro_ = true;
     char error_string[MAX_ERROR_LENGTH+1];
-    kenchiro_start_time_ = last_call_time_;
     switch (scene_) {
     case MAERZ_11:
-    case APRIL_09:
-    case APRIL_16:
         kenchiro_id_ = 0;  // APRIL_21,
         audio_.PlaySound("S1_wachauf02_nr_nomisa_skip6.wav", 0, false, -1, error_string);
+        kenchiro_start_time_ = last_call_time_;
+        draw_kenchiro_ = true;
+        break;
+    case APRIL_09:
+        audio_.PlaySound("01jun_heirat.wav", 0, false, -1, error_string);
+        break;
+    case APRIL_16:
+        audio_.PlaySound("02jun_townwork.wav", 0, false, -1, error_string);
         break;
     case APRIL_17:
         kenchiro_id_ = 6;  // Naka Erdbeben
         audio_.PlaySound("Naka_Erdbeben_01.wav", 0, false, -1, error_string);
+        kenchiro_start_time_ = last_call_time_;
+        draw_kenchiro_ = true;
         break;
     case APRIL_21:
         kenchiro_id_ = 7;  // Naka Zuhause
         audio_.PlaySound("Naka_Zuhause_02.wav", 0, false, -1, error_string);
+        kenchiro_start_time_ = last_call_time_;
+        draw_kenchiro_ = true;
         break;
     case MAI_10:
-    case JUNI_01:
-    case JUNI_04:
-    case JUNI_05:
-    case JUNI_12:
         kenchiro_id_ = 1;
         audio_.PlaySound("S20_Kitchomu_nr_nomisa_skip7.wav", 0, false, -1, error_string);
+        kenchiro_start_time_ = last_call_time_;
+        draw_kenchiro_ = true;
+        break;
+    case JUNI_01:
+        audio_.PlaySound("03jun_mailtempelmadchen.wav", 0, false, -1, error_string);
+        break;
+    case JUNI_04:
+        audio_.PlaySound("04jun_evakuierungmail.wav", 0, false, -1, error_string);
+        break;
+    case JUNI_05:
+        audio_.PlaySound("05jun_regenmail.wav", 0, false, -1, error_string);
+        break;
+    case JUNI_12:
+        if (kenchiro_id_ != 7) {
+            audio_.PlaySound("06jun_geheiratetmail.wav", 0, false, -1, error_string);
+            kenchiro_id_ = 7;
+        } else {
+            audio_.PlaySound("0601jun_anrufnachgeheiratet.wav", 0, false, -1, error_string);
+            kenchiro_id_ = 3;
+        }
         break;
     case JULI_29:
-        audio_.PlaySound("S23_Picasso03_nr_nomisa_skip5.5.wav", 0, false, -1, error_string);
-        kenchiro_id_ = 2;  // JULI_29,
+        if (kenchiro_id_ != 2) {
+            audio_.PlaySound("08jun_obdachlosermail.wav", 0, false, -1, error_string);
+            kenchiro_id_ = 2;
+            break;
+        } else {
+            audio_.PlaySound("S23_Picasso03_nr_nomisa_skip5.5.wav", 0, false, -1, error_string);
+            kenchiro_id_ = 2;  // JULI_29,
+            kenchiro_start_time_ = last_call_time_;
+            draw_kenchiro_ = true;
+        }
         break;
     case AUGUST_15:
     case MAERZ_11_END:
         audio_.PlaySound("S27_schwimmen03_nr_nomisa_skip14.wav", 0, false, -1, error_string);
         kenchiro_id_ = 3;  // MAERZ_11_END,
+        kenchiro_start_time_ = last_call_time_;
+        draw_kenchiro_ = true;
         break;
     case UNKNOWN:
-        audio_.PlaySound("S29_Kobe02_nr_nomisa_skip6.5.wav", 0, false, -1, error_string);
-        kenchiro_id_ = 5;  // UNKNOWN
+        if (kenchiro_id_ != 5) {
+            audio_.PlaySound("09jun_skateboard.wav", 0, false, -1, error_string);
+            kenchiro_id_ = 5;
+            break;
+        } else {
+            audio_.PlaySound("S29_Kobe02_nr_nomisa_skip6.5.wav", 0, false, -1, error_string);
+            kenchiro_id_ = 5;  // UNKNOWN
+            kenchiro_start_time_ = last_call_time_;
+            draw_kenchiro_ = true;
+        }
         break;
     case PROBERAUM:
         audio_.PlaySound("S28_wasma02_nr_nomisa_skip7.wav", 0, false, -1, error_string);
         kenchiro_id_ = 4;  // PROBERAUM
+        kenchiro_start_time_ = last_call_time_;
+        draw_kenchiro_ = true;
         break;
     }
 }

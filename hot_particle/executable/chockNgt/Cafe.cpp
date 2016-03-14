@@ -59,7 +59,7 @@ int Cafe::Draw(float time) {
     // Video to the left
     if (draw_video_) {
         if (textureManager.getVideoID("Sawa_5.wmv", &tex_id,
-            error_string, video_time + 0.5f + kFrameSkipTime) < 0) {
+            error_string, video_time + 0.3f + kFrameSkipTime) < 0) {
             MessageBox(mainWnd, error_string, "Texture manager get video ID", MB_OK);
             return -1;
         }
