@@ -5,6 +5,7 @@
 //#include "bass.h"
 #include "mathhelpers.h"
 #include "TextureManager.h"
+#include "Audio.h"
 #include "Configuration.h"
 #include "Zimmer.h"
 #include "Prolog.h"
@@ -43,6 +44,7 @@ static GLuint creditsTexture;
 static int *creditsTexData[1024*1024];
 
 TextureManager textureManager;
+Audio audio_;
 Zimmer zimmer_;
 Prolog prolog_;
 Karaoke karaoke_;
@@ -77,6 +79,10 @@ void glInit()
 		MessageBox(mainWnd, errorString, "Texture Manager Load", MB_OK);
 		return;
 	}
+    if (audio_.Init(errorString)) {
+        MessageBox(mainWnd, errorString, "Audio Initialization", MB_OK);
+        return;
+    }
 }
 
 void glUnInit()
@@ -131,8 +137,6 @@ void DrawQuad(float startX, float endX, float startY, float endY, float alpha) {
 int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                      LPSTR lpCmdLine, int nCmdShow )
 {
-	char errorString[MAX_ERROR_LENGTH + 1];
-
     MSG msg;
 	msg.message = WM_CREATE;
 
@@ -205,7 +209,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
-        GLuint tex_id;
+        //GLuint tex_id;
 
         int return_value = 1;  // Assume we are finished
         switch (scene_to_show_) {
@@ -535,6 +539,7 @@ void EndCurrentScene(bool switch_to_next_scene) {
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HINSTANCE hInstance = GetModuleHandle(NULL);
+    char error_string[MAX_ERROR_LENGTH + 1];
 
 	switch (message)                  /* handle the messages */
     {
@@ -554,97 +559,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 	case WM_KEYDOWN:
 		switch(wParam)
 		{
-#if 0
-			// change what is shown
-        case 'Q':
-            prolog_.ToBeginning();
-            scene_to_show_ = PROLOG;
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
-            break;
-        case 'W':
-            zimmer_.ToBeginning();
-            scene_to_show_ = ZIMMER;
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
-            break;
-        case 'E':
-            karaoke_.ToBeginning();
-            scene_to_show_ = KARAOKE;
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
-            break;
-        case 'R':
-            zimmer_.ToBeginning();
-            scene_to_show_ = PROBE;
-            zimmer_.StartScene(PROBERAUM);
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
-            break;
-        case 'T':
-            smartphones_.ToBeginning();
-            scene_to_show_ = SMARTPHONES;
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
-            break;
-
-        case '1':
-            if (scene_to_show_ == ZIMMER) {
-                zimmer_.StartScene(MAERZ_11);
-            }
-            prolog_.StartVideo();
-            if (scene_to_show_ == PROLOG) {
-                PlaySound("textures/Fukushima-Fahrt_small.wav", NULL, SND_ASYNC);
-            }
-            if (scene_to_show_ == PROBE) {
-                zimmer_.StartScene(PROBERAUM);
-            }
-            break;
-        case '2':
-            zimmer_.StartScene(ARPIL_09);
-            break;
-        case '3':
-            zimmer_.StartScene(APRIL_16);
-            break;
-        case '4':
-            zimmer_.StartScene(APRIL_17);
-            break;
-        case '5':
-            zimmer_.StartScene(APRIL_21);
-            break;
-        case '6':
-            zimmer_.StartScene(MAI_10);
-            break;
-        case '7':
-            zimmer_.StartScene(JUNI_01);
-            break;
-        case '8':
-            zimmer_.StartScene(JUNI_04);
-            break;
-        case '9':
-            zimmer_.StartScene(JUNI_05);
-            break;
-        case '0':
-            zimmer_.StartScene(JUNI_12);
-            break;
-        case 'Z':
-            zimmer_.StartScene(JULI_29);
-            break;
-        case 'X':
-            zimmer_.StartScene(AUGUST_15);
-            break;
-        case 'C':
-            zimmer_.StartScene(MAERZ_11_END);
-            break;
-        case 'V':
-            zimmer_.StartScene(UNKNOWN);
-            break;
-
-        case 'N':
-            if (scene_to_show_ == SMARTPHONES) smartphones_.TakeNextPicture();
-            break;
-        case 'K':
-            if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
-            if (scene_to_show_ == PROBE) zimmer_.StartKenchiro();
-            if (scene_to_show_ == KARAOKE) karaoke_.StartKenchiro();
-            break;
-#endif
-
         case '1':
             EndCurrentScene(true);
             next_scene_id_ = 0;
@@ -777,6 +691,11 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             next_scene_id_--;
             if (next_scene_id_ == 11) next_scene_id_--;  // Kawauchi no longer exists
             if (next_scene_id_ < 0) next_scene_id_ = 0;
+            break;
+
+        case 'V':
+            zimmer_.GoToErdbeben();
+            zimmer_.NextPanya();
             break;
 
         case 'N':

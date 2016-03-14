@@ -93,6 +93,7 @@
     <None Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Audio.h" />
     <ClInclude Include="Cafe.h" />
     <ClInclude Include="Car.h" />
     <ClInclude Include="chockNgt.h" />
@@ -112,6 +113,7 @@
     <ClInclude Include="Zimmer.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Audio.cpp" />
     <ClCompile Include="Cafe.cpp" />
     <ClCompile Include="Car.cpp" />
     <ClCompile Include="chockNgt.cpp" />

@@ -33,6 +33,21 @@ public:
     void StartKenchiro(void);
     void EndKenchiro(void);
 
+    // Goes to the place in the Nakaba video where he wakes up to "Erdbeben"
+    void GoToErdbeben(void) {
+        // Re-write history so that we go to the right place
+        kenchiro_start_time_ = last_call_time_ - kErdbebenStart;
+        erdbeben_started_ = true;
+    }
+    void NextPanya(void) {
+        if (scene_ == APRIL_21) {
+            current_panya_id_++;
+            panya_start_time_ = last_call_time_;
+            // No change after third panya
+            if (current_panya_id_ > 2) current_panya_id_ = 2;
+        }
+    }
+
 private:
     // State machine (initialized incorrectly to test toBeginning()
     float last_call_time_ = 0.0f;
@@ -44,5 +59,13 @@ private:
     float brightness_ = 3.0f;  // fade to black
     float to_white_ = 3.0f;  // fade to white
     ZIMMER_SCENE scene_ = JUNI_04;
+
+    // Plus the 10 seconds skip
+    const float kErdbebenStart = 1.5f;
+    bool erdbeben_started_ = true;
+
+    // Everything that controls panya (state machine depending on number of panyas and so on
+    int current_panya_id_;  // The panya that is currently displayed, may be -1 for none.
+    float panya_start_time_;  // The time that panya came to life, is used for fade-in and out.
 };
 
