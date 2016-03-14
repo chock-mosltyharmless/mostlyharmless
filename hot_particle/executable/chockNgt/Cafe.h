@@ -1,5 +1,8 @@
 #pragma once
 
+#include "chockNgt.h"
+#include "Audio.h"
+
 class Cafe
 {
 public:
@@ -16,18 +19,21 @@ public:
         to_white_ = 1.0f;
     }
     void EndScene(void) {
-        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.StopSound(0, 36.0f, error_string);
         has_white_fade_ = true;
     }
 
     void StartVideo(void) {
         draw_video_ = true;
         video_start_time_ = last_call_time_;
-        PlaySound("textures/Sawa_5.wav", NULL, SND_ASYNC);
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.PlaySound("Sawa_5.wav", 0, false, -1, error_string);
     }
     void EndVideo(void) {
         draw_video_ = false;
-        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.StopSound(0, 36.0f, error_string);
     }
 
 private:

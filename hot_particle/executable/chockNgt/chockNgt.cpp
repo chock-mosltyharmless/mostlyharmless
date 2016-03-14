@@ -178,6 +178,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	float fCurTime;
 	GetAsyncKeyState(VK_ESCAPE);
 
+    char error_string[MAX_ERROR_LENGTH+1];
+
 	do
     {
 		while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
@@ -249,7 +251,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 car_.UpdateTime(fCurTime);
                 smartphones_.UpdateTime(fCurTime);
                 // It has ended, start a new one
-                PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+                audio_.StopSound(0, 36.0f, error_string);
                 end_current_scene_ = false;
                 switch(next_scene_id_) {
                 case 0:
@@ -531,7 +533,8 @@ void EndCurrentScene(bool switch_to_next_scene) {
     // What do I do with car and smartphones???
     car_.EndScene();
     smartphones_.EndScene();
-    PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+    char error_string[MAX_ERROR_LENGTH+1];
+    audio_.StopSound(0, 36.0f, error_string);    
     end_current_scene_ = switch_to_next_scene;
 }
 
@@ -702,7 +705,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             if (scene_to_show_ == SMARTPHONES) smartphones_.TakeNextPicture();
             if (scene_to_show_ == PROLOG) {
                 prolog_.StartVideo();
-                PlaySound("textures/Fukushima-Fahrt_small.wav", NULL, SND_ASYNC);
+                audio_.PlaySound("Fukushima-Fahrt_small.wav", 0, false, -1, error_string);
             }
             if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
             if (scene_to_show_ == PROBE) zimmer_.StartKenchiro();

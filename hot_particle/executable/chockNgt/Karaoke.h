@@ -1,5 +1,8 @@
 #pragma once
 
+#include "chockNgt.h"
+#include "Audio.h"
+
 enum KARAOKE_SCENE {
     TRENNUNG = 0,
     BAHNHOF_BAR,
@@ -23,7 +26,8 @@ public:
         to_white_ = 1.0f;
     }
     void EndScene(void) {
-        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.StopSound(0, 36.0f, error_string);
         has_white_fade_ = true;
     }
 

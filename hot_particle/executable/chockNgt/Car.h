@@ -1,5 +1,8 @@
 #pragma once
 
+#include "chockNgt.h"
+#include "Audio.h"
+
 enum CAR_SCENE {
     BEGRUSSUNG = 0,  // Automatically moves on to Zahnarzt
     TOMOBE,
@@ -29,6 +32,7 @@ public:
     void StartScene(CAR_SCENE scene) {
         scene_ = scene;
         has_white_fade_ = false;
+        char error_string[MAX_ERROR_LENGTH+1];
         switch (scene) {
         case BEGRUSSUNG:
             to_white_ = 1.5f;
@@ -47,33 +51,34 @@ public:
         // Play audio
         switch (scene) {
         case BEGRUSSUNG:
-            PlaySound("textures/Begrussung_N1Y1R3.wav", NULL, SND_ASYNC);
+            audio_.PlaySound("Begrussung_N1Y1R3.wav", 0, false, -1, error_string);
             break;
         case TOMOBE:
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            audio_.StopSound(0, 36.0f, error_string);
             break;
         case SIEVERT:
-            PlaySound("textures/Sievert_N1Y1R1.wav", NULL, SND_ASYNC);
+            audio_.PlaySound("Sievert_N1Y1R1.wav", 0, false, -1, error_string);
             break;
         case TAMURA:
-            PlaySound("textures/Tamura_N3Y1R1.wav", NULL, SND_ASYNC);
+            audio_.PlaySound("Tamura_N3Y1R1.wav", 0, false, -1, error_string);
             break;
         case KATSURAO13:
-            PlaySound("textures/13Katsurao_N1Y3R3.wav", NULL, SND_ASYNC);
+            audio_.PlaySound("13Katsurao_N1Y3R3.wav", 0, false, -1, error_string);
             break;
         case KATSURAO14:
-            PlaySound("textures/14Katsurao_N1Y4R1.wav", NULL, SND_ASYNC);
+            audio_.PlaySound("14Katsurao_N1Y4R1.wav", 0, false, -1, error_string);
             break;
         case ABSCHIED:
-            PlaySound("textures/Abschied_N1Y1R2.wav", NULL, SND_ASYNC);
+            audio_.PlaySound("Abschied_N1Y1R2.wav", 0, false, -1, error_string);
             break;
         default:  // This is a bug
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            audio_.StopSound(0, 36.0f, error_string);
             break;
         }
     }
     void EndScene(void) {
-        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.StopSound(0, 36.0f, error_string);
         has_white_fade_ = true;
         next_scene_ = END_IT;
     }

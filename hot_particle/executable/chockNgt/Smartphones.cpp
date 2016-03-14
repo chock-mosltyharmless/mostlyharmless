@@ -289,8 +289,8 @@ int Smartphones::Draw(float time) {
     // Panya in the watch
     switch (scene_) {
     case SM_KUHE:
-        if (video_time >= 4.0f && last_video_time < 4.0f) NextPanya();
-        if (video_time >= 9.0f && last_video_time < 9.0f) NextPanya();
+        if (video_time >= 7.0f && last_video_time < 7.0f) NextPanya();
+        if (video_time >= 41.0f && last_video_time < 41.0f) NextPanya();
         break;
     case SM_MINAMISOMA:
         if (video_time >= 32.5f && last_video_time < 32.5f) NextPanya();
@@ -309,11 +309,11 @@ int Smartphones::Draw(float time) {
         if (size < 0.0f) size = 0.0f;
         if (size > 1.0f) size = 1.0f;
         float cx = 0.5f * (-0.665f + -0.46f);
-        float cy = 0.5f * (0.814f + 0.476f);
+        float cy = 0.5f * (0.844f + 0.506f);
         float l = (1.0f - size) * cx + size * -0.665f;
         float r = (1.0f - size) * cx + size * -0.46f;
-        float t = (1.0f - size) * cy + size * 0.814f;
-        float b = (1.0f - size) * cy + size * 0.476f;
+        float t = (1.0f - size) * cy + size * 0.844f;
+        float b = (1.0f - size) * cy + size * 0.506f;
         glBindTexture(GL_TEXTURE_2D, tex_id);
         float alpha = (4.0f - panya_time);
         if (alpha < 0) alpha = 0;

@@ -1,4 +1,8 @@
 #pragma once
+
+#include "chockNgt.h"
+#include "Audio.h"
+
 class Prolog
 {
 public:
@@ -12,7 +16,8 @@ public:
     void StartVideo(void);
     void EndVideo(void) {
         show_video_ = false;
-        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.StopSound(0, 36.0f, error_string);
     }
     void StartLight(void) { has_light_ = true; }
     void EndLight(void) { has_light_ = false; }

@@ -2,6 +2,8 @@
 #include "Car.h"
 #include "chockNgt.h"
 #include "Configuration.h"
+#include "Smartphones.h"
+#include "Audio.h"
 
 Car::Car()
 {
@@ -25,10 +27,10 @@ void Car::ToBeginning(void) {
 }
 
 int Car::Draw(float time) {
-    char error_string[MAX_ERROR_LENGTH + 1];
     GLuint tex_id;
     const char *texture_name;
-    bool is_scene_finished = false;    
+    bool is_scene_finished = false;
+    char error_string[MAX_ERROR_LENGTH+1];
 
     if (scene_ == KUHE) {
         last_call_time_ = time;
@@ -132,7 +134,7 @@ int Car::Draw(float time) {
                 scene_ = WOHIN;
                 video_start_time_ = time;
                 has_white_fade_ = false;
-                PlaySound("textures/Wohin_N6Y6R5.wav", NULL, SND_ASYNC);
+                audio_.PlaySound("Wohin_N6Y6R5.wav", 0, false, -1, error_string);
                 break;
             case KUHE:
                 scene_ = KUHE;
@@ -143,13 +145,13 @@ int Car::Draw(float time) {
                 scene_ = ZAHNARZT;
                 video_start_time_ = time;
                 has_white_fade_ = false;
-                PlaySound("textures/Zahnarzt_N1Y1R2.wav", NULL, SND_ASYNC);
+                audio_.PlaySound("Zahnarzt_N1Y1R2.wav", 0, false, -1, error_string);
                 break;
             case POLIZEI:  // Probably not used due to GPS
                 scene_ = POLIZEI;
                 video_start_time_ = time;
                 has_white_fade_ = false;
-                PlaySound("textures/Polizei_Y5R5.wav", NULL, SND_ASYNC);
+                audio_.PlaySound("Polizei_Y5R5.wav", 0, false, -1, error_string);
                 break;
             case END_IT:
             default:
@@ -390,7 +392,7 @@ int Car::Draw(float time) {
                     scene_ = ZAHNARZT;
                     video_start_time_ = time;
                     has_white_fade_ = false;
-                    PlaySound("textures/Zahnarzt_N1Y1R2.wav", NULL, SND_ASYNC);
+                    audio_.PlaySound("Zahnarzt_N1Y1R2.wav", 0, false, -1, error_string);
                     break;
                 }
             }
@@ -408,7 +410,7 @@ int Car::Draw(float time) {
                     scene_ = POLIZEI;
                     video_start_time_ = time;
                     has_white_fade_ = false;
-                    PlaySound("textures/Polizei_Y5R5.wav", NULL, SND_ASYNC);
+                    audio_.PlaySound("Polizei_Y5R5.wav", 0, false, -1, error_string);
                     break;
                 }
             }

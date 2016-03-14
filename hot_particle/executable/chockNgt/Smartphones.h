@@ -1,5 +1,8 @@
 #pragma once
 
+#include "chockNgt.h"
+#include "Audio.h"
+
 enum SMARTPHONE_SCENE {
     SM_KUHE = 0,
     SM_MINAMISOMA
@@ -16,6 +19,7 @@ public:
     void UpdateTime(float time) { last_call_time_ = time; }
 
     void StartScene(SMARTPHONE_SCENE scene) {
+        char error_string[MAX_ERROR_LENGTH+1];
         scene_ = scene;
         has_white_fade_ = false;
         to_white_ = 2.0f;
@@ -34,19 +38,20 @@ public:
                 last_picture_take_time_[i] = last_call_time_ - 10.0f;
             }
             TakeNextPicture();
-            PlaySound("textures/Kuhe_N4Y3R4.wav", NULL, SND_ASYNC);
+            audio_.PlaySound("Kuhe_N4Y3R4.wav", 0, false, -1, error_string);
             break;
         case SM_MINAMISOMA:
-            PlaySound("textures/Minamisoma.wav", NULL, SND_ASYNC); // I need it...
+            audio_.PlaySound("Minamisoma.wav", 0, false, -1, error_string);
             break;
         default:  // This is a bug
-            PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+            audio_.StopSound(0, 36.0f, error_string);
             break;
         }
     }
 
     void EndScene(void) {
-        PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.StopSound(0, 36.0f, error_string);
         has_white_fade_ = true;
     }
 
@@ -56,6 +61,8 @@ public:
     void NextPanya() {
         // I don't care about panya ID because there is only one
         // per scene
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.PlaySound("panya_klingelton.wav", 1, false, -1, error_string);
         current_panya_id_ = 1;
         panya_start_time_ = last_call_time_;
     }

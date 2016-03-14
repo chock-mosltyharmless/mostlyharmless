@@ -1,4 +1,8 @@
 #pragma once
+
+#include "chockNgt.h"
+#include "Audio.h"
+
 enum ZIMMER_SCENE {
     MAERZ_11 = 0,
     APRIL_09,
@@ -41,6 +45,8 @@ public:
     }
     void NextPanya(void) {
         if (scene_ == APRIL_21) {
+            char error_string[MAX_ERROR_LENGTH+1];
+            audio_.PlaySound("panya_klingelton.wav", 1, false, -1, error_string);
             current_panya_id_++;
             panya_start_time_ = last_call_time_;
             // No change after third panya

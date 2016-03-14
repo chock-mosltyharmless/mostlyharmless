@@ -191,25 +191,27 @@ int Karaoke::Draw(float time) {
 void Karaoke::StartKenchiro(void) {
     draw_kenchiro_ = true;
     kenchiro_start_time_ = last_call_time_;
+    char error_string[MAX_ERROR_LENGTH+1];
 
     switch (scene_) {
     case TRENNUNG:
         kenchiro_id_ = 0;
-        PlaySound("textures/Naka_Kneipe_02.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("Naka_Kneipe_02.wav", 0, false, -1, error_string);
         break;
     case BAHNHOF_BAR:
         kenchiro_id_ = 1;
-        PlaySound("textures/Naka_Udagawa_01.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("Naka_Udagawa_01.wav", 0, false, -1, error_string);
         break;
     case MITARBEITER:
     case SEKUHARA:
         kenchiro_id_ = 2;
-        PlaySound("textures/S22_fight02_nr_nomisa_skip0.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("S22_fight02_nr_nomisa_skip0.wav", 0, false, -1, error_string);
     }
 }
 
 void Karaoke::EndKenchiro(void) {
     draw_kenchiro_ = false;
-    PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+    char error_string[MAX_ERROR_LENGTH+1];
+    audio_.StopSound(0, 36.0f, error_string);
 }
 

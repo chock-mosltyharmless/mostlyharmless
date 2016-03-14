@@ -2,6 +2,7 @@
 #include "Zimmer.h"
 #include "chockNgt.h"
 #include "Configuration.h"
+#include "Audio.h"
 
 Zimmer::Zimmer()
 {
@@ -28,7 +29,8 @@ void Zimmer::ToBeginning(void) {
 }
 
 void Zimmer::StartScene(ZIMMER_SCENE scene) {
-    PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+    char error_string[MAX_ERROR_LENGTH];
+    audio_.StopSound(0, 36.0f, error_string);
     scene_ = scene;
     EndKenchiro();
     erdbeben_started_ = false;
@@ -52,7 +54,8 @@ void Zimmer::StartScene(ZIMMER_SCENE scene) {
 
 void Zimmer::EndScene(void) {
     erdbeben_started_ = false;
-    PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+    char error_string[MAX_ERROR_LENGTH+1];
+    audio_.StopSound(0, 36.0f, error_string);
     if (scene_ == UNKNOWN) {
         has_white_fade_ = false;
         has_light_ = false;
@@ -403,21 +406,22 @@ int Zimmer::Draw(float time) {
 
 void Zimmer::StartKenchiro(void) {
     draw_kenchiro_ = true;
+    char error_string[MAX_ERROR_LENGTH+1];
     kenchiro_start_time_ = last_call_time_;
     switch (scene_) {
     case MAERZ_11:
     case APRIL_09:
     case APRIL_16:
         kenchiro_id_ = 0;  // APRIL_21,
-        PlaySound("textures/S1_wachauf02_nr_nomisa_skip6.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("S1_wachauf02_nr_nomisa_skip6.wav", 0, false, -1, error_string);
         break;
     case APRIL_17:
         kenchiro_id_ = 6;  // Naka Erdbeben
-        PlaySound("textures/Naka_Erdbeben_01.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("Naka_Erdbeben_01.wav", 0, false, -1, error_string);
         break;
     case APRIL_21:
         kenchiro_id_ = 7;  // Naka Zuhause
-        PlaySound("textures/Naka_Zuhause_02.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("Naka_Zuhause_02.wav", 0, false, -1, error_string);
         break;
     case MAI_10:
     case JUNI_01:
@@ -425,29 +429,30 @@ void Zimmer::StartKenchiro(void) {
     case JUNI_05:
     case JUNI_12:
         kenchiro_id_ = 1;
-        PlaySound("textures/S20_Kitchomu_nr_nomisa_skip7.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("S20_Kitchomu_nr_nomisa_skip7.wav", 0, false, -1, error_string);
         break;
     case JULI_29:
-        PlaySound("textures/S23_Picasso03_nr_nomisa_skip5.5.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("S23_Picasso03_nr_nomisa_skip5.5.wav", 0, false, -1, error_string);
         kenchiro_id_ = 2;  // JULI_29,
         break;
     case AUGUST_15:
     case MAERZ_11_END:
-        PlaySound("textures/S27_schwimmen03_nr_nomisa_skip14.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("S27_schwimmen03_nr_nomisa_skip14.wav", 0, false, -1, error_string);
         kenchiro_id_ = 3;  // MAERZ_11_END,
         break;
     case UNKNOWN:
-        PlaySound("textures/S29_Kobe02_nr_nomisa_skip6.5.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("S29_Kobe02_nr_nomisa_skip6.5.wav", 0, false, -1, error_string);
         kenchiro_id_ = 5;  // UNKNOWN
         break;
     case PROBERAUM:
-        PlaySound("textures/S28_wasma02_nr_nomisa_skip7.wav", NULL, SND_ASYNC);
+        audio_.PlaySound("S28_wasma02_nr_nomisa_skip7.wav", 0, false, -1, error_string);
         kenchiro_id_ = 4;  // PROBERAUM
         break;
     }
 }
 
 void Zimmer::EndKenchiro(void) {
-    PlaySound("textures/silence.wav", NULL, SND_ASYNC);
+    char error_string[MAX_ERROR_LENGTH+1];
+    audio_.StopSound(0, 36.0f, error_string);
     draw_kenchiro_ = false;
 }
