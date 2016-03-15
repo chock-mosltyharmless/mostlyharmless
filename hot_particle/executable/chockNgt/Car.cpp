@@ -341,12 +341,12 @@ int Car::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // GPS
-    float l = gps_size * -0.9f + (1.0f - gps_size) * -0.3475f;
-    float r = gps_size * 0.9f + (1.0f - gps_size) * -0.0325f;
-    float t = gps_size * 0.95f + (1.0f - gps_size) * -0.052f;
-    float b = gps_size * -0.85f + (1.0f - gps_size) * -0.364f;
+    float l = gps_size * -0.8f + (1.0f - gps_size) * -0.665f;
+    float r = gps_size * 0.8f + (1.0f - gps_size) * -0.4675f;
+    float t = gps_size * 1.2f + (1.0f - gps_size) * -0.112f;
+    float b = gps_size * -1.2f + (1.0f - gps_size) * -0.428f;
     //if (textureManager.getTextureID("map_5_10_platt_small.png", &tex_id, error_string) < 0) {
-    if (textureManager.getTextureID("map_5_10_platt_blur.png", &tex_id, error_string) < 0) {
+    if (textureManager.getTextureID("map_5_10_small.png", &tex_id, error_string) < 0) {
     //if (textureManager.getTextureID("gps_schrift.png", &tex_id, error_string) < 0) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
@@ -355,7 +355,7 @@ int Car::Draw(float time) {
     float large_alpha = 8.0f * gps_size;
     if (large_alpha > 1.0f) large_alpha = 1.0f;
     DrawQuad(l, r, t, b, 1.0f);  // The small version of the GPS
-    if (textureManager.getTextureID("map_5_10_platt.png", &tex_id, error_string) < 0) {
+    if (textureManager.getTextureID("map_5_10.png", &tex_id, error_string) < 0) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
@@ -365,7 +365,7 @@ int Car::Draw(float time) {
     if (scene_ == BEGRUSSUNG) {
         float blinking = 0.0f;
         if (gps_time > 4.0f) blinking = 0.5f - cosf((gps_time - 4.0f) * 4.0f);
-        if (textureManager.getTextureID("map_5_10_platt_nodaiishi.png", &tex_id, error_string) < 0) {
+        if (textureManager.getTextureID("map_5_10_nodaiichi.png", &tex_id, error_string) < 0) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
@@ -378,7 +378,7 @@ int Car::Draw(float time) {
         float blinking = 0.0f;
         blinking = 0.5f - cosf((gps_time - 4.0f) * 4.0f);
         blinking = 0.6f + 0.4f * blinking;  // don't blink so much
-        if (textureManager.getTextureID("map_5_10_platt_kreuze.png", &tex_id, error_string) < 0) {
+        if (textureManager.getTextureID("map_5_10_kreuze.png", &tex_id, error_string) < 0) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
             return -1;
         }
