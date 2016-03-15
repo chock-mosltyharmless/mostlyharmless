@@ -17,7 +17,7 @@
 #define AU_FADE_IN_START_DB -80.0f
 // Max. 1 hour audio files
 #define AU_MAX_AUDIO_LENGTH (AU_SAMPLING_RATE * 60 * 60)
-#define AU_NUM_PLAY_BLOCKS 8
+#define AU_NUM_PLAY_BLOCKS 4
 #define AU_AUDIO_BUFFER_SIZE 2048
 
 // TODO:

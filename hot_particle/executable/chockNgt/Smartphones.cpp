@@ -56,9 +56,9 @@ int Smartphones::Draw(float time) {
         "cows_3.png",
         "cows_4.png",
         "cows_5.png",
-        "cows_6.png",
         "cows_7.png",
         "cows_8.png",
+        "cows_6.png",
     };
     const char *kMinaTextures[kNumCowPictures] = {
         "Minamisoma_08.png",
@@ -76,10 +76,11 @@ int Smartphones::Draw(float time) {
         23.5f,
         32.5f,
         46.0f,
-        54.0f,
-        60.0f,
+        /*54.0f,*/
+        56.0f,
         72.0f,
         1000.0f, // whateffs
+        2000.0f, // whateffs
     };
     const float kMinaShowTime[kNumCowPictures] = {
         8.5f,
@@ -104,10 +105,10 @@ int Smartphones::Draw(float time) {
 
     // Videos only during Cows
     // left, bottom, right
-    const float kVideoSkip[3] = { 4.63f, 4.80f, 3.41f };
+    const float kVideoSkip[3] = { 4.80f, 4.53f, 3.41f };
     const float kVideoDuration[2] = {80.0f, 85.0f};
-    const char *kLeftVideo = "Kuhe_N4.wmv";
-    const char *kBottomVideo = "Kuhe_R4.wmv";
+    const char *kLeftVideo = "Kuhe_R4.wmv";
+    const char *kBottomVideo = "Kuhe_N4.wmv";
     const char *kRightVideo = "Kuhe_Y3.wmv";
     
     glEnable(GL_BLEND);
@@ -175,7 +176,8 @@ int Smartphones::Draw(float time) {
         switch (picture_position) {
         case 0:  // CENTER
         default:
-            DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f,
+            //DrawQuad(-0.285f, 0.28f, 0.762f, -0.052f,
+            DrawQuad(-0.325f, 0.28f, 0.762f, -0.082f,
                 border_size + x_shift, 1.0f - border_size + x_shift, border_size + y_shift, 1.0f - border_size + y_shift,
                 1.0f);
             break;
@@ -239,8 +241,8 @@ int Smartphones::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-0.711f, -0.449f, 0.476f, -0.03f,
-            0.175f, 0.825f, 0.0f, 1.0f,
+        DrawQuad(-0.711f, -0.449f, 0.456f, -0.03f,
+            0.175f, 0.825f, 0.0f, 0.8f,
             1.0f);
 
         // Bottom
