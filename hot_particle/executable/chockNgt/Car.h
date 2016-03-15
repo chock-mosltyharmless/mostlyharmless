@@ -75,12 +75,24 @@ public:
             audio_.StopSound(0, 36.0f, error_string);
             break;
         }
+        current_panya_id_ = -1;
+        panya_start_time_ = last_call_time_;
     }
+
     void EndScene(void) {
         char error_string[MAX_ERROR_LENGTH+1];
         audio_.StopSound(0, 36.0f, error_string);
         has_white_fade_ = true;
         next_scene_ = END_IT;
+        current_panya_id_ = -1;
+        panya_start_time_ = last_call_time_;
+    }
+
+    void NextPanya() {
+        char error_string[MAX_ERROR_LENGTH+1];
+        audio_.PlaySound("panya_klingelton.wav", 1, false, -1, error_string);
+        current_panya_id_++;
+        panya_start_time_ = last_call_time_;
     }
 
 private:
@@ -93,5 +105,9 @@ private:
     bool has_white_fade_ = true;
     bool show_gps_ = true;
     float gps_start_time_ = 0.0f;
+
+    // Panya
+    int current_panya_id_ = -1;
+    float panya_start_time_ = 0.0f;
 };
 

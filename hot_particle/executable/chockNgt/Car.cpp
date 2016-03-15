@@ -24,6 +24,8 @@ void Car::ToBeginning(void) {
     next_scene_ = END_IT;
     show_gps_ = false;
     gps_start_time_ = last_call_time_ - 100.0f;  // Make sure that GPS isn't showing
+    current_panya_id_ = -1;
+    panya_start_time_ = last_call_time_;
 }
 
 int Car::Draw(float time) {
@@ -36,6 +38,35 @@ int Car::Draw(float time) {
         last_call_time_ = time;
         return smartphones_.Draw(time);
     }
+
+    // Panya whole script
+    const int kMaxNumPanyas = 12;
+    const char *kPanyaNames[11][kMaxNumPanyas] = {
+        /*BEGRUSSUNG*/ {"panya_begrussung.png", "panya_ok.png"},
+        /*TOMOBE    */ {"panya_ok.png", "panya_nachdenklich.png"},
+        /*SIEVERT   */ {"panya_wow.png", "panya_sauer.png", "panya_fragend.png"},
+        /*TAMURA    */ {"panya_fragend.png", "panya_ok.png", "panya_ok.png", "panya_ok.png"},
+        /*KATSU 13  */ {"panya_fragend.png"},
+        /*KATSU 14  */ {"panya_nachdenklich.png", "panya_sauer.png", "panya_wow.png"},
+        /*ABSCHIED  */ {"panya_begrussung.png"},
+        /*ZAHNARZT  */ {"panya_sauer.png"},
+        /*POLIZEI   */ {"panya_nachdenklich.png", "panya_fragend.png", "panya_wow.png", "panya_fragend.png", "panya_wow.png", "panya_wow.png", "panya_begeistert.png", "panya_nachdenklich.png", "panya_no.png", "panya_wow.png", "panya_wow.png", "panya_wow.png"},
+        /*KUHE      */ {},
+        /*WOHIN     */ {"panya_wow.png", "panya_nachdenklich.png", "panya_wow.png", "panya_sauer.png", "panya_fragend.png"}
+    };
+    const float kPanyaStartTimes[11][kMaxNumPanyas] = {
+        /*BEGRUSSUNG*/ {3.0f, 41.0f},
+        /* TOMOBE   */ {38.0f, 60.0f},
+        /* SIEVERT  */ {2.0f, 14.0f, 137.0f},
+        /* TAMURA   */ {8.0f, 47.0f, 57.0f, 63.0f},
+        /* KATSU 13 */ {173.5f},
+        /* KATSU 14 */ {7.0f, 62.0f, 157.0f},
+        /* ABSCHIED */ {6.5f},
+        /* ZAHARZT  */ {155.0f},
+        /* POLIZEI  */ {72.0f, 83.0f, 87.0f, 93.0f, 116.0f, 155.0f, 165.0f, 227.0f, 239.0f, 255.0f, 274.0f, 310.0f},
+        /* KUHE     */ {},
+        /* WOHIN    */ {2.0f, 10.0f, 30.0f, 46.0f, 76.0f}
+    };
 
     // Time spent on GPS before it's size reduced
     const float kGPSDurations[] = {
@@ -74,12 +105,12 @@ int Car::Draw(float time) {
         137.0f,  // SIEVERT
         73.0f,  // TAMURA,
         181.5f,  // KATSURAO13
-        175.0f,  // KATSURAO14
-        6.0f,  // ABSCHIED,
+        168.0f,  // KATSURAO14
+        9.0f,  // ABSCHIED,
         162.0f,  // ZAHNARZT,
         331.0f,  // POLIZEI,
         78.0f,  // KUHE,
-        82.0f  // WOHIN
+        84.0f  // WOHIN
     };
 
     // The video in the center
@@ -188,6 +219,7 @@ int Car::Draw(float time) {
     }
 
     float video_time = time - video_start_time_;
+    float last_video_time = last_call_time_ - video_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
 
     glEnable(GL_BLEND);
@@ -354,6 +386,39 @@ int Car::Draw(float time) {
         DrawQuad(l, r, t, b, large_alpha * blinking);  // The large version of the GPS
     }
 
+    // Drawing Panya
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (current_panya_id_ >= 0 && current_panya_id_ < kMaxNumPanyas &&
+        kPanyaNames[scene_][current_panya_id_] != NULL) {
+        const char *texture_name = kPanyaNames[scene_][current_panya_id_];
+        if (textureManager.getTextureID(texture_name, &tex_id,
+            error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        float panya_time = time - panya_start_time_;
+        float size = panya_time * 4.0f - 1.5f;
+        if (size < 0.0f) size = 0.0f;
+        if (size > 1.0f) size = 1.0f;
+        float cx = 0.5f * (0.4675f + 0.665f);
+        float cy = 0.5f * (-0.112f + -0.428f);
+        float l = (1.0f - size) * cx + size * 0.4675f;
+        float r = (1.0f - size) * cx + size * 0.665f;
+        float t = (1.0f - size) * cy + size * -0.112f;
+        float b = (1.0f - size) * cy + size * -0.428f;
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        float alpha = (6.0f - panya_time);
+        if (alpha < 0) alpha = 0;
+        if (alpha > 1) alpha = 1;
+        DrawQuad(l, r, t, b, alpha);
+    }
+    // And her scripting
+    if (current_panya_id_ < kMaxNumPanyas - 1 && kPanyaNames[scene_][current_panya_id_ + 1] != NULL &&
+        video_time >= kPanyaStartTimes[scene_][current_panya_id_ + 1] &&
+        last_video_time < kPanyaStartTimes[scene_][current_panya_id_ + 1]) {
+        NextPanya();
+    }
+
     // Fade to white
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
@@ -392,6 +457,7 @@ int Car::Draw(float time) {
                     scene_ = ZAHNARZT;
                     video_start_time_ = time;
                     has_white_fade_ = false;
+                    current_panya_id_ = -1;
                     audio_.PlaySound("Zahnarzt_N1Y1R2.wav", 0, false, -1, error_string);
                     break;
                 }
@@ -410,6 +476,7 @@ int Car::Draw(float time) {
                     scene_ = POLIZEI;
                     video_start_time_ = time;
                     has_white_fade_ = false;
+                    current_panya_id_ = -1;
                     audio_.PlaySound("Polizei_Y5R5.wav", 0, false, -1, error_string);
                     break;
                 }
@@ -421,6 +488,7 @@ int Car::Draw(float time) {
             break;
         case KATSURAO14: // Automatically moves on to Wohin
             has_white_fade_ = true;
+            current_panya_id_ = -1;
             next_scene_ = WOHIN;
             break;
         case TAMURA:

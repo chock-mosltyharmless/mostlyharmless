@@ -92,7 +92,7 @@ int Zimmer::Draw(float time) {
                                 0.0f, 0.0f,  // Nakaba
     };
     float kFrameCloseTimes[8] = {152.5f, 100.5f, 305.0f, 85.0f, 73.0f, 313.0f,  // kenchiro
-                                 56.0f, 97.0f  // Nakaba
+                                 53.0f, 94.0f  // Nakaba
     };
     // 0: clock
     // 1: center
