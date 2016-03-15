@@ -59,7 +59,7 @@ void Zimmer::EndScene(void) {
     erdbeben_started_ = false;
     char error_string[MAX_ERROR_LENGTH+1];
     audio_.StopSound(0, 36.0f, error_string);
-    if (scene_ == UNKNOWN) {
+    if (scene_ == FINAL_ROOM) {
         has_white_fade_ = false;
         has_light_ = false;
     } else {
@@ -129,6 +129,7 @@ int Zimmer::Draw(float time) {
         "zuhause_room_august_15.png",  // AUGUST_15,
         "zuhause_room_maerz_11.png",  // MARZ_11_END,
         "zuhause_room_september_14.png",  // UNKNOWN
+        "zuhause_room_september_14.png",  // FINAL_ROOM
         "proberaum_room.png",  // PROBERAUM
     };
     const char *kRoomNoClockTextures[] = {
@@ -146,6 +147,7 @@ int Zimmer::Draw(float time) {
         "zuhause_room_august_15_noclock.png",  // AUGUST_15,
         "zuhause_room_maerz_11_noclock.png",  // MARZ_11_END,
         "zuhause_room_september_14_noclock.png",  // UNKNOWN
+        "zuhause_room_september_14_noclock.png",  // FINAL_ROOM
         "proberaum_room_noclock.png",  // PROBERAUM
     };
     const char *kRoomDrawingsTextures[] = {
@@ -163,6 +165,7 @@ int Zimmer::Draw(float time) {
         "zuhause_drawings_august_night.png",  // AUGUST_15,
         "zuhause_drawings_maerz_night.png",  // MARZ_11_END,
         "zuhause_drawings_september_night.png",  // UNKNOWN
+        "zuhause_drawings_september_night.png",  // FINAL_ROOM
         "zuhause_drawings_mai.png",  // PROBERAUM
     };
     const char *kRoomLightings[] = {
@@ -180,6 +183,7 @@ int Zimmer::Draw(float time) {
         "zuhause_lighting_night.png",  // AUGUST_15,
         "zuhause_lighting_night.png",  // MARZ_11_END,
         "zuhause_lighting_night.png",  // UNKNOWN
+        "zuhause_lighting_night.png",  // FINAL_ROOM
         "proberaum_lighting.png",  // PROBERAUM
     };
     const char *kRoomClocks[] = {
@@ -197,6 +201,7 @@ int Zimmer::Draw(float time) {
         "zuhause_clock_august_15.png",  // AUGUST_15,
         "zuhause_clock_maerz_11.png",  // MARZ_11_END,
         "zuhause_clock_september_14.png",  // UNKNOWN
+        "zuhause_clock_september_14.png",  // FINAL_ROOM
         "zuhause_clock_maerz_11.png",  // PROBERAUM
     };
 
@@ -492,6 +497,7 @@ void Zimmer::StartKenchiro(void) {
         draw_kenchiro_ = true;
         break;
     case UNKNOWN:
+    case FINAL_ROOM:
         if (kenchiro_id_ != 5) {
             audio_.PlaySound("09jun_skateboard.wav", 0, false, -1, error_string);
             kenchiro_id_ = 5;

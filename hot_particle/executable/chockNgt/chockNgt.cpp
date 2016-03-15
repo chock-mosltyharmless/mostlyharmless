@@ -421,6 +421,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(UNKNOWN);
                     break;
+                case 30:
+                    zimmer_.ToBeginning();
+                    scene_to_show_ = ZIMMER;
+                    zimmer_.StartScene(FINAL_ROOM);
+                    break;
                 default:
                     break;  // Ignore that scene, it's not implemented
                 }
@@ -784,7 +789,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 next_scene_id_++;
                 if (next_scene_id_ == 11) next_scene_id_++;  // Kawauchi no longer exists
                 if (next_scene_id_ == 23) next_scene_id_++;  // Second kneipe deleted
-                if (next_scene_id_ > 29) next_scene_id_ = 29;
+                if (next_scene_id_ > 30) next_scene_id_ = 30;
                 break;
 
             case 'V':

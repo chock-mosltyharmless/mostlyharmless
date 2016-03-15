@@ -18,6 +18,7 @@ enum ZIMMER_SCENE {
     AUGUST_15,
     MAERZ_11_END,
     UNKNOWN,
+    FINAL_ROOM,
     PROBERAUM
 };
 
