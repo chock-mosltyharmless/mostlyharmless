@@ -129,8 +129,8 @@ int Audio::PlaySound(const char *name, int channel, bool loop, float fade_in, ch
         channel_volume_[channel] = volume;
         channel_fade_in_[channel] = -1.0f;
     } else {
-        // start sound with -70dB
-        channel_volume_[channel] = expf(-70.0f / 6.0f * logf(2.0f));
+        // start sound with -50dB
+        channel_volume_[channel] = expf(-50.0f / 6.0f * logf(2.0f));
         channel_fade_in_[channel] = fade_in;
     }
 

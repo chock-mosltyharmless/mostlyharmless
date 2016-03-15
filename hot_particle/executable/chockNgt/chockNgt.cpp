@@ -43,7 +43,11 @@ HWND mainWnd;
 static GLuint creditsTexture;
 static int *creditsTexData[1024*1024];
 
+float fCurTime = 0.0f;
+
 bool mod_key_ = false;
+// Used to avoid double-pressing the same key
+float last_key_press_time_[65536] = { 0.0f };
 
 TextureManager textureManager;
 Audio audio_;
@@ -182,7 +186,6 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	long lastTime = 0;
 
 	// start music playback
-	float fCurTime;
 	GetAsyncKeyState(VK_ESCAPE);
 
     char error_string[MAX_ERROR_LENGTH+1];
@@ -568,228 +571,289 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     char error_string[MAX_ERROR_LENGTH + 1];
     int cur_mod_key = mod_key_;
 
-	switch (message)                  /* handle the messages */
+    switch (message)                  /* handle the messages */
     {
 
     case WM_SYSCOMMAND:
-      switch (wParam)
-      {
-        case SC_SCREENSAVE:  
-          return 0;
+        switch (wParam)
+        {
+        case SC_SCREENSAVE:
+            return 0;
         case SC_MONITORPOWER:
-          return 0;
-		default:
-			return DefWindowProc(hwnd, message, wParam, lParam);
-      }
-      break;
+            return 0;
+        default:
+            return DefWindowProc(hwnd, message, wParam, lParam);
+        }
+        break;
 
-	case WM_KEYDOWN:
+    case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
         mod_key_ = false;
-		switch(wParam)
-		{
-        case VK_F1:
-            mod_key_ = true;
-            break;
+        if (fCurTime - last_key_press_time_[wParam] > 0.5f) {
+            last_key_press_time_[wParam] = fCurTime;
+            switch (wParam)
+            {
+            case VK_F1:
+                mod_key_ = true;
+                break;
 
-        case '1':
-            if (cur_mod_key) { EndCurrentScene(true); next_scene_id_ = 0;}
-            break;
-        case '2':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 1; }
-            break;
-        case '3':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 2; }
-            break;
-        case '4':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 3; }
-            break;
-        case '5':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 4; }
-            break;
-        case '6':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 5; }
-            break;
-        case '7':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 6; }
-            break;
-        case '8':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 7; }
-            break;
-        case '9':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 8; }
-            break;
-        case '0':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 9; }
-            break;
-        case 'Q':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 10; } else {
-                EndCurrentScene(true);
-                next_scene_id_--;
-                if (next_scene_id_ == 11) next_scene_id_--;  // Kawauchi no longer exists
-                if (next_scene_id_ == 23) next_scene_id_--;
-                if (next_scene_id_ < 0) next_scene_id_ = 0;
-            }
-            break;
-        case 'W':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 11; }
-            break;
-        case 'E':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 12; }
-            break;
-        case 'R':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 13; }
-            break;
-        case 'T':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 14; }
-            break;
-        case 'Y':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 15; }
-            break;
-        case 'U':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 16; }
-            break;
-        case 'I':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 17; }
-            break;
-        case 'O':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 18; }
-            break;
-        case 'P':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 19; }
-            break;
-        case 'A':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 20; }
-            break;
-        case 'S':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 21; }
-            break;
-        case 'D':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 22; }
-            break;
-        case 'F':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 23; }
-            break;
-        case 'G':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 24; }
-            break;
-        case 'H':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 25; }
-            break;
-        case 'J':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 26; }
-            break;
-        case 'K':
-            if (cur_mod_key) { EndCurrentScene(true);
-            next_scene_id_ = 27; }
-            break;
-        case 'L':
-            if (cur_mod_key) { EndCurrentScene(true); next_scene_id_ = 28; }
-            break;
-        case 'Z':
-            if (cur_mod_key) { EndCurrentScene(true); next_scene_id_ = 29; } else {
-                EndCurrentScene(false);
-            }
-            break;
-
-        case VK_RETURN:
-            EndCurrentScene(true);
-            next_scene_id_++;
-            if (next_scene_id_ == 11) next_scene_id_++;  // Kawauchi no longer exists
-            if (next_scene_id_ == 23) next_scene_id_++;  // Second kneipe deleted
-            if (next_scene_id_ > 29) next_scene_id_ = 29;
-            break;
-
-        case 'V':
-            zimmer_.GoToErdbeben();
-            zimmer_.NextPanya();
-            if (scene_to_show_ == CAR) {
-                audio_.PlaySound("panya_klingelton.wav", 1, false, -1, error_string);
-            }
-            break;
-
-        case 'M':
-            if (scene_to_show_ == SMARTPHONES) smartphones_.TakeNextPicture();
-            if (scene_to_show_ == PROLOG) {
-                prolog_.StartVideo();
-                audio_.PlaySound("Fukushima-Fahrt_small.wav", 0, false, -1, error_string);
-            }
-            if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
-            if (scene_to_show_ == PROBE) zimmer_.StartKenchiro();
-            if (scene_to_show_ == KARAOKE) karaoke_.StartKenchiro();
-            if (scene_to_show_ == CAFE) cafe_.StartVideo();
-            break;
-        //case 'C':
-            //EndCurrentScene(false);
-            //break;
-
-        case VK_UP:
-            audio_.PlaySound("punch.wav", 0, false, -1, error_string);
-            break;
-        case VK_DOWN:
-            audio_.PlaySound("01_Donner.wav", 0, false, -1, error_string);
-            break;
-        case VK_LEFT:
-            if (!music_is_playing) {
-                audio_.PlaySound("musik_bearb.wav", 2, false, -1, error_string);
-                audio_.StopSound(3, 18.0f, error_string);
-                noise_is_playing = false;
-                music_is_playing = true;
-            } else {
-                audio_.StopSound(2, 18.0f, error_string);
-                music_is_playing = false;
-            }
-            break;
-        case VK_RIGHT:
-            if (!noise_is_playing) {
-                audio_.StopSound(2, 18.0f, error_string);
-                music_is_playing = false;
-                noise_is_playing = true;
-                switch (scene_to_show_) {
-                case CAFE:
-                    audio_.PlaySound("cafe.wav", 3, true, 24.0f, error_string, 0.3f);
-                    break;
-                case KARAOKE:
-                    audio_.PlaySound("kneipe.wav", 3, true, 24.0f, error_string, 0.2f);
-                    break;
-                case CAR:
-                    audio_.PlaySound("fahrt.wav", 3, true, 24.0f, error_string, 0.04f);
-                    break;
+            case '1':
+                if (cur_mod_key) { EndCurrentScene(true); next_scene_id_ = 0; }
+                break;
+            case '2':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 1;
                 }
-            } else {
-                audio_.StopSound(3, 36.0f, error_string);
-                noise_is_playing = false;
-            }
+                break;
+            case '3':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 2;
+                }
+                break;
+            case '4':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 3;
+                }
+                break;
+            case '5':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 4;
+                }
+                break;
+            case '6':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 5;
+                }
+                break;
+            case '7':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 6;
+                }
+                break;
+            case '8':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 7;
+                }
+                break;
+            case '9':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 8;
+                }
+                break;
+            case '0':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 9;
+                }
+                break;
+            case 'Q':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 10;
+                }
+                else {
+                    EndCurrentScene(true);
+                    next_scene_id_--;
+                    if (next_scene_id_ == 11) next_scene_id_--;  // Kawauchi no longer exists
+                    if (next_scene_id_ == 23) next_scene_id_--;
+                    if (next_scene_id_ < 0) next_scene_id_ = 0;
+                }
+                break;
+            case 'W':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 11;
+                }
+                break;
+            case 'E':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 12;
+                }
+                break;
+            case 'R':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 13;
+                }
+                break;
+            case 'T':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 14;
+                }
+                break;
+            case 'Y':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 15;
+                }
+                break;
+            case 'U':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 16;
+                }
+                break;
+            case 'I':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 17;
+                }
+                break;
+            case 'O':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 18;
+                }
+                break;
+            case 'P':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 19;
+                }
+                break;
+            case 'A':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 20;
+                }
+                break;
+            case 'S':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 21;
+                }
+                break;
+            case 'D':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 22;
+                }
+                break;
+            case 'F':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 23;
+                }
+                break;
+            case 'G':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 24;
+                }
+                break;
+            case 'H':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 25;
+                }
+                break;
+            case 'J':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 26;
+                }
+                break;
+            case 'K':
+                if (cur_mod_key) {
+                    EndCurrentScene(true);
+                    next_scene_id_ = 27;
+                }
+                break;
+            case 'L':
+                if (cur_mod_key) { EndCurrentScene(true); next_scene_id_ = 28; }
+                break;
+            case 'Z':
+                if (cur_mod_key) { EndCurrentScene(true); next_scene_id_ = 29; }
+                else {
+                    EndCurrentScene(false);
+                }
+                break;
 
-		default:
-			break;
-		}
+            case VK_RETURN:
+                EndCurrentScene(true);
+                next_scene_id_++;
+                if (next_scene_id_ == 11) next_scene_id_++;  // Kawauchi no longer exists
+                if (next_scene_id_ == 23) next_scene_id_++;  // Second kneipe deleted
+                if (next_scene_id_ > 29) next_scene_id_ = 29;
+                break;
+
+            case 'V':
+                zimmer_.GoToErdbeben();
+                zimmer_.NextPanya();
+                if (scene_to_show_ == CAR) {
+                    audio_.PlaySound("panya_klingelton.wav", 1, false, -1, error_string);
+                }
+                break;
+
+            case 'M':
+                if (scene_to_show_ == SMARTPHONES) smartphones_.TakeNextPicture();
+                if (scene_to_show_ == PROLOG) {
+                    prolog_.StartVideo();
+                    audio_.PlaySound("Fukushima-Fahrt_small.wav", 0, false, -1, error_string);
+                }
+                if (scene_to_show_ == ZIMMER) zimmer_.StartKenchiro();
+                if (scene_to_show_ == PROBE) zimmer_.StartKenchiro();
+                if (scene_to_show_ == KARAOKE) karaoke_.StartKenchiro();
+                if (scene_to_show_ == CAFE) cafe_.StartVideo();
+                break;
+                //case 'C':
+                    //EndCurrentScene(false);
+                    //break;
+
+            case VK_UP:
+                audio_.PlaySound("punch.wav", 0, false, -1, error_string);
+                break;
+            case VK_DOWN:
+                audio_.PlaySound("01_Donner.wav", 0, false, -1, error_string);
+                break;
+            case VK_LEFT:
+                if (!music_is_playing) {
+                    audio_.PlaySound("musik_bearb.wav", 2, false, -1, error_string);
+                    audio_.StopSound(3, 18.0f, error_string);
+                    noise_is_playing = false;
+                    music_is_playing = true;
+                }
+                else {
+                    audio_.StopSound(2, 18.0f, error_string);
+                    music_is_playing = false;
+                }
+                break;
+            case VK_RIGHT:
+                if (!noise_is_playing) {
+                    audio_.StopSound(2, 18.0f, error_string);
+                    music_is_playing = false;
+                    noise_is_playing = true;
+                    switch (scene_to_show_) {
+                    case CAFE:
+                        audio_.PlaySound("cafe.wav", 3, true, 24.0f, error_string, 0.3f);
+                        break;
+                    case KARAOKE:
+                        audio_.PlaySound("kneipe.wav", 3, true, 24.0f, error_string, 0.2f);
+                        break;
+                    case CAR:
+                        audio_.PlaySound("fahrt.wav", 3, true, 24.0f, error_string, 0.04f);
+                        break;
+                    }
+                }
+                else {
+                    audio_.StopSound(3, 36.0f, error_string);
+                    noise_is_playing = false;
+                }
+
+            default:
+                break;
+            }
+        }
 		break;
 
 	case WM_CREATE:
