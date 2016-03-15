@@ -251,8 +251,8 @@ int Car::Draw(float time) {
         if (gps_size > 1.0f) gps_size = 1.0f;
         gps_size = 0.5f + cosf(gps_size * PIF) * 0.5f;  // Make it smooth
     }
-    gps_l = gps_size * -0.8f + (1.0f - gps_size) * -0.665f;
-    gps_r = gps_size * 0.8f + (1.0f - gps_size) * -0.4675f;
+    gps_r = gps_size * 0.8f + (1.0f - gps_size) * 0.665f;
+    gps_l = gps_size * -0.8f + (1.0f - gps_size) * 0.4675f;
     gps_t = gps_size * 1.2f + (1.0f - gps_size) * -0.112f;
     gps_b = gps_size * -1.2f + (1.0f - gps_size) * -0.428f;
     // Special case: Tomobe always has a smaller map
@@ -260,8 +260,8 @@ int Car::Draw(float time) {
         gps_size = (video_time - 4.0f) * 0.5f;
         if (gps_size < 0.0f) gps_size = 0.0f;
         if (gps_size > 1.0f) gps_size = 1.0f;
-        gps_l = gps_size * -0.8f*0.67f + (1.0f - gps_size) * -0.665f;
-        gps_r = gps_size * 0.8f*0.67f + (1.0f - gps_size) * -0.4675f;
+        gps_r = gps_size * 0.8f*0.67f + (1.0f - gps_size) * 0.665f;
+        gps_l = gps_size * -0.8f*0.67f + (1.0f - gps_size) * 0.4675f;
         gps_t = gps_size * 1.2f*0.67f + (1.0f - gps_size) * -0.112f;
         gps_b = gps_size * -1.2f*0.67f + (1.0f - gps_size) * -0.428f;
     }
@@ -410,7 +410,7 @@ int Car::Draw(float time) {
     case ABSCHIED:
     case ZAHNARZT:
     case POLIZEI:
-        texture_name = "car_room_night.png";
+        texture_name = "car_room_night_schatten.png";
         break;
     case TAMURA:
     case KATSURAO13:
@@ -419,7 +419,7 @@ int Car::Draw(float time) {
     case WOHIN:
     case END_IT:
     default:
-        texture_name = "car_room.png";
+        texture_name = "car_room_schatten.png";
         break;
     }
     if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
@@ -487,10 +487,10 @@ int Car::Draw(float time) {
         float size = panya_time * 4.0f - 1.5f;
         if (size < 0.0f) size = 0.0f;
         if (size > 1.0f) size = 1.0f;
-        float cx = 0.5f * (0.4675f + 0.665f);
+        float cx = 0.5f * (-0.4675f + -0.665f);
         float cy = 0.5f * (-0.112f + -0.428f);
-        float l = (1.0f - size) * cx + size * 0.4675f;
-        float r = (1.0f - size) * cx + size * 0.665f;
+        float r = (1.0f - size) * cx + size * -0.4675f;
+        float l = (1.0f - size) * cx + size * -0.665f;
         float t = (1.0f - size) * cy + size * -0.112f;
         float b = (1.0f - size) * cy + size * -0.428f;
         glBindTexture(GL_TEXTURE_2D, tex_id);
