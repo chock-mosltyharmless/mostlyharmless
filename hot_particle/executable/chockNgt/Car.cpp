@@ -115,7 +115,7 @@ int Car::Draw(float time) {
 
     const float kDriverMoveRight[] = {
         0.2f,  //BEGRUSSUNG = 0
-        0.3f,  // TOMOBE,
+        0.2f,  // TOMOBE,
         0.3f,  // SIEVERT
         0.2f,  // TAMURA,
         0.1f,  // KATSURAO13
@@ -128,7 +128,7 @@ int Car::Draw(float time) {
     };
     const float kDriverLeftFade[] = {
         0.3f,  //BEGRUSSUNG = 0
-        0.4f,  // TOMOBE,
+        0.3f,  // TOMOBE,
         0.4f,  // SIEVERT
         0.3f,  // TAMURA,
         0.2f,  // KATSURAO13
@@ -223,6 +223,10 @@ int Car::Draw(float time) {
         if (to_white_ < 0.0f) to_white_ = 0.0f;
     }
 
+    float video_time = time - video_start_time_;
+    float last_video_time = last_call_time_ - video_start_time_;
+    if (video_time < 0.0f) video_time = 0.0f;
+
     float gps_l, gps_r, gps_t, gps_b;
     float gps_size = 0.0f;
     float gps_time = time - gps_start_time_;
@@ -253,16 +257,14 @@ int Car::Draw(float time) {
     gps_b = gps_size * -1.2f + (1.0f - gps_size) * -0.428f;
     // Special case: Tomobe always has a smaller map
     if (scene_ == TOMOBE) {
-        gps_size = 0.67f;
-        gps_l = gps_size * -0.8f;
-        gps_r = gps_size * 0.8f;
-        gps_t = gps_size * 1.2f;
-        gps_b = gps_size * -1.2f;
+        gps_size = (video_time - 4.0f) * 0.5f;
+        if (gps_size < 0.0f) gps_size = 0.0f;
+        if (gps_size > 1.0f) gps_size = 1.0f;
+        gps_l = gps_size * -0.8f*0.67f + (1.0f - gps_size) * -0.665f;
+        gps_r = gps_size * 0.8f*0.67f + (1.0f - gps_size) * -0.4675f;
+        gps_t = gps_size * 1.2f*0.67f + (1.0f - gps_size) * -0.112f;
+        gps_b = gps_size * -1.2f*0.67f + (1.0f - gps_size) * -0.428f;
     }
-
-    float video_time = time - video_start_time_;
-    float last_video_time = last_call_time_ - video_start_time_;
-    if (video_time < 0.0f) video_time = 0.0f;
 
     float driving_speed = 0.0f;
     switch (scene_) {
@@ -435,7 +437,7 @@ int Car::Draw(float time) {
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    float large_alpha = 8.0f * gps_size;
+    float large_alpha = 4.0f * gps_size;
     if (large_alpha > 1.0f) large_alpha = 1.0f;
     DrawQuad(gps_l, gps_r, gps_t, gps_b, 1.0f);  // The small version of the GPS
     texture_name = "map_5_10.png";
