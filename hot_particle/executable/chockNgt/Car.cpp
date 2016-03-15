@@ -195,6 +195,7 @@ int Car::Draw(float time) {
         if (to_white_ < 0.0f) to_white_ = 0.0f;
     }
 
+    float gps_l, gps_r, gps_t, gps_b;
     float gps_size = 0.0f;
     float gps_time = time - gps_start_time_;
     if (show_gps_) {
@@ -216,6 +217,18 @@ int Car::Draw(float time) {
         if (gps_size < 0.0f) gps_size = 0.0f;
         if (gps_size > 1.0f) gps_size = 1.0f;
         gps_size = 0.5f + cosf(gps_size * PIF) * 0.5f;  // Make it smooth
+    }
+    gps_l = gps_size * -0.8f + (1.0f - gps_size) * -0.665f;
+    gps_r = gps_size * 0.8f + (1.0f - gps_size) * -0.4675f;
+    gps_t = gps_size * 1.2f + (1.0f - gps_size) * -0.112f;
+    gps_b = gps_size * -1.2f + (1.0f - gps_size) * -0.428f;
+    // Special case: Tomobe always has a smaller map
+    if (scene_ == TOMOBE) {
+        gps_size = 0.67f;
+        gps_l = gps_size * -0.8f;
+        gps_r = gps_size * 0.8f;
+        gps_t = gps_size * 1.2f;
+        gps_b = gps_size * -1.2f;
     }
 
     float video_time = time - video_start_time_;
@@ -341,10 +354,6 @@ int Car::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // GPS
-    float l = gps_size * -0.8f + (1.0f - gps_size) * -0.665f;
-    float r = gps_size * 0.8f + (1.0f - gps_size) * -0.4675f;
-    float t = gps_size * 1.2f + (1.0f - gps_size) * -0.112f;
-    float b = gps_size * -1.2f + (1.0f - gps_size) * -0.428f;
     //if (textureManager.getTextureID("map_5_10_platt_small.png", &tex_id, error_string) < 0) {
     if (textureManager.getTextureID("map_5_10_small.png", &tex_id, error_string) < 0) {
     //if (textureManager.getTextureID("gps_schrift.png", &tex_id, error_string) < 0) {
@@ -354,13 +363,15 @@ int Car::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     float large_alpha = 8.0f * gps_size;
     if (large_alpha > 1.0f) large_alpha = 1.0f;
-    DrawQuad(l, r, t, b, 1.0f);  // The small version of the GPS
-    if (textureManager.getTextureID("map_5_10.png", &tex_id, error_string) < 0) {
+    DrawQuad(gps_l, gps_r, gps_t, gps_b, 1.0f);  // The small version of the GPS
+    texture_name = "map_5_10.png";
+    if (scene_ == TOMOBE) texture_name = "map_5_11.png";
+    if (textureManager.getTextureID(texture_name, &tex_id, error_string) < 0) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(l, r, t, b, large_alpha);  // The large version of the GPS
+    DrawQuad(gps_l, gps_r, gps_t, gps_b, large_alpha);  // The large version of the GPS
     // Draw the flashing Fukushima for destination
     if (scene_ == BEGRUSSUNG) {
         float blinking = 0.0f;
@@ -370,7 +381,7 @@ int Car::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(l, r, t, b, large_alpha * blinking);  // The large version of the GPS
+        DrawQuad(gps_l, gps_r, gps_t, gps_b, large_alpha * blinking);  // The large version of the GPS
     }
     // Draw Kreuze
     // Draw the flashing Fukushima for destination
@@ -383,7 +394,7 @@ int Car::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(l, r, t, b, large_alpha * blinking);  // The large version of the GPS
+        DrawQuad(gps_l, gps_r, gps_t, gps_b, large_alpha * blinking);  // The large version of the GPS
     }
 
     // Drawing Panya
