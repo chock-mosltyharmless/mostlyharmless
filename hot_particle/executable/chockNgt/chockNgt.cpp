@@ -549,7 +549,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
 
 		//Sleep(5);
-    } while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE));
+    //} while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE));
+    } while (msg.message != WM_QUIT);
 
 	// music uninit
 #if 0
