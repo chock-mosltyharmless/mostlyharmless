@@ -37,7 +37,7 @@ DWORD WINAPI Audio::ThreadFunc(LPVOID lpParameter) {
                 int sample = (int)(float_data[i] * 32768);
                 if (sample > 32767) sample = 32767;
                 if (sample < -32768) sample = -32768;
-                audio->myMuzikBlock[block][i] = sample;
+                audio->myMuzikBlock[block][i] = (short)sample;
             }
             waveOutPrepareHeader(audio->hWaveOut, &(audio->header[block]), sizeof(WAVEHDR));
             waveOutWrite(audio->hWaveOut, &(audio->header[block]), sizeof(WAVEHDR));

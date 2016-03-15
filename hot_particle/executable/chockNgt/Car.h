@@ -3,6 +3,8 @@
 #include "chockNgt.h"
 #include "Audio.h"
 
+#define FAHRT_SOUND_VOLUME 0.1f
+
 enum CAR_SCENE {
     BEGRUSSUNG = 0,  // Automatically moves on to Zahnarzt
     TOMOBE,
@@ -58,15 +60,18 @@ public:
             break;
         case SIEVERT:
             audio_.PlaySound("Sievert_N1Y1R1.wav", 0, false, -1, error_string);
+            audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
             break;
         case TAMURA:
             audio_.PlaySound("Tamura_N3Y1R1.wav", 0, false, -1, error_string);
             break;
         case KATSURAO13:
             audio_.PlaySound("13Katsurao_N1Y3R3.wav", 0, false, -1, error_string);
+            audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
             break;
         case KATSURAO14:
             audio_.PlaySound("14Katsurao_N1Y4R1.wav", 0, false, -1, error_string);
+            audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
             break;
         case ABSCHIED:
             audio_.PlaySound("Abschied_N1Y1R2.wav", 0, false, -1, error_string);
@@ -82,6 +87,9 @@ public:
     void EndScene(void) {
         char error_string[MAX_ERROR_LENGTH+1];
         audio_.StopSound(0, 36.0f, error_string);
+        if (scene_ != SIEVERT) {
+            audio_.StopSound(2, 36.0f, error_string);
+        }
         has_white_fade_ = true;
         next_scene_ = END_IT;
         current_panya_id_ = -1;

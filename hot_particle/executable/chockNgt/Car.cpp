@@ -57,8 +57,8 @@ int Car::Draw(float time) {
     const float kPanyaStartTimes[11][kMaxNumPanyas] = {
         /*BEGRUSSUNG*/ {3.0f, 41.0f},
         /* TOMOBE   */ {38.0f, 60.0f},
-        /* SIEVERT  */ {2.0f, 14.0f, 137.0f},
-        /* TAMURA   */ {8.0f, 47.0f, 57.0f, 63.0f},
+        /* SIEVERT  */ {2.0f, 14.0f, 141.0f},
+        /* TAMURA   */ {8.0f, 47.0f, 53.0f, 56.0f},
         /* KATSU 13 */ {173.5f},
         /* KATSU 14 */ {7.0f, 62.0f, 157.0f},
         /* ABSCHIED */ {6.5f},
@@ -115,29 +115,29 @@ int Car::Draw(float time) {
 
     const float kDriverMoveRight[] = {
         0.2f,  //BEGRUSSUNG = 0
-        0.4f,  // TOMOBE,
-        0.4f,  // SIEVERT
+        0.3f,  // TOMOBE,
+        0.3f,  // SIEVERT
         0.2f,  // TAMURA,
         0.1f,  // KATSURAO13
         0.0f,  // KATSURAO14
         0.3f,  // ABSCHIED,
-        0.4f,  // ZAHNARZT,
-        0.4f,  // POLIZEI,
-        0.1f,  // KUHE,
-        0.0f  // WOHIN
+        0.3f,  // ZAHNARZT,
+        0.3f,  // POLIZEI,
+        0.0f,  // KUHE,
+        0.1f  // WOHIN
     };
     const float kDriverLeftFade[] = {
-        0.4f,  //BEGRUSSUNG = 0
-        0.5f,  // TOMOBE,
-        0.5f,  // SIEVERT
-        0.5f,  // TAMURA,
-        0.5f,  // KATSURAO13
-        0.6f,  // KATSURAO14
+        0.3f,  //BEGRUSSUNG = 0
+        0.4f,  // TOMOBE,
+        0.4f,  // SIEVERT
+        0.3f,  // TAMURA,
+        0.2f,  // KATSURAO13
+        0.1f,  // KATSURAO14
         0.4f,  // ABSCHIED,
-        0.5f,  // ZAHNARZT,
-        0.5f,  // POLIZEI,
-        0.2f,  // KUHE,
-        0.5f  // WOHIN
+        0.4f,  // ZAHNARZT,
+        0.4f,  // POLIZEI,
+        0.3f,  // KUHE,
+        0.2f  // WOHIN
     };
 
     // The video in the center
@@ -264,6 +264,39 @@ int Car::Draw(float time) {
     float last_video_time = last_call_time_ - video_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
 
+    float driving_speed = 0.0f;
+    switch (scene_) {
+    case ZAHNARZT:
+        driving_speed = 1.0f;
+        break;
+    case SIEVERT:
+        driving_speed = 1.0f;
+        break;
+    case POLIZEI:
+        driving_speed = 1.0f;
+        if (video_time > 110.0f) driving_speed = 1.0f - (video_time - 110.0f) / 2.0f;
+        if (video_time >= 110.0f && last_video_time < 110.0f) audio_.StopSound(2, 24.0f, error_string);
+        if (video_time > 156.0f) driving_speed = (video_time - 156.0f) / 2.0f;
+        if (video_time >= 156.0f && last_video_time < 156.0f) audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
+        break;
+    case KATSURAO13:
+        driving_speed = 1.0f;
+        if (video_time > 92.0f) driving_speed = 1.0f - (video_time - 92.0f) / 8.0f;
+        if (video_time >= 92.0f && last_video_time < 92.0f) audio_.StopSound(2, 4.0f, error_string);
+        break;
+    case KATSURAO14:
+        driving_speed = 1.0f;
+        break;
+    case WOHIN:
+        driving_speed = 1.0f;
+        break;
+    default:
+        driving_speed = 0.0f;
+        break;
+    }
+    if (driving_speed < 0.0f) driving_speed = 0.0f;
+    if (driving_speed > 1.0f) driving_speed = 1.0f;
+
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -292,6 +325,9 @@ int Car::Draw(float time) {
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Driver Video (always do it?)
+    float n1 = 0.02f * driving_speed * (sinf(video_time * 9.0f) + 0.4f * cosf(video_time * 21.0f) + 0.2f * cosf(video_time * 41.0f));
+    float n2 = 0.02f * driving_speed * (cosf(video_time * 7.7f) + 0.4f * cosf(video_time * 18.5f) + 0.2f * sinf(video_time * 53.4f));
+    float n3 = 0.02f * driving_speed * (cosf(video_time * 5.3f) + 0.4f * sinf(video_time * 28.5f) + 0.2f * cosf(video_time * 38.4f));
     if (kDriverVideo[scene_] && video_time > kVideoStartDelay[scene_][1] &&
         video_time <= kVideoDuration[scene_] + 2.0f) {
         texture_name = kDriverVideo[scene_];
@@ -312,7 +348,7 @@ int Car::Draw(float time) {
     float fade_x_l = 0.5f * ((kDriverLeftFade[scene_] - 0.1f) * 0.3225f + (1.0f - kDriverLeftFade[scene_] + 0.1f) * -0.3225f);
     float fade_x_r = 0.5f * (kDriverLeftFade[scene_] * 0.3225f + (1.0f - kDriverLeftFade[scene_]) * -0.3225f);
     DrawQuad(cut_x, 0.3225f, 0.72f, -0.054f,
-             0.0f, -kDriverMoveRight[scene_] + 0.9f, 0.0f, 1.0f,
+             0.0f + n1, -kDriverMoveRight[scene_] + 0.9f + n1, 0.0f + n2, 1.0f + n2,
              1.0f);
     DrawQuadColor(-0.3225f, fade_x_l, 0.72f, -0.054f,
         0.0f, 0.0f, 0.0f, 0.0f,
@@ -339,7 +375,7 @@ int Car::Draw(float time) {
     // Hier muesste ich zwischen 3/4 und 9/16 unterscheiden
     // 9/16
     DrawQuad(-0.7625f, -0.39875f, 0.72f, -0.054f,
-        0.289f, 0.711f, 0.1f, 0.9f,
+       0.289f + 0.6f * n2, 0.711f + 0.6f*n2, 0.1f + 0.6f*n3, 0.9f + 0.6f *n3,
         1.0f);
 
     // Right Video (always do it?)
@@ -361,7 +397,7 @@ int Car::Draw(float time) {
     // Hier muesste ich zwischen 3/4 und 9/16 unterscheiden
     // 3/4
     DrawQuad(0.39875f, 0.7625f, 0.72f, -0.054f,
-        0.21875f, 0.78125f, 0.0f, 1.0f,
+        0.21875f + 0.6f * n3, 0.78125f +  0.6f * n3, 0.0f + 0.6f * n1, 1.0f + 0.6f * n1,
         1.0f);
 
     // Room
@@ -508,6 +544,7 @@ int Car::Draw(float time) {
                     has_white_fade_ = false;
                     current_panya_id_ = -1;
                     audio_.PlaySound("Zahnarzt_N1Y1R2.wav", 0, false, -1, error_string);
+                    audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
                     break;
                 }
             }
@@ -527,6 +564,8 @@ int Car::Draw(float time) {
                     has_white_fade_ = false;
                     current_panya_id_ = -1;
                     audio_.PlaySound("Polizei_Y5R5.wav", 0, false, -1, error_string);
+                    // Audio was already there, no fade-in necesary.
+                    //audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
                     break;
                 }
             }
