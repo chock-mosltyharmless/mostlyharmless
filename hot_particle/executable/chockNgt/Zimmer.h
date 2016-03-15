@@ -77,5 +77,6 @@ private:
     // Everything that controls panya (state machine depending on number of panyas and so on
     int current_panya_id_;  // The panya that is currently displayed, may be -1 for none.
     float panya_start_time_;  // The time that panya came to life, is used for fade-in and out.
+    float music_stopper_ = 1.0f;
 };
 

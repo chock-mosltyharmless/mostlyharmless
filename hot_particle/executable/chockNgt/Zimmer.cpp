@@ -26,6 +26,8 @@ void Zimmer::ToBeginning(void) {
     erdbeben_started_ = false;
     current_panya_id_ = -1;
     panya_start_time_ = last_call_time_;
+
+    music_stopper_ = -1.0f;
 }
 
 void Zimmer::StartScene(ZIMMER_SCENE scene) {
@@ -50,6 +52,7 @@ void Zimmer::StartScene(ZIMMER_SCENE scene) {
         to_white_ = 1.0f;
         break;
     }
+    music_stopper_ = -1.0f;
 }
 
 void Zimmer::EndScene(void) {
@@ -62,6 +65,8 @@ void Zimmer::EndScene(void) {
     } else {
         has_white_fade_ = true;
     }
+
+    music_stopper_ = -1.0f;
     
     // Leave everything as it was
 #if 0
@@ -194,6 +199,13 @@ int Zimmer::Draw(float time) {
         "zuhause_clock_september_14.png",  // UNKNOWN
         "zuhause_clock_maerz_11.png",  // PROBERAUM
     };
+
+    if (music_stopper_ >= 0.0f) {
+        music_stopper_ -= time - last_call_time_;
+        if (music_stopper_ < 0.0f) {
+            audio_.StopSound(2, 120.0f, error_string);
+        }
+    }
 
     // Adjust brightness according to time difference
     if (has_light_) {
@@ -474,6 +486,7 @@ void Zimmer::StartKenchiro(void) {
     case AUGUST_15:
     case MAERZ_11_END:
         audio_.PlaySound("S27_schwimmen03_nr_nomisa_skip14.wav", 0, false, -1, error_string);
+        music_stopper_ = 1.2f;
         kenchiro_id_ = 3;  // MAERZ_11_END,
         kenchiro_start_time_ = last_call_time_;
         draw_kenchiro_ = true;
