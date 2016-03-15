@@ -108,7 +108,7 @@ int Car::Draw(float time) {
         168.0f,  // KATSURAO14
         9.0f,  // ABSCHIED,
         162.0f,  // ZAHNARZT,
-        331.0f,  // POLIZEI,
+        328.0f,  // POLIZEI,
         78.0f,  // KUHE,
         84.0f  // WOHIN
     };

@@ -831,7 +831,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     //break;
 
             case VK_UP:
-                audio_.PlaySound("punch.wav", 0, false, -1, error_string);
+                audio_.PlaySound("punch.wav", 4, false, -1, error_string);
                 break;
             case VK_DOWN:
                 audio_.PlaySound("01_Donner.wav", 0, false, -1, error_string);
@@ -855,10 +855,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     noise_is_playing = true;
                     switch (scene_to_show_) {
                     case CAFE:
-                        audio_.PlaySound("cafe.wav", 3, true, 24.0f, error_string, 0.3f);
+                        audio_.PlaySound("cafe.wav", 3, true, 24.0f, error_string, 0.2f);
                         break;
                     case KARAOKE:
-                        audio_.PlaySound("kneipe.wav", 3, true, 24.0f, error_string, 0.2f);
+                        audio_.PlaySound("kneipe.wav", 3, true, 24.0f, error_string, 0.16f);
                         break;
                     case CAR:
                         audio_.PlaySound("fahrt.wav", 3, true, 24.0f, error_string, 0.04f);
