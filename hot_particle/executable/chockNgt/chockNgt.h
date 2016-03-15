@@ -22,3 +22,4 @@ void DrawQuadColor(float startX, float endX, float startY, float endY,
 void DrawQuad(float startX, float endX, float startY, float endY, float startU, float endU, float startV, float endV, float alpha);
 void DrawQuad(float startX, float endX, float startY, float endY, float startV, float endV, float alpha);
 void DrawQuad(float startX, float endX, float startY, float endY, float alpha);
+void DrawBlackFade(float startX, float endX, float startY, float endY);

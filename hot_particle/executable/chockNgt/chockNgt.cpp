@@ -100,16 +100,31 @@ void glUnInit()
 	ReleaseDC(mainWnd, mainDC);
 }
 
+void DrawBlackFade(float startX, float endX, float startY, float endY)
+{
+    glDisable(GL_TEXTURE_2D);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
+
+    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+    glBegin(GL_QUADS);
+    glVertex3f(startX, endY, 0.99f);
+    glColor4f(0.0f, 0.0f, 0.0f, 0.0f);
+    glVertex3f(endX, endY, 0.99f);
+    glVertex3f(endX, startY, 0.99f);
+    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+    glVertex3f(startX, startY, 0.99f);
+    glEnd();
+
+    glDisable(GL_TEXTURE_2D);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+}
+
 void DrawQuadColor(float startX, float endX, float startY, float endY,
                    float startU, float endU, float startV, float endV,
                    float red, float green, float blue, float alpha) {
     // set up matrices
-    /*
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    */
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);

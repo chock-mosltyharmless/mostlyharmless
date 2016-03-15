@@ -32,7 +32,7 @@ int Car::Draw(float time) {
     GLuint tex_id;
     const char *texture_name;
     bool is_scene_finished = false;
-    char error_string[MAX_ERROR_LENGTH+1];
+    char error_string[MAX_ERROR_LENGTH + 1];
 
     if (scene_ == KUHE) {
         last_call_time_ = time;
@@ -113,6 +113,33 @@ int Car::Draw(float time) {
         84.0f  // WOHIN
     };
 
+    const float kDriverMoveRight[] = {
+        0.2f,  //BEGRUSSUNG = 0
+        0.4f,  // TOMOBE,
+        0.4f,  // SIEVERT
+        0.2f,  // TAMURA,
+        0.1f,  // KATSURAO13
+        0.0f,  // KATSURAO14
+        0.3f,  // ABSCHIED,
+        0.4f,  // ZAHNARZT,
+        0.4f,  // POLIZEI,
+        0.1f,  // KUHE,
+        0.0f  // WOHIN
+    };
+    const float kDriverLeftFade[] = {
+        0.4f,  //BEGRUSSUNG = 0
+        0.5f,  // TOMOBE,
+        0.5f,  // SIEVERT
+        0.5f,  // TAMURA,
+        0.5f,  // KATSURAO13
+        0.6f,  // KATSURAO14
+        0.4f,  // ABSCHIED,
+        0.5f,  // ZAHNARZT,
+        0.5f,  // POLIZEI,
+        0.2f,  // KUHE,
+        0.5f  // WOHIN
+    };
+
     // The video in the center
     const char *kDriverVideo[] = {
         "Begrussung_R3.wmv",  //BEGRUSSUNG = 0
@@ -190,7 +217,8 @@ int Car::Draw(float time) {
                 break;
             }
         }
-    } else {
+    }
+    else {
         to_white_ -= (time - last_call_time_) * 0.5f;
         if (to_white_ < 0.0f) to_white_ = 0.0f;
     }
@@ -202,9 +230,10 @@ int Car::Draw(float time) {
         gps_size = gps_time * 0.5f;
         if (gps_size > 1.0f) gps_size = 1.0f;
         gps_size = 0.5f - cosf(gps_size * PIF) * 0.5f;  // Make it smooth
-    } else {
+    }
+    else {
         float delay = kGPSFadeOutDuration[0];
-        switch(scene_) {
+        switch (scene_) {
         case ZAHNARZT:
         default:
             delay = kGPSFadeOutDuration[0];
@@ -279,7 +308,16 @@ int Car::Draw(float time) {
         }
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(-0.3225f, 0.3225f, 0.72f, -0.054f, 1.0f);
+    float cut_x = 0.5f * (kDriverMoveRight[scene_] * 0.3225f + (1.0f - kDriverMoveRight[scene_]) * -0.3225f);
+    float fade_x_l = 0.5f * ((kDriverLeftFade[scene_] - 0.1f) * 0.3225f + (1.0f - kDriverLeftFade[scene_] + 0.1f) * -0.3225f);
+    float fade_x_r = 0.5f * (kDriverLeftFade[scene_] * 0.3225f + (1.0f - kDriverLeftFade[scene_]) * -0.3225f);
+    DrawQuad(cut_x, 0.3225f, 0.72f, -0.054f,
+             0.0f, -kDriverMoveRight[scene_] + 0.9f, 0.0f, 1.0f,
+             1.0f);
+    DrawQuadColor(-0.3225f, fade_x_l, 0.72f, -0.054f,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
+    DrawBlackFade(fade_x_l, fade_x_r, 0.72f, -0.054f);
 
     // Left Video (always do it?)
     if (kLeftVideo[scene_] && video_time > kVideoStartDelay[scene_][0] &&
