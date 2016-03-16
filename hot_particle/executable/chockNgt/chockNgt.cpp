@@ -579,7 +579,7 @@ void EndCurrentScene(bool switch_to_next_scene) {
     char error_string[MAX_ERROR_LENGTH+1];
     audio_.StopSound(0, 36.0f, error_string);    
     end_current_scene_ = switch_to_next_scene;
-    audio_.StopSound(2, 18.0f, error_string);
+    //audio_.StopSound(5, 18.0f, error_string); // music does not stop
     audio_.StopSound(3, 18.0f, error_string);
     music_is_playing = false;
     noise_is_playing = false;
@@ -839,19 +839,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 break;
             case VK_LEFT:
                 if (!music_is_playing) {
-                    audio_.PlaySound("musik_bearb.wav", 2, false, -1, error_string);
+                    audio_.PlaySound("musik_bearb.wav", 5, false, -1, error_string);
                     audio_.StopSound(3, 18.0f, error_string);
                     noise_is_playing = false;
                     music_is_playing = true;
                 }
                 else {
-                    audio_.StopSound(2, 18.0f, error_string);
+                    audio_.StopSound(5, 18.0f, error_string);
                     music_is_playing = false;
                 }
                 break;
             case VK_RIGHT:
                 if (!noise_is_playing) {
-                    audio_.StopSound(2, 18.0f, error_string);
+                    audio_.StopSound(5, 18.0f, error_string);
                     music_is_playing = false;
                     noise_is_playing = true;
                     switch (scene_to_show_) {

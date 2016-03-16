@@ -208,7 +208,7 @@ int Zimmer::Draw(float time) {
     if (music_stopper_ >= 0.0f) {
         music_stopper_ -= time - last_call_time_;
         if (music_stopper_ < 0.0f) {
-            audio_.StopSound(2, 120.0f, error_string);
+            audio_.StopSound(5, 120.0f, error_string);
         }
     }
 
