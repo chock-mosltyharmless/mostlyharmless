@@ -349,13 +349,15 @@ int Car::Draw(float time) {
     float cut_x = 0.5f * (kDriverMoveRight[scene_] * 0.3225f + (1.0f - kDriverMoveRight[scene_]) * -0.3225f);
     float fade_x_l = 0.5f * ((kDriverLeftFade[scene_] - 0.1f) * 0.3225f + (1.0f - kDriverLeftFade[scene_] + 0.1f) * -0.3225f);
     float fade_x_r = 0.5f * (kDriverLeftFade[scene_] * 0.3225f + (1.0f - kDriverLeftFade[scene_]) * -0.3225f);
-    DrawQuad(cut_x, 0.3225f, 0.72f, -0.054f,
+    DrawQuad(cut_x, 0.339f, 0.72f, -0.054f,
              0.0f + n1, -kDriverMoveRight[scene_] + 0.9f + n1, 0.0f + n2, 1.0f + n2,
              1.0f);
+#if 0
     DrawQuadColor(-0.3225f, fade_x_l, 0.72f, -0.054f,
         0.0f, 0.0f, 0.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f);
     DrawBlackFade(fade_x_l, fade_x_r, 0.72f, -0.054f);
+#endif
 
     // Left Video (always do it?)
     if (kLeftVideo[scene_] && video_time > kVideoStartDelay[scene_][0] &&
@@ -403,6 +405,7 @@ int Car::Draw(float time) {
         1.0f);
 
     // Room
+    bool night_scene = false;
     switch (scene_) {
     case BEGRUSSUNG:
     case TOMOBE:
@@ -410,7 +413,8 @@ int Car::Draw(float time) {
     case ABSCHIED:
     case ZAHNARZT:
     case POLIZEI:
-        texture_name = "car_room_night_schatten.png";
+        texture_name = "car_room_night.png";
+        night_scene = true;
         break;
     case TAMURA:
     case KATSURAO13:
@@ -419,7 +423,8 @@ int Car::Draw(float time) {
     case WOHIN:
     case END_IT:
     default:
-        texture_name = "car_room_schatten.png";
+        texture_name = "car_room.png";
+        night_scene = false;
         break;
     }
     if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
@@ -437,6 +442,17 @@ int Car::Draw(float time) {
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-0.686f, -0.475f, -0.142f, -0.5118f, 1.0f);
+    if (night_scene) {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // glow
+        texture_name = "kneipe_clock_glow.png";
+        if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(-0.686f - 0.45f, -0.475f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.4f);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
 
     // GPS
     //if (textureManager.getTextureID("map_5_10_platt_small.png", &tex_id, error_string) < 0) {
@@ -480,6 +496,18 @@ int Car::Draw(float time) {
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
         DrawQuad(gps_l, gps_r, gps_t, gps_b, large_alpha * blinking);  // The large version of the GPS
+    }
+    // Glow for small
+    if (night_scene) {
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        texture_name = "kneipe_clock_glow.png";
+        if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuad(0.475f - 0.45f, 0.686f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.4f * (1.0f - large_alpha));
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     // Drawing Panya
