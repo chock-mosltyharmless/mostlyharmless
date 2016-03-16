@@ -251,19 +251,19 @@ int Car::Draw(float time) {
         if (gps_size > 1.0f) gps_size = 1.0f;
         gps_size = 0.5f + cosf(gps_size * PIF) * 0.5f;  // Make it smooth
     }
-    gps_r = gps_size * 0.8f + (1.0f - gps_size) * 0.665f;
-    gps_l = gps_size * -0.8f + (1.0f - gps_size) * 0.4675f;
-    gps_t = gps_size * 1.2f + (1.0f - gps_size) * -0.112f;
-    gps_b = gps_size * -1.2f + (1.0f - gps_size) * -0.428f;
+    gps_r = gps_size * 0.8f + (1.0f - gps_size) * 0.686f;
+    gps_l = gps_size * -0.8f + (1.0f - gps_size) * 0.475f;
+    gps_t = gps_size * 1.2f + (1.0f - gps_size) * -0.142f;
+    gps_b = gps_size * -1.2f + (1.0f - gps_size) * -0.518f;
     // Special case: Tomobe always has a smaller map
     if (scene_ == TOMOBE) {
         gps_size = (video_time - 4.0f) * 0.5f;
         if (gps_size < 0.0f) gps_size = 0.0f;
         if (gps_size > 1.0f) gps_size = 1.0f;
-        gps_r = gps_size * 0.8f*0.67f + (1.0f - gps_size) * 0.665f;
-        gps_l = gps_size * -0.8f*0.67f + (1.0f - gps_size) * 0.4675f;
-        gps_t = gps_size * 1.2f*0.67f + (1.0f - gps_size) * -0.112f;
-        gps_b = gps_size * -1.2f*0.67f + (1.0f - gps_size) * -0.428f;
+        gps_r = gps_size * 0.8f*0.67f + (1.0f - gps_size) * 0.686f;
+        gps_l = gps_size * -0.8f*0.67f + (1.0f - gps_size) * 0.475f;
+        gps_t = gps_size * 1.2f*0.67f + (1.0f - gps_size) * -0.142f;
+        gps_b = gps_size * -1.2f*0.67f + (1.0f - gps_size) * -0.518f;
     }
 
     float driving_speed = 0.0f;
@@ -429,6 +429,15 @@ int Car::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
+    // Panya backdrop
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    if (textureManager.getTextureID("panya_car_blank.png", &tex_id, error_string) < 0) {
+        MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+        return -1;
+    }
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    DrawQuad(-0.686f, -0.475f, -0.142f, -0.5118f, 1.0f);
+
     // GPS
     //if (textureManager.getTextureID("map_5_10_platt_small.png", &tex_id, error_string) < 0) {
     if (textureManager.getTextureID("map_5_10_small.png", &tex_id, error_string) < 0) {
@@ -474,7 +483,6 @@ int Car::Draw(float time) {
     }
 
     // Drawing Panya
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     if (current_panya_id_ >= 0 && current_panya_id_ < kMaxNumPanyas &&
         kPanyaNames[scene_][current_panya_id_] != NULL) {
         const char *texture_name = kPanyaNames[scene_][current_panya_id_];
@@ -487,12 +495,12 @@ int Car::Draw(float time) {
         float size = panya_time * 4.0f - 1.5f;
         if (size < 0.0f) size = 0.0f;
         if (size > 1.0f) size = 1.0f;
-        float cx = 0.5f * (-0.4675f + -0.665f);
-        float cy = 0.5f * (-0.112f + -0.428f);
-        float r = (1.0f - size) * cx + size * -0.4875f;
-        float l = (1.0f - size) * cx + size * -0.685f;
-        float t = (1.0f - size) * cy + size * -0.127f;
-        float b = (1.0f - size) * cy + size * -0.443f;
+        float cx = 0.5f * (-0.475f + -0.686f);
+        float cy = 0.5f * (-0.142f + -0.518f);
+        float r = (1.0f - size) * cx + size * -0.475f;
+        float l = (1.0f - size) * cx + size * -0.686f;
+        float t = (1.0f - size) * cy + size * -0.142f;
+        float b = (1.0f - size) * cy + size * -0.518f;
         glBindTexture(GL_TEXTURE_2D, tex_id);
         float alpha = (6.0f - panya_time);
         if (alpha < 0) alpha = 0;
