@@ -489,10 +489,10 @@ int Car::Draw(float time) {
         if (size > 1.0f) size = 1.0f;
         float cx = 0.5f * (-0.4675f + -0.665f);
         float cy = 0.5f * (-0.112f + -0.428f);
-        float r = (1.0f - size) * cx + size * -0.4675f;
-        float l = (1.0f - size) * cx + size * -0.665f;
-        float t = (1.0f - size) * cy + size * -0.112f;
-        float b = (1.0f - size) * cy + size * -0.428f;
+        float r = (1.0f - size) * cx + size * -0.4875f;
+        float l = (1.0f - size) * cx + size * -0.685f;
+        float t = (1.0f - size) * cy + size * -0.127f;
+        float b = (1.0f - size) * cy + size * -0.443f;
         glBindTexture(GL_TEXTURE_2D, tex_id);
         float alpha = (6.0f - panya_time);
         if (alpha < 0) alpha = 0;

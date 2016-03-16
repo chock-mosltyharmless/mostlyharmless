@@ -317,8 +317,8 @@ int Smartphones::Draw(float time) {
         float cy = 0.5f * (0.844f + 0.506f);
         float l = (1.0f - size) * cx + size * -0.665f;
         float r = (1.0f - size) * cx + size * -0.46f;
-        float t = (1.0f - size) * cy + size * 0.844f;
-        float b = (1.0f - size) * cy + size * 0.506f;
+        float t = (1.0f - size) * cy + size * 0.874f;
+        float b = (1.0f - size) * cy + size * 0.536f;
         glBindTexture(GL_TEXTURE_2D, tex_id);
         float alpha = (6.0f - panya_time);
         if (alpha < 0) alpha = 0;
