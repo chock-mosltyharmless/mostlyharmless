@@ -234,11 +234,14 @@ int Zimmer::Draw(float time) {
         if (to_white_ < 0.0f) to_white_ = 0.0f;
     }
 
-    last_call_time_ = time;
-
     float video_time = time - kenchiro_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
     video_time -= kVideoDelays[kenchiro_id_];
+    float last_video_time = last_call_time_ - kenchiro_start_time_;
+    if (last_video_time < 0.0f) last_video_time = 0.0f;
+    last_video_time -= kVideoDelays[kenchiro_id_];
+
+    last_call_time_ = time;
 
     if (!erdbeben_started_ && video_time > kErdbebenStart &&
         kenchiro_id_ == 6) {
@@ -251,6 +254,9 @@ int Zimmer::Draw(float time) {
     if (draw_kenchiro_) {
         if (video_time > kFrameOpenTime) {
             start_kenchiro = true;
+            if (last_video_time <= kFrameOpenTime) {
+                audio_.PlaySound("kenshiro_open.wav", 4, false, -1, error_string, 0.4f);
+            }
         }
     }
 
@@ -387,12 +393,16 @@ int Zimmer::Draw(float time) {
         if (open_time * speed > 1.0f) open_rad = sinf(1.0f * PIF * 0.5f);
         speed = 1.2f;  // close time is slower
         float close_time = video_time - kFrameCloseTime;
+        float last_close_time = last_video_time - kFrameCloseTime;
         if (close_time > 0.0f && close_time * speed <= 1.0f) {
             open_rad = 1.0f - sinf(close_time * speed * PIF * 0.5f);
         }
         if (close_time * speed > 1.0f) {
             open_rad = 0.0f;
             EndKenchiro();
+            if (last_close_time * speed <= 1.0f) {
+                audio_.PlaySound("kenshiro_close.wav", 4, false, -1, error_string, 0.4f);
+            }
         }
         open_rad *= 0.75f * PIF;
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -403,7 +413,7 @@ int Zimmer::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        float brightness = 0.48f - sinf(open_rad)*0.2f;
+        float brightness = 0.78f - sinf(open_rad)*0.2f;
         if (open_rad > 3.1415f * 0.5f) brightness = 0.4f + 0.2f * sinf(open_rad);
         DrawQuadColor(-0.665f, -0.665f + cosf(open_rad)*0.205f, 0.814f, 0.476f,
                       brightness, brightness, brightness, 1.0f);

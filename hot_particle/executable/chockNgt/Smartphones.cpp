@@ -144,7 +144,10 @@ int Smartphones::Draw(float time) {
     }
 
     // Adjust for overlapping nightmare...
-    if (textureManager.getTextureID("smartphones_drawings_one.png", &tex_id, error_string)) {
+    const char *texture_name;
+    if (scene_ == SM_KUHE) texture_name = "smartphones_drawings_one.png";
+    else texture_name = "smartphones_drawings_one.png";
+    if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
     }
