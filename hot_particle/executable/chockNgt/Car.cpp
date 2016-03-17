@@ -627,6 +627,7 @@ int Car::Draw(float time) {
         default:
             next_scene_ = END_IT;
             has_white_fade_ = true;
+            audio_.StopSound(2, 24.0f, error_string);
             break;
         }
     }
