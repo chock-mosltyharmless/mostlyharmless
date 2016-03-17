@@ -52,7 +52,7 @@ int Karaoke::Draw(float time) {
     if (draw_kenchiro_) {
         if (video_time > kFrameOpenTime) {
             start_kenchiro = true;
-            if (last_video_time <= kFrameOpenTime) {
+            if (last_video_time <= kFrameOpenTime && kVideoPosition[kenchiro_id_] == 0) {
                 audio_.PlaySound("kenshiro_close.wav", 4, false, -1, error_string, 0.4f);
             }
         }
