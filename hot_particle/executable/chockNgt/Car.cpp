@@ -50,7 +50,7 @@ int Car::Draw(float time) {
         /*KATSU 14  */ {"panya_nachdenklich.png", "panya_sauer.png", "panya_wow.png"},
         /*ABSCHIED  */ {"panya_begrussung.png"},
         /*ZAHNARZT  */ {"panya_sauer.png"},
-        /*POLIZEI   */ {"panya_nachdenklich.png", "panya_fragend.png", "panya_wow.png", "panya_fragend.png", "panya_wow.png", "panya_wow.png", "panya_begeistert.png", "panya_nachdenklich.png", "panya_no.png", "panya_wow.png", "panya_wow.png", "panya_wow.png"},
+        /*POLIZEI   */ {"panya_nachdenklich.png", "panya_fragend.png", "panya_wow.png", "panya_fragend.png", "panya_wow.png", "panya_wow.png", "panya_begeistert.png", "panya_nachdenklich.png", "panya_fragend.png", "panya_wow.png", "panya_wow.png", "panya_wow.png"},
         /*KUHE      */ {},
         /*WOHIN     */ {"panya_wow.png", "panya_nachdenklich.png", "panya_wow.png", "panya_sauer.png", "panya_fragend.png"}
     };
