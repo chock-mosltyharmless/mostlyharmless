@@ -45,6 +45,8 @@ static int *creditsTexData[1024*1024];
 
 float fCurTime = 0.0f;
 
+float last_red_flash = -10.0f;
+
 bool mod_key_ = false;
 // Used to avoid double-pressing the same key
 float last_key_press_time_[65536] = { 0.0f };
@@ -538,6 +540,13 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		}
 #endif
 
+        float alpha = 1.0f - fCurTime + last_red_flash;
+        GLuint tex_id;
+        textureManager.getTextureID("white.tga", &tex_id, error_string);
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        DrawQuadColor(-1.0f, 1.0f, -1.0f, 1.0f,
+                      1.0f, 0.0f, 0.0f, alpha);
+
 		// draw background
 		//DrawQuad(-0.3f, 0.8f, -0.2f, 0.7f, 0.4f, 1.0f, 1.0f);
 		//glEnable(GL_DEPTH_TEST);
@@ -833,6 +842,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 
             case VK_UP:
                 audio_.PlaySound("punch.wav", 4, false, -1, error_string);
+                last_red_flash = fCurTime;
                 break;
             case VK_DOWN:
                 audio_.PlaySound("01_Donner.wav", 0, false, -1, error_string);
