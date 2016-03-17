@@ -280,6 +280,8 @@ int Car::Draw(float time) {
         if (video_time >= 110.0f && last_video_time < 110.0f) audio_.StopSound(2, 24.0f, error_string);
         if (video_time > 156.0f) driving_speed = (video_time - 156.0f) / 2.0f;
         if (video_time >= 156.0f && last_video_time < 156.0f) audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
+        if (video_time > 298.0f) driving_speed = 1.0f - (video_time - 110.0f) / 4.0f;
+        if (video_time >= 298.0f && last_video_time < 298.0f) audio_.StopSound(2, 8.0f, error_string);
         break;
     case KATSURAO13:
         driving_speed = 1.0f;
