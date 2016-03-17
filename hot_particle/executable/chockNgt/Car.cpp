@@ -124,7 +124,7 @@ int Car::Draw(float time) {
         0.3f,  // ZAHNARZT,
         0.3f,  // POLIZEI,
         0.0f,  // KUHE,
-        0.1f  // WOHIN
+        0.0f  // WOHIN
     };
     const float kDriverLeftFade[] = {
         0.3f,  //BEGRUSSUNG = 0
