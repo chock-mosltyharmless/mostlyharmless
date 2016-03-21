@@ -297,7 +297,6 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
-
 //==============================================================================================
 
 int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )

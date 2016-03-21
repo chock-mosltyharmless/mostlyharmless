@@ -19,6 +19,6 @@ void mzk_init(void);
 // Call this function to prepare the next audio buffer.
 // The audio buffer size is AUDIO_BUFFER_SIZE
 void mzk_prepare_block(short *buffer);
-float frand(unsigned int *seed);
+float jo_frand(unsigned int *seed);
 
 #endif

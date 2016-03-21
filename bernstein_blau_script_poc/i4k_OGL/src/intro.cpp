@@ -91,14 +91,14 @@ void GenerateParticles(void) {
             float yp = -1.0f + 2.0f * (float)y / (float)NUM_PARTICLES_PER_DIM;
             for (int x = 0; x < NUM_PARTICLES_PER_DIM; x++) {
                 float xp = -1.0f + 2.0f * (float)x / (float)NUM_PARTICLES_PER_DIM;
-                vertices_[vertex_id++] = xp + 2.0f * frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
-                vertices_[vertex_id++] = yp + 2.0f * frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
-                vertices_[vertex_id++] = zp + 2.0f * frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
+                vertices_[vertex_id++] = xp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
+                vertices_[vertex_id++] = yp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
+                vertices_[vertex_id++] = zp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
                 colors_[color_id++] = 0.9f;
                 colors_[color_id++] = 0.7f;
                 colors_[color_id++] = 0.5f;
                 // fran
-                colors_[color_id++] = frand(&seed);
+                colors_[color_id++] = jo_frand(&seed);
                 //colors_[color_id - 1] = 0.5f;
             }
         }
@@ -288,28 +288,28 @@ void intro_do( long itime )
     // Set parameters to other locations, using seed stuff
     unsigned int start_seed = script_[scene_id][1]; 
     unsigned int seed = start_seed;
-    parameterMatrix[0][1] = params.getParam(2, frand(&seed));
-    parameterMatrix[0][2] = params.getParam(3, frand(&seed));
-    parameterMatrix[0][3] = params.getParam(4, frand(&seed));
+    parameterMatrix[0][1] = params.getParam(2, jo_frand(&seed));
+    parameterMatrix[0][2] = params.getParam(3, jo_frand(&seed));
+    parameterMatrix[0][3] = params.getParam(4, jo_frand(&seed));
 
-    parameterMatrix[1][0] = params.getParam(5, frand(&seed));
-    parameterMatrix[1][1] = params.getParam(6, frand(&seed));
-    parameterMatrix[1][2] = params.getParam(8, frand(&seed));
-    parameterMatrix[1][3] = params.getParam(9, frand(&seed));
+    parameterMatrix[1][0] = params.getParam(5, jo_frand(&seed));
+    parameterMatrix[1][1] = params.getParam(6, jo_frand(&seed));
+    parameterMatrix[1][2] = params.getParam(8, jo_frand(&seed));
+    parameterMatrix[1][3] = params.getParam(9, jo_frand(&seed));
 
-    parameterMatrix[2][0] = params.getParam(12, frand(&seed));
-    parameterMatrix[2][1] = params.getParam(13, frand(&seed));
-    parameterMatrix[2][2] = params.getParam(14, frand(&seed));
+    parameterMatrix[2][0] = params.getParam(12, jo_frand(&seed));
+    parameterMatrix[2][1] = params.getParam(13, jo_frand(&seed));
+    parameterMatrix[2][2] = params.getParam(14, jo_frand(&seed));
 
     //parameterMatrix[2][2] += (itime - last_effect_reset_time_) * 0.000001f * movement_speed_;
     parameterMatrix[2][2] += (itime) * 0.000001f * script_[scene_id][2];
 
-    parameterMatrix[2][3] = params.getParam(15, frand(&seed));
+    parameterMatrix[2][3] = params.getParam(15, jo_frand(&seed));
 
-    parameterMatrix[3][0] = params.getParam(16, frand(&seed));
-    parameterMatrix[3][1] = params.getParam(17, frand(&seed));
-    parameterMatrix[3][2] = params.getParam(18, frand(&seed));
-    parameterMatrix[3][3] = params.getParam(19, frand(&seed));
+    parameterMatrix[3][0] = params.getParam(16, jo_frand(&seed));
+    parameterMatrix[3][1] = params.getParam(17, jo_frand(&seed));
+    parameterMatrix[3][2] = params.getParam(18, jo_frand(&seed));
+    parameterMatrix[3][3] = params.getParam(19, jo_frand(&seed));
 
 	int location = glGetUniformLocation(shaderPrograms[0], "r");
 	glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
