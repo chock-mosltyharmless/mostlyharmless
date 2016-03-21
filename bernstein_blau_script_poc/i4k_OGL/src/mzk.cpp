@@ -68,6 +68,10 @@ float adsrFreq[NUM_INSTRUMENTS];
 float adsrSpeed[NUM_INSTRUMENTS];
 float adsrShape[NUM_INSTRUMENTS][NUM_OVERTONES];
 
+// MIDI volume
+int i_midi_volume_[NUM_INSTRUMENTS];
+float midi_volume_[NUM_INSTRUMENTS];
+
 // attack values and stuff
 static int iADSR[NUM_INSTRUMENTS];
 static float fADSRVal[NUM_INSTRUMENTS];
@@ -136,7 +140,6 @@ void mzk_prepare_block(short *blockBuffer)
 		sampleID = startSampleID;
 
         // Volume?
-        // TODO: MIDI velocity
         //float vol = (float)((double)currentVelocity * midiScaler * curProgram->fMasterVolume) * 32.0f;
         float vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
 
@@ -177,6 +180,8 @@ void mzk_prepare_block(short *blockBuffer)
 
 				// Apply delta-note
 				currentNote[instrument] += savedNote[instrument][currentNoteIndex[instrument]];
+                i_midi_volume_[instrument] += savedVelocity[instrument][currentNoteIndex[instrument]];
+                midi_volume_[instrument] = i_midi_volume_[instrument] / 128.0f;
 
 				// Set the oscillator phases to zero
 				for (int i = 0; i < NUM_OVERTONES; i++)
@@ -314,7 +319,7 @@ void mzk_prepare_block(short *blockBuffer)
             int reverbPos = sampleID % MAX_DELAY_LENGTH;
             for (int j = 0; j < NUM_Stereo_VOICES; j++)
             {
-                reverbBuffer[instrument][reverbPos][j] = outAmplitude[j] * vol * adsrVolume[instrument] * deathVolume;
+                reverbBuffer[instrument][reverbPos][j] = outAmplitude[j] * vol * adsrVolume[instrument] * deathVolume * midi_volume_[instrument];
 
                 // Do the reverb feedback
                 int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
@@ -362,7 +367,7 @@ void mzk_prepare_block(short *blockBuffer)
 		if (val < -32767) val = -32767;
 		blockBuffer[sample] = val;
 #else
-		float val = floatOutput[0][sample] * 5.0f;
+		float val = floatOutput[0][sample] * 4.0f;
 		if (val > 1.5f) val = 1.5f;
 		if (val < -1.5f) val = -1.5f;
 		val = (float)sin(val) * 32768.0f;

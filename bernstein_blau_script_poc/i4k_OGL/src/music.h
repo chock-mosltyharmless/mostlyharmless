@@ -85,3 +85,24 @@ signed char *savedNote[] = {
     savedNote_1990385600,
     savedNote_2147459136,
 };
+
+signed char *savedVelocity[] = {
+    savedVelocity_343302208,
+    savedVelocity_419024832,
+    savedVelocity_500420672,
+    savedVelocity_576147392,
+    savedVelocity_657543232,
+    savedVelocity_733306816,
+    savedVelocity_814657600,
+    savedVelocity_890466240,
+    savedVelocity_971804736,
+    savedVelocity_1047621568,
+    savedVelocity_1128923200,
+    savedVelocity_1204772800,
+    savedVelocity_1361907648,
+    savedVelocity_1519042496,
+    savedVelocity_1676140480,
+    savedVelocity_1833254848,
+    savedVelocity_1990385600,
+    savedVelocity_2147459136,
+};
