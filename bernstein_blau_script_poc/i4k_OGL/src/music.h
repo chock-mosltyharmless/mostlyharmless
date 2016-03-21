@@ -1,7 +1,6 @@
 #pragma once
 
 // This is the music data file.
-#define NUM_INSTURMENT_PARAMS K_MASTER_PANNING
 
 // Here I have no music data...
 #include "music/music.353898560.txt"

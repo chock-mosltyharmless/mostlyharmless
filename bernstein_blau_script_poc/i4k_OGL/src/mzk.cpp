@@ -38,6 +38,8 @@ static float freqtab[kNumFrequencies];
 #define DELAY_MULTIPLICATOR 128
 #define MAX_DELAY_LENGTH (DELAY_MULTIPLICATOR * 130) // Some safety for miscalculation stuff...
 
+static float float_instrument_parameters_[NUM_INSTRUMENTS][NUM_INSTRUMENT_PARAMETERS];
+
 static float randomBuffer[RANDOM_BUFFER_SIZE];
 static float lowNoise[RANDOM_BUFFER_SIZE];
 // The same as random Buffer, but contains exp(4*(randomBuffer-1))
@@ -48,8 +50,23 @@ static int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pul
 static int currentNoteIndex[NUM_INSTRUMENTS];
 static int currentNote[NUM_INSTRUMENTS];
 static float fPhase[NUM_INSTRUMENTS][NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
-static float fTimePoint[NUM_INSTRUMENTS];
-static float fModulationPhase[NUM_INSTRUMENTS];
+//static float fTimePoint[NUM_INSTRUMENTS];
+//static float fModulationPhase[NUM_INSTRUMENTS];
+
+// From vstxsynthproc.cpp
+static float fShape[NUM_INSTRUMENTS][4][NUM_OVERTONES];  // Overtone shape for each ADSR thingies
+float detuneFactor[NUM_OVERTONES];  // Independent of instrument
+
+// Interpolated parameters
+// TODO: Make it one array
+float adsrVolume[NUM_INSTRUMENTS];
+float adsrQuak[NUM_INSTRUMENTS];
+float adsrDistort[NUM_INSTRUMENTS];
+float adsrNoise[NUM_INSTRUMENTS];
+float adsrDetune[NUM_INSTRUMENTS];
+float adsrFreq[NUM_INSTRUMENTS];
+float adsrSpeed[NUM_INSTRUMENTS];
+float adsrShape[NUM_INSTRUMENTS][4];
 
 // attack values and stuff
 static int iADSR[NUM_INSTRUMENTS];
@@ -118,6 +135,21 @@ void mzk_prepare_block(short *blockBuffer)
 		// Go over all samples
 		sampleID = startSampleID;
 
+        // Volume?
+        // TODO: MIDI velocity
+        //float vol = (float)((double)currentVelocity * midiScaler * curProgram->fMasterVolume) * 32.0f;
+        float vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
+
+        // Get parameters locally
+        float panning = float_instrument_parameters_[instrument][K_MASTER_PANNING];
+        float nextADSRVolume = float_instrument_parameters_[instrument][K_VOLUME + iADSR[instrument] + 1];
+        float nextADSRQuak = float_instrument_parameters_[instrument][K_QUAK + iADSR[instrument] + 1];
+        float nextADSRDistort = float_instrument_parameters_[instrument][K_DISTORT + iADSR[instrument] + 1];
+        float nextADSRNoise = float_instrument_parameters_[instrument][K_NOISE + iADSR[instrument] + 1];
+        float nextADSRDetune = float_instrument_parameters_[instrument][K_DETUNE + iADSR[instrument] + 1];
+        float nextADSRFreq = float_instrument_parameters_[instrument][K_FREQ + iADSR[instrument] + 1];
+        float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
+
 		// Set the reverberation buffer length at key start (no interpolation)
 		reverbBufferLength[0] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR + 1;
 		reverbBufferLength[1] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR * 7 / 17 + 1;
@@ -132,6 +164,24 @@ void mzk_prepare_block(short *blockBuffer)
 				// Key on
 				iADSR[instrument] = 0; // attack
 				fADSRVal[instrument] = 0.0f; // starting up
+
+                nextADSRVolume = float_instrument_parameters_[instrument][K_VOLUME + iADSR[instrument] + 1];
+                nextADSRQuak = float_instrument_parameters_[instrument][K_QUAK + iADSR[instrument] + 1];
+                nextADSRDistort = float_instrument_parameters_[instrument][K_DISTORT + iADSR[instrument] + 1];
+                nextADSRNoise = float_instrument_parameters_[instrument][K_NOISE + iADSR[instrument] + 1];
+                nextADSRDetune = float_instrument_parameters_[instrument][K_DETUNE + iADSR[instrument] + 1];
+                nextADSRFreq = float_instrument_parameters_[instrument][K_FREQ + iADSR[instrument] + 1];
+                invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
+
+                adsrVolume[instrument] = float_instrument_parameters_[instrument][K_VOLUME + iADSR[instrument] + 1];
+                adsrQuak[instrument] = float_instrument_parameters_[instrument][K_QUAK + iADSR[instrument] + 1];
+                adsrDistort[instrument] = float_instrument_parameters_[instrument][K_DISTORT + iADSR[instrument] + 1];
+                adsrNoise[instrument] = float_instrument_parameters_[instrument][K_NOISE + iADSR[instrument] + 1];
+                adsrDetune[instrument] = float_instrument_parameters_[instrument][K_DETUNE + iADSR[instrument] + 1];
+                adsrFreq[instrument] = float_instrument_parameters_[instrument][K_FREQ + iADSR[instrument] + 1];
+
+                // TODO: Volume based on velocity
+                vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
 
 				// Apply delta-note
 				currentNote[instrument] += savedNote[instrument][currentNoteIndex[instrument]];
@@ -163,15 +213,44 @@ void mzk_prepare_block(short *blockBuffer)
 		for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++)
 		{
 			// Process ADSR envelope
-#if 1
+            // Process ADSR envelope
+            if (iADSR[instrument] == 0) {
+                fADSRVal[instrument] += (1.0f - fADSRVal[instrument]) *
+                    (float_instrument_parameters_[instrument][K_ADSR_SPEED + 0] / 1024.0f);
+            }
+            // Go from attack to decay
+            if (iADSR[instrument] == 0 && fADSRVal[instrument] > 0.75) {
+                iADSR[instrument] = 1;
+                nextADSRVolume = float_instrument_parameters_[instrument][K_VOLUME + iADSR[instrument] + 1];
+                nextADSRQuak = float_instrument_parameters_[instrument][K_QUAK + iADSR[instrument] + 1];
+                nextADSRDistort = float_instrument_parameters_[instrument][K_DISTORT + iADSR[instrument] + 1];
+                nextADSRNoise = float_instrument_parameters_[instrument][K_NOISE + iADSR[instrument] + 1];
+                nextADSRDetune = float_instrument_parameters_[instrument][K_DETUNE + iADSR[instrument] + 1];
+                nextADSRFreq = float_instrument_parameters_[instrument][K_FREQ + iADSR[instrument] + 1];
+                invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
+            }
+
+            // interpolate volume according to ADSR envelope
+            adsrVolume[instrument] += (nextADSRVolume - adsrVolume[instrument]) * invADSRSpeed;
+            adsrQuak[instrument] += (nextADSRQuak - adsrQuak[instrument]) * invADSRSpeed;
+            adsrDistort[instrument] += (nextADSRDistort - adsrDistort[instrument]) * invADSRSpeed;
+            adsrNoise[instrument] += (nextADSRNoise - adsrNoise[instrument]) * invADSRSpeed;
+            adsrDetune[instrument] += (nextADSRDetune - adsrDetune[instrument]) * invADSRSpeed;
+            adsrFreq[instrument] += (nextADSRFreq - adsrFreq[instrument]) * invADSRSpeed;
+            for (int i = 0; i < NUM_OVERTONES; i++)
+            {
+                adsrShape[instrument][i] += (fShape[instrument][iADSR[instrument] + 1][i] - adsrShape[instrument][i]) * invADSRSpeed;
+            }
+
 			// fade out on new instrument (but not on noteoff...)
+            // (deathcounter)
+            float deathVolume = 1.0f;
 			if (savedNoteTime[instrument][currentNoteIndex[instrument]] == 0 &&
 				sample >= MZK_BLOCK_SIZE - 512 &&
 			    savedNote[instrument][currentNoteIndex[instrument]] != -128)
 			{
-				//fADSRVal[instrument] -= 1.0f / 512.0f;
+                deathVolume = (MZK_BLOCK_SIZE - sample) / 512.0f;
 			}
-#endif
 
 			// Some optimziation?
 			//if (fADSRVal[instrument] < 1.0f / 65536.0f) fADSRVal[instrument] = 0.0f;
@@ -201,7 +280,7 @@ void mzk_prepare_block(short *blockBuffer)
 			// Ignore denormals..
 			//if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
 
-			floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][0];
+			floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][0] * vol * deathVolume;
 			//floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][2];
 			//floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][1];
 			//floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][3];
@@ -312,4 +391,27 @@ void mzk_init()
 		mzkPlayBlock(blockBuffer);
 	}
 #endif
+
+    // Convert int parameters to float parameters
+    for (int inst = 0; inst < NUM_INSTRUMENTS; inst++) {
+        for (int param = 0; param < NUM_INSTRUMENT_PARAMETERS; param++) {
+            float_instrument_parameters_[inst][param] = (float)instrumentParams[inst][param] / 128.0f;
+        }
+    }
+
+    // Set the overtone shape of the oscilators for the 4 different ADSR stuffsies
+    // Some intermediate setting of shape stuff
+    for (int inst = 0; inst < NUM_INSTRUMENTS; inst++) {
+        for (int i = 0; i < NUM_OVERTONES; i++) {
+            for (int j = 0; j < 4; j++) {
+                fShape[inst][j][i] = expRandomBuffer[i + instrumentParams[inst][K_SHAPE + j]*NUM_OVERTONES];
+            }
+        }
+    }
+
+    // Detuning constants
+    for (int i = 0; i < NUM_OVERTONES; i++) {
+        detuneFactor[i] = (randomBuffer[i] - 0.5f);
+    }
+
 }
