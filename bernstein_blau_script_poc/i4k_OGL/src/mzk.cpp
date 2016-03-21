@@ -217,7 +217,6 @@ void mzk_prepare_block(short *blockBuffer)
 		//float baseFreq = freqtab[currentNote[instrument] & 0x7f] * fScaler;
 		float baseFreq = 8.175f * (float)exp2jo((float)currentNote[instrument] * (1.0f/12.0f)) * fScaler;
 
-        if (adsrVolume[instrument] > 1e-4 || nextADSRVolume > 1e-4)
 		for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++)
 		{
 			// Process ADSR envelope
@@ -270,6 +269,7 @@ void mzk_prepare_block(short *blockBuffer)
             int maxOvertones = (int)(3.0f / baseFreq);
             float overtoneLoudness = 1.0f;
             float overallLoudness = 0.0f;
+            if (adsrVolume[instrument] > 1e-4 || nextADSRVolume > 1e-4)
             for (int i = 0; i < NUM_OVERTONES; i++)
             {
                 if (i < maxOvertones)
@@ -367,7 +367,7 @@ void mzk_prepare_block(short *blockBuffer)
 		if (val < -32767) val = -32767;
 		blockBuffer[sample] = val;
 #else
-		float val = floatOutput[0][sample] * 4.0f;
+		float val = floatOutput[0][sample] * 8.0f;
 		if (val > 1.5f) val = 1.5f;
 		if (val < -1.5f) val = -1.5f;
 		val = (float)sin(val) * 32768.0f;
