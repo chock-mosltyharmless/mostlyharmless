@@ -15,7 +15,7 @@
 #define LOG_2_E 1.44269f
 #define fScaler ((float)((double)2*PI / (double)MZK_RATE))
 
-#define NUM_INSTRUMENTS 2
+#define NUM_INSTRUMENTS 8
 #define NUM_INSTRUMENT_PARAMETERS 35
 // Number of additive overtones
 #define NUM_OVERTONES 16
@@ -49,7 +49,7 @@ static int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pul
 // The note index that the instrument is on
 static int currentNoteIndex[NUM_INSTRUMENTS];
 static int currentNote[NUM_INSTRUMENTS];
-static float fPhase[NUM_INSTRUMENTS][NUM_OVERTONES][NUM_Stereo_VOICES]; // Phase of the instrument
+static float fPhase[NUM_INSTRUMENTS][NUM_OVERTONES]; // Phase of the instrument
 //static float fTimePoint[NUM_INSTRUMENTS];
 //static float fModulationPhase[NUM_INSTRUMENTS];
 
@@ -66,7 +66,7 @@ float adsrNoise[NUM_INSTRUMENTS];
 float adsrDetune[NUM_INSTRUMENTS];
 float adsrFreq[NUM_INSTRUMENTS];
 float adsrSpeed[NUM_INSTRUMENTS];
-float adsrShape[NUM_INSTRUMENTS][4];
+float adsrShape[NUM_INSTRUMENTS][NUM_OVERTONES];
 
 // attack values and stuff
 static int iADSR[NUM_INSTRUMENTS];
@@ -179,6 +179,9 @@ void mzk_prepare_block(short *blockBuffer)
                 adsrNoise[instrument] = float_instrument_parameters_[instrument][K_NOISE + iADSR[instrument] + 1];
                 adsrDetune[instrument] = float_instrument_parameters_[instrument][K_DETUNE + iADSR[instrument] + 1];
                 adsrFreq[instrument] = float_instrument_parameters_[instrument][K_FREQ + iADSR[instrument] + 1];
+                for (int i = 0; i < NUM_OVERTONES; i++) {
+                    adsrShape[instrument][i] = fShape[instrument][0][i];
+                }
 
                 // TODO: Volume based on velocity
                 vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
@@ -189,10 +192,7 @@ void mzk_prepare_block(short *blockBuffer)
 				// Set the oscillator phases to zero
 				for (int i = 0; i < NUM_OVERTONES; i++)
 				{
-					for (int j = 0; j < NUM_Stereo_VOICES; j++)
-					{
-						fPhase[instrument][i][j] = 0.f;
-					}
+        			fPhase[instrument][i] = 0.f;
 				}
 			}
 			else
@@ -230,6 +230,7 @@ void mzk_prepare_block(short *blockBuffer)
                 invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
             }
 
+#if 1
             // interpolate volume according to ADSR envelope
             adsrVolume[instrument] += (nextADSRVolume - adsrVolume[instrument]) * invADSRSpeed;
             adsrQuak[instrument] += (nextADSRQuak - adsrQuak[instrument]) * invADSRSpeed;
@@ -237,10 +238,10 @@ void mzk_prepare_block(short *blockBuffer)
             adsrNoise[instrument] += (nextADSRNoise - adsrNoise[instrument]) * invADSRSpeed;
             adsrDetune[instrument] += (nextADSRDetune - adsrDetune[instrument]) * invADSRSpeed;
             adsrFreq[instrument] += (nextADSRFreq - adsrFreq[instrument]) * invADSRSpeed;
-            for (int i = 0; i < NUM_OVERTONES; i++)
-            {
+            for (int i = 0; i < NUM_OVERTONES; i++) {
                 adsrShape[instrument][i] += (fShape[instrument][iADSR[instrument] + 1][i] - adsrShape[instrument][i]) * invADSRSpeed;
             }
+#endif
 
 			// fade out on new instrument (but not on noteoff...)
             // (deathcounter)
@@ -257,10 +258,68 @@ void mzk_prepare_block(short *blockBuffer)
 					
 			float outAmplitude[NUM_Stereo_VOICES] = {0};
 
-			outAmplitude[0] += (float)sin(fPhase[instrument][0][0]);
-            fPhase[instrument][0][0] += baseFreq;
-			while (fPhase[instrument][0][0] > 2.0f * PI) fPhase[instrument][0][0] -= 2.0f * (float)PI;
+#if 1
+            int maxOvertones = (int)(3.0f / baseFreq);
+            float overtoneLoudness = 1.0f;
+            float overallLoudness = 0.0f;
+            for (int i = 0; i < NUM_OVERTONES; i++)
+            {
+                if (i < maxOvertones)
+                {
+                    outAmplitude[0] += (float)sin(fPhase[instrument][i]) * overtoneLoudness *
+                        adsrShape[instrument][i] * (1.0f - panning);
+                    outAmplitude[1] += (float)sin(fPhase[instrument][i]) * overtoneLoudness *
+                        adsrShape[instrument][i] * panning;
+                    fPhase[instrument][i] += baseFreq * (i+1) * (adsrFreq[instrument]*4.0f) *
+                        (1.0f + adsrDetune[instrument] * detuneFactor[i] * 0.5f);
+                    fPhase[instrument][i] += baseFreq * (i + 1);
+                    while (fPhase[instrument][i] > 2.0f * PI) fPhase[instrument][i] -= 2.0f * (float)PI;
+                }
+                overallLoudness += overtoneLoudness * adsrShape[instrument][i];
+                overtoneLoudness *= adsrQuak[instrument] * 2.0f;
+            }
+#else
+            float overallLoudness = 1.0f;
+			outAmplitude[0] += (float)sin(fPhase[instrument][0]);
+            fPhase[instrument][0] += baseFreq;
+			while (fPhase[instrument][0] > 2.0f * PI) fPhase[instrument][0] -= 2.0f * (float)PI;
+#endif
 
+#if 1
+            // Ring modulation with noise
+            for (int i = 0; i < NUM_Stereo_VOICES; i++)
+            {
+                // Ring modulation with noise
+                outAmplitude[i] *= 1.0f + (lowNoise[sampleID % RANDOM_BUFFER_SIZE] - 1.0f) * adsrNoise[instrument];
+            }
+#endif
+
+            // adjust amplitude
+            for (int i = 0; i < NUM_Stereo_VOICES; i++) {
+                // TODO: This is an evil hack to avoid silence?
+                if (overallLoudness > 1.0f / (float)(1<<24)) outAmplitude[i] /= overallLoudness;
+
+                // Distort
+                float distortMult = (float)exp(6.0f*adsrDistort[instrument]);
+                outAmplitude[i] *= distortMult;
+                outAmplitude[i] = 2.0f * (1.0f / (1.0f + (float)exp(-outAmplitude[i])) - 0.5f);
+                outAmplitude[i] /= distortMult;
+            }
+
+            // Put everything into the reverb buffers
+            int reverbPos = sampleID % MAX_DELAY_LENGTH;
+            for (int j = 0; j < NUM_Stereo_VOICES; j++)
+            {
+                reverbBuffer[instrument][reverbPos][j] = outAmplitude[j] * vol * adsrVolume[instrument] * deathVolume;
+
+                // Do the reverb feedback
+                int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
+                int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]);
+                reverbBuffer[instrument][reverbPos][j] += float_instrument_parameters_[instrument][K_DELAY_FEED] * reverbBuffer[instrument][fromLocation % MAX_DELAY_LENGTH][fromBuffer];
+                if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
+            }
+
+#if 0
             // Put everything into the reverb buffers
 			int reverbPos = sampleID % MAX_DELAY_LENGTH;
 			float totalLoudness = 0.5f;
@@ -269,6 +328,7 @@ void mzk_prepare_block(short *blockBuffer)
 			float ampl = outAmplitude[0];
 
 			reverbBuffer[instrument][reverbPos][0] = totalLoudness * ampl;
+#endif
 			
 			// Do the reverb feedback
 #if 0
@@ -280,10 +340,10 @@ void mzk_prepare_block(short *blockBuffer)
 			// Ignore denormals..
 			//if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
 
-			floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][0] * vol * deathVolume;
-			//floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][2];
-			//floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][1];
-			//floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][3];
+			floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][0];
+			floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][2];
+			floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][1];
+			floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][3];
 
 			sampleID++;
 		}
