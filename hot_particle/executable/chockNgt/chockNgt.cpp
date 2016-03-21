@@ -849,7 +849,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 break;
             case VK_LEFT:
                 if (!music_is_playing) {
-                    audio_.PlaySound("musik_bearb.wav", 5, false, -1, error_string);
+                    audio_.PlaySound("musik_bearb.wav", 5, false, -1, error_string,0.4F);
                     audio_.StopSound(3, 18.0f, error_string);
                     noise_is_playing = false;
                     music_is_playing = true;

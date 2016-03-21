@@ -307,8 +307,10 @@ int Zimmer::Draw(float time) {
     // 542,437 - 691,565
     float tvl = -0.3525f;
     float tvr = -0.09375f;
-    float tvt = 0.162f;
-    float tvb = -0.224f;
+    //float tvt = 0.162f;
+    //float tvb = -0.224f;
+    float tvt = 0.172f;
+    float tvb = -0.214f;
     if (current_panya_id_ >= 0) {
         float panya_time = time - panya_start_time_;
 
