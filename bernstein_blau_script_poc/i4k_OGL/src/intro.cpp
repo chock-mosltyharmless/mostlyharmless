@@ -32,7 +32,7 @@
 // Scripting data (loaded from file)
 const int kMaxNumScenes = 1000;
 //const int kSceneTic = 4410; // Number of 1/44100 seconds per scene-time-unit?
-const int kSceneTic = AUDIO_BUFFER_SIZE;
+const int kSceneTic = 2 * AUDIO_BUFFER_SIZE;
 int num_scenes_ = 0;
 int script_[kMaxNumScenes][3]; // Duration, seed, movement
 
