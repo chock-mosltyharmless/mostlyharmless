@@ -308,9 +308,9 @@ void mzk_prepare_block(short *blockBuffer)
 
                 // Distort
 #if 1
-                float distortMult = (float)exp(6.0f*adsrDistort[instrument]);
+                float distortMult = (float)exp2jo(LOG_2_E * 6.0f*adsrDistort[instrument]);
                 outAmplitude[i] *= distortMult;
-                outAmplitude[i] = 2.0f * (1.0f / (1.0f + (float)exp(-outAmplitude[i])) - 0.5f);
+                outAmplitude[i] = 2.0f * (1.0f / (1.0f + (float)exp2jo(LOG_2_E * -outAmplitude[i])) - 0.5f);
                 outAmplitude[i] /= distortMult;
 #endif
             }
