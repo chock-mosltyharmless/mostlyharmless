@@ -11,7 +11,7 @@
 #define USEDSOUND
 #define USEDGRAPHICS
 //#define CLEANEXIT
-#define XRES        1800
+#define XRES        1024
 #define YRES        (1080 * XRES / 1920)
 //#define YRES        (480 * XRES / 640)
 

@@ -367,7 +367,7 @@ void mzk_prepare_block(short *blockBuffer)
 		if (val < -32767) val = -32767;
 		blockBuffer[sample] = val;
 #else
-		float val = floatOutput[0][sample] * 8.0f;
+		float val = floatOutput[0][sample] * 4.0f;
 		if (val > 1.5f) val = 1.5f;
 		if (val < -1.5f) val = -1.5f;
 		val = (float)sin(val) * 32768.0f;
