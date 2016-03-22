@@ -1,0 +1,34 @@
+#ifndef F_MASTER_VOLUME
+#define K_VOLUME               0
+#define K_QUAK                 4
+#define K_DISTORT              8
+#define K_NOISE               12
+#define K_DETUNE              16
+#define K_FREQ                20
+#define K_SHAPE               24
+#define K_ADSR_SPEED          28
+#define K_DELAY_FEED          31
+#define K_DELAY_LENGTH        32
+#define F_MASTER_VOLUME       33
+#define K_MASTER_PANNING      34
+#endif
+
+#pragma data_seg(".instrumentParams")
+unsigned char instrumentParams_817135680[] = {
+  56, 128, 27, 0,  12, 32, 22, 0,  83, 79, 22, 0,  0, 0, 0, 0,  1, 1, 0, 0,  32, 32, 32, 32,  8, 12, 9, 8,  0, 0, 128,  77,  90,  23,  54
+};
+
+#define NUM_NOTES_817135680 19
+
+#pragma data_seg(".savedNoteTime")
+unsigned short savedNoteTime_817135680[] = {
+  0, 96, 96, 96, 96, 96, 96, 96, 89, 1344, 64, 64, 64, 64, 64, 64, 64, 48, 52, 255};
+
+#pragma data_seg(".savedNote")
+signed char savedNote_817135680[] = {
+  69, -14, -2, -1, 17, -14, -2, -1, -128, 17, -14, -2, -1, 17, -14, -2, -1, -128, -128,};
+
+#pragma data_seg(".savedVelocity")
+signed char savedVelocity_817135680[] = {
+ 127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
+
