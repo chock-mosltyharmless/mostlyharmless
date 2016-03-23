@@ -402,9 +402,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         intro_do(t);
 #endif
 
-#if 0
-        if( t > (MZK_DURATION*1000) )
-		{
+#if 1
+        if( t > (MZK_DURATION*AUDIO_BUFFER_SIZE) ) {
 			done = 1;
 		}
 #endif
