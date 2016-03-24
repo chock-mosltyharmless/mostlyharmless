@@ -26,15 +26,11 @@
 #pragma data_seg(".fragmentMainParticle")
 const GLchar fragmentMainParticle[]="\
 #version 330 core\n\
-in vec2 sprite_pos_;\
-in vec4 sprite_color_;\
-out vec4 out_color_;\
-void main(void) {\
-    vec2 abs_pos = abs(sprite_pos_);\
-    float dist1 = 0.9 - abs_pos.x;\
-    float dist2 = 0.9 - 0.9 * abs_pos.y - 0.5 * abs_pos.x;\
-    float dist = min(dist1, dist2);\
-    out_color_ = vec4(smoothstep(0.0, 0.1, dist)) * sprite_color_.rgba;\
+in vec2 u;\
+in vec4 o;\
+out vec4 c;\
+void main(void){\
+c=smoothstep(.0,.1,min(.9-abs(u).x,.9-.9*abs(u).y-.5*abs(u).x))*o;\
 }";
 
 #pragma data_seg(".geometryMainParticle")
@@ -42,36 +38,33 @@ const GLchar geometryMainParticle[]="\
 #version 330 core\n\
 layout(points) in;\
 layout(triangle_strip, max_vertices=4) out;\
-in vec4 particle_color_[];\
-in float particle_magic_[];\
-out vec4 sprite_color_;\
-out vec2 sprite_pos_;\
+in vec4 p[];\
+in float m[];\
+out vec4 o;\
+out vec2 u;\
 uniform mat4 r;\
-void main() {\
-    vec4 pos = gl_in[0].gl_Position;\
-    float radius = .001 + abs(pos.z - .5) * .025;\
-    float luminance = .001 / radius;\
-    radius = min(radius, 0.2 * pos.w);\
-    float brightness = 1. * pow(luminance, 2.);\
-    float c = luminance;\
-    brightness *= smoothstep(c, 0., particle_magic_[0]) / c;\
-    mat2 rot = radius * mat2(.55, .2, -.1, .98);\
-    sprite_color_ = brightness * particle_color_[0];\
-    if (brightness >.01) {\
-        sprite_pos_ = vec2(-1.,1.);\
-        gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);	\
-        EmitVertex();\
-        sprite_pos_ = vec2(1.,1.);\
-        gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);\
-        EmitVertex();\
-        sprite_pos_ = vec2(-1.,-1.);\
-        gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);\
-        EmitVertex();\
-        sprite_pos_ = vec2(1.,-1.);\
-        gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);\
-        EmitVertex();\
-    }\
-    EndPrimitive();\
+void main(){\
+vec4 e=gl_in[0].gl_Position;\
+float q=.001+abs(e.z-.5)*.025;\
+mat2 w=min(q,.2*e.w)*mat2(.55,.2,-.1,.98);\
+q=.001/q;\
+q=1.*pow(q,2.)*smoothstep(q,.0,m[0])/q;\
+if (q>.01){\
+o=q*p[0];\
+u=vec2(-1.,1.);\
+gl_Position=e+vec4(w*u,.0,.0);\
+EmitVertex();\
+u=vec2(1.,1.);\
+gl_Position=e+vec4(w*u,.0,.0);\
+EmitVertex();\
+u=vec2(-1.,-1.);\
+gl_Position=e+vec4(w*u,.0,.0);\
+EmitVertex();\
+u=vec2(1.,-1.);\
+gl_Position=e+vec4(w*u,0.,0.);\
+EmitVertex();\
+}\
+EndPrimitive();\
 }";
 
 #pragma data_seg(".vertexMainHand")
@@ -79,11 +72,11 @@ const GLchar vertexMainHand[]="\
 #version 330 core\n\
 layout (location=0) in vec4 position_;\
 layout (location=1) in vec4 color_;\
-out vec4 particle_color_;\
-out float particle_magic_;\
+out vec4 p;\
+out float m;\
 uniform mat4 r;\
-bool circle(vec2 pixel, vec2 pos, float size) {\
-    return (length(pixel-pos)<size);\
+bool circle(vec2 pixel, vec2 e, float size) {\
+    return (length(pixel-e)<size);\
 }\
 bool rect(vec2 pixel, vec2 topright, vec2 bottomright) {\
     return (pixel.x < topright.x && pixel.y < topright.y && pixel.x > bottomright.x && pixel.y > bottomright.y);\
@@ -95,13 +88,13 @@ bool fotze(vec2 pixel, float size) {\
     return (pixel.x > -size && pixel.x < size && pixel.y > -size && pixel.y < size && pixel.x-pixel.y < 1.4*size && pixel.x-pixel.y > -1.4*size);\
 }\
 void main(void) {\
-    float time = r[0][0];\
-    float yrot = sin(time*0.1)*1.;\
+    float t = r[0][0];\
+    float yrot = sin(t*0.1)*1.;\
     yrot = 1.2 - 1.5 * abs(yrot);\
     mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));\
-    vec3 pos = position_.xyz;\
-    vec2 q = pos.xy * 0.5 + vec2(0.1, 0.1);\
-    float alpha = max(0., 1.2 - length(pos.xy));\
+    vec3 e = position_.xyz;\
+    vec2 q = e.xy * 0.5 + vec2(0.1, 0.1);\
+    float alpha = max(0., 1.2 - length(e.xy));\
     vec3 color = vec3(0.6,0.8,0.9);\
     if (circle(q, vec2(0.), 0.2)) {color = vec3(1.,1.,.8); alpha = 1.;}\
     if (circle(q, vec2(-0.15, 0.3), 0.05)) {color = vec3(1.,1.,.8); alpha = 1.;}\
@@ -112,20 +105,20 @@ void main(void) {\
     if (srect(q, vec4(0., 0.58, 0.155, 0.28))) {color = vec3(1.,1.,.8); alpha = 1.;}\
     if (fotze(q, 0.1)) {color = vec3(0.2); alpha = 1.;}\
     if (fotze(q, 0.08)) {color = vec3(0.9,0.5,0.3); alpha = 1.;}\
-    alpha *= smoothstep(1., 0.5, abs(pos.z));\
-    float explode = smoothstep(7., 20., time);\
-    pos.x += 0.01 * cos(pos.z * 454. + time) + explode * sin(pos.z*225.);\
-    pos.y += 0.01 * sin(pos.z * 133. + time) + explode * cos(pos.z*203.);\
-    pos.z = pos.z * (0.03 + explode);\
-    pos.xy = pos.xy * vec2(0.6, 0.7);\
-    pos.xz = pos.xz * yrotmat;\
-    pos.z += 0.5 - .3 * yrot; \
-    pos.z -= 0.12 * time - 1.;\
-    gl_Position = vec4(pos.xyz, pos.z);\
-    particle_magic_ = color_.a;\
+    alpha *= smoothstep(1., 0.5, abs(e.z));\
+    float explode = smoothstep(7., 20., t);\
+    e.x += 0.01 * cos(e.z * 454. + t) + explode * sin(e.z*225.);\
+    e.y += 0.01 * sin(e.z * 133. + t) + explode * cos(e.z*203.);\
+    e.z = e.z * (0.03 + explode);\
+    e.xy = e.xy * vec2(0.6, 0.7);\
+    e.xz = e.xz * yrotmat;\
+    e.z += 0.5 - .3 * yrot; \
+    e.z -= 0.12 * t - 1.;\
+    gl_Position = vec4(e.xyz, e.z);\
+    m = color_.a;\
     alpha = alpha * color_.a;\
-    particle_color_.rgb = color * alpha / (10. * pow(color_.a + .1*abs(sin(time*0.1+color_.a*100.)), 2.3) + 0.01);\
-    particle_color_.a = alpha;\
+    p.rgb = color * alpha / (10. * pow(color_.a + .1*abs(sin(t*0.1+color_.a*100.)), 2.3) + 0.01);\
+    p.a = alpha;\
 }";
 
 #pragma data_seg(".vertexMainParticle")
@@ -133,58 +126,58 @@ const GLchar vertexMainParticle[]="\
 #version 330 core\n\
 layout (location=0) in vec4 position_;\n\
 layout (location=1) in vec4 color_;\n\
-out vec4 particle_color_;\
-out float particle_magic_;\
+out vec4 p;\
+out float m;\
 uniform mat4 r;\
-float GetImplicit(vec3 pos) {\
-    float time = r[0][0];\
+float GetImplicit(vec3 e) {\
+    float t = r[0][0];\
     float first_amount = r[0][1];\
     float second_amount = r[0][2];\
-    pos.z -= sin(pos.y * cos(pos.x * 0.4) * 0.3) * second_amount * 5.5;\
-    pos.x -= sin(pos.z*0.5) * second_amount * 5.5;\
-    pos.y -= sin(pos.x*.25) * second_amount * 5.5;\
-    pos.x -= sin(time * cos(pos.x * 2.1) * 0.3) * first_amount * 0.1;\
-    pos.y -= cos(time * cos(pos.x * 0.5) * 0.4) * first_amount * 0.1;\
-    pos.z -= sin(time * sin(pos.y * 0.2) * 0.5) * first_amount * 0.1;\
+    e.z -= sin(e.y * cos(e.x * 0.4) * 0.3) * second_amount * 5.5;\
+    e.x -= sin(e.z*0.5) * second_amount * 5.5;\
+    e.y -= sin(e.x*.25) * second_amount * 5.5;\
+    e.x -= sin(t * cos(e.x * 2.1) * 0.3) * first_amount * 0.1;\
+    e.y -= cos(t * cos(e.x * 0.5) * 0.4) * first_amount * 0.1;\
+    e.z -= sin(t * sin(e.y * 0.2) * 0.5) * first_amount * 0.1;\
     float dist = r[3][1] * 25.0;\
     float dist2 = r[3][2] * 5.0;\
     float dist3 = r[3][3];\
-    float implicit = length(pos) - sin(dist * length(pos)) * dist2 - dist3 - 0.2 * sin(time*0.);\
+    float implicit = length(e) - sin(dist * length(e)) * dist2 - dist3 - 0.2 * sin(t*0.);\
     return implicit;\
 }\
 void main(void) {\
-    float time = r[0][0];\
-    float yrot = sin(time*0.15)*0.5;\
+    float t = r[0][0];\
+    float yrot = sin(t*0.15)*0.5;\
     mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));\
-    vec3 pos = position_.xyz;\
-    float implicit = GetImplicit(pos.xyz);\
+    vec3 e = position_.xyz;\
+    float implicit = GetImplicit(e.xyz);\
     float amount = 1. + r[1][1]*0.4 - smoothstep(0.0, 0.4, abs(implicit));\
     const float dd = 0.01;\
-    float dx_implicit = GetImplicit(pos.xyz + vec3(dd, 0., 0.)) - implicit;\
-    float dy_implicit = GetImplicit(pos.xyz + vec3(0., dd, 0.)) - implicit;\
-    float dz_implicit = GetImplicit(pos.xyz + vec3(0., 0., dd)) - implicit;\
-    vec3 f = pos.xyz * 0.45;\
-    f.x += 12. * (r[1][0] * sin(time*0.49) * sin(pos.z*7.) + 1. - r[1][0]) * dx_implicit * amount * r[0][3];\
-    f.y += 12. * (r[1][0] * sin(time*0.31) * sin(pos.x*5.) + 1. - r[1][0]) * dy_implicit * amount * r[0][3];\
-    f.z += 12. * (r[1][0] * sin(time*0.37) * sin(pos.y*6.) + 1. - r[1][0]) * dz_implicit * amount * r[0][3];\
+    float dx_implicit = GetImplicit(e.xyz + vec3(dd, 0., 0.)) - implicit;\
+    float dy_implicit = GetImplicit(e.xyz + vec3(0., dd, 0.)) - implicit;\
+    float dz_implicit = GetImplicit(e.xyz + vec3(0., 0., dd)) - implicit;\
+    vec3 f = e.xyz * 0.45;\
+    f.x += 12. * (r[1][0] * sin(t*0.49) * sin(e.z*7.) + 1. - r[1][0]) * dx_implicit * amount * r[0][3];\
+    f.y += 12. * (r[1][0] * sin(t*0.31) * sin(e.x*5.) + 1. - r[1][0]) * dy_implicit * amount * r[0][3];\
+    f.z += 12. * (r[1][0] * sin(t*0.37) * sin(e.y*6.) + 1. - r[1][0]) * dz_implicit * amount * r[0][3];\
     f.xz = f.xz * yrotmat;\
     f.x *= 0.56;\
     f.z += 1.5 - 2. * r[2][2];\
     f.x += 0.25 - 0.5 * r[2][3];\
     f.y += 0.25 - 0.5 * r[3][0];\
     gl_Position = vec4(f, f.z);\
-    particle_magic_ = color_.a;\
-    particle_color_.r = 0.6 + length(pos.xyz) * .3;\
-    particle_color_.g = 1.1 - length(pos.xyz) * .4;\
-    particle_color_.b = 1.2 - length(pos.xy) * .7 - length(pos.z) * 0.3;\
-    particle_color_.rgb *= pow(1. - particle_magic_, 30.) * 3. + 1.0;\
-    particle_color_.rgb += pow(abs(sin(particle_magic_*100. + time)),10.);\
-    particle_color_.a = 1.0;\
-    float darkener = abs(sin(pos.x * r[1][2] * 8.) + cos(pos.z * r[1][3] * 8.) - sin(pos.y * r[2][0] * 8.));\
-    particle_color_.a += darkener * r[2][1];\
-    particle_color_.rgb -= vec3(darkener) * r[2][1] * 3.0;\
-    particle_color_.rgb = max(vec3(0.), particle_color_.rgb);\
-    particle_color_ *= vec4(amount) * (1.0 - abs(particle_magic_ - 0.5));\
+    m = color_.a;\
+    p.r = 0.6 + length(e.xyz) * .3;\
+    p.g = 1.1 - length(e.xyz) * .4;\
+    p.b = 1.2 - length(e.xy) * .7 - length(e.z) * 0.3;\
+    p.rgb *= pow(1. - m, 30.) * 3. + 1.0;\
+    p.rgb += pow(abs(sin(m*100. + t)),10.);\
+    p.a = 1.0;\
+    float darkener = abs(sin(e.x * r[1][2] * 8.) + cos(e.z * r[1][3] * 8.) - sin(e.y * r[2][0] * 8.));\
+    p.a += darkener * r[2][1];\
+    p.rgb -= vec3(darkener) * r[2][1] * 3.0;\
+    p.rgb = max(vec3(0.), p.rgb);\
+    p *= vec4(amount) * (1.0 - abs(m - 0.5));\
 }";
 
 // -------------------------------------------------------------------
