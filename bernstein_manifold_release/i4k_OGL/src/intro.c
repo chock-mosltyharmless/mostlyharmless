@@ -212,30 +212,6 @@ GLfloat colors_[TOTAL_NUM_PARTICLES * 4];
 //                          Code:
 // -------------------------------------------------------------------
 
-// Multiplices two 4x4 matrices
-void matrixMult(float src1[4][4], float src2[4][4], float dest[4][4])
-{
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
-            dest[i][j] = 0.0f;
-            for (int k = 0; k < 4; k++)
-            {
-                dest[i][j] += src1[i][k] * src2[k][j];
-            }
-        }
-    }
-}
-
-// Note that the character data must be allocated.
-void LoadTextFile(const char *filename, char *data, int data_size) {
-    FILE *fid = fopen(filename, "rb");
-    int num_read = fread(data, 1, data_size - 1, fid);
-    data[num_read] = 0;
-    fclose(fid);
-}
-
 // Create the particle locations and move them to the GPU
 void GenerateParticles(void) {
     unsigned int seed = 23690984;
@@ -429,28 +405,11 @@ void intro_do( long itime )
     // Set parameters to other locations, using seed stuff
     unsigned int start_seed = script_seed_[scene_id]; 
     unsigned int seed = start_seed;
-    parameterMatrix[0][1] = jo_frand(&seed);
-    parameterMatrix[0][2] = jo_frand(&seed);
-    parameterMatrix[0][3] = jo_frand(&seed);
+    for (int i = 1; i < 16; i++) {
+        parameterMatrix[0][i] = jo_frand(&seed);
+    }
 
-    parameterMatrix[1][0] = jo_frand(&seed);
-    parameterMatrix[1][1] = jo_frand(&seed);
-    parameterMatrix[1][2] = jo_frand(&seed);
-    parameterMatrix[1][3] = jo_frand(&seed);
-
-    parameterMatrix[2][0] = jo_frand(&seed);
-    parameterMatrix[2][1] = jo_frand(&seed);
-    parameterMatrix[2][2] = jo_frand(&seed);
-
-    //parameterMatrix[2][2] += (itime - last_effect_reset_time_) * 0.000001f * movement_speed_;
     parameterMatrix[2][2] += (itime) * 0.000001f * script_move_[scene_id];
-
-    parameterMatrix[2][3] = jo_frand(&seed);
-
-    parameterMatrix[3][0] = jo_frand(&seed);
-    parameterMatrix[3][1] = jo_frand(&seed);
-    parameterMatrix[3][2] = jo_frand(&seed);
-    parameterMatrix[3][3] = jo_frand(&seed);
 
     int location = glGetUniformLocation(shaderPrograms[0], "r");
     glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
