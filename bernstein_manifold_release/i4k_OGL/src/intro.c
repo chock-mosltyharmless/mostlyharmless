@@ -16,6 +16,10 @@
 #include "intro.h"
 #include "mzk.h"
 
+#include "script_seed.h"
+#include "script_move.h"
+#include "script_duration.h"
+
 // -------------------------------------------------------------------
 //                          SHADERS:
 // -------------------------------------------------------------------
@@ -186,14 +190,10 @@ void main(void) {\
 #define NUM_PARTICLES_PER_DIM 128
 #define TOTAL_NUM_PARTICLES (NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM)
 
-// Scripting data (loaded from file)
-#define kMaxNumScenes 1000
 //const int kSceneTic = 4410; // Number of 1/44100 seconds per scene-time-unit?
 #define kSceneTic (2 * AUDIO_BUFFER_SIZE)
-int num_scenes_ = 0;
-int script_[kMaxNumScenes][3]; // Duration, seed, movement
 
-                               // This is only used if SHADER_DEBUG is on, but I will leave it for now.
+// This is only used if SHADER_DEBUG is on, but I will leave it for now.
 HWND hWnd;
 #ifdef SHADER_DEBUG
 char err[4097];
@@ -265,15 +265,6 @@ void GenerateParticles(void) {
 
 void intro_init( void ) {
     // Load the script
-    num_scenes_ = 0;
-    FILE *fid = fopen("script.txt", "r");
-    while (num_scenes_ < kMaxNumScenes &&
-        fscanf(fid, "%d %d %d\n", &(script_[num_scenes_][0]),
-            &(script_[num_scenes_][1]), &(script_[num_scenes_][2])) > 0) {
-        num_scenes_++;
-    }
-    fclose(fid);
-
     // Create and link shader and stuff:
 
     // init objects:
@@ -414,9 +405,8 @@ void intro_do( long itime )
     // Find the scene in the script
     int scene_id = 0;
     int start_time = 0;
-    while (scene_id < num_scenes_ - 1 &&
-        start_time + script_[scene_id][0] * kSceneTic < itime) {
-        start_time += script_[scene_id][0] * kSceneTic;
+    while (start_time + (int)(script_duration_[scene_id]) * kSceneTic < itime) {
+        start_time += (int)(script_duration_[scene_id]) * kSceneTic;
         scene_id++;
     }
 
@@ -437,7 +427,7 @@ void intro_do( long itime )
     parameterMatrix[0][0] = itime / 44100.0f;
 
     // Set parameters to other locations, using seed stuff
-    unsigned int start_seed = script_[scene_id][1]; 
+    unsigned int start_seed = script_seed_[scene_id]; 
     unsigned int seed = start_seed;
     parameterMatrix[0][1] = jo_frand(&seed);
     parameterMatrix[0][2] = jo_frand(&seed);
@@ -453,7 +443,7 @@ void intro_do( long itime )
     parameterMatrix[2][2] = jo_frand(&seed);
 
     //parameterMatrix[2][2] += (itime - last_effect_reset_time_) * 0.000001f * movement_speed_;
-    parameterMatrix[2][2] += (itime) * 0.000001f * script_[scene_id][2];
+    parameterMatrix[2][2] += (itime) * 0.000001f * script_move_[scene_id];
 
     parameterMatrix[2][3] = jo_frand(&seed);
 

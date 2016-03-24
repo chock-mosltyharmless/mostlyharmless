@@ -153,6 +153,9 @@
     <ClInclude Include="src\intro.h" />
     <ClInclude Include="src\music.h" />
     <ClInclude Include="src\mzk.h" />
+    <ClInclude Include="src\script_duration.h" />
+    <ClInclude Include="src\script_move.h" />
+    <ClInclude Include="src\script_seed.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.c" />

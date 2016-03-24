@@ -22,6 +22,15 @@
     <ClInclude Include="src\mzk.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\script_duration.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\script_move.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\script_seed.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.c">
