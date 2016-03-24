@@ -170,6 +170,26 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\music\music.1047621568.txt" />
+    <Text Include="src\music\music.1131450432.txt" />
+    <Text Include="src\music\music.1204756416.txt" />
+    <Text Include="src\music\music.1361915840.txt" />
+    <Text Include="src\music\music.1519087552.txt" />
+    <Text Include="src\music\music.1676193728.txt" />
+    <Text Include="src\music\music.1833283520.txt" />
+    <Text Include="src\music\music.1990373312.txt" />
+    <Text Include="src\music\music.2147450944.txt" />
+    <Text Include="src\music\music.345727040.txt" />
+    <Text Include="src\music\music.419065792.txt" />
+    <Text Include="src\music\music.502833216.txt" />
+    <Text Include="src\music\music.576204736.txt" />
+    <Text Include="src\music\music.659984448.txt" />
+    <Text Include="src\music\music.733331392.txt" />
+    <Text Include="src\music\music.817135680.txt" />
+    <Text Include="src\music\music.890453952.txt" />
+    <Text Include="src\music\music.974307392.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

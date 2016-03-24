@@ -79,6 +79,7 @@ static float fADSRVal[NUM_INSTRUMENTS];
 static unsigned int seed;
 
 // create random value between -65534 and 65534?
+#if 0
 #pragma code_seg(".jo_rand")
 int jo_rand(unsigned int *s)
 {
@@ -88,14 +89,21 @@ int jo_rand(unsigned int *s)
     *s = (*s * a + c) % m;
     return (*s >> 8) % 65535;
 }
+#endif
 
 // TODO: Check implementation from somewhere else. Esp. %65535? Numeric recipies.
 #pragma code_seg(".jo_frand")
 float jo_frand(unsigned int *s)
 {
-    return (float)(jo_rand(s)) * (1.0f/65536.0f);
+    unsigned long a = 214013;
+    unsigned long c = 2531011;
+    unsigned long m = 4294967296-1;
+    *s = (*s * a + c) % m;
+    //return (*s >> 8) % 65535;
+    return (float)((*s >> 8) % 65535) * (1.0f/65536.0f);
 }
 
+#pragma code_seg(".ftoi_fast")
 int ftoi_fast(float f)
 {
     return _mm_cvtt_ss2si(_mm_load_ss(&f));     // SSE1 instructions for float->int

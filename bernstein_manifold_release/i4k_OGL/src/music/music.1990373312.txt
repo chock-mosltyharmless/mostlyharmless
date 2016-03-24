@@ -13,22 +13,22 @@
 #define K_MASTER_PANNING      34
 #endif
 
-#pragma data_seg(".instrumentParams")
-unsigned char instrumentParams_1990373312[] = {
-  0, 128, 128, 0,  0, 86, 50, 70,  0, 0, 50, 0,  0, 0, 0, 0,  0, 0, 0, 0,  36, 37, 37, 0,  126, 0, 0, 0,  122, 14, 20,  29,  14,  89,  54
-};
+//#pragma data_seg(".instrumentParams")
+//unsigned char instrumentParams_1990373312[] = {
+//  0, 128, 128, 0,  0, 86, 50, 70,  0, 0, 50, 0,  0, 0, 0, 0,  0, 0, 0, 0,  36, 37, 37, 0,  126, 0, 0, 0,  122, 14, 20,  29,  14,  89,  54
+//};
 
 #define NUM_NOTES_1990373312 6
 
-#pragma data_seg(".savedNoteTime")
+#pragma data_seg(".savedNoteTime_1990373312")
 unsigned short savedNoteTime_1990373312[] = {
   1321, 2, 14, 752, 1, 563, 255};
 
-#pragma data_seg(".savedNote")
+#pragma data_seg(".savedNote_1990373312")
 signed char savedNote_1990373312[] = {
   45, -128, -14, 26, -128, -128,};
 
-#pragma data_seg(".savedVelocity")
+#pragma data_seg(".savedVelocity_1990373312")
 signed char savedVelocity_1990373312[] = {
  127, 0, -127, 96, 0, 0,};
 

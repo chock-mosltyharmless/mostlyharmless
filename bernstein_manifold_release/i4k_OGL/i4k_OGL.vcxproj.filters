@@ -46,4 +46,60 @@
       <Filter>Source Files\_windows</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="src\music\music.345727040.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.419065792.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.502833216.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.576204736.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.659984448.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.733331392.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.817135680.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.890453952.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.974307392.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.1047621568.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.1131450432.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.1204756416.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.1361915840.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.1519087552.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.1676193728.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.1833283520.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.1990373312.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+    <Text Include="src\music\music.2147450944.txt">
+      <Filter>Source Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

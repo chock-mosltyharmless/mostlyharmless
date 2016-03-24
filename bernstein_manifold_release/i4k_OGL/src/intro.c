@@ -24,7 +24,7 @@
 //                          SHADERS:
 // -------------------------------------------------------------------
 #pragma data_seg(".fragmentMainParticle")
-const GLchar fragmentMainParticle[]="";//\
+const GLchar fragmentMainParticle[]="\
 #version 330 core\n\
 in vec2 sprite_pos_;\
 in vec4 sprite_color_;\
@@ -38,7 +38,7 @@ void main(void) {\
 }";
 
 #pragma data_seg(".geometryMainParticle")
-const GLchar geometryMainParticle[]="";//\
+const GLchar geometryMainParticle[]="\
 #version 330 core\n\
 layout(points) in;\
 layout(triangle_strip, max_vertices=4) out;\
@@ -75,7 +75,7 @@ void main() {\
 }";
 
 #pragma data_seg(".vertexMainHand")
-const GLchar vertexMainHand[]="";//\
+const GLchar vertexMainHand[]="\
 #version 330 core\n\
 layout (location=0) in vec4 position_;\
 layout (location=1) in vec4 color_;\
@@ -129,7 +129,7 @@ void main(void) {\
 }";
 
 #pragma data_seg(".vertexMainParticle")
-const GLchar vertexMainParticle[]="";//\
+const GLchar vertexMainParticle[]="\
 #version 330 core\n\
 layout (location=0) in vec4 position_;\n\
 layout (location=1) in vec4 color_;\n\
@@ -224,12 +224,12 @@ void GenerateParticles(void) {
     // Set vertex location
     int vertex_id = 0;
     int color_id = 0;
+    float zp = 1.0f;
     for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
-        float zp = 1.0f - 2.0f * (float)z / (float)NUM_PARTICLES_PER_DIM;
+        float yp = -1.0f;
         for (int y = 0; y < NUM_PARTICLES_PER_DIM; y++) {
-            float yp = -1.0f + 2.0f * (float)y / (float)NUM_PARTICLES_PER_DIM;
+            float xp = -1.0f;
             for (int x = 0; x < NUM_PARTICLES_PER_DIM; x++) {
-                float xp = -1.0f + 2.0f * (float)x / (float)NUM_PARTICLES_PER_DIM;
                 vertices_[vertex_id++] = xp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
                 vertices_[vertex_id++] = yp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
                 vertices_[vertex_id++] = zp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
@@ -239,8 +239,11 @@ void GenerateParticles(void) {
                 // fran
                 colors_[color_id++] = jo_frand(&seed);
                 //colors_[color_id - 1] = 0.5f;
+                xp += 2.0f / (float)NUM_PARTICLES_PER_DIM;
             }
+            yp += 2.0f / (float)NUM_PARTICLES_PER_DIM;
         }
+        zp -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
     }
 }
 
