@@ -20,15 +20,15 @@
 
 #define NUM_NOTES_419065792 17
 
-#pragma data_seg(".savedNoteTime_419065792")
+#pragma data_seg(".savedNoteTime")
 unsigned short savedNoteTime_419065792[] = {
   2074, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 564, 255};
 
-#pragma data_seg(".savedNote_419065792")
+#pragma data_seg(".savedNote")
 signed char savedNote_419065792[] = {
   11, 0, 0, 0, 0, 0, 0, -11, 0, 0, 0, 0, 0, 0, 0, -128, -128,};
 
-#pragma data_seg(".savedVelocity_419065792")
+#pragma data_seg(".savedVelocity")
 signed char savedVelocity_419065792[] = {
  127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
 

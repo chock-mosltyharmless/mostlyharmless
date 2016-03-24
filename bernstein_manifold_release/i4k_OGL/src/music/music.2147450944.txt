@@ -20,17 +20,17 @@
 
 #define NUM_NOTES_2147450944 38
 
-#pragma data_seg(".savedNoteTime_2147450944")
+#pragma data_seg(".savedNoteTime")
 unsigned short savedNoteTime_2147450944[] = {
   0, 96, 96, 96, 96, 96, 96, 96, 64, 25, 64, 64, 64, 64, 64, 64, 64, 64, 47, 17, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 64, 33,
   31, 64, 64, 64, 64, 292, 255};
 
-#pragma data_seg(".savedNote_2147450944")
+#pragma data_seg(".savedNote")
 signed char savedNote_2147450944[] = {
   33, -2, -2, -1, 5, -2, -2, -1, -128, 17, 0, 0, 0, 0, 0, 0, 0, 0, -128, -5, 0, 5, 0, 0, -2, -2, -1, 5, -2, -2, -1, -128,
   -7, -2, -2, -1, -128, -128,};
 
-#pragma data_seg(".savedVelocity_2147450944")
+#pragma data_seg(".savedVelocity")
 signed char savedVelocity_2147450944[] = {
  127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
  0, 0, 0, 0, 0, 0,};

@@ -67,60 +67,6 @@ EmitVertex();\
 EndPrimitive();\
 }";
 
-#pragma data_seg(".vertexMainHand")
-const GLchar vertexMainHand[]="\
-#version 330 core\n\
-layout (location=0) in vec4 o;\
-layout (location=1) in vec4 c;\
-out vec4 p;\
-out float m;\
-uniform mat4 r;\
-bool circle(vec2 pixel, vec2 e, float size) {\
-    return (length(pixel-e)<size);\
-}\
-bool rect(vec2 pixel, vec2 topright, vec2 bottomright) {\
-    return (pixel.x < topright.x && pixel.y < topright.y && pixel.x > bottomright.x && pixel.y > bottomright.y);\
-}\
-bool srect(vec2 pixel, vec4 coords) {\
-    return (pixel.x+pixel.y > coords.x && pixel.x+pixel.y < coords.y && pixel.x-pixel.y > coords.z && pixel.x-pixel.y < coords.w);\
-}\
-bool fotze(vec2 pixel, float size) {\
-    return (pixel.x > -size && pixel.x < size && pixel.y > -size && pixel.y < size && pixel.x-pixel.y < 1.4*size && pixel.x-pixel.y > -1.4*size);\
-}\
-void main(void) {\
-    float t = r[0][0];\
-    float yrot = sin(t*0.1)*1.;\
-    yrot = 1.2 - 1.5 * abs(yrot);\
-    mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));\
-    vec3 e = o.xyz;\
-    vec2 q = e.xy * 0.5 + vec2(0.1, 0.1);\
-    float alpha = max(0., 1.2 - length(e.xy));\
-    vec3 color = vec3(0.6,0.8,0.9);\
-    if (circle(q, vec2(0.), 0.2)) {color = vec3(1.,1.,.8); alpha = 1.;}\
-    if (circle(q, vec2(-0.15, 0.3), 0.05)) {color = vec3(1.,1.,.8); alpha = 1.;}\
-    if (rect(q, vec2(-0.1, 0.3), vec2(-0.2, 0.))) {color = vec3(1.,1.,.8); alpha = 1.;}\
-    if (srect(q, vec4(0., 0.6, -0.28, -0.155))) {color = vec3(1.,1.,.8); alpha = 1.;}\
-    if (srect(q, vec4(0., 0.65, -0.135, -0.01))) {color = vec3(1.,1.,.8); alpha = 1.;}\
-    if (srect(q, vec4(0., 0.65, 0.01, 0.135))) {color = vec3(1.,1.,.8); alpha = 1.;}\
-    if (srect(q, vec4(0., 0.58, 0.155, 0.28))) {color = vec3(1.,1.,.8); alpha = 1.;}\
-    if (fotze(q, 0.1)) {color = vec3(0.2); alpha = 1.;}\
-    if (fotze(q, 0.08)) {color = vec3(0.9,0.5,0.3); alpha = 1.;}\
-    alpha *= smoothstep(1., 0.5, abs(e.z));\
-    float explode = smoothstep(7., 20., t);\
-    e.x += 0.01 * cos(e.z * 454. + t) + explode * sin(e.z*225.);\
-    e.y += 0.01 * sin(e.z * 133. + t) + explode * cos(e.z*203.);\
-    e.z = e.z * (0.03 + explode);\
-    e.xy = e.xy * vec2(0.6, 0.7);\
-    e.xz = e.xz * yrotmat;\
-    e.z += 0.5 - .3 * yrot; \
-    e.z -= 0.12 * t - 1.;\
-    gl_Position = vec4(e.xyz, e.z);\
-    m = c.a;\
-    alpha = alpha * c.a;\
-    p.rgb = color * alpha / (10. * pow(c.a + .1*abs(sin(t*0.1+c.a*100.)), 2.3) + 0.01);\
-    p.a = alpha;\
-}";
-
 #pragma data_seg(".vertexMainParticle")
 const GLchar vertexMainParticle[]="\
 #version 330 core\n\
@@ -172,7 +118,7 @@ HWND hWnd;
 char err[4097];
 #endif
 
-static GLuint shaderPrograms[2];
+static GLuint shaderProgram;
 // The vertex array and vertex buffer
 unsigned int vaoID;
 // 0 is for particle positions, 1 is for particle colors
@@ -215,32 +161,21 @@ void GenerateParticles(void) {
     }
 }
 
-const char *shader_codes[4] = {
-    geometryMainParticle,
-    fragmentMainParticle,
-    vertexMainParticle,
-    vertexMainHand
-};
 #pragma code_seg(".intro_init")
 void intro_init( void ) {
     // Load the script
     // Create and link shader and stuff:
 
     // init objects:
-    shaderPrograms[0] = glCreateProgram();
-    shaderPrograms[1] = glCreateProgram();
-#if 0
+    shaderProgram = glCreateProgram();
+#if 1
     GLuint gMainParticle = glCreateShader(GL_GEOMETRY_SHADER_EXT);
     GLuint fMainParticle = glCreateShader(GL_FRAGMENT_SHADER);
     GLuint vMainParticle = glCreateShader(GL_VERTEX_SHADER);
-    GLuint vHandParticle = glCreateShader(GL_VERTEX_SHADER);
     // compile sources:
     const char *pt = vertexMainParticle;
     glShaderSource(vMainParticle, 1, &pt, NULL);
     glCompileShader(vMainParticle);
-    pt = vertexMainHand;
-    glShaderSource(vHandParticle, 1, &pt, NULL);
-    glCompileShader(vHandParticle);
     pt = geometryMainParticle;
     glShaderSource(gMainParticle, 1, &pt, NULL);
     glCompileShader(gMainParticle);
@@ -302,14 +237,10 @@ void intro_init( void ) {
 #endif
 
     // link shaders:
-    glAttachShader(shaderPrograms[0], vMainParticle);
-    glAttachShader(shaderPrograms[0], gMainParticle);
-    glAttachShader(shaderPrograms[0], fMainParticle);
-    glLinkProgram(shaderPrograms[0]);
-    glAttachShader(shaderPrograms[1], vHandParticle);
-    glAttachShader(shaderPrograms[1], gMainParticle);
-    glAttachShader(shaderPrograms[1], fMainParticle);
-    glLinkProgram(shaderPrograms[1]);
+    glAttachShader(shaderProgram, vMainParticle);
+    glAttachShader(shaderProgram, gMainParticle);
+    glAttachShader(shaderProgram, fMainParticle);
+    glLinkProgram(shaderProgram);
 
 #ifdef SHADER_DEBUG
     int programStatus;
@@ -416,7 +347,7 @@ void intro_do( long itime )
 
     parameterMatrix[2][2] += (itime) * 0.000001f * script_move_[scene_id];
 
-    int location = glGetUniformLocation(shaderPrograms[0], "r");
+    int location = glGetUniformLocation(shaderProgram, "r");
     glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
     // render
     glDisable( GL_CULL_FACE );
@@ -428,7 +359,7 @@ void intro_do( long itime )
     //glViewport(0, 0, XRES, YRES);
 
     // Set program 1 on seed == 0
-    glUseProgram(shaderPrograms[start_seed == 0]);
+    glUseProgram(shaderProgram);
 
     glDrawArrays(GL_POINTS, 0, TOTAL_NUM_PARTICLES);
 }
