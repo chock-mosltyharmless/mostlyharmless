@@ -70,8 +70,8 @@ EndPrimitive();\
 #pragma data_seg(".vertexMainHand")
 const GLchar vertexMainHand[]="\
 #version 330 core\n\
-layout (location=0) in vec4 position_;\
-layout (location=1) in vec4 color_;\
+layout (location=0) in vec4 o;\
+layout (location=1) in vec4 c;\
 out vec4 p;\
 out float m;\
 uniform mat4 r;\
@@ -92,7 +92,7 @@ void main(void) {\
     float yrot = sin(t*0.1)*1.;\
     yrot = 1.2 - 1.5 * abs(yrot);\
     mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));\
-    vec3 e = position_.xyz;\
+    vec3 e = o.xyz;\
     vec2 q = e.xy * 0.5 + vec2(0.1, 0.1);\
     float alpha = max(0., 1.2 - length(e.xy));\
     vec3 color = vec3(0.6,0.8,0.9);\
@@ -115,69 +115,45 @@ void main(void) {\
     e.z += 0.5 - .3 * yrot; \
     e.z -= 0.12 * t - 1.;\
     gl_Position = vec4(e.xyz, e.z);\
-    m = color_.a;\
-    alpha = alpha * color_.a;\
-    p.rgb = color * alpha / (10. * pow(color_.a + .1*abs(sin(t*0.1+color_.a*100.)), 2.3) + 0.01);\
+    m = c.a;\
+    alpha = alpha * c.a;\
+    p.rgb = color * alpha / (10. * pow(c.a + .1*abs(sin(t*0.1+c.a*100.)), 2.3) + 0.01);\
     p.a = alpha;\
 }";
 
 #pragma data_seg(".vertexMainParticle")
 const GLchar vertexMainParticle[]="\
 #version 330 core\n\
-layout (location=0) in vec4 position_;\n\
-layout (location=1) in vec4 color_;\n\
+layout (location=0) in vec4 o;\n\
+layout (location=1) in vec4 c;\n\
 out vec4 p;\
 out float m;\
 uniform mat4 r;\
-float GetImplicit(vec3 e) {\
-    float t = r[0][0];\
-    float first_amount = r[0][1];\
-    float second_amount = r[0][2];\
-    e.z -= sin(e.y * cos(e.x * 0.4) * 0.3) * second_amount * 5.5;\
-    e.x -= sin(e.z*0.5) * second_amount * 5.5;\
-    e.y -= sin(e.x*.25) * second_amount * 5.5;\
-    e.x -= sin(t * cos(e.x * 2.1) * 0.3) * first_amount * 0.1;\
-    e.y -= cos(t * cos(e.x * 0.5) * 0.4) * first_amount * 0.1;\
-    e.z -= sin(t * sin(e.y * 0.2) * 0.5) * first_amount * 0.1;\
-    float dist = r[3][1] * 25.0;\
-    float dist2 = r[3][2] * 5.0;\
-    float dist3 = r[3][3];\
-    float implicit = length(e) - sin(dist * length(e)) * dist2 - dist3 - 0.2 * sin(t*0.);\
-    return implicit;\
+float G(vec3 e){\
+e.z-=sin(e.y*cos(e.x*.4)*.3)*r[0][2]*5.5;\
+e.x-=sin(e.z*.5)*r[0][2]*5.5;\
+e.y-=sin(e.x*.25)*r[0][2]*5.5;\
+e.x-=sin(r[0][0]*cos(e.x*2.1)*.3)*r[0][1]*.1;\
+e.y-=cos(r[0][0]*cos(e.x*.5)*.4)*r[0][1]*.1;\
+e.z-=sin(r[0][0]*sin(e.y*.2)*.5)*r[0][1]*.1;\
+return length(e)-sin(r[3][1]*25.*length(e))*r[3][2]*5.-r[3][3]-.2*sin(r[0][0]*.0);\
 }\
 void main(void) {\
-    float t = r[0][0];\
-    float yrot = sin(t*0.15)*0.5;\
-    mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));\
-    vec3 e = position_.xyz;\
-    float implicit = GetImplicit(e.xyz);\
-    float amount = 1. + r[1][1]*0.4 - smoothstep(0.0, 0.4, abs(implicit));\
-    const float dd = 0.01;\
-    float dx_implicit = GetImplicit(e.xyz + vec3(dd, 0., 0.)) - implicit;\
-    float dy_implicit = GetImplicit(e.xyz + vec3(0., dd, 0.)) - implicit;\
-    float dz_implicit = GetImplicit(e.xyz + vec3(0., 0., dd)) - implicit;\
-    vec3 f = e.xyz * 0.45;\
-    f.x += 12. * (r[1][0] * sin(t*0.49) * sin(e.z*7.) + 1. - r[1][0]) * dx_implicit * amount * r[0][3];\
-    f.y += 12. * (r[1][0] * sin(t*0.31) * sin(e.x*5.) + 1. - r[1][0]) * dy_implicit * amount * r[0][3];\
-    f.z += 12. * (r[1][0] * sin(t*0.37) * sin(e.y*6.) + 1. - r[1][0]) * dz_implicit * amount * r[0][3];\
-    f.xz = f.xz * yrotmat;\
-    f.x *= 0.56;\
-    f.z += 1.5 - 2. * r[2][2];\
-    f.x += 0.25 - 0.5 * r[2][3];\
-    f.y += 0.25 - 0.5 * r[3][0];\
-    gl_Position = vec4(f, f.z);\
-    m = color_.a;\
-    p.r = 0.6 + length(e.xyz) * .3;\
-    p.g = 1.1 - length(e.xyz) * .4;\
-    p.b = 1.2 - length(e.xy) * .7 - length(e.z) * 0.3;\
-    p.rgb *= pow(1. - m, 30.) * 3. + 1.0;\
-    p.rgb += pow(abs(sin(m*100. + t)),10.);\
-    p.a = 1.0;\
-    float darkener = abs(sin(e.x * r[1][2] * 8.) + cos(e.z * r[1][3] * 8.) - sin(e.y * r[2][0] * 8.));\
-    p.a += darkener * r[2][1];\
-    p.rgb -= vec3(darkener) * r[2][1] * 3.0;\
-    p.rgb = max(vec3(0.), p.rgb);\
-    p *= vec4(amount) * (1.0 - abs(m - 0.5));\
+vec3 e=o.xyz;\
+float t=G(e),q=abs(sin(e.x*r[1][2]*8.)+cos(e.z*r[1][3]*8.)-sin(e.y*r[2][0]*8.));\
+m=c.a;\
+p.rgb=(vec3(.6,1.1,1.2)+vec3(.3,-.4,-.8)*length(e))*(pow(1.-m,30.)*3.+1.)+pow(abs(sin(m*100.+r[0][0])),10.)-q*r[2][1]*3.;\
+p.a=1.+q*r[2][1];\
+q=1.+r[1][1]*0.4-smoothstep(.0,.4,abs(t));\
+p*=q*(1.-abs(m-.5));\
+vec3 f=e*.45+12.*(r[1][0]*sin(r[0][0]*vec3(.49,.31,.37))*sin(e.zxy*vec3(7.,5.,6.))+1.-r[1][0])*(vec3(G(e+vec3(.01,.0,.0)),G(e+vec3(.0,.01,.0)),G(e+vec3(.0,.0,.01)))-t)*q*r[0][3];\
+t=sin(r[0][0]*.15)*.5;\
+f.xz*=mat2(cos(t),sin(t),-sin(t),cos(t));\
+f.x*=.56;\
+f.x+=.25-.5*r[2][3];\
+f.y+=.25-.5*r[3][0];\
+f.z+=1.5-2.*r[2][2];\
+gl_Position=vec4(f,f.z);\
 }";
 
 // -------------------------------------------------------------------
