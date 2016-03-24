@@ -24,7 +24,7 @@
 //                          SHADERS:
 // -------------------------------------------------------------------
 #pragma data_seg(".fragmentMainParticle")
-const GLchar *fragmentMainParticle="\
+const GLchar fragmentMainParticle[]="";//\
 #version 330 core\n\
 in vec2 sprite_pos_;\
 in vec4 sprite_color_;\
@@ -38,7 +38,7 @@ void main(void) {\
 }";
 
 #pragma data_seg(".geometryMainParticle")
-const GLchar *geometryMainParticle="\
+const GLchar geometryMainParticle[]="";//\
 #version 330 core\n\
 layout(points) in;\
 layout(triangle_strip, max_vertices=4) out;\
@@ -75,7 +75,7 @@ void main() {\
 }";
 
 #pragma data_seg(".vertexMainHand")
-const GLchar *vertexMainHand="\
+const GLchar vertexMainHand[]="";//\
 #version 330 core\n\
 layout (location=0) in vec4 position_;\
 layout (location=1) in vec4 color_;\
@@ -129,7 +129,7 @@ void main(void) {\
 }";
 
 #pragma data_seg(".vertexMainParticle")
-const GLchar *vertexMainParticle="\
+const GLchar vertexMainParticle[]="";//\
 #version 330 core\n\
 layout (location=0) in vec4 position_;\n\
 layout (location=1) in vec4 color_;\n\
@@ -257,13 +257,17 @@ void intro_init( void ) {
     shaderPrograms[0] = glCreateProgram();
     shaderPrograms[1] = glCreateProgram();
     // compile sources:
-    glShaderSource(vMainParticle, 1, &vertexMainParticle, NULL);
+    const char *pt = vertexMainParticle;
+    glShaderSource(vMainParticle, 1, &pt, NULL);
     glCompileShader(vMainParticle);
-    glShaderSource(vHandParticle, 1, &vertexMainHand, NULL);
+    pt = vertexMainHand;
+    glShaderSource(vHandParticle, 1, &pt, NULL);
     glCompileShader(vHandParticle);
-    glShaderSource(gMainParticle, 1, &geometryMainParticle, NULL);
+    pt = geometryMainParticle;
+    glShaderSource(gMainParticle, 1, &pt, NULL);
     glCompileShader(gMainParticle);
-    glShaderSource(fMainParticle, 1, &fragmentMainParticle, NULL);
+    pt = fragmentMainParticle;
+    glShaderSource(fMainParticle, 1, &pt, NULL);
     glCompileShader(fMainParticle);
 
 #ifdef SHADER_DEBUG
