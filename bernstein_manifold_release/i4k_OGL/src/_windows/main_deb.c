@@ -312,6 +312,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     while( !done )
         {
 		long t = timeGetTime() - to;
+        long itime = t * 441 / 10;
 
         while( PeekMessage(&msg,0,0,0,PM_REMOVE) )
         {
@@ -320,16 +321,15 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DispatchMessage( &msg );
         }
 
-        intro_do( t * 44100 / 1000 );
+        intro_do( itime );
 
-        if( t>(MZK_DURATION*1000) )
+        if( itime > (MZK_DURATION*AUDIO_BUFFER_SIZE) )
 		{
 			done = 1;
 		}
         SwapBuffers( info->hDC );
         }
 
-    sndPlaySound( 0, 0 );
     window_end( info );
 
     return( 0 );

@@ -1,208 +1,3 @@
-#if 0
-
-//--------------------------------------------------------------------------//
-// iq / rgba  .  tiny codes  .  2008                                        //
-//--------------------------------------------------------------------------//
-
-#define WIN32_LEAN_AND_MEAN
-#define WIN32_EXTRA_LEAN
-#include <windows.h>
-#include <math.h>
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include "glext.h"
-
-#include "config.h"
-#include "intro.h"
-#include "mzk.h"
-
-// You can access the wave output for basic synchronization
-extern double outwave[][2];
-
-float frand();
-int rand();
-
-// -------------------------------------------------------------------
-//                          INTRO SCRIPT:
-// -------------------------------------------------------------------
-// Would go here somehow
-
-// -------------------------------------------------------------------
-//                          SHADER CODE:
-// -------------------------------------------------------------------
-
-const GLchar *fragmentMainBackground="\
-#version 330 core\n\
-in vec3 pass_Position;\n\
-out vec4 out_Color;\n\
-\n\
-void main(void)\n\
-{\n\
-   out_Color = vec4(pass_Position, 1.0);\n\
-}";
-
-const GLchar *vertexMainObject="\
-#version 330 core\n\
-in vec3 in_Position;\n\
-out vec3 pass_Position;\n\
-void main(void)\
-{\
-    gl_Position = vec4(in_Position, 1.);\n\
-	pass_Position = in_Position;\n\
-}";
-
-// -------------------------------------------------------------------
-//                          Constants:
-// -------------------------------------------------------------------
-
-HWND hWnd;
-
-static GLuint shaderPrograms[1];
-
-#ifdef SHADER_DEBUG
-char err[4097];
-#endif
-
-// The vertex array and vertex buffer
-unsigned int vaoID;
-unsigned int vboID;
-// And the actual vertices
-GLfloat vertices[18];
-
-// -------------------------------------------------------------------
-//                          Code:
-// -------------------------------------------------------------------
-
-void intro_init( void )
-{
-	// Create and link shader and stuff:
-	// I will have to separate these to be able to use more than one shader...
-	// TODO: I should make some sort of compiling and linking loop...
-	
-	// init objects:
-	GLuint vMainObject = glCreateShader(GL_VERTEX_SHADER);
-	GLuint fMainBackground = glCreateShader(GL_FRAGMENT_SHADER);
-	shaderPrograms[0] = glCreateProgram();
-	// compile sources:
-	glShaderSource(vMainObject, 1, &vertexMainObject, NULL);
-	glCompileShader(vMainObject);
-	glShaderSource(fMainBackground, 1, &fragmentMainBackground, NULL);
-	glCompileShader(fMainBackground);
-
-#ifdef SHADER_DEBUG
-	{
-		// Check programs
-		int tmp, tmp2;
-		glGetShaderiv(vMainObject, GL_COMPILE_STATUS, &tmp);
-		if (!tmp)
-		{
-			glGetShaderInfoLog(vMainObject, 4096, &tmp2, err);
-			err[tmp2]=0;
-			MessageBox(hWnd, err, "vMainObject shader error", MB_OK);
-			return;
-		}
-		glGetShaderiv(fMainBackground, GL_COMPILE_STATUS, &tmp);
-		if (!tmp)
-		{
-			glGetShaderInfoLog(fMainBackground, 4096, &tmp2, err);
-			err[tmp2]=0;
-			MessageBox(hWnd, err, "fMainBackground shader error", MB_OK);
-			return;
-		}
-	}
-#endif
-
-	// link shaders:
-	glAttachShader(shaderPrograms[0], vMainObject);
-	glAttachShader(shaderPrograms[0], fMainBackground);
-	glLinkProgram(shaderPrograms[0]);
-	// The in_Position is at 0:
-	glBindAttribLocation(shaderPrograms[0], 0, "in_Position");
-	//glBinAttribLocation(shader_id, 1, "in_Color");
-
-#ifdef SHADER_DEBUG
-	{
-		int programStatus;
-		glGetProgramiv(shaderPrograms[0], GL_LINK_STATUS, &programStatus);
-		if (programStatus == GL_FALSE)
-		{
-			MessageBox(hWnd, "Could not link program", "Shader 0 error", MB_OK);
-			return;
-		}
-	}
-#endif
-
-	// Replace with real code.
-	vertices[0] = -1.0f; vertices[1] = -1.0f; vertices[2] = 1.0f; // Bottom left corner  
-	vertices[3] = -1.0f; vertices[4] = 1.0f; vertices[5] = 1.0f; // Top left corner  
-	vertices[6] = 1.0f; vertices[7] = 1.0f; vertices[8] = 1.0f; // Top Right corner  
-	vertices[9] = 1.0f; vertices[10] = -1.0f; vertices[11] = 1.0f; // Bottom right corner  
-	vertices[12] = -1.0f; vertices[13] = -1.0f; vertices[14] = 1.0f; // Bottom left corner  
-	vertices[15] = 1.0f; vertices[16] = 1.0f; vertices[17] = 1.0f; // Top Right corner  
-
-	// Set up vertex buffer and stuff
-	glGenVertexArrays(1, &vaoID); // Create our Vertex Array Object  
-	glBindVertexArray(vaoID); // Bind our Vertex Array Object so we can use it  
-  
-	glGenBuffers(1, &vboID); // Generate our Vertex Buffer Object  
-	glBindBuffer(GL_ARRAY_BUFFER, vboID); // Bind our Vertex Buffer Object  
-	glBufferData(GL_ARRAY_BUFFER, 18 * sizeof(GLfloat), vertices, GL_DYNAMIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
-  
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0); // Set up our vertex attributes pointer 
-	//glBindVertexArray(0);
-
-#ifdef SHADER_DEBUG
-	// Get all the errors:
-	{
-		enum GLenum errorValue = glGetError();
-		if (errorValue != GL_NO_ERROR)
-		{
-			MessageBox(hWnd, "There was an error.", "Init error", MB_OK);
-			return;
-		}
-	}
-#endif
-}
-
-void intro_do( long itime )
-{
-	float ftime = 0.001f*(float)itime;
-
-#ifdef USEDSOUND
-#if 0
-	double loudness = 1.0;
-	int k;
-	int musicPos = (((itime)*441)/10);
-	for (k = 0; k < 4096; k++)
-	{
-		loudness += outwave[musicPos][k]*outwave[musicPos][k];
-	}
-	//parameterMatrix[15] = (float)log(loudness) * (1.f/24.f); // This makes it silent?
-#endif
-#endif
-
-    // render
-    glDisable( GL_CULL_FACE );
-
-	//parameterMatrix[0] = ftime; // time	
-	// get music information
-
-	//glClearColor(0.5f, 0.3f, 0.1f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT);
-
-	// set the viewport (not neccessary?)
-	//glGetIntegerv(GL_VIEWPORT, viewport);
-	//glViewport(0, 0, XRES, YRES);
-	
-	glUseProgram(shaderPrograms[0]);
-
-	//glBindVertexArray(vaoID);
-	glDrawArrays(GL_TRIANGLES, 0, 6);
-	//glBindVertexArray(0);
-}
-
-#else
 //--------------------------------------------------------------------------//
 // iq / rgba  .  tiny codes  .  2008                                        //
 //--------------------------------------------------------------------------//
@@ -234,14 +29,62 @@ void main(void)\n\
    out_Color = vec4(pass_Position, 1.0);\n\
 }";
 
-const GLchar *vertexMainObject="\
-#version 330 core\n\
-in vec3 in_Position;\n\
-out vec3 pass_Position;\n\
-void main(void)\
-{\
-    gl_Position = vec4(in_Position, 1.);\n\
-	pass_Position = in_Position;\n\
+const GLchar *vertexMainParticle=
+"#version 330 core\n\
+layout (location=0) in vec4 position_;\n\
+layout (location=1) in vec4 color_;\n\
+out vec4 particle_color_;\
+out float particle_magic_;\
+uniform mat4 r;\
+float GetImplicit(vec3 pos) {\
+    float time = r[0][0];\
+    float first_amount = r[0][1];\
+    float second_amount = r[0][2];\
+    pos.z -= sin(pos.y * cos(pos.x * 0.4) * 0.3) * second_amount * 5.5;\
+    pos.x -= sin(pos.z*0.5) * second_amount * 5.5;\
+    pos.y -= sin(pos.x*.25) * second_amount * 5.5;\
+    pos.x -= sin(time * cos(pos.x * 2.1) * 0.3) * first_amount * 0.1;\
+    pos.y -= cos(time * cos(pos.x * 0.5) * 0.4) * first_amount * 0.1;\
+    pos.z -= sin(time * sin(pos.y * 0.2) * 0.5) * first_amount * 0.1;\
+    float dist = r[3][1] * 25.0;\
+    float dist2 = r[3][2] * 5.0;\
+    float dist3 = r[3][3];\
+    float implicit = length(pos) - sin(dist * length(pos)) * dist2 - dist3 - 0.2 * sin(time*0.);\
+    return implicit;\
+}\
+void main(void) {\
+    float time = r[0][0];\
+    float yrot = sin(time*0.15)*0.5;\
+    mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));\
+    vec3 pos = position_.xyz;\
+    float implicit = GetImplicit(pos.xyz);\
+    float amount = 1. + r[1][1]*0.4 - smoothstep(0.0, 0.4, abs(implicit));\
+    const float dd = 0.01;\
+    float dx_implicit = GetImplicit(pos.xyz + vec3(dd, 0., 0.)) - implicit;\
+    float dy_implicit = GetImplicit(pos.xyz + vec3(0., dd, 0.)) - implicit;\
+    float dz_implicit = GetImplicit(pos.xyz + vec3(0., 0., dd)) - implicit;\
+    vec3 f = pos.xyz * 0.45;\
+    f.x += 12. * (r[1][0] * sin(time*0.49) * sin(pos.z*7.) + 1. - r[1][0]) * dx_implicit * amount * r[0][3];\
+    f.y += 12. * (r[1][0] * sin(time*0.31) * sin(pos.x*5.) + 1. - r[1][0]) * dy_implicit * amount * r[0][3];\
+    f.z += 12. * (r[1][0] * sin(time*0.37) * sin(pos.y*6.) + 1. - r[1][0]) * dz_implicit * amount * r[0][3];\
+    f.xz = f.xz * yrotmat;\
+    f.x *= 0.56;\
+    f.z += 1.5 - 2. * r[2][2];\
+    f.x += 0.25 - 0.5 * r[2][3];\
+    f.y += 0.25 - 0.5 * r[3][0];\
+    gl_Position = vec4(f, f.z);\
+    particle_magic_ = color_.a;\
+    particle_color_.r = 0.6 + length(pos.xyz) * .3;\
+    particle_color_.g = 1.1 - length(pos.xyz) * .4;\
+    particle_color_.b = 1.2 - length(pos.xy) * .7 - length(pos.z) * 0.3;\
+    particle_color_.rgb *= pow(1. - particle_magic_, 30.) * 3. + 1.0;\
+    particle_color_.rgb += pow(abs(sin(particle_magic_*100. + time)),10.);\
+    particle_color_.a = 1.0;\
+    float darkener = abs(sin(pos.x * r[1][2] * 8.) + cos(pos.z * r[1][3] * 8.) - sin(pos.y * r[2][0] * 8.));\
+    particle_color_.a += darkener * r[2][1];\
+    particle_color_.rgb -= vec3(darkener) * r[2][1] * 3.0;\
+    particle_color_.rgb = max(vec3(0.), particle_color_.rgb);\
+    particle_color_ *= vec4(amount) * (1.0 - abs(particle_magic_ - 0.5));\
 }";
 
 // -------------------------------------------------------------------
@@ -352,13 +195,11 @@ void intro_init( void ) {
 #define kMaxShaderLength 100000
     GLchar shader_text[kMaxShaderLength + 1];
     const GLchar *pt = shader_text;
+    glShaderSource(vMainParticle, 1, &vertexMainParticle, NULL);
+    glCompileShader(vMainParticle);
     LoadTextFile("shaders/vertex_hand_particle.txt", shader_text, kMaxShaderLength);
-    //glShaderSource(vHandParticle, 1, &vertexMainObject, NULL);
     glShaderSource(vHandParticle, 1, &pt, NULL);
     glCompileShader(vHandParticle);
-    LoadTextFile("shaders/vertex_main_particle.txt", shader_text, kMaxShaderLength);
-    glShaderSource(vMainParticle, 1, &pt, NULL);
-    glCompileShader(vMainParticle);
     LoadTextFile("shaders/geometry_main_particle.txt", shader_text, kMaxShaderLength);
     glShaderSource(gMainParticle, 1, &pt, NULL);
     glCompileShader(gMainParticle);
@@ -551,5 +392,3 @@ void intro_do( long itime )
 
     glDrawArrays(GL_POINTS, 0, TOTAL_NUM_PARTICLES);
 }
-
-#endif
