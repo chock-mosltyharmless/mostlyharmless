@@ -96,7 +96,7 @@ float jo_frand(unsigned int *s)
     return (float)(jo_rand(s)) * (1.0f/65536.0f);
 }
 
-inline int ftoi_fast(float f)
+int ftoi_fast(float f)
 {
     return _mm_cvtt_ss2si(_mm_load_ss(&f));     // SSE1 instructions for float->int
 }
@@ -274,9 +274,9 @@ void mzk_prepare_block(short *blockBuffer)
                 {
                     if (i < maxOvertones)
                     {
-                        outAmplitude[0] += (float)sin(fPhase[instrument][i]) * overtoneLoudness *
+                        outAmplitude[0] += sinf(fPhase[instrument][i]) * overtoneLoudness *
                             adsrShape[instrument][i] * (1.0f - panning);
-                        outAmplitude[1] += (float)sin(fPhase[instrument][i]) * overtoneLoudness *
+                        outAmplitude[1] += sinf(fPhase[instrument][i]) * overtoneLoudness *
                             adsrShape[instrument][i] * panning;
                         fPhase[instrument][i] += baseFreq * (i+1) * (adsrFreq[instrument]*4.0f) *
                             (1.0f + adsrDetune[instrument] * detuneFactor[i] * 0.5f);
@@ -370,7 +370,7 @@ void mzk_prepare_block(short *blockBuffer)
         float val = floatOutput[0][sample] * 4.0f;
         if (val > 1.5f) val = 1.5f;
         if (val < -1.5f) val = -1.5f;
-        val = (float)sin(val) * 32768.0f;
+        val = (float)sinf(val) * 32768.0f;
         blockBuffer[sample] = ftoi_fast(val);
 #endif
     }
@@ -379,7 +379,7 @@ void mzk_prepare_block(short *blockBuffer)
 }
 
 // put here your synth
-#pragma code_seg(".mzkInit")
+#pragma code_seg(".mzk_init")
 void mzk_init()
 {
     // Create data tables

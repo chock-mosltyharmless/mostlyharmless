@@ -23,6 +23,7 @@
 // -------------------------------------------------------------------
 //                          SHADERS:
 // -------------------------------------------------------------------
+#pragma data_seg(".fragmentMainParticle")
 const GLchar *fragmentMainParticle="\
 #version 330 core\n\
 in vec2 sprite_pos_;\
@@ -36,6 +37,7 @@ void main(void) {\
     out_color_ = vec4(smoothstep(0.0, 0.1, dist)) * sprite_color_.rgba;\
 }";
 
+#pragma data_seg(".geometryMainParticle")
 const GLchar *geometryMainParticle="\
 #version 330 core\n\
 layout(points) in;\
@@ -72,6 +74,7 @@ void main() {\
     EndPrimitive();\
 }";
 
+#pragma data_seg(".vertexMainHand")
 const GLchar *vertexMainHand="\
 #version 330 core\n\
 layout (location=0) in vec4 position_;\
@@ -125,6 +128,7 @@ void main(void) {\
     particle_color_.a = alpha;\
 }";
 
+#pragma data_seg(".vertexMainParticle")
 const GLchar *vertexMainParticle="\
 #version 330 core\n\
 layout (location=0) in vec4 position_;\n\
@@ -213,6 +217,7 @@ GLfloat colors_[TOTAL_NUM_PARTICLES * 4];
 // -------------------------------------------------------------------
 
 // Create the particle locations and move them to the GPU
+#pragma code_seg(".GenerateParticles")
 void GenerateParticles(void) {
     unsigned int seed = 23690984;
 
@@ -239,6 +244,7 @@ void GenerateParticles(void) {
     }
 }
 
+#pragma code_seg(".intro_init")
 void intro_init( void ) {
     // Load the script
     // Create and link shader and stuff:
@@ -373,6 +379,7 @@ void intro_init( void ) {
 #endif
 }
 
+#pragma code_seg(".intro_do")
 void intro_do( long itime )
 {
     static int lastTime = 0;

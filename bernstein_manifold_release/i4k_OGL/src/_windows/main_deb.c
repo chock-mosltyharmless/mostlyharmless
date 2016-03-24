@@ -234,12 +234,9 @@ static int window_init( WININFO *info )
 
 //==============================================================================================
 
-static short myMuzik[MZK_NUMSAMPLESC+22];
-
-static int stopit = 0;
 DWORD WINAPI thread_func(LPVOID lpParameter)
 {
-    while (!stopit)
+    while (1)
     {
         // Try to unprepare header
         if (waveOutUnprepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR))

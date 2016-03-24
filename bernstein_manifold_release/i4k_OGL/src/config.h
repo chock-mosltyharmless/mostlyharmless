@@ -15,6 +15,6 @@
 //#define YRES        (480 * XRES / 640)
 
 // Include this to get debug information in case of a shader failure
-#define SHADER_DEBUG
+//#define SHADER_DEBUG
 
 #endif
