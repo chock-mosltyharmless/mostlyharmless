@@ -246,18 +246,25 @@ void GenerateParticles(void) {
     }
 }
 
+const char *shader_codes[4] = {
+    geometryMainParticle,
+    fragmentMainParticle,
+    vertexMainParticle,
+    vertexMainHand
+};
 #pragma code_seg(".intro_init")
 void intro_init( void ) {
     // Load the script
     // Create and link shader and stuff:
 
     // init objects:
-    GLuint vMainParticle = glCreateShader(GL_VERTEX_SHADER);
-    GLuint gMainParticle = glCreateShader(GL_GEOMETRY_SHADER_EXT);
-    GLuint fMainParticle = glCreateShader(GL_FRAGMENT_SHADER);
-    GLuint vHandParticle = glCreateShader(GL_VERTEX_SHADER);
     shaderPrograms[0] = glCreateProgram();
     shaderPrograms[1] = glCreateProgram();
+#if 0
+    GLuint gMainParticle = glCreateShader(GL_GEOMETRY_SHADER_EXT);
+    GLuint fMainParticle = glCreateShader(GL_FRAGMENT_SHADER);
+    GLuint vMainParticle = glCreateShader(GL_VERTEX_SHADER);
+    GLuint vHandParticle = glCreateShader(GL_VERTEX_SHADER);
     // compile sources:
     const char *pt = vertexMainParticle;
     glShaderSource(vMainParticle, 1, &pt, NULL);
@@ -271,6 +278,22 @@ void intro_init( void ) {
     pt = fragmentMainParticle;
     glShaderSource(fMainParticle, 1, &pt, NULL);
     glCompileShader(fMainParticle);
+#else
+    GLuint shaders[4];
+#define gMainParticle (shaders[0])
+#define fMainParticle (shaders[1])
+#define vMainParticle (shaders[2])
+#define vHandParticle (shaders[3])
+
+    shaders[0] = glCreateShader(GL_GEOMETRY_SHADER_EXT);
+    shaders[1] = glCreateShader(GL_FRAGMENT_SHADER);
+    shaders[2] = glCreateShader(GL_VERTEX_SHADER);
+    shaders[3] = glCreateShader(GL_VERTEX_SHADER);
+    for (int i = 0; i < 4; i++) {
+        glShaderSource(shaders[i], 1, &shader_codes[i], NULL);
+        glCompileShader(shaders[i]);
+    }
+#endif
 
 #ifdef SHADER_DEBUG
     // Check programs
