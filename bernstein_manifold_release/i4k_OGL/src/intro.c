@@ -233,12 +233,9 @@ void GenerateParticles(void) {
                 vertices_[vertex_id++] = xp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
                 vertices_[vertex_id++] = yp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
                 vertices_[vertex_id++] = zp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
-                colors_[color_id++] = 0.9f;
-                colors_[color_id++] = 0.7f;
-                colors_[color_id++] = 0.5f;
+                color_id += 3;  // ignore RGB
                 // fran
                 colors_[color_id++] = jo_frand(&seed);
-                //colors_[color_id - 1] = 0.5f;
                 xp += 2.0f / (float)NUM_PARTICLES_PER_DIM;
             }
             yp += 2.0f / (float)NUM_PARTICLES_PER_DIM;
