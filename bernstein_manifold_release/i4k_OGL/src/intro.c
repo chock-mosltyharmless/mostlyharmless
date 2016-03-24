@@ -19,18 +19,110 @@
 // -------------------------------------------------------------------
 //                          SHADERS:
 // -------------------------------------------------------------------
-const GLchar *fragmentMainBackground="\
+const GLchar *fragmentMainParticle="\
 #version 330 core\n\
-in vec3 pass_Position;\n\
-out vec4 out_Color;\n\
-\n\
-void main(void)\n\
-{\n\
-   out_Color = vec4(pass_Position, 1.0);\n\
+in vec2 sprite_pos_;\
+in vec4 sprite_color_;\
+out vec4 out_color_;\
+void main(void) {\
+    vec2 abs_pos = abs(sprite_pos_);\
+    float dist1 = 0.9 - abs_pos.x;\
+    float dist2 = 0.9 - 0.9 * abs_pos.y - 0.5 * abs_pos.x;\
+    float dist = min(dist1, dist2);\
+    out_color_ = vec4(smoothstep(0.0, 0.1, dist)) * sprite_color_.rgba;\
 }";
 
-const GLchar *vertexMainParticle=
-"#version 330 core\n\
+const GLchar *geometryMainParticle="\
+#version 330 core\n\
+layout(points) in;\
+layout(triangle_strip, max_vertices=4) out;\
+in vec4 particle_color_[];\
+in float particle_magic_[];\
+out vec4 sprite_color_;\
+out vec2 sprite_pos_;\
+uniform mat4 r;\
+void main() {\
+    vec4 pos = gl_in[0].gl_Position;\
+    float radius = .001 + abs(pos.z - .5) * .025;\
+    float luminance = .001 / radius;\
+    radius = min(radius, 0.2 * pos.w);\
+    float brightness = 1. * pow(luminance, 2.);\
+    float c = luminance;\
+    brightness *= smoothstep(c, 0., particle_magic_[0]) / c;\
+    mat2 rot = radius * mat2(.55, .2, -.1, .98);\
+    sprite_color_ = brightness * particle_color_[0];\
+    if (brightness >.01) {\
+        sprite_pos_ = vec2(-1.,1.);\
+        gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);	\
+        EmitVertex();\
+        sprite_pos_ = vec2(1.,1.);\
+        gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);\
+        EmitVertex();\
+        sprite_pos_ = vec2(-1.,-1.);\
+        gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);\
+        EmitVertex();\
+        sprite_pos_ = vec2(1.,-1.);\
+        gl_Position = pos + vec4(rot * sprite_pos_, 0., 0.);\
+        EmitVertex();\
+    }\
+    EndPrimitive();\
+}";
+
+const GLchar *vertexMainHand="\
+#version 330 core\n\
+layout (location=0) in vec4 position_;\
+layout (location=1) in vec4 color_;\
+out vec4 particle_color_;\
+out float particle_magic_;\
+uniform mat4 r;\
+bool circle(vec2 pixel, vec2 pos, float size) {\
+    return (length(pixel-pos)<size);\
+}\
+bool rect(vec2 pixel, vec2 topright, vec2 bottomright) {\
+    return (pixel.x < topright.x && pixel.y < topright.y && pixel.x > bottomright.x && pixel.y > bottomright.y);\
+}\
+bool srect(vec2 pixel, vec4 coords) {\
+    return (pixel.x+pixel.y > coords.x && pixel.x+pixel.y < coords.y && pixel.x-pixel.y > coords.z && pixel.x-pixel.y < coords.w);\
+}\
+bool fotze(vec2 pixel, float size) {\
+    return (pixel.x > -size && pixel.x < size && pixel.y > -size && pixel.y < size && pixel.x-pixel.y < 1.4*size && pixel.x-pixel.y > -1.4*size);\
+}\
+void main(void) {\
+    float time = r[0][0];\
+    float yrot = sin(time*0.1)*1.;\
+    yrot = 1.2 - 1.5 * abs(yrot);\
+    mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));\
+    vec3 pos = position_.xyz;\
+    vec2 q = pos.xy * 0.5 + vec2(0.1, 0.1);\
+    float alpha = max(0., 1.2 - length(pos.xy));\
+    vec3 color = vec3(0.6,0.8,0.9);\
+    if (circle(q, vec2(0.), 0.2)) {color = vec3(1.,1.,.8); alpha = 1.;}\
+    if (circle(q, vec2(-0.15, 0.3), 0.05)) {color = vec3(1.,1.,.8); alpha = 1.;}\
+    if (rect(q, vec2(-0.1, 0.3), vec2(-0.2, 0.))) {color = vec3(1.,1.,.8); alpha = 1.;}\
+    if (srect(q, vec4(0., 0.6, -0.28, -0.155))) {color = vec3(1.,1.,.8); alpha = 1.;}\
+    if (srect(q, vec4(0., 0.65, -0.135, -0.01))) {color = vec3(1.,1.,.8); alpha = 1.;}\
+    if (srect(q, vec4(0., 0.65, 0.01, 0.135))) {color = vec3(1.,1.,.8); alpha = 1.;}\
+    if (srect(q, vec4(0., 0.58, 0.155, 0.28))) {color = vec3(1.,1.,.8); alpha = 1.;}\
+    if (fotze(q, 0.1)) {color = vec3(0.2); alpha = 1.;}\
+    if (fotze(q, 0.08)) {color = vec3(0.9,0.5,0.3); alpha = 1.;}\
+    alpha *= smoothstep(1., 0.5, abs(pos.z));\
+    float explode = smoothstep(7., 20., time);\
+    pos.x += 0.01 * cos(pos.z * 454. + time) + explode * sin(pos.z*225.);\
+    pos.y += 0.01 * sin(pos.z * 133. + time) + explode * cos(pos.z*203.);\
+    pos.z = pos.z * (0.03 + explode);\
+    pos.xy = pos.xy * vec2(0.6, 0.7);\
+    pos.xz = pos.xz * yrotmat;\
+    pos.z += 0.5 - .3 * yrot; \
+    pos.z -= 0.12 * time - 1.;\
+    gl_Position = vec4(pos.xyz, pos.z);\
+    particle_magic_ = color_.a;\
+    alpha = alpha * color_.a;\
+    particle_color_.rgb = color * alpha / (10. * pow(color_.a + .1*abs(sin(time*0.1+color_.a*100.)), 2.3) + 0.01);\
+    particle_color_.a = alpha;\
+}";
+
+const GLchar *vertexMainParticle="\
+#version 330 core\n\
 layout (location=0) in vec4 position_;\n\
 layout (location=1) in vec4 color_;\n\
 out vec4 particle_color_;\
@@ -192,19 +284,13 @@ void intro_init( void ) {
     shaderPrograms[0] = glCreateProgram();
     shaderPrograms[1] = glCreateProgram();
     // compile sources:
-#define kMaxShaderLength 100000
-    GLchar shader_text[kMaxShaderLength + 1];
-    const GLchar *pt = shader_text;
     glShaderSource(vMainParticle, 1, &vertexMainParticle, NULL);
     glCompileShader(vMainParticle);
-    LoadTextFile("shaders/vertex_hand_particle.txt", shader_text, kMaxShaderLength);
-    glShaderSource(vHandParticle, 1, &pt, NULL);
+    glShaderSource(vHandParticle, 1, &vertexMainHand, NULL);
     glCompileShader(vHandParticle);
-    LoadTextFile("shaders/geometry_main_particle.txt", shader_text, kMaxShaderLength);
-    glShaderSource(gMainParticle, 1, &pt, NULL);
+    glShaderSource(gMainParticle, 1, &geometryMainParticle, NULL);
     glCompileShader(gMainParticle);
-    LoadTextFile("shaders/fragment_main_particle.txt", shader_text, kMaxShaderLength);
-    glShaderSource(fMainParticle, 1, &pt, NULL);
+    glShaderSource(fMainParticle, 1, &fragmentMainParticle, NULL);
     glCompileShader(fMainParticle);
 
 #ifdef SHADER_DEBUG
