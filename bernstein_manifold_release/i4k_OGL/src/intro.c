@@ -219,28 +219,30 @@ GLfloat colors_[TOTAL_NUM_PARTICLES * 4];
 // Create the particle locations and move them to the GPU
 #pragma code_seg(".GenerateParticles")
 void GenerateParticles(void) {
-    unsigned int seed = 23690984;
+    //unsigned int seed = 23690984;
+    unsigned int seed = 0;
 
     // Set vertex location
     int vertex_id = 0;
     int color_id = 0;
-    float zp = 1.0f;
+    float pp[3];
+    pp[2] = 1.0f;
     for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
-        float yp = -1.0f;
+        pp[1] = -1.0f;
         for (int y = 0; y < NUM_PARTICLES_PER_DIM; y++) {
-            float xp = -1.0f;
+            pp[0] = -1.0f;
             for (int x = 0; x < NUM_PARTICLES_PER_DIM; x++) {
-                vertices_[vertex_id++] = xp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
-                vertices_[vertex_id++] = yp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
-                vertices_[vertex_id++] = zp + 2.0f * jo_frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
+                for (int dim = 0; dim < 3; dim++) {
+                    vertices_[vertex_id++] = pp[dim] + 2.0f / (float)NUM_PARTICLES_PER_DIM * jo_frand(&seed);
+                }
                 color_id += 3;  // ignore RGB
                 // fran
                 colors_[color_id++] = jo_frand(&seed);
-                xp += 2.0f / (float)NUM_PARTICLES_PER_DIM;
+                pp[0] += 2.0f / (float)NUM_PARTICLES_PER_DIM;
             }
-            yp += 2.0f / (float)NUM_PARTICLES_PER_DIM;
+            pp[1] += 2.0f / (float)NUM_PARTICLES_PER_DIM;
         }
-        zp -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
+        pp[2] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
     }
 }
 
