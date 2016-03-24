@@ -85,7 +85,8 @@ const static char* glnames[NUM_GL_NAMES]={
     "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
 };
 #else
-const static char* glnames[NUM_GL_NAMES]={
+#define MAX_GLNAME_LEN 32
+const static char glnames[NUM_GL_NAMES][MAX_GLNAME_LEN]={
     "wglCreateContextAttribsARB",
     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
     "glAttachShader", "glLinkProgram", "glUseProgram",
