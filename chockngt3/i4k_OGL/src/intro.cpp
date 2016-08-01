@@ -245,7 +245,7 @@ void randomQuaternion(float quat[4], float changer)
 	for (int qdim = 0; qdim < 4; qdim++)
 	{
 		// RANDOM!!!
-		quat[qdim] = frand(&transformationSeed) - 0.5f + 0.25f * sin(0.125f*changer+qdim);
+		quat[qdim] = frand(&transformationSeed) - 0.5f + 0.25f * sinf(0.125f*changer+qdim);
 		invQuatLen += quat[qdim] * quat[qdim];
 	}
 	invQuatLen = 1.0f / (float)sqrt(invQuatLen);
@@ -847,7 +847,7 @@ void doTheMainPart(long itime)
 	if (fCurTime > 19.f)
 	{
 		float relTime = fCurTime - 19.f;
-		overshoot = 2.0f * sin(relTime*0.17f) * (-cos(relTime * 0.75f) + 1.0f);
+		overshoot = 2.0f * sinf(relTime*0.17f) * (-cosf(relTime * 0.75f) + 1.0f);
 	}
 	if (fCurTime > 190.0f)
 	{
@@ -925,7 +925,7 @@ void doTheMainPart(long itime)
 		if (wob < 0.2f)
 		{
 			wob *= 5.0f;
-			brrr += sin(wob * 3.1415f) / (fCurTime + 5.0f) * 4.0f;
+			brrr += sinf(wob * 3.1415f) / (fCurTime + 5.0f) * 4.0f;
 		}
 	}
 
@@ -958,7 +958,7 @@ void doTheMainPart(long itime)
 
 		if (burni < 1.0f)
 		{
-			colorburn = sin(fCurTime*25.0f) * sin(burni * 3.1415f) * 0.5f;
+			colorburn = sinf(fCurTime*25.0f) * sinf(burni * 3.1415f) * 0.5f;
 		}
 	}
 
@@ -970,7 +970,7 @@ void doTheMainPart(long itime)
 
 		if (burni < 1.0f)
 		{
-			colorburn = sin(fCurTime*25.0f) * sin(burni * 3.1415f) * sin(burni * 3.1415f) * 1.5f;
+			colorburn = sinf(fCurTime*25.0f) * sinf(burni * 3.1415f) * sinf(burni * 3.1415f) * 1.5f;
 		}
 	}
 
@@ -982,7 +982,7 @@ void doTheMainPart(long itime)
 
 		if (burni < 1.0f)
 		{
-			colorburn = sin(fCurTime*25.0f) * sin(burni * 3.1415f) * sin(burni * 3.1415f) * 0.75f;
+			colorburn = sinf(fCurTime*25.0f) * sinf(burni * 3.1415f) * sinf(burni * 3.1415f) * 0.75f;
 		}
 	}
 
@@ -994,7 +994,7 @@ void doTheMainPart(long itime)
 
 		if (burni < 1.0f)
 		{
-			colorburn = sin(fCurTime*25.0f) * sin(burni * 3.1415f) * sin(burni * 3.1415f) * 0.75f;
+			colorburn = sinf(fCurTime*25.0f) * sinf(burni * 3.1415f) * sinf(burni * 3.1415f) * 0.75f;
 		}
 	}
 
@@ -1006,7 +1006,7 @@ void doTheMainPart(long itime)
 
 		if (burni < 1.0f)
 		{
-			colorburn = sin(fCurTime*8.0f) * sin(burni * 3.1415f) * sin(burni * 3.1415f) * 2.75f;
+			colorburn = sinf(fCurTime*8.0f) * sinf(burni * 3.1415f) * sinf(burni * 3.1415f) * 2.75f;
 		}
 	}
 
@@ -1113,19 +1113,19 @@ void doTheMainPart(long itime)
 		float timerli = (fCurTime - creditsStartTime) * 0.3f;
 		if (timerli < 1.0f)
 		{
-			float alpha = sin(timerli * 3.1415f);
+			float alpha = sinf(timerli * 3.1415f);
 			float pos = -0.3f;
 			float width = alpha;
-			float high = cos(timerli * 3.1415f) * 0.05f;
+			float high = cosf(timerli * 3.1415f) * 0.05f;
 			drawQuad(pos-width, pos+width, -0.1f-high, 0.4f+high, -0.1f + high, 0.4f-high, 0.0f, 0.175f, alpha);
 		}
 		timerli = (fCurTime - creditsStartTime2) * 0.3f;
 		if (timerli > 0.0f && timerli < 1.0f)
 		{
-			float alpha = sin(timerli * 3.1415f);
+			float alpha = sinf(timerli * 3.1415f);
 			float pos = 0.3f;
 			float width = alpha;
-			float high = cos(timerli * 3.1415f) * 0.05f;
+			float high = cosf(timerli * 3.1415f) * 0.05f;
 			drawQuad(pos-width, pos+width, -0.5f+high, 0.0f-high, -0.5f-high, 0.0f+high, 0.175f, 0.35f, alpha);
 		}
 	}
@@ -1138,10 +1138,10 @@ void doTheMainPart(long itime)
 		float timerli = (fCurTime - bunnyStartTime) * 0.3f;
 		if (timerli < 1.0f)
 		{
-			float alpha = sin(timerli * 3.1415f);
+			float alpha = sinf(timerli * 3.1415f);
 			float pos = -0.0f;
 			float width = alpha * 0.45f;
-			float high = cos(timerli * 3.1415f) * 0.05f;
+			float high = cosf(timerli * 3.1415f) * 0.05f;
 			drawQuad(pos-width, pos+width, -0.8f-high, 0.8f+high, -0.8f + high, 0.8f-high, 0.01f, 0.99f, alpha);
 		}
 	}
