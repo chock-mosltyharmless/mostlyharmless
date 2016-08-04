@@ -54,7 +54,7 @@ static float getSD(float *position, int sdIndex)
 			position[2] += metaCenters[ball][2];
 		}
 		
-		value = sqrt(1.0f / value) - 1.3f;
+		value = sqrtf(1.0f / value) - 1.3f;
 	}
 	else if (sdIndex == SPHERE_FIELD)
 	{
@@ -128,7 +128,7 @@ static void updateSD(int sdIndex, float fDeltaTime)
 	}
 	for (int i = 0; i < 3*3; i++)
 	{
-		metaCenters[0][i] = 2.5f * sin(randomValues[0][i][0]*time + 3.0f * randomValues[0][i][1]);
+		metaCenters[0][i] = 2.5f * sinf(randomValues[0][i][0]*time + 3.0f * randomValues[0][i][1]);
 	}
 }
 
@@ -245,12 +245,12 @@ void updateSwarmDestinations(int pathID, float fDeltaTime, float overShootAmount
 
 		for (int ptIdx = 0; ptIdx < numMPts; ptIdx++)
 		{
-			moveToPoint[ptIdx][0] = 3.04f * sin(fCurTime * randomValues[ptIdx][0][0] + randomValues[ptIdx][0][1]) +
-					2.71f * sin(fCurTime * randomValues[ptIdx][0][2] + randomValues[ptIdx][0][3]);
-			moveToPoint[ptIdx][1] = 2.53f * sin(fCurTime * randomValues[ptIdx][1][0] + randomValues[ptIdx][1][1]) +
-					3.22f * sin(fCurTime * randomValues[ptIdx][1][2] + randomValues[ptIdx][1][3]);
-			moveToPoint[ptIdx][2] = 2.57f * sin(fCurTime * randomValues[ptIdx][2][0] + randomValues[ptIdx][2][1]) +
-					2.83f * sin(fCurTime * randomValues[ptIdx][2][2] + randomValues[ptIdx][2][3]);
+			moveToPoint[ptIdx][0] = 3.04f * sinf(fCurTime * randomValues[ptIdx][0][0] + randomValues[ptIdx][0][1]) +
+					2.71f * sinf(fCurTime * randomValues[ptIdx][0][2] + randomValues[ptIdx][0][3]);
+			moveToPoint[ptIdx][1] = 2.53f * sinf(fCurTime * randomValues[ptIdx][1][0] + randomValues[ptIdx][1][1]) +
+					3.22f * sinf(fCurTime * randomValues[ptIdx][1][2] + randomValues[ptIdx][1][3]);
+			moveToPoint[ptIdx][2] = 2.57f * sinf(fCurTime * randomValues[ptIdx][2][0] + randomValues[ptIdx][2][1]) +
+					2.83f * sinf(fCurTime * randomValues[ptIdx][2][2] + randomValues[ptIdx][2][3]);
 		}
 
 		for (int i = 0; i < NUM_TRIANGLES; i++)
@@ -287,14 +287,14 @@ void updateSwarmDestinations(int pathID, float fDeltaTime, float overShootAmount
 		for (int triIdx = 0; triIdx < NUM_TRIANGLES; triIdx++)
 		{
 			float zPos = tris.position[triIdx][2];
-			float phase = 10.0f * sin(zPos*0.05f + fCurTime*0.3f) * 0.15f;
+			float phase = 10.0f * sinf(zPos*0.05f + fCurTime*0.3f) * 0.15f;
 			float bestAngle = 0;
 			int bestLine = 0;
 			float closestDist = 1.0e20f;
 			for (int i = 0; i < 4; i++)
 			{
-				float linex = sin(phase);
-				float liney = cos(phase);
+				float linex = sinf(phase);
+				float liney = cosf(phase);
 				float distX = tris.position[triIdx][0] - linex;
 				float distY = tris.position[triIdx][1] - liney;
 				float dist = distX * distX + distY * distY;
@@ -307,9 +307,9 @@ void updateSwarmDestinations(int pathID, float fDeltaTime, float overShootAmount
 				phase += 3.1415926f * 0.5f;
 			}
 		
-			tris.moveToPoint[triIdx][0] = 2.7f * sin(bestAngle);
-			tris.moveToPoint[triIdx][1] = 2.7f * cos(bestAngle);
-			float direction = sin(fCurTime*0.4f);
+			tris.moveToPoint[triIdx][0] = 2.7f * sinf(bestAngle);
+			tris.moveToPoint[triIdx][1] = 2.7f * cosf(bestAngle);
+			float direction = sinf(fCurTime*0.4f);
 			if (bestLine & 1) direction = -direction;
 			tris.moveToPoint[triIdx][2] = tris.position[triIdx][2] + direction - 0.1f * tris.position[triIdx][2];
 		}
