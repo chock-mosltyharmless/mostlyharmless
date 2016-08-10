@@ -1,0 +1,161 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="LiveCoding.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="ShaderManager.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Parameter.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureManager.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Editor.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bass.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Editor.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="glext.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GLNames.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Parameter.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="LiveCoding.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderManager.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureManager.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="bass.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="LiveCoding.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="LiveCoding.ico" />
+    <None Include="ReadMe.txt" />
+    <None Include="small.ico" />
+    <None Include="shaders\DitherTexture.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\empty.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\DitherTexture.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\empty.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\empty.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp1.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp1.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp2.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp3.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp2.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp3.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp4.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp4.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp5.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp5.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp6.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp6.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp7.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp7.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp8.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp8.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\SimpleTexture.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\SimpleTexture.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\SimpleTexture.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp9.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\vp9.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{3cc9d983-9b91-4060-8892-ad3784d6faa0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{ab331df5-c80e-4bbf-9b51-3528cc5825d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{7c7a9d26-8a42-4c35-85ec-5071add1e0ce}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

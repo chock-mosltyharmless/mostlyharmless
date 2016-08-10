@@ -1,0 +1,27 @@
+void main(void) {                                                     
+                                                                      
+vec3 npos = vec3(ppos,0.);                                            
+float depth = sDepth(ppos);                                           
+npos.xy /= 1. + 1.2*depth;                                            
+npos.z = depth;                                                       
+npos.y -= 2.*slider9*depth - 1. * slider9;                            
+                                                                      
+vec3 distort = vnoise5(vec3(0.,0.,time*0.01)+                         
+npos*0.06,0.5).rgb;                                                   
+distort += vnoise3(npos*0.01 + distort*0.2, 0.3).rgb;                 
+npos += distort*2.*slider2;                                           
+                                                                      
+vec3 color = vec3(1.);                                                
+                                                                      
+float line = smoothstep(-.0, 1., sin(npos.y * 100.) +                 
+vnoise5(5.*npos + vec3(0.,0., time*0.2), 0.7).r*.3);                  
+                                                                      
+float height = slider1 + 0.001;                                       
+color -= vec3(line) * smoothstep(height, 0., abs(npos.y));            
+                                                                      
+gl_FragColor = vec4(color, 1.);                                       
+float vignette = max(0., 1.9 - length(ppos));                         
+gl_FragColor =  gl_FragColor * vignette +                             
+vec4(1. - vignette);                                                  
+}                                                                     
+                                                                      
