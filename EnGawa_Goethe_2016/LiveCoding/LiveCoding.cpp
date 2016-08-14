@@ -534,7 +534,47 @@ void intro_do(long t)
     // TODO: Here is the rendering done!
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-	glRectf(-1.0, -0.3, 1.0, 0.1);
+    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+    glUseProgram(programID);
+    textureManager.getTextureID("lines.tga", &textureID, errorText);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glDisable(GL_BLEND);
+
+
+    // Draw left line (Otone)
+    const int num_segments = 20;
+    const float segment_step = 1.0f / num_segments;
+    float bend_amount = (float)sin(ftime) * segment_step * 2.0f;
+    float line_width = 0.15f;
+    float last_x = -1.2f;
+    float last_y = -line_width;
+    float last_rotation = 0.0f;
+    glBegin(GL_QUADS);
+    for (int segment = 0; segment < num_segments; segment++) {
+        float tu_start = segment * segment_step;
+        float tu_end = (segment + 1) * segment_step;
+        float next_rotation = last_rotation;
+        float right_x = (float)cos(last_rotation) * segment_step * 1.2f;
+        float right_y = (float)sin(last_rotation) * segment_step * 1.2f;
+        float last_normal_x = -(float)sin(last_rotation) * line_width;
+        float last_normal_y = (float)cos(last_rotation) * line_width;
+        float next_normal_x = -(float)sin(next_rotation) * line_width;
+        float next_normal_y = (float)cos(next_rotation) * line_width;
+        glTexCoord2f(tu_start, 0.0f);
+        glVertex2f(last_x, last_y);
+        glTexCoord2f(tu_end, 0.0f);
+        glVertex2f(last_x + right_x, last_y + right_y);
+        glTexCoord2f(tu_end, 0.5f);
+        glVertex2f(last_x + right_x + next_normal_x, last_y + right_y + next_normal_y);
+        glTexCoord2f(tu_start, 0.5f);
+        glVertex2f(last_x + last_normal_x, last_y + last_normal_y);
+        last_rotation = next_rotation;
+        last_x += right_x;
+        last_y += right_y;
+    }
+    glEnd();
+
 
 	// Copy backbuffer to texture
 	if (usedIndex > 4) {
