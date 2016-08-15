@@ -22,6 +22,12 @@ char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg", "v
 int usedIndex = 0;
 float aspectRatio = (float)XRES / (float)YRES;
 
+long start_time_ = 0;
+float right_wave_start_ = 0.0f;
+float right_wave_end_ = 0.0f;
+float left_wave_start_ = 0.0f;
+float left_wave_end_ = 0.0f;
+
 /*************************************************
  * GL Core variables
  *************************************************/
@@ -157,6 +163,9 @@ static int initGL(WININFO *winInfo)
  *************************************************/
 static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
+    int time = timeGetTime() - start_time_;
+    float ftime = 0.001f * time;
+
 	// salvapantallas
 	if( uMsg==WM_SYSCOMMAND && (wParam==SC_SCREENSAVE || wParam==SC_MONITORPOWER) )
 		return( 0 );
@@ -188,132 +197,55 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case VK_NEXT:
 		case VK_END:
 		case VK_HOME:
-			editor.moveCursor(wParam);
 			break;
 
 		case VK_RETURN:
 		case VK_DELETE:
 		case VK_BACK:
-			editor.controlCharacter(wParam);
 			break;
 
-		case 'k':
-		case 'K':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				editor.deleteLine();
-			}
-			break;
+        case 'm':
+        case 'M':
+            if (GetAsyncKeyState(VK_CONTROL) < 0) {
+                // TODO: Minimization again.
+                SetWindowLong(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+                ShowWindow(hWnd, SW_MAXIMIZE);
+                GetClientRect(hWnd, &windowRect);
+                glViewport(0, 0, windowRect.right - windowRect.left, abs(windowRect.bottom - windowRect.top)); //NEW
+                aspectRatio = (float)(windowRect.right - windowRect.left) / (float)(abs(windowRect.bottom - windowRect.top));
+                ShowCursor(false);
+            }
+            break;
 
-		case 'z':
-		case 'Z':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				editor.undo();
-				char errorText[MAX_ERROR_LENGTH];
-				char *shaderText;
-				shaderText = editor.getText();
-				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
-				{
-					editor.setErrorText(errorText);
-				}
-				else editor.unshowError();
-				editor.showText();
-			}
-			break;
-
-		case 'y':
-		case 'Y':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				editor.redo();
-				char errorText[MAX_ERROR_LENGTH];
-				char *shaderText;
-				shaderText = editor.getText();
-				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
-				{
-					editor.setErrorText(errorText);
-				}
-				else editor.unshowError();
-				editor.showText();
-			}
-			break;
-
-		case 'm':
-		case 'M':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				// TODO: Minimization again.
-				SetWindowLong(hWnd, GWL_STYLE, WS_POPUP|WS_VISIBLE);
-				ShowWindow(hWnd, SW_MAXIMIZE);
-				GetClientRect(hWnd, &windowRect);
-				glViewport(0, 0, windowRect.right-windowRect.left, abs(windowRect.bottom - windowRect.top)); //NEW
-				aspectRatio = (float)(windowRect.right-windowRect.left) / (float)(abs(windowRect.bottom - windowRect.top));
-				ShowCursor(false);
-			}
-			break;
-
-		case 's':
-		case 'S':
-			// We want a new shader
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				char errorText[MAX_ERROR_LENGTH];
-				char *shaderText;
-				shaderText = editor.getText();
-				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
-				{
-					//MessageBox(wininfo.hWnd, errorText, "Shader change", MB_OK);
-					editor.setErrorText(errorText);
-				}
-				else
-				{
-					// It worked, so save the shader
-					shaderManager.saveProgress(usedShader[usedIndex], errorText, &editor);
-					editor.unshowError();
-					editor.unshowText();
-				}
-			}
-			break;
-
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-        case '0':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				// I use the ordering of keys to be able to get to the shader...
-				usedIndex = wParam - '1';
-                if (wParam == '0') usedIndex = 9;
-				if (usedIndex >= NUM_USED_PROGRAMS) usedIndex = NUM_USED_PROGRAMS - 1;
-
-				char errorText[MAX_ERROR_LENGTH+1];
-				char filename[SM_MAX_FILENAME_LENGTH+1];
-				sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "shaders/%s", usedShader[usedIndex]);
-				if (editor.loadText(filename, errorText))
-				{
-					MessageBox(wininfo.hWnd, errorText, "Editor init", MB_OK);
-					return -1;
-				}
-			}
-			break;
+        case 'A':
+        case 'a':
+            right_wave_start_ = ftime;
+            break;
+        case 'S':
+        case 's':
+            left_wave_start_ = ftime;
+            break;
 
 		default:
 			break;
 		}
     }
 
-	// Text entering
-	if (uMsg==WM_CHAR && GetAsyncKeyState(VK_CONTROL) >= 0)
-	{
-		editor.putCharacter(wParam);
-	}
+    if (uMsg == WM_KEYUP) {
+        switch(wParam) {
+        case 'A':
+        case 'a':
+            right_wave_end_ = ftime;
+            break;
+        case 'S':
+        case 's':
+            left_wave_end_ = ftime;
+            break;
+
+        default:
+            break;
+        }
+    }
 
     return( DefWindowProc(hWnd,uMsg,wParam,lParam) );
 }
@@ -545,22 +477,22 @@ void intro_do(long t)
     // Draw left line (Otone)
     const int num_segments = 20;
     const float segment_step = 1.0f / num_segments;
-    float bend_amount = (float)sin(ftime) * segment_step * 2.0f;
-    float line_width = 0.15f;
+    float bend_amount = (float)sin(ftime*0.3f) * segment_step;
+    float line_width = 0.1f;
     float last_x = -1.2f;
     float last_y = -line_width;
     float last_rotation = 0.0f;
     glBegin(GL_QUADS);
     for (int segment = 0; segment < num_segments; segment++) {
-        float tu_start = segment * segment_step;
-        float tu_end = (segment + 1) * segment_step;
-        float next_rotation = last_rotation;
+        float tu_start = segment * segment_step * 0.5f + 0.5f;
+        float tu_end = (segment + 1) * segment_step * 0.5f + 0.5f;
+        float next_rotation = last_rotation + bend_amount;
         float right_x = (float)cos(last_rotation) * segment_step * 1.2f;
-        float right_y = (float)sin(last_rotation) * segment_step * 1.2f;
+        float right_y = (float)sin(last_rotation) * segment_step * 1.2f * aspectRatio;
         float last_normal_x = -(float)sin(last_rotation) * line_width;
-        float last_normal_y = (float)cos(last_rotation) * line_width;
+        float last_normal_y = (float)cos(last_rotation) * line_width * aspectRatio;
         float next_normal_x = -(float)sin(next_rotation) * line_width;
-        float next_normal_y = (float)cos(next_rotation) * line_width;
+        float next_normal_y = (float)cos(next_rotation) * line_width * aspectRatio;
         glTexCoord2f(tu_start, 0.0f);
         glVertex2f(last_x, last_y);
         glTexCoord2f(tu_end, 0.0f);
@@ -661,10 +593,10 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return -1;
 	}
 
-    long to=timeGetTime();
+    start_time_ = timeGetTime();
     while( !done )
         {
-		long t = timeGetTime() - to;
+		long t = timeGetTime() - start_time_;
 
         while( PeekMessage(&msg,0,0,0,PM_REMOVE) )
         {
