@@ -475,17 +475,24 @@ void intro_do(long t)
 
 
     // Draw left line (Otone)
-    const int num_segments = 20;
+    const int num_segments = 100;
     const float segment_step = 1.0f / num_segments;
+    const float wave_move_speed = 1.0f;
+    const float wave_ramp = 0.15f;
     float bend_amount = (float)sin(ftime*0.3f) * segment_step;
     float line_width = 0.1f;
+    float displace_amount = 0.1f;
     float last_x = -1.2f;
     float last_y = -line_width;
     float last_rotation = 0.0f;
+    float wave_right = (ftime - right_wave_start_) * wave_move_speed;
+    float wave_left = (ftime - right_wave_end_) * wave_move_speed;
+    if (right_wave_start_ > right_wave_end_) wave_left = -1000.0f;
     glBegin(GL_QUADS);
     for (int segment = 0; segment < num_segments; segment++) {
-        float tu_start = segment * segment_step * 0.5f + 0.5f;
-        float tu_end = (segment + 1) * segment_step * 0.5f + 0.5f;
+        float t[2] = { segment * segment_step, (segment + 1) * segment_step };  // Internal "x"
+        float tu_start = t[0] * 0.5f + 0.5f;
+        float tu_end = t[1] * 0.5f + 0.5f;
         float next_rotation = last_rotation + bend_amount;
         float right_x = (float)cos(last_rotation) * segment_step * 1.2f;
         float right_y = (float)sin(last_rotation) * segment_step * 1.2f * aspectRatio;
@@ -493,14 +500,28 @@ void intro_do(long t)
         float last_normal_y = (float)cos(last_rotation) * line_width * aspectRatio;
         float next_normal_x = -(float)sin(next_rotation) * line_width;
         float next_normal_y = (float)cos(next_rotation) * line_width * aspectRatio;
+        
+        // Right-moving wave
+        float displace[2] = { 0.0f, 0.0f };
+        for (int i = 0; i < 2; i++) {
+            if (t[i] > wave_left && t[i] < wave_right) displace[i] = displace_amount * aspectRatio;
+            if (t[i] > wave_left && t[i] < wave_left + wave_ramp) {
+                displace[i] *= 0.5f - 0.5f * (float)cos((t[i] - wave_left) * 3.141592f / wave_ramp);
+            }
+            if (t[i] < wave_right && t[i] > wave_right - wave_ramp) {
+                displace[i] *= 0.5f - 0.5f * (float)cos((wave_right - t[i]) * 3.141592f / wave_ramp);
+            }
+        }
+
+        // Actual drawing
         glTexCoord2f(tu_start, 0.0f);
-        glVertex2f(last_x, last_y);
+        glVertex2f(last_x, last_y + displace[0]);
         glTexCoord2f(tu_end, 0.0f);
-        glVertex2f(last_x + right_x, last_y + right_y);
+        glVertex2f(last_x + right_x, last_y + right_y + displace[1]);
         glTexCoord2f(tu_end, 0.5f);
-        glVertex2f(last_x + right_x + next_normal_x, last_y + right_y + next_normal_y);
+        glVertex2f(last_x + right_x + next_normal_x, last_y + right_y + next_normal_y + displace[1]);
         glTexCoord2f(tu_start, 0.5f);
-        glVertex2f(last_x + last_normal_x, last_y + last_normal_y);
+        glVertex2f(last_x + last_normal_x, last_y + last_normal_y + displace[0]);
         last_rotation = next_rotation;
         last_x += right_x;
         last_y += right_y;
