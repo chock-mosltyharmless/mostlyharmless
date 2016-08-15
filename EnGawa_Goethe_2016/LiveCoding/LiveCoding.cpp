@@ -23,10 +23,10 @@ int usedIndex = 0;
 float aspectRatio = (float)XRES / (float)YRES;
 
 long start_time_ = 0;
-float right_wave_start_ = 0.0f;
-float right_wave_end_ = 0.0f;
-float left_wave_start_ = 0.0f;
-float left_wave_end_ = 0.0f;
+float right_wave_start_ = -2.0f;
+float right_wave_end_ = -1.0f;
+float left_wave_start_ = -2.0f;
+float left_wave_end_ = -1.0f;
 
 /*************************************************
  * GL Core variables
@@ -219,11 +219,11 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
         case 'A':
         case 'a':
-            right_wave_start_ = ftime;
+            if (right_wave_end_ >= right_wave_start_) right_wave_start_ = ftime;
             break;
         case 'S':
         case 's':
-            left_wave_start_ = ftime;
+            if (left_wave_end_ >= left_wave_start_)left_wave_start_ = ftime;
             break;
 
 		default:
@@ -477,8 +477,9 @@ void intro_do(long t)
     // Draw left line (Otone)
     const int num_segments = 100;
     const float segment_step = 1.0f / num_segments;
-    const float wave_move_speed = 1.0f;
+    const float wave_move_speed = 1.2f;
     const float wave_ramp = 0.15f;
+    const float wave_space_frequency = 20.0f;
     float bend_amount = (float)sin(ftime*0.3f) * segment_step;
     float line_width = 0.1f;
     float displace_amount = 0.1f;
@@ -511,6 +512,7 @@ void intro_do(long t)
             if (t[i] < wave_right && t[i] > wave_right - wave_ramp) {
                 displace[i] *= 0.5f - 0.5f * (float)cos((wave_right - t[i]) * 3.141592f / wave_ramp);
             }
+            displace[i] *= (float)sin(wave_space_frequency * (t[i] - ftime * wave_move_speed));
         }
 
         // Actual drawing
