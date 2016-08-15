@@ -347,14 +347,19 @@ static int window_init( WININFO *info )
 void DrawOtone(float ftime, bool is_otone) {
     const int num_segments = 100;
     const float segment_step = 1.0f / num_segments;
-    const float wave_move_speed = 1.4f;
+    const float wave_move_speed = 1.f;
     const float wave_ramp = 0.15f;
     const float wave_space_frequency = 20.0f;
     float bend_amount = (float)sin(ftime*0.3f) * segment_step;
-    bend_amount = 0.0f;
-    float acceptance = 0.85f;
-    float line_width = 0.1f;
-    float displace_amount = 0.1f;
+    bend_amount = is_otone ? 1.f - interpolatedParameters[14] : interpolatedParameters[15];
+    bend_amount = 2.0 * (bend_amount - 0.5f) * segment_step;
+    float line_width = 0.03f + 0.2f * (is_otone ? interpolatedParameters[16] : interpolatedParameters[17]);
+    float displace_amount = 0.01f + 0.2f * (is_otone ? interpolatedParameters[2] : interpolatedParameters[3]);
+    float other_displace_amount = 0.01f + 0.2f * (is_otone ? interpolatedParameters[3] : interpolatedParameters[2]);
+    //float acceptance = is_otone ? interpolatedParameters[4] : interpolatedParameters[5];
+    float acceptance = 1.0f - 2.f * (fabsf(interpolatedParameters[14] - 1.0f + interpolatedParameters[15]));
+    if (acceptance < 0.0f) acceptance = 0.0f;
+    acceptance *= acceptance;  // stronger go-down
     float last_x = -1.2f;
     float last_y = is_otone ? -line_width : -line_width*1.1f;
     float last_rotation = 0.0f;
@@ -398,7 +403,7 @@ void DrawOtone(float ftime, bool is_otone) {
         // Left-moving wave
         float other_displace[2] = { 0.0f, 0.0f };
         for (int i = 0; i < 2; i++) {
-            if (t[i] > other_wave_left && t[i] < other_wave_right) other_displace[i] = displace_amount * aspectRatio;
+            if (t[i] > other_wave_left && t[i] < other_wave_right) other_displace[i] = other_displace_amount * aspectRatio;
             if (t[i] > other_wave_left && t[i] < other_wave_left + wave_ramp) {
                 other_displace[i] *= 0.5f - 0.5f * (float)cos((t[i] - other_wave_left) * 3.141592f / wave_ramp);
             }
