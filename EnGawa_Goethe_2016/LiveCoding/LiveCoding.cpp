@@ -353,7 +353,7 @@ void DrawOtone(float ftime, bool is_otone) {
     float bend_amount = (float)sin(ftime*0.3f) * segment_step;
     bend_amount = is_otone ? 1.f - interpolatedParameters[14] : interpolatedParameters[15];
     bend_amount = 2.0 * (bend_amount - 0.5f) * segment_step;
-    float line_width = 0.03f + 0.2f * (is_otone ? interpolatedParameters[16] : interpolatedParameters[17]);
+    float line_width = 0.03f + 0.2f * (is_otone ? interpolatedParameters[4] : interpolatedParameters[5]);
     float displace_amount = 0.01f + 0.2f * (is_otone ? interpolatedParameters[2] : interpolatedParameters[3]);
     float other_displace_amount = 0.01f + 0.2f * (is_otone ? interpolatedParameters[3] : interpolatedParameters[2]);
     //float acceptance = is_otone ? interpolatedParameters[4] : interpolatedParameters[5];
