@@ -115,6 +115,7 @@
     <ClInclude Include="bass.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="Editor.h" />
+    <ClInclude Include="FluidSimulation.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="GLNames.h" />
     <ClInclude Include="LiveCoding.h" />
@@ -127,6 +128,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Editor.cpp" />
+    <ClCompile Include="FluidSimulation.cpp" />
     <ClCompile Include="LiveCoding.cpp" />
     <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="ShaderManager.cpp" />

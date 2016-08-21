@@ -8,6 +8,7 @@
 #include "GLNames.h"
 #include "ShaderManager.h"
 #include "TextureManager.h"
+#include "FluidSimulation.h"
 #include "Editor.h"
 #include "Parameter.h"
 #include "bass.h"
@@ -23,10 +24,7 @@ int usedIndex = 0;
 float aspectRatio = (float)XRES / (float)YRES;
 
 long start_time_ = 0;
-float right_wave_start_ = -2.0f;
-float right_wave_end_ = -1.0f;
-float left_wave_start_ = -2.0f;
-float left_wave_end_ = -1.0f;
+FluidSimulation fluid_simulation_;
 
 /*************************************************
  * GL Core variables
@@ -155,6 +153,9 @@ static int initGL(WININFO *winInfo)
 	}
 	blob = 0.;
 
+    // Create the fluid simulation stuff
+    fluid_simulation_.Init();
+
 	return 0;
 }
 
@@ -217,15 +218,6 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             }
             break;
 
-        case 'A':
-        case 'a':
-            if (right_wave_end_ >= right_wave_start_) right_wave_start_ = ftime;
-            break;
-        case 'S':
-        case 's':
-            if (left_wave_end_ >= left_wave_start_)left_wave_start_ = ftime;
-            break;
-
 		default:
 			break;
 		}
@@ -233,15 +225,6 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
     if (uMsg == WM_KEYUP) {
         switch(wParam) {
-        case 'A':
-        case 'a':
-            right_wave_end_ = ftime;
-            break;
-        case 'S':
-        case 's':
-            left_wave_end_ = ftime;
-            break;
-
         default:
             break;
         }
@@ -344,105 +327,11 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
-void DrawOtone(float ftime, bool is_otone) {
-    const int num_segments = 100;
-    const float segment_step = 1.0f / num_segments;
-    const float wave_move_speed = 1.f;
-    const float wave_ramp = 0.15f;
-    const float wave_space_frequency = 20.0f;
-    float bend_amount = (float)sin(ftime*0.3f) * segment_step;
-    bend_amount = is_otone ? 1.f - interpolatedParameters[14] : interpolatedParameters[15];
-    bend_amount = 2.0 * (bend_amount - 0.5f) * segment_step;
-    float line_width = 0.03f + 0.2f * (is_otone ? interpolatedParameters[4] : interpolatedParameters[5]);
-    float displace_amount = 0.01f + 0.2f * (is_otone ? interpolatedParameters[2] : interpolatedParameters[3]);
-    float other_displace_amount = 0.01f + 0.2f * (is_otone ? interpolatedParameters[3] : interpolatedParameters[2]);
-    //float acceptance = is_otone ? interpolatedParameters[4] : interpolatedParameters[5];
-    float acceptance = 1.0f - 2.f * (fabsf(interpolatedParameters[14] - 1.0f + interpolatedParameters[15]));
-    if (acceptance < 0.0f) acceptance = 0.0f;
-    acceptance *= acceptance;  // stronger go-down
-    float last_x = -1.2f;
-    float last_y = is_otone ? -line_width : -line_width*1.1f;
-    float last_rotation = 0.0f;
-    float this_wave_start_ = is_otone ? right_wave_start_ : left_wave_start_;
-    float this_wave_end_ = is_otone ? right_wave_end_ : left_wave_end_;
-    float other_wave_start_ = is_otone ? left_wave_start_ : right_wave_start_;
-    float other_wave_end_ = is_otone ? left_wave_end_ : right_wave_end_;
-    float wave_right = (ftime - this_wave_start_) * wave_move_speed;
-    float wave_left = (ftime - this_wave_end_) * wave_move_speed;
-    if (this_wave_start_ > this_wave_end_) wave_left = -1000.0f;
-    float other_wave_left = 2.0f - (ftime - other_wave_start_) * wave_move_speed;
-    float other_wave_right = 2.0f - (ftime - other_wave_end_) * wave_move_speed;
-    if (other_wave_start_ > other_wave_end_) other_wave_right = 1000.0f;
-    glBegin(GL_QUADS);
-    for (int segment = 0; segment < num_segments; segment++) {
-        float t[2] = { segment * segment_step, (segment + 1) * segment_step };  // Internal "x"
-        float tu_start = t[0] * 0.5f + 0.5f;
-        float tu_end = t[1] * 0.5f + 0.5f;
-        float next_rotation = last_rotation + bend_amount;
-        float right_x = (float)cos(last_rotation) * segment_step * 1.22f;
-        float right_y = (float)sin(last_rotation) * segment_step * 1.22f * aspectRatio;
-        float last_normal_x = -(float)sin(last_rotation) * line_width;
-        float last_normal_y = (float)cos(last_rotation) * line_width * aspectRatio;
-        float next_normal_x = -(float)sin(next_rotation) * line_width;
-        float next_normal_y = (float)cos(next_rotation) * line_width * aspectRatio;
-
-        // Right-moving wave
-        float displace[2] = { 0.0f, 0.0f };
-        for (int i = 0; i < 2; i++) {
-            if (t[i] > wave_left && t[i] < wave_right) displace[i] = displace_amount * aspectRatio;
-            if (t[i] > wave_left && t[i] < wave_left + wave_ramp) {
-                displace[i] *= 0.5f - 0.5f * (float)cos((t[i] - wave_left) * 3.141592f / wave_ramp);
-            }
-            if (t[i] < wave_right && t[i] > wave_right - wave_ramp) {
-                displace[i] *= 0.5f - 0.5f * (float)cos((wave_right - t[i]) * 3.141592f / wave_ramp);
-            }
-            displace[i] *= (float)sin(wave_space_frequency * (t[i] - ftime * wave_move_speed));
-        }
-
-#if 1
-        // Left-moving wave
-        float other_displace[2] = { 0.0f, 0.0f };
-        for (int i = 0; i < 2; i++) {
-            if (t[i] > other_wave_left && t[i] < other_wave_right) other_displace[i] = other_displace_amount * aspectRatio;
-            if (t[i] > other_wave_left && t[i] < other_wave_left + wave_ramp) {
-                other_displace[i] *= 0.5f - 0.5f * (float)cos((t[i] - other_wave_left) * 3.141592f / wave_ramp);
-            }
-            if (t[i] < other_wave_right && t[i] > other_wave_right - wave_ramp) {
-                other_displace[i] *= 0.5f - 0.5f * (float)cos((other_wave_right - t[i]) * 3.141592f / wave_ramp);
-            }
-            other_displace[i] *= (float)sin(wave_space_frequency * (t[i] + ftime * wave_move_speed));
-            other_displace[i] *= acceptance;
-            displace[i] += other_displace[i];
-        }
-#endif
-
-        // Actual drawing
-        float multiply_x = is_otone ? 1.0f : -1.0f;
-        float tv_up = is_otone ? 0.0f : 0.4f;
-        float tv_down = is_otone ? 0.4f : 1.0f;
-        glTexCoord2f(tu_start, tv_up);
-        glVertex2f(multiply_x * (last_x),
-                   last_y + displace[0]);
-        glTexCoord2f(tu_end, tv_up);
-        glVertex2f(multiply_x * (last_x + right_x),
-                   last_y + right_y + displace[1]);
-        glTexCoord2f(tu_end, tv_down);
-        glVertex2f(multiply_x * (last_x + right_x + next_normal_x),
-                   last_y + right_y + next_normal_y + displace[1]);
-        glTexCoord2f(tu_start, tv_down);
-        glVertex2f(multiply_x * (last_x + last_normal_x),
-                   last_y + last_normal_y + displace[0]);
-        last_rotation = next_rotation;
-        last_x += right_x;
-        last_y += right_y;
-    }
-    glEnd();
-}
-
-void intro_do(long t)
+void intro_do(long t, long delta_time)
 {
 	char errorText[MAX_ERROR_LENGTH+1];
 	float ftime = 0.001f*(float)t;
+    float fdelta_time = 0.001f * (float)(delta_time);
 	GLuint textureID;
 
 	glDisable(GL_BLEND);
@@ -560,7 +449,7 @@ void intro_do(long t)
     // TODO: Here is the rendering done!
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+    shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
     glUseProgram(programID);
     textureManager.getTextureID("lines.tga", &textureID, errorText);
     glBindTexture(GL_TEXTURE_2D, textureID);
@@ -568,10 +457,21 @@ void intro_do(long t)
     glDisable(GL_BLEND);
 
     glDisable(GL_CULL_FACE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_DST_COLOR, GL_ZERO);
-    DrawOtone(ftime, false);
-    DrawOtone(ftime, true);
+    //glEnable(GL_BLEND);
+    //glBlendFunc(GL_DST_COLOR, GL_ZERO);
+
+    fluid_simulation_.UpdateTime(fdelta_time);
+    fluid_simulation_.GetTexture();
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(-1.0f, -1.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(1.0f, -1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(1.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(-1.0f, 1.0f);
+    glEnd();
 
 	// Copy backbuffer to texture
 	if (usedIndex > 4) {
@@ -588,11 +488,7 @@ void intro_do(long t)
 	int xres = windowRect.right - windowRect.left;
 	int yres = windowRect.bottom - windowRect.top;
 	glViewport(0, 0, xres, yres);
-	if (usedIndex > 4) {
-		shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
-	} else {
-		shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
-	}
+    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
 	glUseProgram(programID);
 	loc = glGetUniformLocation(programID, "time");
 	glUniform1f(loc, (float)(t * 0.001f));
@@ -659,6 +555,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
     start_time_ = timeGetTime();
+    long last_time = 0;
+    
     while( !done )
         {
 		long t = timeGetTime() - start_time_;
@@ -673,8 +571,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-        intro_do(t);
+        intro_do(t, t - last_time);
 		editor.render(t);
+        last_time = t;
 
 		SwapBuffers( info->hDC );
 	}

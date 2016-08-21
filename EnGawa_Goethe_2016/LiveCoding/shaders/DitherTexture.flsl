@@ -9,12 +9,13 @@ void main(void) {
 	{
 		float n1=fract(sin(time + dot(o.xy,vec2(-12.9898+float(i),78.233)))*43758.5453);
 		float n2=fract(sin(time + dot(o.xy,vec2(23.34534,23.4324-float(i))))*2038.23482);
-		vec4 col2 = texture2D(Texture0, gl_TexCoord[0].xy + vec2(n1,n2)*vec2(n1,n2)*0.002);
+		vec4 col2 = texture2D(Texture0, gl_TexCoord[0].xy + vec2(n1,n2)*vec2(n1,n2)*0.01);
 		float similarity = 0.07 / (length(col - col2) + 0.07);
 		//col = mix(col, col2, 0.5 * similarity);
-		//if (similarity > .5) {col = mix(col,col2,0.5);}
-		if (similarity > 0.) {col = mix(col,col2,0.15);}
-		col += 0.06 * vec4(min(n1,n2));
+		if (similarity > .5) {col = mix(col,col2,0.5);}
+		//if (similarity > 0.) {col = mix(col,col2,0.15);}
+		//col += 0.06 * vec4(min(n1,n2));
 	}
-	gl_FragColor = 1.2 * col * color - vec4(vec3(0.2), 1.0);
+	//gl_FragColor = 1.2 * col * color - vec4(vec3(0.2), 1.0);
+    gl_FragColor = vec4(1.0 - 2. * col.rrr, 1.0);
 }
