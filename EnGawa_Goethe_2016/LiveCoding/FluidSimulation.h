@@ -1,10 +1,13 @@
 #pragma once
 
-#define FS_UPDATE_STEP 0.01f
+#define FS_UPDATE_STEP 0.005f
 // Reduction of speed due to friction and so on
-#define FS_VELOCITY_MULTIPLIER 0.9f
-#define FS_PULL_STRENGTH 0.01f
+#define FS_VELOCITY_MULTIPLIER 0.f
+#define FS_PULL_STRENGTH 0.15f
 #define FS_PUSH_MULTIPLIER 1.0f
+// Strength of the speed-up field
+#define FS_FIELD_STRENGTH_CENTER 0.1f
+#define FS_FIELD_STRENGTH_ROTATION 0.2f
 
 class FluidSimulation
 {
@@ -21,11 +24,11 @@ public:
     GLuint GetTexture(void);
 
 private:
-    const static int kWidth = 160;
-    const static int kBorderWidth = 20;
+    const static int kWidth = 640;
+    const static int kBorderWidth = 2;
     const static int kTotalWidth = kWidth + 2 * kBorderWidth;
-    const static int kHeight = 90;
-    const static int kBorderHeight = 20;
+    const static int kHeight = 360;
+    const static int kBorderHeight = 2;
     const static int kTotalHeight = kHeight + 2 * kBorderWidth;
 
     float remain_time_;  // Time that wasn't used for update
