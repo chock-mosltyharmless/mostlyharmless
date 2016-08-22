@@ -23,10 +23,10 @@ void FluidSimulation::Init(void) {
     remain_time_ = 0.0f;
 
     // Put some fluid to the left and right
-    for (int y = kTotalHeight / 2 - 60; y < kTotalHeight / 2 + 61; y++) {
-        for (int x = 0; x < 40; x++) {
-            fluid_amount_[1 - next_][y][x] = 1.0f;
-            fluid_amount_[1 - next_][y][kTotalWidth - x - 1] = 1.0f;
+    for (int y = kTotalHeight / 2 - 10; y < kTotalHeight / 2 + 11; y++) {
+        for (int x = 0; x < 180; x++) {
+            fluid_amount_[1 - next_][y + 40][x] = 1.0f;
+            fluid_amount_[1 - next_][y - 40][kTotalWidth - x - 1] = 1.0f;
         }
     }
 
@@ -58,6 +58,7 @@ void FluidSimulation::UpdateTime(float time_difference) {
     while (time_difference > FS_UPDATE_STEP) {
         int next = next_;
 
+#if 1
         // Reduce speed due to friction
         for (int y = 0; y < kTotalHeight; y++) {
             for (int x = 0; x < kTotalWidth; x++) {
@@ -108,6 +109,7 @@ void FluidSimulation::UpdateTime(float time_difference) {
             }
             yp += y_step;
         }
+#endif
 
         // Copy fluid to next frame
         for (int y = 0; y < kTotalHeight; y++) {
@@ -118,41 +120,64 @@ void FluidSimulation::UpdateTime(float time_difference) {
         }
 
         // Actually move the fluid
+#if 0
+        float yp = -1.0f;
+        float x_step = 2.0f / kTotalWidth;
+        float y_step = 2.0f / kTotalHeight;
+#endif
         for (int y = 1; y < kTotalHeight - 1; y++) {
+            float xp = -1.0f;
             for (int x = 1; x < kTotalWidth - 1; x++) {
+#if 1
                 // Update velocity
                 fluid_velocity_[next][y][x][0] = fluid_velocity_[1 - next][y][x][0];
                 fluid_velocity_[next][y][x][1] = fluid_velocity_[1 - next][y][x][1];
+                float left_right_velocity = fluid_velocity_[1 - next][y][x][0];
+                float top_bottom_velocity = fluid_velocity_[1 - next][y][x][1];
+#else
+                float length = sqrtf(xp * xp + yp * yp);
+                if (length < 0.0001f) length = 0.0001f;
+                float x_normal = yp / length;
+                float y_normal = -xp / length;
+
+                // Circle-pos
+                float center_move = length - 0.5f;
+                float left_right_velocity = -xp * center_move * FS_FIELD_STRENGTH_CENTER;
+                float top_bottom_velocity = -yp * center_move * FS_FIELD_STRENGTH_CENTER;
+
+                // Rotation
+                left_right_velocity += FS_FIELD_STRENGTH_ROTATION * x_normal * (1.0f - fabsf(center_move));
+                top_bottom_velocity += FS_FIELD_STRENGTH_ROTATION * y_normal * (1.0f - fabsf(center_move));
+#endif
 
                 // from left
                 float move_amount;
-                float velocity = fluid_velocity_[1 - next][y][x - 1][0];
-                velocity = velocity > 0.0f ? velocity : 0.0f;
-                move_amount = velocity * fluid_amount_[1 - next][y][x - 1];
+                float left_velocity = left_right_velocity > 0.0f ? left_right_velocity : 0.0f;
+                move_amount = left_velocity * fluid_amount_[1 - next][y][x - 1];
                 fluid_amount_[next][y][x - 1] -= move_amount;
                 fluid_amount_[next][y][x] += move_amount;
                 // from right
-                velocity = fluid_velocity_[1 - next][y][x + 1][0];
-                velocity = velocity < 0.0f ? velocity : 0.0f;
-                move_amount = -velocity * fluid_amount_[1 - next][y][x + 1];
+                float right_velocity = left_right_velocity < 0.0f ? left_right_velocity : 0.0f;
+                move_amount = -right_velocity * fluid_amount_[1 - next][y][x + 1];
                 fluid_amount_[next][y][x + 1] -= move_amount;
                 fluid_amount_[next][y][x] += move_amount;
 
                 // from bottom/top
-                velocity = fluid_velocity_[1 - next][y - 1][x][1];
-                velocity = velocity > 0.0f ? velocity : 0.0f;
-                move_amount = velocity * fluid_amount_[1 - next][y - 1][x];
+                float top_velocity = top_bottom_velocity > 0.0f ? top_bottom_velocity : 0.0f;
+                move_amount = top_velocity * fluid_amount_[1 - next][y - 1][x];
                 fluid_amount_[next][y - 1][x] -= move_amount;
                 fluid_amount_[next][y][x] += move_amount;
-                velocity = fluid_velocity_[1 - next][y + 1][x][1];
-                velocity = velocity < 0.0f ? velocity : 0.0f;
-                move_amount = -velocity * fluid_amount_[1 - next][y + 1][x];
+                float bottom_velocity = top_bottom_velocity < 0.0f ? top_bottom_velocity : 0.0f;
+                move_amount = -bottom_velocity * fluid_amount_[1 - next][y + 1][x];
                 fluid_amount_[next][y + 1][x] -= move_amount;
                 fluid_amount_[next][y][x] += move_amount;
 
                 // Denormals
                 if (fabsf(fluid_amount_[next][y][x]) < 1.e-5f) fluid_amount_[next][y][x] = 0.0f;
+
+                xp += x_step;
             }
+            yp += y_step;
         }
 
         time_difference -= FS_UPDATE_STEP;
