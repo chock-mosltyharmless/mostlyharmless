@@ -108,7 +108,7 @@ const static float defaultParameters[maxNumParameters] =
 	0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
 	0.0f, 0.0f, 0.0f, 0.0f,			// 14-22 ~= 1b-9b
 };
-static float interpolatedParameters[maxNumParameters];
+float interpolatedParameters[maxNumParameters];
 const int NUM_KEYS = 127;
 static int keyPressed[NUM_KEYS] = {0};
 

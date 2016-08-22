@@ -1,12 +1,14 @@
 #include "stdafx.h"
 #include "FluidSimulation.h"
 #include "glext.h"
+#include "Parameter.h"
 #include <math.h>
+
+extern float interpolatedParameters[];
 
 FluidSimulation::FluidSimulation() {
     next_ = 0;
 }
-
 
 FluidSimulation::~FluidSimulation() {
 }
@@ -23,12 +25,25 @@ void FluidSimulation::Init(void) {
     remain_time_ = 0.0f;
 
     // Put some fluid to the left and right
-    for (int y = kTotalHeight / 2 - 10; y < kTotalHeight / 2 + 11; y++) {
-        for (int x = 0; x < 180; x++) {
-            fluid_amount_[1 - next_][y + 40][x] = 1.0f;
-            fluid_amount_[1 - next_][y - 40][kTotalWidth - x - 1] = 1.0f;
+#if 1
+    last_sum_fluid = 0.0f;
+    for (int y = kTotalHeight / 2 - 20; y < kTotalHeight / 2 + 21; y++) {
+        for (int x = 0; x < 80; x++) {
+            fluid_amount_[1 - next_][y + 20][x] = 1.0f;
+            fluid_amount_[1 - next_][y - 20][kTotalWidth - x - 1] = 1.0f;
+            last_sum_fluid += 2.0f;
         }
     }
+#else
+    last_sum_fluid = 0.0f;
+    float cell_fluid = FS_TOTAL_SUM_FLUID / (kTotalHeight * kTotalWidth);
+    for (int y = 0; y < kTotalHeight; y++) {
+        for (int x = 0; x < kTotalHeight; x++) {
+            last_sum_fluid += cell_fluid;
+            fluid_amount_[1 - next_][y][x] = cell_fluid;
+        }
+    }
+#endif
 
     glGenTextures(1, &texture_id_);
     glBindTexture(GL_TEXTURE_2D, texture_id_);
@@ -37,7 +52,7 @@ void FluidSimulation::Init(void) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_R8,
         kTotalWidth, kTotalHeight,
         0, GL_RED, GL_FLOAT, fluid_amount_[1 - next_]);
 }
@@ -57,7 +72,9 @@ void FluidSimulation::UpdateTime(float time_difference) {
 
     while (time_difference > FS_UPDATE_STEP) {
         int next = next_;
-
+        float add_fluid = FS_TOTAL_SUM_FLUID - last_sum_fluid;
+        add_fluid /= kTotalHeight * kTotalWidth;
+        last_sum_fluid = 0.0f;
 #if 1
         // Reduce speed due to friction
         for (int y = 0; y < kTotalHeight; y++) {
@@ -77,6 +94,7 @@ void FluidSimulation::UpdateTime(float time_difference) {
                 if (amount > 1.0f) pull_amount = (1.0f - amount) * FS_PUSH_MULTIPLIER;
                 if (amount < 0.0f) pull_amount = -amount;  // Should not happen, still negative fluid --> pull
                 pull_amount *= FS_PULL_STRENGTH;
+                //if (pull_amount > 0.5f) pull_amount = 0.5f;
                 fluid_velocity_[1 - next][y][x + 1][0] -= pull_amount;
                 fluid_velocity_[1 - next][y][x - 1][0] += pull_amount;
                 fluid_velocity_[1 - next][y + 1][x][1] -= pull_amount;
@@ -91,19 +109,30 @@ void FluidSimulation::UpdateTime(float time_difference) {
         for (int y = 0; y < kTotalHeight; y++) {
             float xp = -1.0f;
             for (int x = 0; x < kTotalWidth; x++) {
-                float length = sqrtf(xp * xp + yp * yp);
+                float adjusted_xp = xp;
+                float adjusted_yp = yp;
+
+                adjusted_xp += interpolatedParameters[2] * fabsf(yp) * 0.75f;
+                adjusted_xp -= interpolatedParameters[3] * fabsf(yp) * 0.75f;
+                adjusted_yp += interpolatedParameters[3] * xp * 0.25f;
+
+                float length = sqrtf(adjusted_xp * adjusted_xp + adjusted_yp * adjusted_yp);
                 if (length < 0.0001f) length = 0.0001f;
-                float x_normal = yp / length;
-                float y_normal = -xp / length;
+                float x_normal = adjusted_yp / length;
+                float y_normal = -adjusted_xp / length;
 
                 // Circle-pos
                 float center_move = length - 0.5f;
-                fluid_velocity_[1 - next][y][x][0] -= xp * center_move * FS_FIELD_STRENGTH_CENTER;
-                fluid_velocity_[1 - next][y][x][1] -= yp * center_move * FS_FIELD_STRENGTH_CENTER;
+
+                fluid_velocity_[1 - next][y][x][0] -= adjusted_xp * center_move * FS_FIELD_STRENGTH_CENTER;
+                fluid_velocity_[1 - next][y][x][1] -= adjusted_yp * center_move * FS_FIELD_STRENGTH_CENTER;
 
                 // Rotation
                 fluid_velocity_[1 - next][y][x][0] += FS_FIELD_STRENGTH_ROTATION * x_normal * (1.0f - fabsf(center_move));
                 fluid_velocity_[1 - next][y][x][1] += FS_FIELD_STRENGTH_ROTATION * y_normal * (1.0f - fabsf(center_move));
+
+                // Move out of middle
+                //fluid_velocity_[1 - next][y][x][0] += 0.01f / (length * length + 0.1f);
 
                 xp += x_step;
             }
@@ -114,7 +143,8 @@ void FluidSimulation::UpdateTime(float time_difference) {
         // Copy fluid to next frame
         for (int y = 0; y < kTotalHeight; y++) {
             for (int x = 0; x < kTotalWidth; x++) {
-                fluid_amount_[next][y][x] = fluid_amount_[1 - next][y][x];
+                fluid_amount_[next][y][x] = fluid_amount_[1 - next][y][x] + add_fluid;
+                last_sum_fluid += fluid_amount_[next][y][x];
                 // TODO: Max fluid speed 1.0?
             }
         }
@@ -173,7 +203,14 @@ void FluidSimulation::UpdateTime(float time_difference) {
                 fluid_amount_[next][y][x] += move_amount;
 
                 // Denormals
-                if (fabsf(fluid_amount_[next][y][x]) < 1.e-5f) fluid_amount_[next][y][x] = 0.0f;
+                if (fabsf(fluid_amount_[next][y][x]) < 1.e-8f) fluid_amount_[next][y][x] = 0.0f;
+
+                // Check for invalid numbers
+                if (isnan(fluid_amount_[next][y][x]) ||
+                    fluid_amount_[next][y][x] < -1.0f ||
+                    fluid_amount_[next][y][x] > 2.0f) {
+                    fluid_amount_[next][y][x] = fluid_amount_[1 - next][y][x];
+                }
 
                 xp += x_step;
             }
@@ -182,6 +219,7 @@ void FluidSimulation::UpdateTime(float time_difference) {
 
         time_difference -= FS_UPDATE_STEP;
         next_ = 1 - next;
+        if (time_difference > 0.2f) time_difference = 0.0f;
     }
 
     remain_time_ = time_difference;
