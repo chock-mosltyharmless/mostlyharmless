@@ -59,17 +59,16 @@ void FluidSimulation::Init(void) {
 GLuint FluidSimulation::GetTexture(void) {
     // Send data to GPU
     glBindTexture(GL_TEXTURE_2D, texture_id_);
-    glTexSubImage2D(GL_TEXTURE_2D, 0,
-            0, 0, kTotalWidth, kTotalHeight,
-        GL_RED, GL_FLOAT, fluid_amount_[1 - next_]);
     return texture_id_;
 }
 
 void FluidSimulation::UpdateTime(float time_difference) {
     time_difference += remain_time_;
     remain_time_ = 0.0f;
+    bool did_update = false;
 
     while (time_difference > FS_UPDATE_STEP) {
+        did_update = true;
         int next = next_;
         float add_fluid = FS_TOTAL_SUM_FLUID - last_sum_fluid;
         add_fluid /= kTotalHeight * kTotalWidth;
@@ -254,6 +253,13 @@ void FluidSimulation::UpdateTime(float time_difference) {
         time_difference -= FS_UPDATE_STEP;
         next_ = 1 - next;
         if (time_difference > 0.2f) time_difference = 0.0f;
+    }
+
+    if (did_update) {
+        glBindTexture(GL_TEXTURE_2D, texture_id_);
+        glTexSubImage2D(GL_TEXTURE_2D, 0,
+            0, 0, kTotalWidth, kTotalHeight,
+            GL_RED, GL_FLOAT, fluid_amount_[1 - next_]);
     }
 
     remain_time_ = time_difference;

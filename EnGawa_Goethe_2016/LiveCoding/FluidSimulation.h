@@ -1,13 +1,13 @@
 #pragma once
 
-#define FS_UPDATE_STEP 0.01f
+#define FS_UPDATE_STEP 0.005f
 // Reduction of speed due to friction and so on
 #define FS_PULL_STRENGTH 0.1f
 #define FS_PUSH_MULTIPLIER 0.5f
 // Strength of the speed-up field
 #define FS_FIELD_STRENGTH_CENTER 0.2f
 #define FS_FIELD_STRENGTH_ROTATION 0.2f
-#define FS_TOTAL_SUM_FLUID (80*40)
+#define FS_TOTAL_SUM_FLUID (120*40)
 
 class FluidSimulation
 {

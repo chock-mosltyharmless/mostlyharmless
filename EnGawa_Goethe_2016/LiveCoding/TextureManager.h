@@ -29,9 +29,6 @@
 // Name of the 32x32x32 noise texture
 #define TM_3DNOISE_TEXTURE_SIZE 16 // try smaller?
 
-// Kinect Header files
-#include <Kinect.h>
-
 struct TGAHeader
 {
 	unsigned char identSize;
@@ -84,9 +81,6 @@ private: // functions
 	void generateNoiseTexture(void);
 	int createNoiseTexture(char *errorString, const char *name);
 	int createNoiseTexture3D(char *errorString, const char *name);
-	int initializeDefaultSensor(char *errorString);  // Initializes Kinect
-	int CreateSensorTexture(char *errorString, const char *name);
-	int UpdateSensorTexture(char *error_string, GLuint texture_index);
 	
 private: // data
 	int numTextures;
@@ -96,11 +90,6 @@ private: // data
 	int textureHeight[TM_MAX_NUM_TEXTURES];
 
 	// Kinect data
-	IKinectSensor *kinect_sensor_;
-	IDepthFrameReader *depth_frame_reader_;
 	INT64 last_frame_time_;  // Last time that a kinect frame was aquired
-	float *cpu_depth_sensor_buffer_;
-	float *smoothed_depth_sensor_buffer_[2];
-	int next_smoothed_depth_sensor_buffer_;
 };
 

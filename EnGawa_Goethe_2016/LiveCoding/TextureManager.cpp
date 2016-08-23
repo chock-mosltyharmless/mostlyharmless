@@ -7,7 +7,6 @@
 #include "Parameter.h"
 
 // Kinect Header files
-#include <Kinect.h>
 #include <math.h>
 
 static float noiseData[TM_NOISE_TEXTURE_SIZE * TM_NOISE_TEXTURE_SIZE * 4];
@@ -17,12 +16,6 @@ static float noiseData3D[TM_3DNOISE_TEXTURE_SIZE * TM_3DNOISE_TEXTURE_SIZE * TM_
 TextureManager::TextureManager(void)
 {
 	numTextures = 0;
-	kinect_sensor_ = NULL;
-	depth_frame_reader_ = NULL;
-	cpu_depth_sensor_buffer_ = NULL;
-	smoothed_depth_sensor_buffer_[0] = NULL;
-	smoothed_depth_sensor_buffer_[1] = NULL;
-	next_smoothed_depth_sensor_buffer_ = 0;
 }
 
 TextureManager::~TextureManager(void)
@@ -34,30 +27,6 @@ void TextureManager::releaseAll(void)
 {
 	glDeleteTextures(numTextures, textureID);
 	numTextures = 0;
-
-	// Release kinect stuff
-	if (depth_frame_reader_) {
-		depth_frame_reader_->Release();
-		depth_frame_reader_ = NULL;
-	}
-
-	// close the Kinect Sensor
-	if (kinect_sensor_) {
-		kinect_sensor_->Close();
-		kinect_sensor_->Release();
-		kinect_sensor_ = NULL;
-	}
-
-	if (cpu_depth_sensor_buffer_) {
-		delete[] cpu_depth_sensor_buffer_;
-		cpu_depth_sensor_buffer_ = NULL;
-	}
-
-	if (smoothed_depth_sensor_buffer_[0]) {
-		delete[] smoothed_depth_sensor_buffer_[0];
-		delete[] smoothed_depth_sensor_buffer_[1];
-		smoothed_depth_sensor_buffer_[0] = NULL;
-	}
 }
 
 int TextureManager::loadTGA(const char *filename, char *errorString)
@@ -137,17 +106,11 @@ int TextureManager::init(char *errorString)
 	// Free everything if there was something before.
 	releaseAll();
 
-	int retVal = initializeDefaultSensor(errorString);
-	if (retVal != 0) return retVal;
-
 	// create small and large rendertarget texture
 	createRenderTargetTexture(errorString, X_OFFSCREEN, Y_OFFSCREEN, TM_OFFSCREEN_NAME);
 	createRenderTargetTexture(errorString, X_HIGHLIGHT, Y_HIGHLIGHT, TM_HIGHLIGHT_NAME);
 	createNoiseTexture(errorString, TM_NOISE_NAME);
 	createNoiseTexture3D(errorString, TM_NOISE3D_NAME);
-
-	// Create texture for depth sensor (kinect)
-	CreateSensorTexture(errorString, TM_DEPTH_SENSOR_NAME);
 
 	// Go throught the textures directory and load all textures.
 	HANDLE hFind = INVALID_HANDLE_VALUE;
@@ -192,11 +155,6 @@ int TextureManager::getTextureID(const char *name, GLuint *id, char *errorString
 		sprintf_s(errorString, MAX_ERROR_LENGTH,
 			"Could not find texture '%s'", name);
 		return -1;
-	} else {
-		// It may be necessary to update the texture
-		if (strcmp(name, TM_DEPTH_SENSOR_NAME) == 0) {
-			return UpdateSensorTexture(errorString, texture_index);
-		}
 	}
 
 	// id was correctly set at this point.
@@ -429,262 +387,4 @@ void TextureManager::generateNoiseTexture(void)
 	delete [] filterKernel;
 
 	makeIntTexture();
-}
-
-int TextureManager::initializeDefaultSensor(char *errorMessage)
-{
-	HRESULT hr;
-
-	sprintf_s(errorMessage, MAX_ERROR_LENGTH, "");
-
-	hr = GetDefaultKinectSensor(&kinect_sensor_);
-	if (FAILED(hr))
-	{
-		sprintf_s(errorMessage, MAX_ERROR_LENGTH, "Could not initialize Kinect");
-		kinect_sensor_ = NULL;
-		return -1;
-	}
-
-	if (kinect_sensor_)
-	{
-		// Initialize the Kinect and get the depth reader
-		IDepthFrameSource* depthFrameSource = NULL;
-
-		hr = kinect_sensor_->Open();
-
-		if (SUCCEEDED(hr))
-		{
-			hr = kinect_sensor_->get_DepthFrameSource(&depthFrameSource);
-		}
-
-		if (SUCCEEDED(hr))
-		{
-			hr = depthFrameSource->OpenReader(&depth_frame_reader_);
-		}
-
-		if (depthFrameSource)
-		{
-			depthFrameSource->Release();
-			depthFrameSource = NULL;
-		}
-	}
-
-	if (!kinect_sensor_ || FAILED(hr))
-	{	
-		sprintf_s(errorMessage, MAX_ERROR_LENGTH,
-			"Could not open kinect depth reader");
-		return -1;
-	}
-
-	return 0;
-}
-
-int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
-	if (!depth_frame_reader_) {
-		sprintf_s(errorString, MAX_ERROR_LENGTH,
-			"No depth sensor exists for texture creation");
-		return -1;
-	}
-
-	glGenTextures(1, textureID + numTextures);
-	strcpy_s(textureName[numTextures], TM_MAX_FILENAME_LENGTH, name);
-	glBindTexture(GL_TEXTURE_2D, textureID[numTextures]);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	//gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGBA,
-	//	TM_NOISE_TEXTURE_SIZE, TM_NOISE_TEXTURE_SIZE,
-	//	GL_BGRA, GL_UNSIGNED_BYTE, noiseIntData);
-
-	IDepthFrame* pDepthFrame = NULL;
-	HRESULT hr;
-
-	bool hasSucceeded = false;
-	for (int tries = 0; tries < 20 && !hasSucceeded; tries++) {
-		Sleep(100);
-		hr = depth_frame_reader_->AcquireLatestFrame(&pDepthFrame);
-		if (SUCCEEDED(hr)) hasSucceeded = true;
-	}
-	if (!hasSucceeded) {
-		sprintf_s(errorString, MAX_ERROR_LENGTH,
-			"Could not acquire last depth sensor frame");
-		return -1;
-	}
-
-	pDepthFrame->get_RelativeTime(&last_frame_time_);
-
-	IFrameDescription* pFrameDescription = NULL;
-	int nWidth = 0;
-	int nHeight = 0;
-
-	hr = pDepthFrame->get_FrameDescription(&pFrameDescription);
-	if (FAILED(hr)) {
-		pDepthFrame->Release();
-		sprintf_s(errorString, MAX_ERROR_LENGTH,
-			"Could not get Depth Frame description");
-		return -1;
-	}
-
-	pFrameDescription->get_Width(&nWidth);
-	pFrameDescription->get_Height(&nHeight);
-
-	if (cpu_depth_sensor_buffer_) delete[] cpu_depth_sensor_buffer_;
-	cpu_depth_sensor_buffer_ = new float[nWidth * nHeight];
-	memset(cpu_depth_sensor_buffer_, 0, nWidth * nHeight);
-	if (smoothed_depth_sensor_buffer_[0]) {
-		delete[] smoothed_depth_sensor_buffer_[0];
-		delete[] smoothed_depth_sensor_buffer_[1];
-	}
-	smoothed_depth_sensor_buffer_[0] = new float[nWidth * nHeight];
-	smoothed_depth_sensor_buffer_[1] = new float[nWidth * nHeight];
-	memset(smoothed_depth_sensor_buffer_[0], 0, nWidth*nHeight);
-	memset(smoothed_depth_sensor_buffer_[1], 0, nWidth*nHeight);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,
-		nWidth, nHeight,
-		0, GL_RED, GL_FLOAT, smoothed_depth_sensor_buffer_[0]);
-
-	textureWidth[numTextures] = nWidth;
-	textureHeight[numTextures] = nHeight;
-	numTextures++;
-
-	pFrameDescription->Release();
-	pDepthFrame->Release();
-
-	return 0;
-}
-
-int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index) {
-	HRESULT hr;
-	glBindTexture(GL_TEXTURE_2D, texture_index);
-	int width = textureWidth[texture_index];
-	int height = textureHeight[texture_index];
-
-	if (!kinect_sensor_) {
-		// No kinect sensor present - just ignore!
-		return 0;
-	}
-
-	IDepthFrame *depth_frame_interface = NULL;
-	hr = depth_frame_reader_->AcquireLatestFrame(&depth_frame_interface);
-	if (FAILED(hr)) {
-		// Could not aquire new frame -> just ignore
-		return 0;
-	}
-
-	INT64 current_frame_time;
-	depth_frame_interface->get_RelativeTime(&current_frame_time);
-	if (current_frame_time == last_frame_time_) {
-		// Frame did not change --> ignore
-		depth_frame_interface->Release();
-		return 0;
-	}
-	last_frame_time_ = current_frame_time;
-
-	UINT buffer_size = 0;
-	UINT16 *buffer = NULL;
-
-	hr = depth_frame_interface->AccessUnderlyingBuffer(&buffer_size, &buffer);
-	
-	// Transform depth buffer to 32-bit float with range 0..1
-	float min_depth = 3.0f; // always?
-	float max_depth = (7000.0f * params.getParam(14, 0.2f)) + min_depth + 1.0f;
-	for (int y = 1; y < height-1; y++) {
-		UINT16 *source_pointer = buffer + width * y;
-		float *dest_pointer = cpu_depth_sensor_buffer_ + width * y;
-		for (int x = 1; x < width-1; x++) {
-			float depth = (float)*source_pointer;
-			if (depth > max_depth) depth = max_depth;
-			if (depth < min_depth) depth = max_depth;
-			depth = (max_depth - depth) / max_depth;  // Go to range 0..1
-#if 0
-			float y_to_border = fminf((float)y, (float)(height - y));
-			float x_to_border = fminf((float)x, (float)(width - x));
-			float distance_to_border = fminf(x_to_border, y_to_border);
-			float amount = fminf(distance_to_border / 64.0f, 1.0f);
-#else
-			float amount = 1.0f;
-#endif
-
-			// Ignore singular pixels
-			int active = 0;
-			if (*(source_pointer - width) > (int)min_depth) active++;
-			if (*(source_pointer + width) > (int)min_depth) active++;
-			if (*(source_pointer + 1) > (int)min_depth) active++;
-			if (*(source_pointer - 1) > (int)min_depth) active++;
-			if (active > 3) {
-				*dest_pointer = depth * amount;
-			} else {
-				*dest_pointer -= 0.003f;
-				if (*dest_pointer < 0) *dest_pointer = 0;
-			}
-			source_pointer++;
-			dest_pointer++;
-		}
-	}
-	
-	depth_frame_interface->Release();
-
-	int next = next_smoothed_depth_sensor_buffer_;
-	int cur = 1 - next_smoothed_depth_sensor_buffer_;
-
-	// Set interpolated depth buffer to the max where it should be
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
-			int index = y * width + x;
-			if (smoothed_depth_sensor_buffer_[cur][index] < cpu_depth_sensor_buffer_[index]) {
-				smoothed_depth_sensor_buffer_[cur][index] = cpu_depth_sensor_buffer_[index];
-			}
-		}
-	}
-
-	// Gravitate the depth buffer
-	const float cGravitate = 0.2f * params.getParam(15, 0.5f) * params.getParam(15, 0.5f);
-	for (int y = 1; y < height - 1; y++) {
-		for (int x = 1; x < width - 1; x++) {
-			int index = y * width + x;
-#if 1
-			float surround = fmaxf(fmaxf(smoothed_depth_sensor_buffer_[cur][index - 1],
-					  smoothed_depth_sensor_buffer_[cur][index + 1]),
-				fmaxf(smoothed_depth_sensor_buffer_[cur][index - width],
-				      smoothed_depth_sensor_buffer_[cur][index + width]));
-			surround += smoothed_depth_sensor_buffer_[cur][index - 1] +
-				smoothed_depth_sensor_buffer_[cur][index + 1] +
-				smoothed_depth_sensor_buffer_[cur][index - width] +
-				smoothed_depth_sensor_buffer_[cur][index + width];
-			surround /= 5.0;
-			
-#else
-			float surround = smoothed_depth_sensor_buffer_[cur][index - 1] +
-				smoothed_depth_sensor_buffer_[cur][index + 1] +
-				smoothed_depth_sensor_buffer_[cur][index - width] +
-					smoothed_depth_sensor_buffer_[cur][index + width];
-			surround /= 4.0;
-#endif
-			smoothed_depth_sensor_buffer_[next][index] =
-				surround - cGravitate;
-		}
-	}
-
-	// Set interpolated depth buffer to the max where it should be
-	for (int y = 0; y < height; y++) {
-		for (int x = 0; x < width; x++) {
-			int index = y * width + x;
-			if (smoothed_depth_sensor_buffer_[next][index] < 0.0f) {
-				smoothed_depth_sensor_buffer_[next][index] = 0.0f;
-			}
-			if (smoothed_depth_sensor_buffer_[next][index] > 1.0f) {
-				smoothed_depth_sensor_buffer_[next][index] = 1.0f;
-			}
-		}
-	}
-	next_smoothed_depth_sensor_buffer_ = cur;
-
-	// Send data to GPU
-	glTexSubImage2D(GL_TEXTURE_2D, 0,
-		0, 0, width, height,
-		GL_RED, GL_FLOAT, smoothed_depth_sensor_buffer_[next]);
-
-	return 0;
 }
