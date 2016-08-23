@@ -494,7 +494,6 @@ void intro_do(long t, long delta_time)
 	glUniform1f(loc, (float)(t * 0.001f));
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
 	glDisable(GL_BLEND);
-
 	glBegin(GL_QUADS);
 	glTexCoord2f(0.0f, 0.0f);
 	glVertex2f(-1.0f, -1.0f);
