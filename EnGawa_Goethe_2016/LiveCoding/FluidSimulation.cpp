@@ -22,6 +22,7 @@ void FluidSimulation::Init(void) {
         }
     }
     remain_time_ = 0.0f;
+    current_time = 0.0;
 
     // Put some fluid to the left and right
 #if 1
@@ -68,6 +69,8 @@ void FluidSimulation::UpdateTime(float time_difference) {
     bool did_update = false;
 
     while (time_difference > FS_UPDATE_STEP) {
+        current_time += FS_UPDATE_STEP;
+        float time = (float)current_time;
         did_update = true;
         int next = next_;
         float add_fluid = FS_TOTAL_SUM_FLUID - last_sum_fluid;
@@ -170,22 +173,33 @@ void FluidSimulation::UpdateTime(float time_difference) {
                 last_sum_fluid += current_amount;
 
                 // Calculate velocities
-                float adjusted_xp = xp;
-                float adjusted_yp = yp;
-                adjusted_xp += interpolatedParameters[2] * fabsf(yp) * 0.75f;
-                adjusted_xp -= interpolatedParameters[3] * fabsf(yp) * 0.75f;
-                adjusted_yp += interpolatedParameters[3] * xp * 0.25f;
-                float length = sqrtf(adjusted_xp * adjusted_xp + adjusted_yp * adjusted_yp);
+                float length = sqrtf(xp * xp + yp * yp);
                 if (length < 0.0001f) length = 0.0001f;
-                float x_normal = adjusted_yp / length;
-                float y_normal = -adjusted_xp / length;
+                float x_normal = yp / length;
+                float y_normal = -xp / length;
                 // Circle-pos
                 float center_move = length - 0.5f;
-                float right_velocity = -adjusted_xp * center_move * FS_FIELD_STRENGTH_CENTER;
-                float down_velocity = -adjusted_yp * center_move * FS_FIELD_STRENGTH_CENTER;
+                float right_velocity = -xp * center_move * FS_FIELD_STRENGTH_CENTER;
+                float down_velocity = -yp * center_move * FS_FIELD_STRENGTH_CENTER;
                 // Rotation
                 right_velocity += FS_FIELD_STRENGTH_ROTATION * x_normal * (1.0f - fabsf(center_move));
                 down_velocity += FS_FIELD_STRENGTH_ROTATION * y_normal * (1.0f - fabsf(center_move));
+
+                // Some middle hill
+                float hill_rotation = time * FS_HILL_ROTATION_SPEED;
+                //float xp_rot = cos(hill_rotation) * xp - sin(hill_rotation) * yp;
+                float yp_rot = sinf(hill_rotation) * xp + cosf(hill_rotation) * yp;
+                float line_dist = yp_rot * yp_rot;
+                float hill_amount = interpolatedParameters[2] * 0.03f / (line_dist + 0.03f);
+                float away_amount = 1.0f * yp_rot * hill_amount;  // goes to linear?
+                right_velocity += -sinf(-hill_rotation) * away_amount;
+                down_velocity += cosf(-hill_rotation) * away_amount;
+
+                // Tear up
+                right_velocity += 0.3f * sinf(yp * 9.f + time) *
+                    cosf(xp * (8.f + sinf(time * 0.3f)) - time * 0.7f) * interpolatedParameters[3];
+                down_velocity += 0.3f * cosf(yp * (7.f - cosf(time * 0.27f)) - time * 0.9f) *
+                    sinf(xp * 5.f + time * 0.6f) * interpolatedParameters[3];
 
 #if 1
                 float pull_amount = CalculatePull(current_amount);
@@ -203,28 +217,24 @@ void FluidSimulation::UpdateTime(float time_difference) {
                 if (down_velocity > 0.5f) down_velocity = 0.5f;
 
                 // move right
+                float move_amount;
                 if (right_velocity > 0) {
-                    float move_amount = right_velocity * current_amount;
-                    next_amount -= move_amount;
-                    fluid_amount_[next][y][x + 1] += move_amount;
+                    move_amount = right_velocity * current_amount;
                 } else {
-                    float move_amount = -right_velocity * right_amount;
-                    next_amount += move_amount;
-                    fluid_amount_[next][y][x + 1] -= move_amount;
+                    move_amount = right_velocity * right_amount;
                 }
-
+                next_amount -= move_amount;
+                fluid_amount_[next][y][x + 1] += move_amount;
                 // Copy y stuff
                 float next_bottom = bottom_amount;
                 // move bottom
                 if (down_velocity > 0) {
-                    float move_amount = down_velocity * current_amount;
-                    next_amount -= move_amount;
-                    next_bottom += move_amount;
+                    move_amount = down_velocity * current_amount;
                 } else {
-                    float move_amount = -down_velocity * bottom_amount;
-                    next_amount += move_amount;
-                    next_bottom -= move_amount;
+                    move_amount = down_velocity * bottom_amount;
                 }
+                next_amount -= move_amount;
+                next_bottom += move_amount;
                 fluid_amount_[next][y + 1][x] = next_bottom;
 
                 // Check for invalid numbers. This thing is done last...

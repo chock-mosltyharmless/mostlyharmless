@@ -1,13 +1,14 @@
 #pragma once
 
-#define FS_UPDATE_STEP 0.005f
+#define FS_UPDATE_STEP 0.01f
 // Reduction of speed due to friction and so on
 #define FS_PULL_STRENGTH 0.1f
 #define FS_PUSH_MULTIPLIER 0.5f
 // Strength of the speed-up field
-#define FS_FIELD_STRENGTH_CENTER 0.2f
+#define FS_FIELD_STRENGTH_CENTER 0.4f
 #define FS_FIELD_STRENGTH_ROTATION 0.2f
 #define FS_TOTAL_SUM_FLUID (120*40)
+#define FS_HILL_ROTATION_SPEED 0.2f
 
 class FluidSimulation
 {
@@ -39,6 +40,8 @@ private:
     const static int kHeight = 180;
     const static int kBorderHeight = 2;
     const static int kTotalHeight = kHeight + 2 * kBorderWidth;
+
+    double current_time;
 
     float last_sum_fluid;
     float remain_time_;  // Time that wasn't used for update
