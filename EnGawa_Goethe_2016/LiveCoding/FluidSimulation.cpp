@@ -155,6 +155,13 @@ void FluidSimulation::UpdateTime(float time_difference) {
             fluid_amount_[next][0][x] = fluid_amount_[1 - next][0][x];
         }
 
+        // Middle hill precalculation
+        float hill_rotation = time * FS_HILL_ROTATION_SPEED;
+        float sinf_hill_rotation = sinf(hill_rotation);
+        float cosf_hill_rotation = cosf(hill_rotation);
+        float sinf_inv_hill_rotation = sinf(-hill_rotation);
+        float cosf_inv_hill_rotation = cosf(-hill_rotation);
+
         // Actually move the fluid
         float yp = -1.0f;
         float x_step = 2.0f / kTotalWidth;
@@ -188,18 +195,20 @@ void FluidSimulation::UpdateTime(float time_difference) {
                 // Some middle hill
                 float hill_rotation = time * FS_HILL_ROTATION_SPEED;
                 //float xp_rot = cos(hill_rotation) * xp - sin(hill_rotation) * yp;
-                float yp_rot = sinf(hill_rotation) * xp + cosf(hill_rotation) * yp;
+                float yp_rot = sinf_hill_rotation * xp + cosf_hill_rotation * yp;
                 float line_dist = yp_rot * yp_rot;
                 float hill_amount = interpolatedParameters[2] * 0.03f / (line_dist + 0.03f);
                 float away_amount = 1.0f * yp_rot * hill_amount;  // goes to linear?
-                right_velocity += -sinf(-hill_rotation) * away_amount;
-                down_velocity += cosf(-hill_rotation) * away_amount;
+                right_velocity += -sinf_inv_hill_rotation * away_amount;
+                down_velocity += cosf_inv_hill_rotation * away_amount;
 
+#if 1
                 // Tear up
                 right_velocity += 0.3f * sinf(yp * 9.f + time) *
                     cosf(xp * (8.f + sinf(time * 0.3f)) - time * 0.7f) * interpolatedParameters[3];
                 down_velocity += 0.3f * cosf(yp * (7.f - cosf(time * 0.27f)) - time * 0.9f) *
                     sinf(xp * 5.f + time * 0.6f) * interpolatedParameters[3];
+#endif
 
 #if 1
                 float pull_amount = CalculatePull(current_amount);
