@@ -11,7 +11,7 @@
 #include "FluidSimulation.h"
 #include "Editor.h"
 #include "Parameter.h"
-#include "bass.h"
+//#include "bass.h"
 
 #define MAX_LOADSTRING 100
 #define BLOB_FADE_SPEED 1.0f
