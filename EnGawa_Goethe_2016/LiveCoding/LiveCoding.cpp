@@ -205,6 +205,11 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case VK_BACK:
 			break;
 
+        case 'a':
+        case 'A':
+            fluid_simulation_.request_set_points_ = true;
+            break;
+
         case 'm':
         case 'M':
             if (GetAsyncKeyState(VK_CONTROL) < 0) {
@@ -440,11 +445,13 @@ void intro_do(long t, long delta_time)
 	textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_3D, textureID);
 
+#if 0
 	if (usedIndex > 4) {
 		glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
 	} else {
 		glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 	}
+#endif
 
     // TODO: Here is the rendering done!
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -473,6 +480,7 @@ void intro_do(long t, long delta_time)
     glVertex2f(-1.0f, 1.0f);
     glEnd();
 
+#if 0
 	// Copy backbuffer to texture
 	if (usedIndex > 4) {
 		textureManager.getTextureID(TM_HIGHLIGHT_NAME, &textureID, errorText);
@@ -504,6 +512,7 @@ void intro_do(long t, long delta_time)
 	glTexCoord2f(0.0f, 1.0f);
 	glVertex2f(-1.0f, 1.0f);
 	glEnd();
+#endif
 }
 
 

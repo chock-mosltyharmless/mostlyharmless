@@ -4,13 +4,21 @@
 #include "Parameter.h"
 #include <math.h>
 
+
 extern float interpolatedParameters[];
+extern float aspectRatio;
 
 FluidSimulation::FluidSimulation() {
     next_ = 0;
+    request_set_points_ = false;
 }
 
 FluidSimulation::~FluidSimulation() {
+}
+
+float FluidSimulation::frand(void) {
+    int randint = rand() % RAND_MAX;
+    return (float)randint / (float)(RAND_MAX);
 }
 
 void FluidSimulation::Init(void) {
@@ -63,12 +71,51 @@ GLuint FluidSimulation::GetTexture(void) {
     return texture_id_;
 }
 
+void FluidSimulation::SetPoints(void) {
+    int next = next_;
+    int current = 1 - next;
+    float time = (float)current_time;
+    for (int y = 0; y < kTotalHeight; y++) {
+        for (int x = 0; x < kTotalWidth; x++) {
+            fluid_amount_[current][y][x] = 0.0f;
+        }
+    }
+
+    const int kNumDots = FS_TOTAL_SUM_FLUID / 5;
+    for (int dot = 0; dot < kNumDots; dot++) {
+        float angle = frand() * 3.1415f * 2.0f;
+        float distance = 2.0f * frand() - 1.0f;
+        distance = distance * distance * distance;
+        distance *= 0.25f;
+        distance += 0.5f;
+        int xp = (int)(distance * sin(angle) * kTotalWidth / 2) + kTotalWidth / 2;
+        int yp = (int)(distance * cos(angle) * kTotalHeight / 2) + kTotalHeight / 2;
+
+        for (int dy = -1; dy <= 1; dy++) {
+            for (int dx = -1; dx <= 1; dx++) {
+                int xpos = xp + dx;
+                int ypos = yp + dy;
+                if (xpos >= 0 && xpos < kTotalWidth &&
+                    xpos >= 0 && ypos < kTotalHeight) {
+                    // Should always be true...
+                    fluid_amount_[current][ypos][xpos] = 1.0f;
+                }
+            }
+        }
+    }
+}
+
 void FluidSimulation::UpdateTime(float time_difference) {
     time_difference += remain_time_;
     remain_time_ = 0.0f;
     bool did_update = false;
 
     while (time_difference > FS_UPDATE_STEP) {
+        if (request_set_points_) {
+            SetPoints();
+            request_set_points_ = false;
+        }
+        
         current_time += FS_UPDATE_STEP;
         float time = (float)current_time;
         did_update = true;
@@ -76,79 +123,6 @@ void FluidSimulation::UpdateTime(float time_difference) {
         float add_fluid = FS_TOTAL_SUM_FLUID - last_sum_fluid;
         add_fluid /= kTotalHeight * kTotalWidth;
         last_sum_fluid = 0.0f;
-#if 0
-        // Reduce speed due to friction
-        for (int y = 0; y < kTotalHeight; y++) {
-            for (int x = 0; x < kTotalWidth; x++) {
-                fluid_velocity_[1 - next][y][x][0] *= FS_VELOCITY_MULTIPLIER;
-                if (fabsf(fluid_velocity_[1 - next][y][x][0]) < 1.e-5f) fluid_velocity_[1 - next][y][x][0] = 0.0f;
-                fluid_velocity_[1 - next][y][x][1] *= FS_VELOCITY_MULTIPLIER;
-                if (fabsf(fluid_velocity_[1 - next][y][x][1]) < 1.e-5f) fluid_velocity_[1 - next][y][x][0] = 0.0f;
-            }
-        }
-
-        // Do fluid - pull
-        for (int y = 1; y < kTotalHeight - 1; y++) {
-            for (int x = 1; x < kTotalWidth - 1; x++) {
-                float amount = fluid_amount_[1 - next][y][x];
-                float pull_amount = amount - amount * amount;
-                if (amount > 1.0f) pull_amount = (1.0f - amount) * FS_PUSH_MULTIPLIER;
-                if (amount < 0.0f) pull_amount = -amount;  // Should not happen, still negative fluid --> pull
-                pull_amount *= FS_PULL_STRENGTH;
-                //if (pull_amount > 0.5f) pull_amount = 0.5f;
-                fluid_velocity_[1 - next][y][x + 1][0] -= pull_amount;
-                fluid_velocity_[1 - next][y][x - 1][0] += pull_amount;
-                fluid_velocity_[1 - next][y + 1][x][1] -= pull_amount;
-                fluid_velocity_[1 - next][y - 1][x][1] += pull_amount;
-            }
-        }
-
-        // Apply trace field
-        float yp = -1.0f;
-        float x_step = 2.0f / kTotalWidth;
-        float y_step = 2.0f / kTotalHeight;
-        for (int y = 0; y < kTotalHeight; y++) {
-            float xp = -1.0f;
-            for (int x = 0; x < kTotalWidth; x++) {
-                float adjusted_xp = xp;
-                float adjusted_yp = yp;
-
-                adjusted_xp += interpolatedParameters[2] * fabsf(yp) * 0.75f;
-                adjusted_xp -= interpolatedParameters[3] * fabsf(yp) * 0.75f;
-                adjusted_yp += interpolatedParameters[3] * xp * 0.25f;
-
-                float length = sqrtf(adjusted_xp * adjusted_xp + adjusted_yp * adjusted_yp);
-                if (length < 0.0001f) length = 0.0001f;
-                float x_normal = adjusted_yp / length;
-                float y_normal = -adjusted_xp / length;
-
-                // Circle-pos
-                float center_move = length - 0.5f;
-
-                fluid_velocity_[1 - next][y][x][0] -= adjusted_xp * center_move * FS_FIELD_STRENGTH_CENTER;
-                fluid_velocity_[1 - next][y][x][1] -= adjusted_yp * center_move * FS_FIELD_STRENGTH_CENTER;
-
-                // Rotation
-                fluid_velocity_[1 - next][y][x][0] += FS_FIELD_STRENGTH_ROTATION * x_normal * (1.0f - fabsf(center_move));
-                fluid_velocity_[1 - next][y][x][1] += FS_FIELD_STRENGTH_ROTATION * y_normal * (1.0f - fabsf(center_move));
-
-                // Move out of middle
-                //fluid_velocity_[1 - next][y][x][0] += 0.01f / (length * length + 0.1f);
-
-                xp += x_step;
-            }
-            yp += y_step;
-        }
-
-        // Copy fluid to next frame
-        for (int y = 0; y < kTotalHeight; y++) {
-            for (int x = 0; x < kTotalWidth; x++) {
-                fluid_amount_[next][y][x] = fluid_amount_[1 - next][y][x] + add_fluid;
-                last_sum_fluid += fluid_amount_[next][y][x];
-                // TODO: Max fluid speed 1.0?
-            }
-        }
-#endif
 
         // Copy top row that is not copied otherwise
         for (int x = 0; x < kTotalWidth; x++) {

@@ -33,6 +33,12 @@ public:
         return pull_amount * FS_PULL_STRENGTH;
     }
 
+    void SetPoints(void);
+
+    static float frand(void);
+
+    bool request_set_points_;
+
 private:
     const static int kWidth = 320;
     const static int kBorderWidth = 2;

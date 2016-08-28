@@ -19,7 +19,9 @@
     <ClCompile Include="stdafx.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="FluidSimulation.cpp" />
+    <ClCompile Include="FluidSimulation.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bass.h">
@@ -58,7 +60,9 @@
     <ClInclude Include="stdafx.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="FluidSimulation.h" />
+    <ClInclude Include="FluidSimulation.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Library Include="bass.lib" />
