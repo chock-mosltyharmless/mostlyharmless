@@ -71,6 +71,25 @@ GLuint FluidSimulation::GetTexture(void) {
     return texture_id_;
 }
 
+void FluidSimulation::DrawLine(float startX, float startY, float dirX, float dirY,
+                               int length, int buffer) {
+    int xp = (int)(startX * kTotalWidth + kTotalWidth) * 128;
+    int yp = (int)(startY * kTotalHeight + kTotalHeight) * 128;
+    int dx = (int)(dirX * 256);
+    int dy = (int)(dirY * 256);
+
+    for (int i = 0; i < length; i++) {
+        int xpos = xp / 256;
+        int ypos = yp / 256;
+        if (xpos >= 0 && xpos < kTotalWidth &&
+            ypos >= 0 && ypos < kTotalHeight) {
+            fluid_amount_[buffer][ypos][xpos] = 1.0f;
+        }
+        xp += dx;
+        yp += dy;
+    }
+}
+
 void FluidSimulation::SetPoints(void) {
     int next = next_;
     int current = 1 - next;
@@ -81,27 +100,33 @@ void FluidSimulation::SetPoints(void) {
         }
     }
 
-    const int kNumDots = FS_TOTAL_SUM_FLUID / 5;
+    const int kNumDots = FS_TOTAL_SUM_FLUID / 20;
     for (int dot = 0; dot < kNumDots; dot++) {
         float angle = frand() * 3.1415f * 2.0f;
         float distance = 2.0f * frand() - 1.0f;
         distance = distance * distance * distance;
-        distance *= 0.25f;
+        distance *= 0.1f;
         distance += 0.5f;
+        float direction = (2.0f * (frand() - 0.5f)) + angle - 3.15415f/2.0f;
+#if 0
         int xp = (int)(distance * sin(angle) * kTotalWidth / 2) + kTotalWidth / 2;
         int yp = (int)(distance * cos(angle) * kTotalHeight / 2) + kTotalHeight / 2;
-
         for (int dy = -1; dy <= 1; dy++) {
             for (int dx = -1; dx <= 1; dx++) {
                 int xpos = xp + dx;
                 int ypos = yp + dy;
                 if (xpos >= 0 && xpos < kTotalWidth &&
-                    xpos >= 0 && ypos < kTotalHeight) {
+                    ypos >= 0 && ypos < kTotalHeight) {
                     // Should always be true...
                     fluid_amount_[current][ypos][xpos] = 1.0f;
                 }
             }
         }
+#else
+        DrawLine(distance * sinf(angle), distance * cosf(angle),
+            sinf(direction), cosf(direction),
+            25, current);
+#endif
     }
 }
 

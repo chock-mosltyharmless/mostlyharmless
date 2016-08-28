@@ -35,6 +35,8 @@ public:
 
     void SetPoints(void);
 
+    void DrawLine(float startX, float startY, float dirX, float dirY, int length, int buffer);
+
     static float frand(void);
 
     bool request_set_points_;
