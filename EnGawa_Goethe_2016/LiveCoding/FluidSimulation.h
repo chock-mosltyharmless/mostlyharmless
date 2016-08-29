@@ -34,6 +34,7 @@ public:
     }
 
     void SetPoints(void);
+    void SetRegularLines(void);
 
     void DrawLine(float startX, float startY, float dirX, float dirY, int length, int buffer);
 

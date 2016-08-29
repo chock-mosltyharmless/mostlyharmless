@@ -100,14 +100,17 @@ void FluidSimulation::SetPoints(void) {
         }
     }
 
-    const int kNumDots = FS_TOTAL_SUM_FLUID / 20;
+    int length = (int)(interpolatedParameters[4] * 40) + 5;
+    const int kNumDots = FS_TOTAL_SUM_FLUID / length;
+
     for (int dot = 0; dot < kNumDots; dot++) {
         float angle = frand() * 3.1415f * 2.0f;
         float distance = 2.0f * frand() - 1.0f;
         distance = distance * distance * distance;
-        distance *= 0.1f;
+        distance *= 0.3f * interpolatedParameters[6];
         distance += 0.5f;
-        float direction = (2.0f * (frand() - 0.5f)) + angle - 3.15415f/2.0f;
+        float direction = (interpolatedParameters[5] *  4.0f * (frand() - 0.5f)) +
+            angle - 3.15415f/2.0f;
 #if 0
         int xp = (int)(distance * sin(angle) * kTotalWidth / 2) + kTotalWidth / 2;
         int yp = (int)(distance * cos(angle) * kTotalHeight / 2) + kTotalHeight / 2;
@@ -125,8 +128,39 @@ void FluidSimulation::SetPoints(void) {
 #else
         DrawLine(distance * sinf(angle), distance * cosf(angle),
             sinf(direction), cosf(direction),
-            25, current);
+            length, current);
 #endif
+    }
+}
+
+void FluidSimulation::SetRegularLines(void) {
+    int next = next_;
+    int current = 1 - next;
+    float time = (float)current_time;
+    for (int y = 0; y < kTotalHeight; y++) {
+        for (int x = 0; x < kTotalWidth; x++) {
+            fluid_amount_[current][y][x] = 0.0f;
+        }
+    }
+
+    int length = (int)(interpolatedParameters[4] * 60) + 5;
+    const int kNumLines = FS_TOTAL_SUM_FLUID / length;
+
+    for (int dot = 0; dot < kNumLines; dot++) {
+        float angle = (float)dot * 3.1415f * 2.0f / kNumLines;
+        float distance = 0.5f - (float)(dot & 1);
+        distance *= 0.2f * interpolatedParameters[6];
+        distance += 0.5f;
+        //float direction = (interpolatedParameters[5] * 4.0f * (frand() - 0.5f)) +
+        //    angle - 3.15415f / 2.0f;
+        float direction = angle - 3.15415f / 2.0f;
+        float x_start = distance * sinf(angle);
+        float y_start = distance * cosf(angle);
+        float x_dir = sinf(direction);
+        float y_dir = cosf(direction);
+        x_start -= 2.0f * interpolatedParameters[5] * x_dir * length * (float)(dot & 1) / (float)kTotalWidth;
+        y_start -= 2.0f * interpolatedParameters[5] * y_dir * length * (float)(dot & 1) / (float)kTotalHeight;
+        DrawLine(x_start, y_start, x_dir, y_dir, length, current);
     }
 }
 
@@ -137,7 +171,7 @@ void FluidSimulation::UpdateTime(float time_difference) {
 
     while (time_difference > FS_UPDATE_STEP) {
         if (request_set_points_) {
-            SetPoints();
+            SetRegularLines();
             request_set_points_ = false;
         }
         
