@@ -10,6 +10,8 @@
 #define FS_TOTAL_SUM_FLUID (120*40)
 #define FS_HILL_ROTATION_SPEED 0.2f
 
+#define FS_MUSIC_BEAT 0.405f
+
 class FluidSimulation
 {
 public:
@@ -56,6 +58,9 @@ private:
     float remain_time_;  // Time that wasn't used for update
     int next_;  // Buffer for next animation (0 or 1)
     float fluid_amount_[2][kTotalHeight][kTotalWidth];
+
+    // Some stuff I will probably not use for long
+    float last_music_beat_;
 
     GLuint texture_id_;
 };

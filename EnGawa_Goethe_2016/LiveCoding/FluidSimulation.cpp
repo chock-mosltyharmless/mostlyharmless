@@ -11,6 +11,8 @@ extern float aspectRatio;
 FluidSimulation::FluidSimulation() {
     next_ = 0;
     request_set_points_ = false;
+    //last_music_beat_ = 1.0e10f;  // Don't start the music
+    last_music_beat_ = 0.0f;  // Start right off
 }
 
 FluidSimulation::~FluidSimulation() {
@@ -143,13 +145,27 @@ void FluidSimulation::SetRegularLines(void) {
         }
     }
 
-    int length = (int)(interpolatedParameters[4] * 60) + 5;
+    float line_length = interpolatedParameters[6];
+    line_length = 0.2f * sinf(time) + 1.f;
+
+    int length = (int)(line_length * 60) + 5;
     const int kNumLines = FS_TOTAL_SUM_FLUID / length;
 
+    float diff_dir = interpolatedParameters[5];
+    diff_dir = sinf(time * 0.25f);
+    if (diff_dir < 0.0f) diff_dir = 0.0f;
+    if (time < 27.0f) diff_dir = 0.0f;
+
+    float spread = interpolatedParameters[6];
+    spread = -sinf(time * 0.3f);
+    if (spread < -.5f) spread = -0.5f;
+    if (time < 13.8f) spread = 0.0f;
+
     for (int dot = 0; dot < kNumLines; dot++) {
-        float angle = (float)dot * 3.1415f * 2.0f / kNumLines;
+        float angle = (float)dot * 3.1415f * 2.0f / kNumLines +
+            time * 0.3f;
         float distance = 0.5f - (float)(dot & 1);
-        distance *= 0.2f * interpolatedParameters[6];
+        distance *= 0.2f * spread;
         distance += 0.5f;
         //float direction = (interpolatedParameters[5] * 4.0f * (frand() - 0.5f)) +
         //    angle - 3.15415f / 2.0f;
@@ -158,8 +174,8 @@ void FluidSimulation::SetRegularLines(void) {
         float y_start = distance * cosf(angle);
         float x_dir = sinf(direction);
         float y_dir = cosf(direction);
-        x_start -= 2.0f * interpolatedParameters[5] * x_dir * length * (float)(dot & 1) / (float)kTotalWidth;
-        y_start -= 2.0f * interpolatedParameters[5] * y_dir * length * (float)(dot & 1) / (float)kTotalHeight;
+        x_start -= 2.0f * diff_dir * x_dir * length * (float)(dot & 1) / (float)kTotalWidth;
+        y_start -= 2.0f * diff_dir * y_dir * length * (float)(dot & 1) / (float)kTotalHeight;
         DrawLine(x_start, y_start, x_dir, y_dir, length, current);
     }
 }
@@ -173,8 +189,14 @@ void FluidSimulation::UpdateTime(float time_difference) {
         if (request_set_points_) {
             SetRegularLines();
             request_set_points_ = false;
+            last_music_beat_ = current_time;
         }
-        
+
+        if (current_time - last_music_beat_ > FS_MUSIC_BEAT &&
+            current_time < 159.0f) {
+            request_set_points_ = true;
+        }
+
         current_time += FS_UPDATE_STEP;
         float time = (float)current_time;
         did_update = true;

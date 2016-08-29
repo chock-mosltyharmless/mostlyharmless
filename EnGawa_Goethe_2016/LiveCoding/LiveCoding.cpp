@@ -11,7 +11,7 @@
 #include "FluidSimulation.h"
 #include "Editor.h"
 #include "Parameter.h"
-//#include "bass.h"
+#include "bass.h"
 
 #define MAX_LOADSTRING 100
 #define BLOB_FADE_SPEED 1.0f
@@ -543,7 +543,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// start music playback
 #ifdef MUSIC
 	BASS_Init(-1,44100,0,info->hWnd,NULL);
-	HSTREAM mp3Str=BASS_StreamCreateFile(FALSE,"Musik/set1.mp3",0,0,0);
+	HSTREAM mp3Str=BASS_StreamCreateFile(FALSE,"Goethe_music.mp3",0,0,0);
 	BASS_ChannelPlay(mp3Str, TRUE);
 	BASS_Start();
 #endif
