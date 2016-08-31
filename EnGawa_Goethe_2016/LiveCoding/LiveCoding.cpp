@@ -458,17 +458,34 @@ void intro_do(long t, long delta_time)
     glClear(GL_COLOR_BUFFER_BIT);
     shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
     glUseProgram(programID);
-    textureManager.getTextureID("lines.tga", &textureID, errorText);
-    glBindTexture(GL_TEXTURE_2D, textureID);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glDisable(GL_BLEND);
 
     glDisable(GL_CULL_FACE);
     //glEnable(GL_BLEND);
     //glBlendFunc(GL_DST_COLOR, GL_ZERO);
+    glDisable(GL_BLEND);
 
     fluid_simulation_.UpdateTime(fdelta_time);
     fluid_simulation_.GetTexture();
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex2f(-1.0f, -1.0f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex2f(1.0f, -1.0f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex2f(1.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex2f(-1.0f, 1.0f);
+    glEnd();
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_DST_COLOR, GL_ZERO);
+    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+    glUseProgram(programID);
+    textureManager.getTextureID("blatt.tga", &textureID, errorText);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     glBegin(GL_QUADS);
     glTexCoord2f(0.0f, 0.0f);
     glVertex2f(-1.0f, -1.0f);

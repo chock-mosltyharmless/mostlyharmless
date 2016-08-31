@@ -146,13 +146,13 @@ void FluidSimulation::SetRegularLines(void) {
     }
 
     float line_length = interpolatedParameters[6];
-    line_length = 0.2f * sinf(time) + 1.f;
+    line_length = -0.5f * cosf(time * 0.65f) + 1.f;
 
     int length = (int)(line_length * 60) + 5;
     const int kNumLines = FS_TOTAL_SUM_FLUID / length;
 
     float diff_dir = interpolatedParameters[5];
-    diff_dir = sinf(time * 0.25f);
+    diff_dir = 2.0f * sinf(time * 0.25f);
     if (diff_dir < 0.0f) diff_dir = 0.0f;
     if (time < 27.0f) diff_dir = 0.0f;
 
