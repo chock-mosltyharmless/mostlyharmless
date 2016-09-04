@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Configuration.h"
+
 #define FS_UPDATE_STEP 0.01f
 // Reduction of speed due to friction and so on
 #define FS_PULL_STRENGTH 0.1f
@@ -44,12 +46,24 @@ public:
 
     bool request_set_points_;
 
+    unsigned char *GetBackBuffer() {
+        return back_buffer_[0][0];
+    }
+
+    void SetBackBuffer() {
+        float *dest = fluid_amount_[1 - next_][0];
+        unsigned char(*source)[4] = back_buffer_[0];
+        for (int x = 0; x < kTotalHeight * kTotalWidth; x++) {
+            dest[x] = (float)(255 - source[x][1]) / 255.0f;
+        }
+    }
+
 private:
-    const static int kWidth = 320;
-    const static int kBorderWidth = 2;
+    const static int kWidth = X_HIGHLIGHT;
+    const static int kBorderWidth = 0;
     const static int kTotalWidth = kWidth + 2 * kBorderWidth;
-    const static int kHeight = 180;
-    const static int kBorderHeight = 2;
+    const static int kHeight = Y_HIGHLIGHT;
+    const static int kBorderHeight = 0;
     const static int kTotalHeight = kHeight + 2 * kBorderWidth;
 
     double current_time;
@@ -58,6 +72,7 @@ private:
     float remain_time_;  // Time that wasn't used for update
     int next_;  // Buffer for next animation (0 or 1)
     float fluid_amount_[2][kTotalHeight][kTotalWidth];
+    unsigned char back_buffer_[kTotalHeight][kTotalWidth][4];
 
     // Some stuff I will probably not use for long
     float last_music_beat_;

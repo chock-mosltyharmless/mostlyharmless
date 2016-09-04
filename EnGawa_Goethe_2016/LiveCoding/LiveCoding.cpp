@@ -23,8 +23,11 @@ char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg", "v
 int usedIndex = 0;
 float aspectRatio = (float)XRES / (float)YRES;
 
+float music_start_time_ = -10000.0f;
+
 long start_time_ = 0;
 FluidSimulation fluid_simulation_;
+HSTREAM mp3Str;
 
 /*************************************************
  * GL Core variables
@@ -204,6 +207,28 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case VK_DELETE:
 		case VK_BACK:
 			break;
+
+        case 'q':
+        case 'Q':
+            music_start_time_ = 0.001f * (timeGetTime() - start_time_);
+            // start music playback
+#ifdef MUSIC
+            BASS_Init(-1, 44100, 0, hWnd, NULL);
+            mp3Str = BASS_StreamCreateFile(FALSE, "Goethe_music.mp3", 0, 0, 0);
+            BASS_ChannelPlay(mp3Str, TRUE);
+            BASS_Start();
+#endif
+            break;
+        case 'w':
+        case 'W':
+            music_start_time_ = -10000.0f;
+#ifdef MUSIC
+            BASS_Stop();
+            BASS_ChannelStop(mp3Str);
+            BASS_StreamFree(mp3Str);
+            BASS_Free();
+#endif
+            break;
 
         case 'a':
         case 'A':
@@ -530,7 +555,8 @@ void intro_do(long t, long delta_time)
     //glBlendFunc(GL_DST_COLOR, GL_ZERO);
     glDisable(GL_BLEND);
 
-    if (0) {  // Do the fluid stuff
+    if (ftime - music_start_time_ > 159.0f ||
+        ftime - music_start_time_ < 0.5f) {  // Do the fluid stuff
         fluid_simulation_.UpdateTime(fdelta_time);
         fluid_simulation_.GetTexture();
         glBegin(GL_QUADS);
@@ -544,8 +570,20 @@ void intro_do(long t, long delta_time)
         glVertex2f(-1.0f, 1.0f);
         glEnd();
     } else {  // Do the rigit dance stuff
-        float music_start_time = 0.0f;
-        DrawMusic(ftime - music_start_time);
+        glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+        DrawMusic(ftime - music_start_time_);
+        textureManager.getTextureID(TM_HIGHLIGHT_NAME, &textureID, errorText);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, fluid_simulation_.GetBackBuffer());
+        fluid_simulation_.SetBackBuffer();
+        
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        int xres = windowRect.right - windowRect.left;
+        int yres = windowRect.bottom - windowRect.top;
+        glViewport(0, 0, xres, yres);
+        DrawMusic(ftime - music_start_time_);
     }
 #if 0
     glEnable(GL_BLEND);
@@ -627,14 +665,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     //intro_init();
 
-	// start music playback
-#ifdef MUSIC
-	BASS_Init(-1,44100,0,info->hWnd,NULL);
-	HSTREAM mp3Str=BASS_StreamCreateFile(FALSE,"Goethe_music.mp3",0,0,0);
-	BASS_ChannelPlay(mp3Str, TRUE);
-	BASS_Start();
-#endif
-
 	// Initialize COM
 	HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)) exit(-1);
@@ -677,8 +707,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #ifdef MUSIC
 	// music uninit
-	BASS_ChannelStop(mp3Str);
-	BASS_StreamFree(mp3Str);
 	BASS_Free();
 #endif
 
