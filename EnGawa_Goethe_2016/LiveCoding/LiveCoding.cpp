@@ -332,6 +332,70 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
+void DrawMusic(float ftime) {
+    const int kNumEdges = 8;
+    float delta_angle = 3.141592f * 2.0f / kNumEdges;
+    const float music_beat = 0.405f;
+    const float rotation_speed = 0.05f;
+
+    // Initialize OGL stuff
+    GLuint textureID;
+    GLuint programID;
+    char errorText[MAX_ERROR_LENGTH + 1];
+    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+    glUseProgram(programID);
+    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+    glBegin(GL_QUADS);
+
+    // Just a 5-edge thingie
+    for (int person = 0; person < 2; person++) {
+        //float divergence = person * -sinf(ftime * 3.1415f / 160.0f * 8.0f);
+        //if (divergence < 0.0f) divergence = 0.0f;
+        float divergence = person * sinf(ftime * 3.1415f / 160.0f * 7.5f);
+        divergence *= divergence;
+        if (ftime < 20.0f) divergence = 0.0f;
+
+        for (int edge = 0; edge < kNumEdges; edge++) {
+            float start_angle = edge * delta_angle;
+            int next_edge = edge + 1;
+            if (edge == kNumEdges - 1) next_edge = 0;
+            float end_angle = next_edge * delta_angle;
+
+            float beat_overdrive = sinf(ftime * 3.1415f / 160.0f) * 2.0f + .5f;
+            float rotation = rotation_speed * 3.1415f * 2.0f * ftime;
+            float beat = sinf(ftime * 3.1415f * 2.0f / music_beat);
+            //beat *= beat * beat;
+            rotation += rotation_speed * beat * music_beat * beat_overdrive;
+            start_angle -= rotation;
+            end_angle -= rotation;
+
+            float start_line[2] = { cosf(start_angle), sinf(start_angle) };
+            float end_line[2] = { cosf(end_angle), sinf(end_angle) };
+
+            float star_amount = 0.2f * sinf(ftime * 3.1415f / 160.0f);
+            float inner_dist_start = 0.27f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * edge / kNumEdges * 10 + divergence*star_amount);
+            float inner_dist_end = 0.27f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * next_edge / kNumEdges * 10 + divergence*star_amount);
+            float outer_dist_start = 0.35f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * edge / kNumEdges * 10 + divergence);
+            float outer_dist_end = 0.35f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * next_edge / kNumEdges * 10 + divergence);
+
+            float size_overdrive = sinf(ftime * 3.1415f / 160.0f) * 2.0f + .4f;
+            float size = 1.0f + 0.2f * size_overdrive +
+                size_overdrive * (0.25f * sinf(ftime * 0.4f + divergence * 3.14f) + 0.15f * sinf(ftime * 0.25f + divergence * 3.14f));
+            inner_dist_start *= size;
+            inner_dist_end *= size;
+            outer_dist_start *= size;
+            outer_dist_end *= size;
+
+            glVertex2f(start_line[0] * inner_dist_start, start_line[1] * inner_dist_start * aspectRatio);
+            glVertex2f(start_line[0] * outer_dist_start, start_line[1] * outer_dist_start * aspectRatio);
+            glVertex2f(end_line[0] * outer_dist_end, end_line[1] * outer_dist_end * aspectRatio);
+            glVertex2f(end_line[0] * inner_dist_end, end_line[1] * inner_dist_end * aspectRatio);
+        }
+    }
+
+    glEnd();
+}
+
 void intro_do(long t, long delta_time)
 {
 	char errorText[MAX_ERROR_LENGTH+1];
@@ -466,19 +530,24 @@ void intro_do(long t, long delta_time)
     //glBlendFunc(GL_DST_COLOR, GL_ZERO);
     glDisable(GL_BLEND);
 
-    fluid_simulation_.UpdateTime(fdelta_time);
-    fluid_simulation_.GetTexture();
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(-1.0f, -1.0f);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(1.0f, -1.0f);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(1.0f, 1.0f);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(-1.0f, 1.0f);
-    glEnd();
-
+    if (0) {  // Do the fluid stuff
+        fluid_simulation_.UpdateTime(fdelta_time);
+        fluid_simulation_.GetTexture();
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex2f(-1.0f, -1.0f);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex2f(1.0f, -1.0f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(1.0f, 1.0f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex2f(-1.0f, 1.0f);
+        glEnd();
+    } else {  // Do the rigit dance stuff
+        float music_start_time = 0.0f;
+        DrawMusic(ftime - music_start_time);
+    }
+#if 0
     glEnable(GL_BLEND);
     glBlendFunc(GL_DST_COLOR, GL_ZERO);
     shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
@@ -496,6 +565,7 @@ void intro_do(long t, long delta_time)
     glTexCoord2f(0.0f, 1.0f);
     glVertex2f(-1.0f, 1.0f);
     glEnd();
+#endif
 
 #if 0
 	// Copy backbuffer to texture

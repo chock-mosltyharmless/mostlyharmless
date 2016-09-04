@@ -186,11 +186,13 @@ void FluidSimulation::UpdateTime(float time_difference) {
     bool did_update = false;
 
     while (time_difference > FS_UPDATE_STEP) {
+#if 0
         if (request_set_points_) {
             SetRegularLines();
             request_set_points_ = false;
             last_music_beat_ = current_time;
         }
+#endif
 
         if (current_time - last_music_beat_ > FS_MUSIC_BEAT &&
             current_time < 159.0f) {
