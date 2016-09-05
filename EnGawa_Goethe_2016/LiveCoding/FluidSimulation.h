@@ -21,7 +21,7 @@ public:
     virtual ~FluidSimulation();
 
     // To create texture, field and so on
-    void Init(void);
+    void Init(bool show_stuff);
 
     void UpdateTime(float time_difference);
     
@@ -66,6 +66,8 @@ private:
     const static int kBorderHeight = 0;
     const static int kTotalHeight = kHeight + 2 * kBorderWidth;
 
+    bool show_stuff_;
+    
     double current_time;
 
     float last_sum_fluid;

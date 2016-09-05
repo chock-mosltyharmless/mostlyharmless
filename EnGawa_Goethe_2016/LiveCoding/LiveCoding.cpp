@@ -157,7 +157,7 @@ static int initGL(WININFO *winInfo)
 	blob = 0.;
 
     // Create the fluid simulation stuff
-    fluid_simulation_.Init();
+    fluid_simulation_.Init(false);
 
 	return 0;
 }
@@ -233,6 +233,16 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'a':
         case 'A':
             fluid_simulation_.request_set_points_ = true;
+            break;
+
+        case 'o':
+        case 'O':
+            fluid_simulation_.Init(false);
+            break;
+
+        case 'p':
+        case 'P':
+            fluid_simulation_.Init(true);
             break;
 
         case 'm':

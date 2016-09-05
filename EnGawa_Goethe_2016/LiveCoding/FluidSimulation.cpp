@@ -23,7 +23,7 @@ float FluidSimulation::frand(void) {
     return (float)randint / (float)(RAND_MAX);
 }
 
-void FluidSimulation::Init(void) {
+void FluidSimulation::Init(bool show_stuff) {
     next_ = 1;
     for (int y = 0; y < kTotalHeight; y++) {
         for (int x = 0; x < kTotalWidth; x++) {
@@ -35,25 +35,17 @@ void FluidSimulation::Init(void) {
     current_time = 0.0;
 
     // Put some fluid to the left and right
-#if 1
-    last_sum_fluid = 0.0f;
-    for (int y = kTotalHeight / 2 - 20; y < kTotalHeight / 2 + 21; y++) {
-        for (int x = 0; x < 80; x++) {
-            fluid_amount_[1 - next_][y + 20][x] = 1.0f;
-            fluid_amount_[1 - next_][y - 20][kTotalWidth - x - 1] = 1.0f;
-            last_sum_fluid += 2.0f;
+    show_stuff_ = show_stuff;
+    if (show_stuff) {
+        last_sum_fluid = 0.0f;
+        for (int y = 1; y < kTotalHeight - 1; y++) {
+            for (int x = 0; x < 25; x++) {
+                fluid_amount_[1 - next_][y][x] = 1.0f;
+                fluid_amount_[1 - next_][y][kTotalWidth - x - 1] = 1.0f;
+                last_sum_fluid += 2.0f;
+            }
         }
     }
-#else
-    last_sum_fluid = 0.0f;
-    float cell_fluid = FS_TOTAL_SUM_FLUID / (kTotalHeight * kTotalWidth);
-    for (int y = 0; y < kTotalHeight; y++) {
-        for (int x = 0; x < kTotalHeight; x++) {
-            last_sum_fluid += cell_fluid;
-            fluid_amount_[1 - next_][y][x] = cell_fluid;
-        }
-    }
-#endif
 
     glGenTextures(1, &texture_id_);
     glBindTexture(GL_TEXTURE_2D, texture_id_);
@@ -83,8 +75,8 @@ void FluidSimulation::DrawLine(float startX, float startY, float dirX, float dir
     for (int i = 0; i < length; i++) {
         int xpos = xp / 256;
         int ypos = yp / 256;
-        if (xpos >= 0 && xpos < kTotalWidth &&
-            ypos >= 0 && ypos < kTotalHeight) {
+        if (xpos >= 1 && xpos < kTotalWidth - 1 &&
+            ypos >= 1 && ypos < kTotalHeight - 1) {
             fluid_amount_[buffer][ypos][xpos] = 1.0f;
         }
         xp += dx;
@@ -199,6 +191,20 @@ void FluidSimulation::UpdateTime(float time_difference) {
             request_set_points_ = true;
         }
 
+        // Anger lines
+        float rand_value = sinf(current_time * 100.0f);
+        rand_value *= rand_value;
+        rand_value *= rand_value;
+        rand_value *= rand_value;
+        rand_value *= 0.98f;
+        if (rand_value > 1.0f - interpolatedParameters[3]) {
+            DrawLine(sinf(current_time * 111.0f),
+                sinf(current_time * 1322.0f),
+                sinf(current_time * 2938.0f),
+                sinf(current_time * 1234.0f),
+                (int)(50 * interpolatedParameters[3]), 1 - next_);
+        }
+
         current_time += FS_UPDATE_STEP;
         float time = (float)current_time;
         did_update = true;
@@ -206,6 +212,8 @@ void FluidSimulation::UpdateTime(float time_difference) {
         float add_fluid = FS_TOTAL_SUM_FLUID - last_sum_fluid;
         add_fluid /= kTotalHeight * kTotalWidth;
         last_sum_fluid = 0.0f;
+        if (!show_stuff_) add_fluid = 0;
+        if (add_fluid < 0) add_fluid = 0.0f;
 
         // Copy top row that is not copied otherwise
         for (int x = 0; x < kTotalWidth; x++) {
@@ -262,9 +270,9 @@ void FluidSimulation::UpdateTime(float time_difference) {
 #if 1
                 // Tear up
                 right_velocity += 0.3f * sinf(yp * 9.f + time) *
-                    cosf(xp * (8.f + sinf(time * 0.3f)) - time * 0.7f) * interpolatedParameters[3];
+                    cosf(xp * (8.f + sinf(time * 0.3f)) - time * 0.7f) * (interpolatedParameters[3] + 0.03f);
                 down_velocity += 0.3f * cosf(yp * (7.f - cosf(time * 0.27f)) - time * 0.9f) *
-                    sinf(xp * 5.f + time * 0.6f) * interpolatedParameters[3];
+                    sinf(xp * 5.f + time * 0.6f) * (interpolatedParameters[3] + 0.03f);
 #endif
 
 #if 1
