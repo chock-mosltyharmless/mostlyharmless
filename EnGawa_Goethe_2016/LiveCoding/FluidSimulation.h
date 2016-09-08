@@ -58,6 +58,10 @@ public:
         }
     }
 
+    void PushApart(void) {
+        push_apart_ = true;
+    }
+
 private:
     const static int kWidth = X_HIGHLIGHT;
     const static int kBorderWidth = 0;
@@ -67,7 +71,8 @@ private:
     const static int kTotalHeight = kHeight + 2 * kBorderWidth;
 
     bool show_stuff_;
-    
+    bool push_apart_;
+
     double current_time;
 
     float last_sum_fluid;

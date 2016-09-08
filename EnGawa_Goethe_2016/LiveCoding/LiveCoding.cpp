@@ -245,6 +245,10 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             fluid_simulation_.Init(true);
             break;
 
+        case 'x':
+        case 'X':
+            fluid_simulation_.PushApart();
+
         case 'm':
         case 'M':
             if (GetAsyncKeyState(VK_CONTROL) < 0) {

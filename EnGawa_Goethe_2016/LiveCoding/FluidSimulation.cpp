@@ -13,6 +13,7 @@ FluidSimulation::FluidSimulation() {
     request_set_points_ = false;
     //last_music_beat_ = 1.0e10f;  // Don't start the music
     last_music_beat_ = 0.0f;  // Start right off
+    push_apart_ = false;
 }
 
 FluidSimulation::~FluidSimulation() {
@@ -177,7 +178,9 @@ void FluidSimulation::UpdateTime(float time_difference) {
     remain_time_ = 0.0f;
     bool did_update = false;
 
-    while (time_difference > FS_UPDATE_STEP) {
+    float slow_down = interpolatedParameters[13] * interpolatedParameters[13] * 0.04f;
+    
+    while (time_difference > FS_UPDATE_STEP + slow_down) {
 #if 0
         if (request_set_points_) {
             SetRegularLines();
@@ -196,8 +199,9 @@ void FluidSimulation::UpdateTime(float time_difference) {
         rand_value *= rand_value;
         rand_value *= rand_value;
         rand_value *= rand_value;
-        rand_value *= 0.98f;
-        if (rand_value > 1.0f - interpolatedParameters[3]) {
+        rand_value *= rand_value;
+        rand_value *= 0.75f;
+        if (rand_value > 1.0f - 0.7f * interpolatedParameters[3]) {
             DrawLine(sinf(current_time * 111.0f),
                 sinf(current_time * 1322.0f),
                 sinf(current_time * 2938.0f),
@@ -205,7 +209,7 @@ void FluidSimulation::UpdateTime(float time_difference) {
                 (int)(50 * interpolatedParameters[3]), 1 - next_);
         }
 
-        current_time += FS_UPDATE_STEP;
+        current_time += FS_UPDATE_STEP + slow_down;
         float time = (float)current_time;
         did_update = true;
         int next = next_;
@@ -214,6 +218,42 @@ void FluidSimulation::UpdateTime(float time_difference) {
         last_sum_fluid = 0.0f;
         if (!show_stuff_) add_fluid = 0;
         if (add_fluid < 0) add_fluid = 0.0f;
+
+        // Push apart
+        if (push_apart_) {
+            push_apart_ = false;
+            for (int y = 0; y < kTotalHeight; y++) {
+                for (int x = 0; x < kTotalWidth; x++) {
+                    fluid_amount_[1 - next][y][x] = 0.0f;
+                }
+            }
+#if 0
+            const int num_points = 9;
+            float num_pixels_squared = FS_TOTAL_SUM_FLUID / num_points;
+            int num_pixels = (int)(sqrtf(num_pixels_squared) + 1.0f);
+            for (int point = 0; point < num_points; point++) {
+                float degree = (float)point * 3.1415 * 2.0f / num_points;
+                float xp = sinf(degree) * 0.8f;
+                float yp = cosf(degree) * 0.8f;
+                int start_x = (int)(0.5f * xp * kTotalHeight + kTotalWidth / 2);
+                int start_y = (int)(0.5f * yp * kTotalHeight + kTotalHeight / 2);
+                for (int y = 0; y < num_pixels; y++) {
+                    for (int x = 0; x < num_pixels; x++) {
+                        fluid_amount_[1 - next][y + start_y][x + start_x] = 1.0f;
+                    }
+                }
+            }
+#else
+            last_sum_fluid = 0.0f;
+            for (int y = kTotalHeight / 6; y < 5 * kTotalHeight / 6; y++) {
+                for (int x = 0; x < 35; x++) {
+                    fluid_amount_[1 - next_][y][x + kTotalWidth / 4] = 1.0f;
+                    fluid_amount_[1 - next_][y][3 * kTotalWidth / 4 - x - 1] = 1.0f;
+                    last_sum_fluid += 2.0f;
+                }
+            }
+#endif
+        }
 
         // Copy top row that is not copied otherwise
         for (int x = 0; x < kTotalWidth; x++) {
@@ -226,6 +266,9 @@ void FluidSimulation::UpdateTime(float time_difference) {
         float cosf_hill_rotation = cosf(hill_rotation);
         float sinf_inv_hill_rotation = sinf(-hill_rotation);
         float cosf_inv_hill_rotation = cosf(-hill_rotation);
+
+        float slider1 = interpolatedParameters[2];
+        float slider2 = interpolatedParameters[3];
 
         // Actually move the fluid
         float yp = -1.0f;
@@ -262,7 +305,7 @@ void FluidSimulation::UpdateTime(float time_difference) {
                 //float xp_rot = cos(hill_rotation) * xp - sin(hill_rotation) * yp;
                 float yp_rot = sinf_hill_rotation * xp + cosf_hill_rotation * yp;
                 float line_dist = yp_rot * yp_rot;
-                float hill_amount = interpolatedParameters[2] * 0.03f / (line_dist + 0.03f);
+                float hill_amount = slider1 * 0.025f / (line_dist + 0.025f);
                 float away_amount = 1.0f * yp_rot * hill_amount;  // goes to linear?
                 right_velocity += -sinf_inv_hill_rotation * away_amount;
                 down_velocity += cosf_inv_hill_rotation * away_amount;
@@ -270,9 +313,9 @@ void FluidSimulation::UpdateTime(float time_difference) {
 #if 1
                 // Tear up
                 right_velocity += 0.3f * sinf(yp * 9.f + time) *
-                    cosf(xp * (8.f + sinf(time * 0.3f)) - time * 0.7f) * (interpolatedParameters[3] + 0.03f);
+                    cosf(xp * (8.f + sinf(time * 0.3f)) - time * 0.7f) * (slider2 + 0.03f);
                 down_velocity += 0.3f * cosf(yp * (7.f - cosf(time * 0.27f)) - time * 0.9f) *
-                    sinf(xp * 5.f + time * 0.6f) * (interpolatedParameters[3] + 0.03f);
+                    sinf(xp * 5.f + time * 0.6f) * (slider2 + 0.03f);
 #endif
 
 #if 1
@@ -334,7 +377,7 @@ void FluidSimulation::UpdateTime(float time_difference) {
             }
         }
 
-        time_difference -= FS_UPDATE_STEP;
+        time_difference -= FS_UPDATE_STEP + slow_down;
         next_ = 1 - next;
         if (time_difference > 0.2f) time_difference = 0.0f;
     }
