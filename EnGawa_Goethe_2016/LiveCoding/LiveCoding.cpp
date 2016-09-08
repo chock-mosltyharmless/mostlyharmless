@@ -23,8 +23,11 @@ char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg", "v
 int usedIndex = 0;
 float aspectRatio = (float)XRES / (float)YRES;
 
+float music_start_time_ = -10000.0f;
+
 long start_time_ = 0;
 FluidSimulation fluid_simulation_;
+HSTREAM mp3Str;
 
 /*************************************************
  * GL Core variables
@@ -154,7 +157,7 @@ static int initGL(WININFO *winInfo)
 	blob = 0.;
 
     // Create the fluid simulation stuff
-    fluid_simulation_.Init();
+    fluid_simulation_.Init(false);
 
 	return 0;
 }
@@ -205,10 +208,46 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case VK_BACK:
 			break;
 
+        case 'q':
+        case 'Q':
+            music_start_time_ = 0.001f * (timeGetTime() - start_time_);
+            // start music playback
+#ifdef MUSIC
+            BASS_Init(-1, 44100, 0, hWnd, NULL);
+            mp3Str = BASS_StreamCreateFile(FALSE, "Goethe_music.mp3", 0, 0, 0);
+            BASS_ChannelPlay(mp3Str, TRUE);
+            BASS_Start();
+#endif
+            break;
+        case 'w':
+        case 'W':
+            music_start_time_ = -10000.0f;
+#ifdef MUSIC
+            BASS_Stop();
+            BASS_ChannelStop(mp3Str);
+            BASS_StreamFree(mp3Str);
+            BASS_Free();
+#endif
+            break;
+
         case 'a':
         case 'A':
             fluid_simulation_.request_set_points_ = true;
             break;
+
+        case 'o':
+        case 'O':
+            fluid_simulation_.Init(false);
+            break;
+
+        case 'p':
+        case 'P':
+            fluid_simulation_.Init(true);
+            break;
+
+        case 'x':
+        case 'X':
+            fluid_simulation_.PushApart();
 
         case 'm':
         case 'M':
@@ -330,6 +369,70 @@ static int window_init( WININFO *info )
         return( 0 );
     
     return( 1 );
+}
+
+void DrawMusic(float ftime) {
+    const int kNumEdges = 8;
+    float delta_angle = 3.141592f * 2.0f / kNumEdges;
+    const float music_beat = 0.405f;
+    const float rotation_speed = 0.05f;
+
+    // Initialize OGL stuff
+    GLuint textureID;
+    GLuint programID;
+    char errorText[MAX_ERROR_LENGTH + 1];
+    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+    glUseProgram(programID);
+    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+    glBegin(GL_QUADS);
+
+    // Just a 5-edge thingie
+    for (int person = 0; person < 2; person++) {
+        //float divergence = person * -sinf(ftime * 3.1415f / 160.0f * 8.0f);
+        //if (divergence < 0.0f) divergence = 0.0f;
+        float divergence = person * sinf(ftime * 3.1415f / 160.0f * 7.5f);
+        divergence *= divergence;
+        if (ftime < 20.0f) divergence = 0.0f;
+
+        for (int edge = 0; edge < kNumEdges; edge++) {
+            float start_angle = edge * delta_angle;
+            int next_edge = edge + 1;
+            if (edge == kNumEdges - 1) next_edge = 0;
+            float end_angle = next_edge * delta_angle;
+
+            float beat_overdrive = sinf(ftime * 3.1415f / 160.0f) * 2.0f + .5f;
+            float rotation = rotation_speed * 3.1415f * 2.0f * ftime;
+            float beat = sinf(ftime * 3.1415f * 2.0f / music_beat);
+            //beat *= beat * beat;
+            rotation += rotation_speed * beat * music_beat * beat_overdrive;
+            start_angle -= rotation;
+            end_angle -= rotation;
+
+            float start_line[2] = { cosf(start_angle), sinf(start_angle) };
+            float end_line[2] = { cosf(end_angle), sinf(end_angle) };
+
+            float star_amount = 0.2f * sinf(ftime * 3.1415f / 160.0f);
+            float inner_dist_start = 0.27f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * edge / kNumEdges * 10 + divergence*star_amount);
+            float inner_dist_end = 0.27f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * next_edge / kNumEdges * 10 + divergence*star_amount);
+            float outer_dist_start = 0.35f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * edge / kNumEdges * 10 + divergence);
+            float outer_dist_end = 0.35f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * next_edge / kNumEdges * 10 + divergence);
+
+            float size_overdrive = sinf(ftime * 3.1415f / 160.0f) * 2.0f + .4f;
+            float size = 1.0f + 0.2f * size_overdrive +
+                size_overdrive * (0.25f * sinf(ftime * 0.4f + divergence * 3.14f) + 0.15f * sinf(ftime * 0.25f + divergence * 3.14f));
+            inner_dist_start *= size;
+            inner_dist_end *= size;
+            outer_dist_start *= size;
+            outer_dist_end *= size;
+
+            glVertex2f(start_line[0] * inner_dist_start, start_line[1] * inner_dist_start * aspectRatio);
+            glVertex2f(start_line[0] * outer_dist_start, start_line[1] * outer_dist_start * aspectRatio);
+            glVertex2f(end_line[0] * outer_dist_end, end_line[1] * outer_dist_end * aspectRatio);
+            glVertex2f(end_line[0] * inner_dist_end, end_line[1] * inner_dist_end * aspectRatio);
+        }
+    }
+
+    glEnd();
 }
 
 void intro_do(long t, long delta_time)
@@ -466,18 +569,36 @@ void intro_do(long t, long delta_time)
     //glBlendFunc(GL_DST_COLOR, GL_ZERO);
     glDisable(GL_BLEND);
 
-    fluid_simulation_.UpdateTime(fdelta_time);
-    fluid_simulation_.GetTexture();
-    glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 0.0f);
-    glVertex2f(-1.0f, -1.0f);
-    glTexCoord2f(1.0f, 0.0f);
-    glVertex2f(1.0f, -1.0f);
-    glTexCoord2f(1.0f, 1.0f);
-    glVertex2f(1.0f, 1.0f);
-    glTexCoord2f(0.0f, 1.0f);
-    glVertex2f(-1.0f, 1.0f);
-    glEnd();
+    if (ftime - music_start_time_ > 159.0f ||
+        ftime - music_start_time_ < 0.5f) {  // Do the fluid stuff
+        fluid_simulation_.UpdateTime(fdelta_time);
+        fluid_simulation_.GetTexture();
+        glBegin(GL_QUADS);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex2f(-1.0f, -1.0f);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex2f(1.0f, -1.0f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(1.0f, 1.0f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex2f(-1.0f, 1.0f);
+        glEnd();
+    } else {  // Do the rigit dance stuff
+        glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+        DrawMusic(ftime - music_start_time_);
+        textureManager.getTextureID(TM_HIGHLIGHT_NAME, &textureID, errorText);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, fluid_simulation_.GetBackBuffer());
+        fluid_simulation_.SetBackBuffer();
+        
+        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+        int xres = windowRect.right - windowRect.left;
+        int yres = windowRect.bottom - windowRect.top;
+        glViewport(0, 0, xres, yres);
+        DrawMusic(ftime - music_start_time_);
+    }
 
 #if 0
     glEnable(GL_BLEND);
@@ -559,14 +680,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     //intro_init();
 
-	// start music playback
-#ifdef MUSIC
-	BASS_Init(-1,44100,0,info->hWnd,NULL);
-	HSTREAM mp3Str=BASS_StreamCreateFile(FALSE,"Goethe_music.mp3",0,0,0);
-	BASS_ChannelPlay(mp3Str, TRUE);
-	BASS_Start();
-#endif
-
 	// Initialize COM
 	HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)) exit(-1);
@@ -609,8 +722,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 #ifdef MUSIC
 	// music uninit
-	BASS_ChannelStop(mp3Str);
-	BASS_StreamFree(mp3Str);
 	BASS_Free();
 #endif
 
