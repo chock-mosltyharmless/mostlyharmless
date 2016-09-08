@@ -479,6 +479,7 @@ void intro_do(long t, long delta_time)
     glVertex2f(-1.0f, 1.0f);
     glEnd();
 
+#if 0
     glEnable(GL_BLEND);
     glBlendFunc(GL_DST_COLOR, GL_ZERO);
     shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
@@ -496,6 +497,7 @@ void intro_do(long t, long delta_time)
     glTexCoord2f(0.0f, 1.0f);
     glVertex2f(-1.0f, 1.0f);
     glEnd();
+#endif
 
 #if 0
 	// Copy backbuffer to texture
