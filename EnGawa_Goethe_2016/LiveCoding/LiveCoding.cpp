@@ -24,6 +24,10 @@ int usedIndex = 0;
 float aspectRatio = (float)XRES / (float)YRES;
 
 float music_start_time_ = -10000.0f;
+float otone_start_time_ = 1.0e20f;
+float real_otone_start_time_ = 1.0e20f;  // triggered by close-to-entrance rotation
+float masako_start_time_ = 1.0e20f;
+float real_masako_start_time_ = 1.0e20f;  // triggered by close-to-entrance rotation
 
 long start_time_ = 0;
 //FluidSimulation fluid_simulation_;
@@ -233,6 +237,20 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'a':
         case 'A':
             //fluid_simulation_.request_set_points_ = true;
+            otone_start_time_ = 1.0e20f;
+            real_otone_start_time_ = otone_start_time_;
+            masako_start_time_ = 1.0e20f;
+            real_masako_start_time_ = masako_start_time_;
+            break;
+
+        case 's':
+        case 'S':
+            otone_start_time_ = 0.001f * (timeGetTime() - start_time_);
+            break;
+
+        case 'd':
+        case 'D':
+            masako_start_time_ = 0.001f * (timeGetTime() - start_time_);
             break;
 
         case 'o':
@@ -371,7 +389,8 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
-void DrawTearCircle(float start_angle, float end_angle, float distance) {
+void DrawTearCircle(float start_angle, float end_angle, float distance,
+                    float center_x = 0.0f, float center_y = 0.0f) {
     const int kNumSegments = 100;
     const float kTearWidth = 0.04f;
     float cur_angle = start_angle;
@@ -395,8 +414,14 @@ void DrawTearCircle(float start_angle, float end_angle, float distance) {
         float left_width = kTearWidth * sinf(tear_left_pos * 3.1415f) / sqrtf(tear_left_pos);
         float right_width = kTearWidth * sinf(tear_right_pos * 3.1415f) / sqrtf(tear_right_pos);
 
-        float left_pos[2] = { distance * sinf(left_angle), distance * cosf(left_angle) };
-        float right_pos[2] = { distance * sinf(right_angle), distance * cosf(right_angle) };
+        float left_pos[2] = {
+            distance * sinf(left_angle) + center_x,
+            distance * cosf(left_angle) + center_y
+        };
+        float right_pos[2] = {
+            distance * sinf(right_angle) + center_x,
+            distance * cosf(right_angle) + center_y
+        };
         float left_normal[2] = { sinf(left_angle), cosf(left_angle) };
         float right_normal[2] = { sinf(right_angle), cosf(right_angle) };
 
@@ -483,123 +508,124 @@ void DrawMusic(float ftime) {
 
 void intro_do(long t, long delta_time)
 {
-	char errorText[MAX_ERROR_LENGTH+1];
-	float ftime = 0.001f*(float)t;
+    char errorText[MAX_ERROR_LENGTH + 1];
+    float ftime = 0.001f*(float)t;
     float fdelta_time = 0.001f * (float)(delta_time);
-	GLuint textureID;
+    GLuint textureID;
 
-	glDisable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
+    glDisable(GL_BLEND);
+    glDisable(GL_DEPTH_TEST);
 
-	// Those are key-Press indicators. I only act on 0-to-1.
-	for (int i = 0; i < maxNumParameters; i++)
-	{
-		interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
-									0.05f * params.getParam(i, defaultParameters[i]);
-	}
-	// Update key press events.
-	for (int i = 0; i < NUM_KEYS; i++)
-	{
-		if (params.getParam(i, 0.0) > 0.5f) keyPressed[i]++;
-		else keyPressed[i] = 0;
-	}
+    // Those are key-Press indicators. I only act on 0-to-1.
+    for (int i = 0; i < maxNumParameters; i++)
+    {
+        interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
+            0.05f * params.getParam(i, defaultParameters[i]);
+    }
+    // Update key press events.
+    for (int i = 0; i < NUM_KEYS; i++)
+    {
+        if (params.getParam(i, 0.0) > 0.5f) keyPressed[i]++;
+        else keyPressed[i] = 0;
+    }
 
-	// BPM => spike calculation
-	float BPS = BPM / 60.0f;
-	float jumpsPerSecond = BPS / 1.0f; // Jump on every fourth beat.
-	static float phase = 0.0f;
-	float jumpTime = (ftime * jumpsPerSecond) + phase;
-	jumpTime -= (float)floor(jumpTime);
-	if (keyPressed[41] == 1)
-	{
-		phase -= jumpTime;
-		jumpTime = 0.0f;
-		if (phase < 0.0f) phase += 1.0;
-	}
-	jumpTime = jumpTime * jumpTime;
-	// spike is between 0.0 and 1.0 depending on the position within whatever.
-	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 1.5f) + 0.5f;
-	// blob is growing down from 1. after keypress
-	static float lastFTime = 0.f;
-	blob *= (float)exp(-(float)(ftime - lastFTime) * BLOB_FADE_SPEED);
-	lastFTime = ftime;
+    // BPM => spike calculation
+    float BPS = BPM / 60.0f;
+    float jumpsPerSecond = BPS / 1.0f; // Jump on every fourth beat.
+    static float phase = 0.0f;
+    float jumpTime = (ftime * jumpsPerSecond) + phase;
+    jumpTime -= (float)floor(jumpTime);
+    if (keyPressed[41] == 1)
+    {
+        phase -= jumpTime;
+        jumpTime = 0.0f;
+        if (phase < 0.0f) phase += 1.0;
+    }
+    jumpTime = jumpTime * jumpTime;
+    // spike is between 0.0 and 1.0 depending on the position within whatever.
+    float spike = 0.5f * cosf(jumpTime * 3.1415926f * 1.5f) + 0.5f;
+    // blob is growing down from 1. after keypress
+    static float lastFTime = 0.f;
+    blob *= (float)exp(-(float)(ftime - lastFTime) * BLOB_FADE_SPEED);
+    lastFTime = ftime;
 
-	// Set the program uniforms
-	GLuint programID;
-	shaderManager.getProgramID(usedProgram[usedIndex], &programID, errorText);
-	glUseProgram(programID);
-	GLuint loc = glGetUniformLocation(programID, "aspectRatio");
-	glUniform1f(loc, aspectRatio);
-	loc = glGetUniformLocation(programID, "time");
-	glUniform1f(loc, (float)(t * 0.001f));
-	// For now I am just sending the spike to the shader. I might need something better...
-	loc = glGetUniformLocation(programID, "spike");
-	glUniform1f(loc, spike);
-	loc = glGetUniformLocation(programID, "blob");
-	glUniform1f(loc, blob);
-	loc = glGetUniformLocation(programID, "knob1");
-	glUniform1f(loc, interpolatedParameters[14]);
-	loc = glGetUniformLocation(programID, "knob2");
-	glUniform1f(loc, interpolatedParameters[15]);
-	loc = glGetUniformLocation(programID, "knob3");
-	glUniform1f(loc, interpolatedParameters[16]);
-	loc = glGetUniformLocation(programID, "knob4");
-	glUniform1f(loc, interpolatedParameters[17]);
-	loc = glGetUniformLocation(programID, "knob5");
-	glUniform1f(loc, interpolatedParameters[18]);
-	loc = glGetUniformLocation(programID, "knob6");
-	glUniform1f(loc, interpolatedParameters[19]);
-	loc = glGetUniformLocation(programID, "knob7");
-	glUniform1f(loc, interpolatedParameters[20]);
-	loc = glGetUniformLocation(programID, "knob8");
-	glUniform1f(loc, interpolatedParameters[21]);
-	loc = glGetUniformLocation(programID, "knob9");
-	glUniform1f(loc, interpolatedParameters[22]);
-	loc = glGetUniformLocation(programID, "slider1");
-	glUniform1f(loc, interpolatedParameters[2]);
-	loc = glGetUniformLocation(programID, "slider2");
-	glUniform1f(loc, interpolatedParameters[3]);
-	loc = glGetUniformLocation(programID, "slider3");
-	glUniform1f(loc, interpolatedParameters[4]);
-	loc = glGetUniformLocation(programID, "slider4");
-	glUniform1f(loc, interpolatedParameters[5]);
-	loc = glGetUniformLocation(programID, "slider5");
-	glUniform1f(loc, interpolatedParameters[6]);
-	loc = glGetUniformLocation(programID, "slider6");
-	glUniform1f(loc, interpolatedParameters[8]);
-	loc = glGetUniformLocation(programID, "slider7");
-	glUniform1f(loc, interpolatedParameters[9]);
-	loc = glGetUniformLocation(programID, "slider8");
-	glUniform1f(loc, interpolatedParameters[12]);
-	loc = glGetUniformLocation(programID, "slider9");
-	glUniform1f(loc, interpolatedParameters[13]);
+    // Set the program uniforms
+    GLuint programID;
+    shaderManager.getProgramID(usedProgram[usedIndex], &programID, errorText);
+    glUseProgram(programID);
+    GLuint loc = glGetUniformLocation(programID, "aspectRatio");
+    glUniform1f(loc, aspectRatio);
+    loc = glGetUniformLocation(programID, "time");
+    glUniform1f(loc, (float)(t * 0.001f));
+    // For now I am just sending the spike to the shader. I might need something better...
+    loc = glGetUniformLocation(programID, "spike");
+    glUniform1f(loc, spike);
+    loc = glGetUniformLocation(programID, "blob");
+    glUniform1f(loc, blob);
+    loc = glGetUniformLocation(programID, "knob1");
+    glUniform1f(loc, interpolatedParameters[14]);
+    loc = glGetUniformLocation(programID, "knob2");
+    glUniform1f(loc, interpolatedParameters[15]);
+    loc = glGetUniformLocation(programID, "knob3");
+    glUniform1f(loc, interpolatedParameters[16]);
+    loc = glGetUniformLocation(programID, "knob4");
+    glUniform1f(loc, interpolatedParameters[17]);
+    loc = glGetUniformLocation(programID, "knob5");
+    glUniform1f(loc, interpolatedParameters[18]);
+    loc = glGetUniformLocation(programID, "knob6");
+    glUniform1f(loc, interpolatedParameters[19]);
+    loc = glGetUniformLocation(programID, "knob7");
+    glUniform1f(loc, interpolatedParameters[20]);
+    loc = glGetUniformLocation(programID, "knob8");
+    glUniform1f(loc, interpolatedParameters[21]);
+    loc = glGetUniformLocation(programID, "knob9");
+    glUniform1f(loc, interpolatedParameters[22]);
+    loc = glGetUniformLocation(programID, "slider1");
+    glUniform1f(loc, interpolatedParameters[2]);
+    loc = glGetUniformLocation(programID, "slider2");
+    glUniform1f(loc, interpolatedParameters[3]);
+    loc = glGetUniformLocation(programID, "slider3");
+    glUniform1f(loc, interpolatedParameters[4]);
+    loc = glGetUniformLocation(programID, "slider4");
+    glUniform1f(loc, interpolatedParameters[5]);
+    loc = glGetUniformLocation(programID, "slider5");
+    glUniform1f(loc, interpolatedParameters[6]);
+    loc = glGetUniformLocation(programID, "slider6");
+    glUniform1f(loc, interpolatedParameters[8]);
+    loc = glGetUniformLocation(programID, "slider7");
+    glUniform1f(loc, interpolatedParameters[9]);
+    loc = glGetUniformLocation(programID, "slider8");
+    glUniform1f(loc, interpolatedParameters[12]);
+    loc = glGetUniformLocation(programID, "slider9");
+    glUniform1f(loc, interpolatedParameters[13]);
 
-	// Set texture identifiers
-	GLint texture_location;
-	texture_location = glGetUniformLocation(programID, "Noise3DTexture");
-	glUniform1i(texture_location, 0);
-	texture_location = glGetUniformLocation(programID, "DepthSensorTexture");
-	glUniform1i(texture_location, 1);
-	texture_location = glGetUniformLocation(programID, "BGTexture");
-	glUniform1i(texture_location, 2);
+    // Set texture identifiers
+    GLint texture_location;
+    texture_location = glGetUniformLocation(programID, "Noise3DTexture");
+    glUniform1i(texture_location, 0);
+    texture_location = glGetUniformLocation(programID, "DepthSensorTexture");
+    glUniform1i(texture_location, 1);
+    texture_location = glGetUniformLocation(programID, "BGTexture");
+    glUniform1i(texture_location, 2);
 
-	// render to larger offscreen texture
-	glActiveTexture(GL_TEXTURE2);
-	textureManager.getTextureID("hermaniak.tga", &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glActiveTexture(GL_TEXTURE1);
-	//textureManager.getTextureID(TM_DEPTH_SENSOR_NAME, &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glActiveTexture(GL_TEXTURE0);
-	textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
-	glBindTexture(GL_TEXTURE_3D, textureID);
+    // render to larger offscreen texture
+    glActiveTexture(GL_TEXTURE2);
+    textureManager.getTextureID("hermaniak.tga", &textureID, errorText);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glActiveTexture(GL_TEXTURE1);
+    //textureManager.getTextureID(TM_DEPTH_SENSOR_NAME, &textureID, errorText);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glActiveTexture(GL_TEXTURE0);
+    textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
+    glBindTexture(GL_TEXTURE_3D, textureID);
 
 #if 0
-	if (usedIndex > 4) {
-		glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
-	} else {
-		glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
-	}
+    if (usedIndex > 4) {
+        glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+    }
+    else {
+        glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+    }
 #endif
 
     // TODO: Here is the rendering done!
@@ -631,10 +657,61 @@ void intro_do(long t, long delta_time)
         glVertex2f(-1.0f, 1.0f);
         glEnd();
 #endif
-        float rotation_speed = 0.1f;
-        float rotation = rotation_speed * 3.1415f * 2.0f * ftime;
-        DrawTearCircle(rotation, rotation - 3.2f, 0.4f);
-        DrawTearCircle(rotation + 3.1415f, rotation + 3.1415f - 3.2f, 0.4f);
+        const float line_length = 0.35f;
+        float rotation_speed = 0.1f + 1.0f * interpolatedParameters[13];
+        static float rotation = 0.0f;
+        if (rotation > 2.0f * 3.1415928f) rotation -= 2.0f * 3.1415928f;
+        float distance1 = interpolatedParameters[2] + 1.0f;
+        float distance2 = interpolatedParameters[3] + 1.0f;
+
+        if (ftime >= otone_start_time_ &&
+            ftime < real_otone_start_time_) {
+            // The theatre just started, init the rotation to where it should be
+            rotation = 2.0f * 3.141529f - 1.5f;
+            real_otone_start_time_ = ftime;
+        }
+        float incoming1 = (real_otone_start_time_ - ftime) * 0.03f + 0.75f;
+        if (incoming1 < 0.0f) incoming1 = 0.0f;
+        incoming1 *= incoming1;
+        distance1 += 1.1f * incoming1 / line_length;
+
+        // slow down in the beginning
+        rotation += rotation_speed * fdelta_time * 3.1415f * 2.0f * (1.0f - incoming1);
+
+        static float masako_rotation_error = 0.0f;
+        if (ftime >= masako_start_time_ &&
+            ftime < real_masako_start_time_) {
+            // The theatre just started, init the rotation to where it should be
+            real_masako_start_time_ = ftime;
+            float destination_rotation = 2.0f * 3.141529f - 1.5f;
+            if (rotation - 1.0f < destination_rotation) {
+                masako_rotation_error = destination_rotation - rotation;
+            } else {
+                masako_rotation_error = destination_rotation - rotation + 2.0f * 3.141529f;
+            }
+        }
+        float incoming2 = (real_masako_start_time_ - ftime) * 0.03f + 0.75f;
+        if (incoming2 < 0.0f) incoming2 = 0.0f;
+        incoming2 *= incoming2;
+        distance2 += 1.1f * incoming2 / line_length;
+        float masako_rotation = rotation + 3.1415f;
+        float rotation_adaptation = 1.0f - 0.03f * (ftime - real_masako_start_time_);
+        if (rotation_adaptation < 0.0f) rotation_adaptation = 0.0f;
+        rotation_adaptation = 1.0f - cosf(rotation_adaptation * 3.1415f / 2.0f);
+        masako_rotation += rotation_adaptation * masako_rotation_error;
+
+        if (ftime >= real_otone_start_time_) {
+            DrawTearCircle(rotation + 1.6f / distance1,
+                rotation - 1.6f / distance1,
+                0.35f * distance1,
+                -0.7f * incoming1, -0.8f * incoming1);
+        }
+        if (ftime >= real_masako_start_time_) {
+            DrawTearCircle(masako_rotation + 1.6f / distance2,
+                masako_rotation - 1.6f / distance2,
+                0.35f * distance2,
+                0.7f * incoming2, 0.8f * incoming2);
+        }
     } else {  // Do the rigit dance stuff
 #if 0
         glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
