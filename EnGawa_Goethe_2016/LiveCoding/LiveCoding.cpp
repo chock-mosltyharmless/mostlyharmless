@@ -8,7 +8,7 @@
 #include "GLNames.h"
 #include "ShaderManager.h"
 #include "TextureManager.h"
-#include "FluidSimulation.h"
+//#include "FluidSimulation.h"
 #include "Editor.h"
 #include "Parameter.h"
 #include "bass.h"
@@ -26,7 +26,7 @@ float aspectRatio = (float)XRES / (float)YRES;
 float music_start_time_ = -10000.0f;
 
 long start_time_ = 0;
-FluidSimulation fluid_simulation_;
+//FluidSimulation fluid_simulation_;
 HSTREAM mp3Str;
 
 /*************************************************
@@ -157,7 +157,7 @@ static int initGL(WININFO *winInfo)
 	blob = 0.;
 
     // Create the fluid simulation stuff
-    fluid_simulation_.Init(false);
+    //fluid_simulation_.Init(false);
 
 	return 0;
 }
@@ -232,22 +232,22 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 
         case 'a':
         case 'A':
-            fluid_simulation_.request_set_points_ = true;
+            //fluid_simulation_.request_set_points_ = true;
             break;
 
         case 'o':
         case 'O':
-            fluid_simulation_.Init(false);
+            //fluid_simulation_.Init(false);
             break;
 
         case 'p':
         case 'P':
-            fluid_simulation_.Init(true);
+            //fluid_simulation_.Init(true);
             break;
 
         case 'x':
         case 'X':
-            fluid_simulation_.PushApart();
+            //fluid_simulation_.PushApart();
 
         case 'm':
         case 'M':
@@ -371,14 +371,58 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
+void DrawTearCircle(float start_angle, float end_angle, float distance) {
+    const int kNumSegments = 100;
+    const float kTearWidth = 0.04f;
+    float cur_angle = start_angle;
+    float delta_angle = (end_angle - start_angle) / kNumSegments;
+    float tear_delta_position = 1.0f / (kNumSegments + 1);
+    float tear_position = tear_delta_position / 4.0f;
+
+    // Initialize OGL stuff
+    GLuint programID;
+    char errorText[MAX_ERROR_LENGTH + 1];
+    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+    glUseProgram(programID);
+    glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
+    glBegin(GL_QUADS);
+
+    for (int i = 0; i < kNumSegments; i++) {
+        float left_angle = cur_angle;
+        float right_angle = cur_angle + delta_angle;
+        float tear_left_pos = tear_position;  // nothing for 0.
+        float tear_right_pos = tear_left_pos + tear_delta_position;
+        float left_width = kTearWidth * sinf(tear_left_pos * 3.1415f) / sqrtf(tear_left_pos);
+        float right_width = kTearWidth * sinf(tear_right_pos * 3.1415f) / sqrtf(tear_right_pos);
+
+        float left_pos[2] = { distance * sinf(left_angle), distance * cosf(left_angle) };
+        float right_pos[2] = { distance * sinf(right_angle), distance * cosf(right_angle) };
+        float left_normal[2] = { sinf(left_angle), cosf(left_angle) };
+        float right_normal[2] = { sinf(right_angle), cosf(right_angle) };
+
+        glVertex2f(left_pos[0] - left_width * left_normal[0],
+            (left_pos[1] - left_width * left_normal[1]) * aspectRatio);
+        glVertex2f(left_pos[0] + left_width * left_normal[0],
+            (left_pos[1] + left_width * left_normal[1]) * aspectRatio);
+        glVertex2f(right_pos[0] + right_width * right_normal[0],
+            (right_pos[1] + right_width * right_normal[1]) * aspectRatio);
+        glVertex2f(right_pos[0] - right_width * right_normal[0],
+            (right_pos[1] - right_width * right_normal[1]) * aspectRatio);
+
+        cur_angle = right_angle;
+        tear_position = tear_right_pos;
+    }
+
+    glEnd();
+}
+
 void DrawMusic(float ftime) {
     const int kNumEdges = 8;
     float delta_angle = 3.141592f * 2.0f / kNumEdges;
     const float music_beat = 0.405f;
-    const float rotation_speed = 0.05f;
+    const float rotation_speed = 0.1f;
 
     // Initialize OGL stuff
-    GLuint textureID;
     GLuint programID;
     char errorText[MAX_ERROR_LENGTH + 1];
     shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
@@ -401,10 +445,11 @@ void DrawMusic(float ftime) {
             float end_angle = next_edge * delta_angle;
 
             float beat_overdrive = sinf(ftime * 3.1415f / 160.0f) * 2.0f + .5f;
+            if (ftime > 80.0f) beat_overdrive = 1.0f;
             float rotation = rotation_speed * 3.1415f * 2.0f * ftime;
             float beat = sinf(ftime * 3.1415f * 2.0f / music_beat);
             //beat *= beat * beat;
-            rotation += rotation_speed * beat * music_beat * beat_overdrive;
+            rotation += rotation_speed * beat * music_beat * beat_overdrive * 0.4f;
             start_angle -= rotation;
             end_angle -= rotation;
 
@@ -412,6 +457,7 @@ void DrawMusic(float ftime) {
             float end_line[2] = { cosf(end_angle), sinf(end_angle) };
 
             float star_amount = 0.2f * sinf(ftime * 3.1415f / 160.0f);
+            if (ftime > 80.0f) star_amount = 0.2f;
             float inner_dist_start = 0.27f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * edge / kNumEdges * 10 + divergence*star_amount);
             float inner_dist_end = 0.27f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * next_edge / kNumEdges * 10 + divergence*star_amount);
             float outer_dist_start = 0.35f + star_amount * sinf(0.2f * ftime + 3.1415f * 2.0f * edge / kNumEdges * 10 + divergence);
@@ -571,6 +617,7 @@ void intro_do(long t, long delta_time)
 
     if (ftime - music_start_time_ > 159.0f ||
         ftime - music_start_time_ < 0.5f) {  // Do the fluid stuff
+#if 0
         fluid_simulation_.UpdateTime(fdelta_time);
         fluid_simulation_.GetTexture();
         glBegin(GL_QUADS);
@@ -583,7 +630,13 @@ void intro_do(long t, long delta_time)
         glTexCoord2f(0.0f, 1.0f);
         glVertex2f(-1.0f, 1.0f);
         glEnd();
+#endif
+        float rotation_speed = 0.1f;
+        float rotation = rotation_speed * 3.1415f * 2.0f * ftime;
+        DrawTearCircle(rotation, rotation - 3.2f, 0.4f);
+        DrawTearCircle(rotation + 3.1415f, rotation + 3.1415f - 3.2f, 0.4f);
     } else {  // Do the rigit dance stuff
+#if 0
         glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
         DrawMusic(ftime - music_start_time_);
         textureManager.getTextureID(TM_HIGHLIGHT_NAME, &textureID, errorText);
@@ -591,7 +644,8 @@ void intro_do(long t, long delta_time)
         glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, fluid_simulation_.GetBackBuffer());
         fluid_simulation_.SetBackBuffer();
-        
+#endif
+
         glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         int xres = windowRect.right - windowRect.left;
