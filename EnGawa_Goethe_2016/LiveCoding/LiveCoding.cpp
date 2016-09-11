@@ -453,8 +453,9 @@ void drawQuad(float startX, float endX, float startY, float endY, float startV, 
 void DrawTearCircle(float start_angle, float end_angle, float distance,
                     float center_x, float center_y,
                     int person, float interpolation,
-                    float ftime) {
-    float kTearWidth = 0.04f;
+                    float ftime,
+                    float thickness) {
+    float kTearWidth = 0.04f * thickness;
     if (ftime > black_start_time_) {
         kTearWidth += (ftime - black_start_time_) * (ftime - black_start_time_) * 0.02f;
         start_angle += (ftime - black_start_time_) * (ftime - black_start_time_) * 0.1f;
@@ -803,19 +804,22 @@ void intro_do(long t, long delta_time)
         if (interpolation < 0.0f || ftime - music_start_time_ < 0.5f) interpolation = 0.0f;
         interpolation *= interpolation;
 
+        float length_difference = 0.75f * interpolatedParameters[4];
         if (ftime >= real_otone_start_time_) {
-            DrawTearCircle(rotation + 1.6f / distance1,
-                rotation - 1.6f / distance1,
+            DrawTearCircle(rotation + (1.6f - length_difference) / distance1,
+                rotation - (1.6f - length_difference) / distance1,
                 0.35f * distance1,
                 -0.7f * incoming1, -0.8f * incoming1,
-                0, interpolation, ftime);
+                0, interpolation, ftime,
+                1.0f - length_difference * 0.2f);
         }
         if (ftime >= real_masako_start_time_) {
-            DrawTearCircle(masako_rotation + 1.6f / distance2,
-                masako_rotation - 1.6f / distance2,
+            DrawTearCircle(masako_rotation + (1.6f + length_difference) / distance2,
+                masako_rotation - (1.6f + length_difference) / distance2,
                 0.35f * distance2,
                 0.7f * incoming2, 0.8f * incoming2,
-                1, interpolation, ftime);
+                1, interpolation, ftime,
+                1.0f + length_difference * 0.2f);
         }
     } else {  // Do the rigit dance stuff
 #if 0
