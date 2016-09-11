@@ -721,8 +721,12 @@ void intro_do(long t, long delta_time)
 #endif
 
     // TODO: Here is the rendering done!
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    float red = 1.0f + sinf(ftime * 0.3f) * interpolatedParameters[12];
+    float green = 1.0f + sinf(ftime * 0.4f) * interpolatedParameters[12];
+    float blue = 1.0f - sinf(ftime * 0.3f) * interpolatedParameters[12];
+    glClearColor(red, green, blue, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+
     shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
     glUseProgram(programID);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -823,9 +827,6 @@ void intro_do(long t, long delta_time)
         glGetTexImage(GL_TEXTURE_2D, 0, GL_RGBA, GL_UNSIGNED_BYTE, fluid_simulation_.GetBackBuffer());
         fluid_simulation_.SetBackBuffer();
 #endif
-
-        glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
         int xres = windowRect.right - windowRect.left;
         int yres = windowRect.bottom - windowRect.top;
         glViewport(0, 0, xres, yres);
