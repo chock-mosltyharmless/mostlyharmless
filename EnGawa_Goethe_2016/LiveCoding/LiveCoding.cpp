@@ -34,6 +34,9 @@ float black_start_time_ = 1.0e20f;
 // Set to true if the animation stops
 bool rotation_stopped_ = false;
 
+// Engawa logo
+float ending_start_time_ = 1.0e20f;
+
 long start_time_ = 0;
 //FluidSimulation fluid_simulation_;
 HSTREAM mp3Str;
@@ -228,6 +231,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'Q':
             music_start_time_ = 0.001f * (timeGetTime() - start_time_);
             black_start_time_ = 1.0e20f;
+            ending_start_time_ = 1.0e20f;
             rotation_stopped_ = false;
             // start music playback
 #ifdef MUSIC
@@ -241,6 +245,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'W':
             music_start_time_ = -10000.0f;
             black_start_time_ = 1.0e20f;
+            ending_start_time_ = 1.0e20f;
             rotation_stopped_ = false;
 #ifdef MUSIC
             BASS_Stop();
@@ -258,6 +263,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             masako_start_time_ = 1.0e20f;
             real_masako_start_time_ = masako_start_time_;
             black_start_time_ = 1.0e20f;
+            ending_start_time_ = 1.0e20f;
             rotation_stopped_ = false;
             break;
 
@@ -265,6 +271,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'S':
             otone_start_time_ = 0.001f * (timeGetTime() - start_time_);
             black_start_time_ = 1.0e20f;
+            ending_start_time_ = 1.0e20f;
             rotation_stopped_ = false;
             break;
 
@@ -272,6 +279,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'D':
             masako_start_time_ = 0.001f * (timeGetTime() - start_time_);
             black_start_time_ = 1.0e20f;
+            ending_start_time_ = 1.0e20f;
             rotation_stopped_ = false;
             break;
 
@@ -291,7 +299,14 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'X':
             //fluid_simulation_.PushApart();
             black_start_time_ = 0.001f * (timeGetTime() - start_time_);
+            ending_start_time_ = 1.0e20f;
             rotation_stopped_ = true;
+            break;
+
+        case 'c':
+        case 'C':
+            //fluid_simulation_.PushApart();
+            ending_start_time_ = 0.001f * (timeGetTime() - start_time_);
             break;
 
         case 'm':
@@ -414,6 +429,24 @@ static int window_init( WININFO *info )
         return( 0 );
     
     return( 1 );
+}
+
+void drawQuad(float startX, float endX, float startY, float endY, float startV, float endV, float alpha)
+{
+    // set up matrices
+    glEnable(GL_TEXTURE_2D);
+
+    glColor4f(1.0f, 1.0f, 1.0f, alpha);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0f, endV);
+    glVertex3f(startX, endY * aspectRatio / 4 * 3 - 0.1f, 0.99f);
+    glTexCoord2f(1.0f, endV);
+    glVertex3f(endX, endY * aspectRatio / 4 * 3 - 0.1f, 0.99f);
+    glTexCoord2f(1.0f, startV);
+    glVertex3f(endX, startY * aspectRatio / 4 * 3 - 0.1f, 0.99f);
+    glTexCoord2f(0.0, startV);
+    glVertex3f(startX, startY * aspectRatio / 4 * 3 - 0.1f, 0.99f);
+    glEnd();
 }
 
 // interpolation with the interpolation_quad
@@ -798,6 +831,72 @@ void intro_do(long t, long delta_time)
         glViewport(0, 0, xres, yres);
         DrawMusic(ftime - music_start_time_);
     }
+
+    if (ftime > ending_start_time_)
+    {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        // Draw icon
+        char errorString[MAX_ERROR_LENGTH + 1];
+        GLuint texID;
+        textureManager.getTextureID("icon.tga", &texID, errorString);
+        glBindTexture(GL_TEXTURE_2D, texID);
+        float alpha;
+        if (ftime - ending_start_time_ < 0.4f) alpha = 0.0f;
+        else alpha = 1.0f;
+        drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+
+        // Draw first highlight
+        textureManager.getTextureID("icon_highlight1.tga", &texID, errorString);
+        glBindTexture(GL_TEXTURE_2D, texID);
+        if (ftime - ending_start_time_ < 0.3f) alpha = (ftime - ending_start_time_) / 0.3f;
+        else alpha = 1.1f - (ftime - ending_start_time_ - 0.3f) * 0.5f;
+        if (alpha < 0.0f) alpha = 0.0f;
+        if (alpha > 1.0f) alpha = 1.0f;
+        alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
+        drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
+
+        // Draw second highlight
+        textureManager.getTextureID("icon_highlight2.tga", &texID, errorString);
+        glBindTexture(GL_TEXTURE_2D, texID);
+        if (ftime - ending_start_time_ < 0.4f) alpha = (ftime - ending_start_time_ - 0.3f) / 0.1f;
+        else alpha = 1.2f - (ftime - ending_start_time_ - 0.4f) * 1.2f;
+        if (alpha < 0.0f) alpha = 0.0f;
+        if (alpha > 1.0f) alpha = 1.0f;
+        alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
+        alpha *= 0.75f;
+        drawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
+
+        // draw some sparkles
+        textureManager.getTextureID("sparkle.tga", &texID, errorString);
+        glBindTexture(GL_TEXTURE_2D, texID);
+        float sparkleTime = (ftime - ending_start_time_ - 0.4f) * 0.4f;
+        for (int i = 0; i < 16; i++)
+        {
+            float sparkleDuration = 1.3f + 0.4f * sinf(i*2.4f + 2.3f);
+            if (sparkleTime > 0.0f && sparkleTime < sparkleDuration)
+            {
+                float amount = sqrtf(sinf((sparkleTime / sparkleDuration * 3.1415f)));
+                float iconDistance = 0.5f;
+                float ASPECT_RATIO = 240.0f / 170.0f;
+                float centerX = -0.3f + iconDistance * (0.55f + 0.35f * sinf(i*2.1f + 7.3f));
+                centerX += (0.7f + 0.15f*sinf(i*1.4f + 8.3f)) * iconDistance / sparkleDuration * sparkleTime -
+                    0.1f * sparkleTime*sparkleTime / sparkleDuration / sparkleDuration;
+                float centerY = 0.5f + iconDistance * ASPECT_RATIO * (0.8f + 0.3f * sinf(i*4.6f + 2.9f) - 1.0f);
+                centerY += (0.5f + 0.2f*sinf(i*6.8f + 3.0f)) * iconDistance / sparkleDuration * sparkleTime * ASPECT_RATIO -
+                    0.2f * sparkleTime*sparkleTime / sparkleDuration / sparkleDuration;
+                float width = iconDistance * 0.25f;
+                drawQuad(centerX - width, centerX + width,
+                    centerY - width * ASPECT_RATIO, centerY + width * ASPECT_RATIO,
+                    0.0f, 1.0f, amount);
+            }
+        }
+        glDisable(GL_BLEND);
+    }
+
 
 #if 0
     glEnable(GL_BLEND);
