@@ -29,6 +29,11 @@ float real_otone_start_time_ = 1.0e20f;  // triggered by close-to-entrance rotat
 float masako_start_time_ = 1.0e20f;
 float real_masako_start_time_ = 1.0e20f;  // triggered by close-to-entrance rotation
 
+// Time when theatre goes black (end)
+float black_start_time_ = 1.0e20f;
+// Set to true if the animation stops
+bool rotation_stopped_ = false;
+
 long start_time_ = 0;
 //FluidSimulation fluid_simulation_;
 HSTREAM mp3Str;
@@ -222,6 +227,8 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'q':
         case 'Q':
             music_start_time_ = 0.001f * (timeGetTime() - start_time_);
+            black_start_time_ = 1.0e20f;
+            rotation_stopped_ = false;
             // start music playback
 #ifdef MUSIC
             BASS_Init(-1, 44100, 0, hWnd, NULL);
@@ -233,6 +240,8 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
         case 'w':
         case 'W':
             music_start_time_ = -10000.0f;
+            black_start_time_ = 1.0e20f;
+            rotation_stopped_ = false;
 #ifdef MUSIC
             BASS_Stop();
             BASS_ChannelStop(mp3Str);
@@ -248,31 +257,42 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             real_otone_start_time_ = otone_start_time_;
             masako_start_time_ = 1.0e20f;
             real_masako_start_time_ = masako_start_time_;
+            black_start_time_ = 1.0e20f;
+            rotation_stopped_ = false;
             break;
 
         case 's':
         case 'S':
             otone_start_time_ = 0.001f * (timeGetTime() - start_time_);
+            black_start_time_ = 1.0e20f;
+            rotation_stopped_ = false;
             break;
 
         case 'd':
         case 'D':
             masako_start_time_ = 0.001f * (timeGetTime() - start_time_);
+            black_start_time_ = 1.0e20f;
+            rotation_stopped_ = false;
             break;
 
         case 'o':
         case 'O':
             //fluid_simulation_.Init(false);
+            rotation_stopped_ = false;
             break;
 
         case 'p':
         case 'P':
             //fluid_simulation_.Init(true);
+            rotation_stopped_ = true;
             break;
 
         case 'x':
         case 'X':
             //fluid_simulation_.PushApart();
+            black_start_time_ = 0.001f * (timeGetTime() - start_time_);
+            rotation_stopped_ = true;
+            break;
 
         case 'm':
         case 'M':
@@ -399,8 +419,14 @@ static int window_init( WININFO *info )
 // interpolation with the interpolation_quad
 void DrawTearCircle(float start_angle, float end_angle, float distance,
                     float center_x, float center_y,
-                    int person, float interpolation = 0.0f) {
-    const float kTearWidth = 0.04f;
+                    int person, float interpolation,
+                    float ftime) {
+    float kTearWidth = 0.04f;
+    if (ftime > black_start_time_) {
+        kTearWidth += (ftime - black_start_time_) * (ftime - black_start_time_) * 0.02f;
+        start_angle += (ftime - black_start_time_) * (ftime - black_start_time_) * 0.1f;
+        end_angle -= (ftime - black_start_time_) * (ftime - black_start_time_) * 0.1f;
+    }
     float cur_angle = start_angle;
     float delta_angle = (end_angle - start_angle) / kNumSegments;
     float tear_delta_position = 1.0f / (kNumSegments + 1);
@@ -709,7 +735,9 @@ void intro_do(long t, long delta_time)
         distance1 += 1.1f * incoming1 / line_length;
 
         // slow down in the beginning
-        rotation += rotation_speed * fdelta_time * 3.1415f * 2.0f * (1.0f - incoming1);
+        if (!rotation_stopped_) {
+            rotation += rotation_speed * fdelta_time * 3.1415f * 2.0f * (1.0f - incoming1);
+        }
 
         static float masako_rotation_error = 0.0f;
         if (ftime >= masako_start_time_ &&
@@ -743,14 +771,14 @@ void intro_do(long t, long delta_time)
                 rotation - 1.6f / distance1,
                 0.35f * distance1,
                 -0.7f * incoming1, -0.8f * incoming1,
-                0, interpolation);
+                0, interpolation, ftime);
         }
         if (ftime >= real_masako_start_time_) {
             DrawTearCircle(masako_rotation + 1.6f / distance2,
                 masako_rotation - 1.6f / distance2,
                 0.35f * distance2,
                 0.7f * incoming2, 0.8f * incoming2,
-                1, interpolation);
+                1, interpolation, ftime);
         }
     } else {  // Do the rigit dance stuff
 #if 0
