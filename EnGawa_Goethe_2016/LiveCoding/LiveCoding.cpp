@@ -33,6 +33,13 @@ long start_time_ = 0;
 //FluidSimulation fluid_simulation_;
 HSTREAM mp3Str;
 
+// Of the music stuff
+const int kNumEdges = 8;
+const int kNumSegmentsPerEdge = 16;
+const int kNumSegments = kNumEdges * kNumSegmentsPerEdge;
+// Created by music, used by floaty stuff
+float interpolation_quad_[2][kNumSegments][4][2];
+
 /*************************************************
  * GL Core variables
  *************************************************/
@@ -389,9 +396,10 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
+// interpolation with the interpolation_quad
 void DrawTearCircle(float start_angle, float end_angle, float distance,
-                    float center_x = 0.0f, float center_y = 0.0f) {
-    const int kNumSegments = 100;
+                    float center_x, float center_y,
+                    int person, float interpolation = 0.0f) {
     const float kTearWidth = 0.04f;
     float cur_angle = start_angle;
     float delta_angle = (end_angle - start_angle) / kNumSegments;
@@ -425,14 +433,18 @@ void DrawTearCircle(float start_angle, float end_angle, float distance,
         float left_normal[2] = { sinf(left_angle), cosf(left_angle) };
         float right_normal[2] = { sinf(right_angle), cosf(right_angle) };
 
-        glVertex2f(left_pos[0] - left_width * left_normal[0],
-            (left_pos[1] - left_width * left_normal[1]) * aspectRatio);
-        glVertex2f(left_pos[0] + left_width * left_normal[0],
-            (left_pos[1] + left_width * left_normal[1]) * aspectRatio);
-        glVertex2f(right_pos[0] + right_width * right_normal[0],
-            (right_pos[1] + right_width * right_normal[1]) * aspectRatio);
-        glVertex2f(right_pos[0] - right_width * right_normal[0],
-            (right_pos[1] - right_width * right_normal[1]) * aspectRatio);
+        float t = interpolation;
+        float k = 1.0f - t;
+        float vertices[4][2] = {
+            {left_pos[0] - left_width * left_normal[0], (left_pos[1] - left_width * left_normal[1]) * aspectRatio},
+            {left_pos[0] + left_width * left_normal[0], (left_pos[1] + left_width * left_normal[1]) * aspectRatio},
+            {right_pos[0] + right_width * right_normal[0], (right_pos[1] + right_width * right_normal[1]) * aspectRatio},
+            {right_pos[0] - right_width * right_normal[0],(right_pos[1] - right_width * right_normal[1]) * aspectRatio}
+        };
+        glVertex2f(t * interpolation_quad_[person][i][0][0] + k * vertices[0][0], t * interpolation_quad_[person][i][0][1] + k * vertices[0][1]);
+        glVertex2f(t * interpolation_quad_[person][i][1][0] + k * vertices[1][0], t * interpolation_quad_[person][i][1][1] + k * vertices[1][1]);
+        glVertex2f(t * interpolation_quad_[person][i][2][0] + k * vertices[2][0], t * interpolation_quad_[person][i][2][1] + k * vertices[2][1]);
+        glVertex2f(t * interpolation_quad_[person][i][3][0] + k * vertices[3][0], t * interpolation_quad_[person][i][3][1] + k * vertices[3][1]);
 
         cur_angle = right_angle;
         tear_position = tear_right_pos;
@@ -442,7 +454,6 @@ void DrawTearCircle(float start_angle, float end_angle, float distance,
 }
 
 void DrawMusic(float ftime) {
-    const int kNumEdges = 8;
     float delta_angle = 3.141592f * 2.0f / kNumEdges;
     const float music_beat = 0.405f;
     const float rotation_speed = 0.1f;
@@ -463,6 +474,7 @@ void DrawMusic(float ftime) {
         divergence *= divergence;
         if (ftime < 20.0f) divergence = 0.0f;
 
+        int interpolation_quad_id = 0;
         for (int edge = 0; edge < kNumEdges; edge++) {
             float start_angle = edge * delta_angle;
             int next_edge = edge + 1;
@@ -496,10 +508,31 @@ void DrawMusic(float ftime) {
             outer_dist_start *= size;
             outer_dist_end *= size;
 
-            glVertex2f(start_line[0] * inner_dist_start, start_line[1] * inner_dist_start * aspectRatio);
-            glVertex2f(start_line[0] * outer_dist_start, start_line[1] * outer_dist_start * aspectRatio);
-            glVertex2f(end_line[0] * outer_dist_end, end_line[1] * outer_dist_end * aspectRatio);
-            glVertex2f(end_line[0] * inner_dist_end, end_line[1] * inner_dist_end * aspectRatio);
+            float vertices[4][2] = {
+                {start_line[0] * inner_dist_start, start_line[1] * inner_dist_start * aspectRatio},
+                {start_line[0] * outer_dist_start, start_line[1] * outer_dist_start * aspectRatio},
+                {end_line[0] * outer_dist_end, end_line[1] * outer_dist_end * aspectRatio},
+                {end_line[0] * inner_dist_end, end_line[1] * inner_dist_end * aspectRatio}
+            };
+            for (int segment = 0; segment < kNumSegmentsPerEdge; segment++) {
+                float t_start = (float)segment / (float)(kNumSegmentsPerEdge);
+                float k_start = 1.0f - t_start;
+                float t_end = (float)(segment + 1) / (float)(kNumSegmentsPerEdge);
+                float k_end = 1.0f - t_end;
+                interpolation_quad_[person][interpolation_quad_id][0][0] = k_start * vertices[0][0] + t_start * vertices[3][0];
+                interpolation_quad_[person][interpolation_quad_id][0][1] = k_start * vertices[0][1] + t_start * vertices[3][1];
+                interpolation_quad_[person][interpolation_quad_id][1][0] = k_start * vertices[1][0] + t_start * vertices[2][0];
+                interpolation_quad_[person][interpolation_quad_id][1][1] = k_start * vertices[1][1] + t_start * vertices[2][1];
+                interpolation_quad_[person][interpolation_quad_id][3][0] = k_end * vertices[0][0] + t_end * vertices[3][0];
+                interpolation_quad_[person][interpolation_quad_id][3][1] = k_end * vertices[0][1] + t_end * vertices[3][1];
+                interpolation_quad_[person][interpolation_quad_id][2][0] = k_end * vertices[1][0] + t_end * vertices[2][0];
+                interpolation_quad_[person][interpolation_quad_id][2][1] = k_end * vertices[1][1] + t_end * vertices[2][1];
+                glVertex2f(interpolation_quad_[person][interpolation_quad_id][0][0], interpolation_quad_[person][interpolation_quad_id][0][1]);
+                glVertex2f(interpolation_quad_[person][interpolation_quad_id][1][0], interpolation_quad_[person][interpolation_quad_id][1][1]);
+                glVertex2f(interpolation_quad_[person][interpolation_quad_id][2][0], interpolation_quad_[person][interpolation_quad_id][2][1]);
+                glVertex2f(interpolation_quad_[person][interpolation_quad_id][3][0], interpolation_quad_[person][interpolation_quad_id][3][1]);
+                interpolation_quad_id++;
+            }
         }
     }
 
@@ -700,17 +733,24 @@ void intro_do(long t, long delta_time)
         rotation_adaptation = 1.0f - cosf(rotation_adaptation * 3.1415f / 2.0f);
         masako_rotation += rotation_adaptation * masako_rotation_error;
 
+        // Interpolation with the music stuff
+        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.1f;
+        if (interpolation < 0.0f || ftime - music_start_time_ < 0.5f) interpolation = 0.0f;
+        interpolation *= interpolation;
+
         if (ftime >= real_otone_start_time_) {
             DrawTearCircle(rotation + 1.6f / distance1,
                 rotation - 1.6f / distance1,
                 0.35f * distance1,
-                -0.7f * incoming1, -0.8f * incoming1);
+                -0.7f * incoming1, -0.8f * incoming1,
+                0, interpolation);
         }
         if (ftime >= real_masako_start_time_) {
             DrawTearCircle(masako_rotation + 1.6f / distance2,
                 masako_rotation - 1.6f / distance2,
                 0.35f * distance2,
-                0.7f * incoming2, 0.8f * incoming2);
+                0.7f * incoming2, 0.8f * incoming2,
+                1, interpolation);
         }
     } else {  // Do the rigit dance stuff
 #if 0
