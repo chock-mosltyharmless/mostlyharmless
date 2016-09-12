@@ -546,7 +546,7 @@ void DrawMusic(float ftime) {
             float rotation = rotation_speed * 3.1415f * 2.0f * ftime;
             float beat = sinf(ftime * 3.1415f * 2.0f / music_beat);
             //beat *= beat * beat;
-            rotation += rotation_speed * beat * music_beat * beat_overdrive * 0.4f;
+            rotation += rotation_speed * beat * music_beat * beat_overdrive * 0.35f;
             start_angle -= rotation;
             end_angle -= rotation;
 
@@ -800,19 +800,23 @@ void intro_do(long t, long delta_time)
 
         float center1_move_x = sinf(ftime * 1.7f) * interpolatedParameters[6] * 0.4f;
         float center1_move_y = sinf(ftime * 0.57f) * interpolatedParameters[6] * 0.4f;
-        float center2_move_x = sinf(ftime * 1.97f) * interpolatedParameters[8] * 0.4f;
-        float center2_move_y = sinf(ftime * 0.3f) * interpolatedParameters[8] * 0.4f;
+        float center2_move_x = sinf(ftime * 1.97f) * interpolatedParameters[6] * 0.4f;
+        float center2_move_y = sinf(ftime * 0.3f) * interpolatedParameters[6] * 0.4f;
 
         static float masako_rotation_error = 0.0f;
         if (ftime >= masako_start_time_ &&
             ftime < real_masako_start_time_) {
             // The theatre just started, init the rotation to where it should be
-            real_masako_start_time_ = ftime;
             float destination_rotation = 2.0f * 3.141529f - 1.5f;
             if (rotation - 1.0f < destination_rotation) {
                 masako_rotation_error = destination_rotation - rotation;
             } else {
                 masako_rotation_error = destination_rotation - rotation + 2.0f * 3.141529f;
+            }
+
+            // Only start Masako if she is about at the right position
+            if (fabsf(masako_rotation_error) < 0.5f) {
+                real_masako_start_time_ = ftime;
             }
         }
         float incoming2 = (real_masako_start_time_ - ftime) * 0.03f + 0.75f;
@@ -826,7 +830,7 @@ void intro_do(long t, long delta_time)
         masako_rotation += rotation_adaptation * masako_rotation_error;
 
         // Interpolation with the music stuff
-        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.1f;
+        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.04f;
         if (interpolation < 0.0f || ftime - music_start_time_ < 0.5f) interpolation = 0.0f;
         interpolation *= interpolation;
 
