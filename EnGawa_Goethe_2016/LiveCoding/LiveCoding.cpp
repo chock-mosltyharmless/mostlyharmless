@@ -599,6 +599,20 @@ void DrawMusic(float ftime) {
     glEnd();
 }
 
+// Anfang langsamer
+// Anfang Masako immer synchron, kein Überlappen!
+// Nach Musik langsamer
+// Black aprupt
+// Streit kein Kreis - ggf. zwei unterschiedliche Zentren für die Kreise
+// Bei Masako eh voraussichtlich Kreis 70* drehen
+// Feste Parameter, dass ich nur noch auf Tasten drücken muss...
+// Abstand ruckartig, ca. 3 unterschiedliche Stufen. Geschwindigkeit immer gleich?
+//    --> Zusammengehen immer langsam.
+//    --> Problem nach dem Streit: Zusammen <-> Auseinander hin-und-her: Wie mach ich das?
+// Mittwoch: 19:00
+// Donnerstag: Ab 18:00 Sprichst mit Masako
+// Freitag: 9-11
+
 void intro_do(long t, long delta_time)
 {
     char errorText[MAX_ERROR_LENGTH + 1];
@@ -612,8 +626,8 @@ void intro_do(long t, long delta_time)
     // Those are key-Press indicators. I only act on 0-to-1.
     for (int i = 0; i < maxNumParameters; i++)
     {
-        interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
-            0.05f * params.getParam(i, defaultParameters[i]);
+        interpolatedParameters[i] = 0.9995f * interpolatedParameters[i] +
+            0.0005f * params.getParam(i, defaultParameters[i]);
     }
     // Update key press events.
     for (int i = 0; i < NUM_KEYS; i++)
@@ -773,9 +787,21 @@ void intro_do(long t, long delta_time)
         distance1 += 1.1f * incoming1 / line_length;
 
         // slow down in the beginning
+        float inverter = 1.0f;
         if (!rotation_stopped_) {
             rotation += rotation_speed * fdelta_time * 3.1415f * 2.0f * (1.0f - incoming1);
         }
+        else {
+            inverter = -1.0f;
+            //distance1 += 0.1f;
+            //distance2 -= 0.5f;
+            rotation += 3.1415f * 0.4f;
+        }
+
+        float center1_move_x = sinf(ftime * 1.7f) * interpolatedParameters[6] * 0.4f;
+        float center1_move_y = sinf(ftime * 0.57f) * interpolatedParameters[6] * 0.4f;
+        float center2_move_x = sinf(ftime * 1.97f) * interpolatedParameters[8] * 0.4f;
+        float center2_move_y = sinf(ftime * 0.3f) * interpolatedParameters[8] * 0.4f;
 
         static float masako_rotation_error = 0.0f;
         if (ftime >= masako_start_time_ &&
@@ -806,20 +832,24 @@ void intro_do(long t, long delta_time)
 
         float length_difference = 0.75f * interpolatedParameters[4];
         if (ftime >= real_otone_start_time_) {
-            DrawTearCircle(rotation + (1.6f - length_difference) / distance1,
-                rotation - (1.6f - length_difference) / distance1,
+            DrawTearCircle(rotation + inverter * (1.6f - length_difference) / distance1,
+                rotation - inverter * (1.6f - length_difference) / distance1,
                 0.35f * distance1,
-                -0.7f * incoming1, -0.8f * incoming1,
+                -0.7f * incoming1 - center1_move_x, -0.8f * incoming1 - center1_move_y,
                 0, interpolation, ftime,
                 1.0f - length_difference * 0.2f);
         }
         if (ftime >= real_masako_start_time_) {
-            DrawTearCircle(masako_rotation + (1.6f + length_difference) / distance2,
-                masako_rotation - (1.6f + length_difference) / distance2,
+            DrawTearCircle(masako_rotation + inverter * (1.6f + length_difference) / distance2,
+                masako_rotation - inverter * (1.6f + length_difference) / distance2,
                 0.35f * distance2,
-                0.7f * incoming2, 0.8f * incoming2,
+                0.7f * incoming2 - center2_move_x, 0.8f * incoming2 - center2_move_y,
                 1, interpolation, ftime,
                 1.0f + length_difference * 0.2f);
+        }
+
+        if (rotation_stopped_) {
+            rotation  -= 3.1415f * 0.4f;
         }
     } else {  // Do the rigit dance stuff
 #if 0
