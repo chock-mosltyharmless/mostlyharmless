@@ -626,8 +626,8 @@ void intro_do(long t, long delta_time)
     // Those are key-Press indicators. I only act on 0-to-1.
     for (int i = 0; i < maxNumParameters; i++)
     {
-        interpolatedParameters[i] = 0.9995f * interpolatedParameters[i] +
-            0.0005f * params.getParam(i, defaultParameters[i]);
+        interpolatedParameters[i] = expf(-fdelta_time) * interpolatedParameters[i] +
+            (1.0f - expf(-fdelta_time)) * params.getParam(i, defaultParameters[i]);
     }
     // Update key press events.
     for (int i = 0; i < NUM_KEYS; i++)
@@ -769,7 +769,7 @@ void intro_do(long t, long delta_time)
         glEnd();
 #endif
         const float line_length = 0.35f;
-        float rotation_speed = 0.1f + 1.0f * interpolatedParameters[13];
+        float rotation_speed = 0.05f + 1.0f * interpolatedParameters[13];
         static float rotation = 0.0f;
         if (rotation > 2.0f * 3.1415928f) rotation -= 2.0f * 3.1415928f;
         float distance1 = interpolatedParameters[2] + 1.0f;
@@ -781,7 +781,7 @@ void intro_do(long t, long delta_time)
             rotation = 2.0f * 3.141529f - 1.5f;
             real_otone_start_time_ = ftime;
         }
-        float incoming1 = (real_otone_start_time_ - ftime) * 0.03f + 0.75f;
+        float incoming1 = (real_otone_start_time_ - ftime) * 0.02f + 0.75f;
         if (incoming1 < 0.0f) incoming1 = 0.0f;
         incoming1 *= incoming1;
         distance1 += 1.1f * incoming1 / line_length;
@@ -819,7 +819,7 @@ void intro_do(long t, long delta_time)
                 real_masako_start_time_ = ftime;
             }
         }
-        float incoming2 = (real_masako_start_time_ - ftime) * 0.03f + 0.75f;
+        float incoming2 = (real_masako_start_time_ - ftime) * 0.02f + 0.75f;
         if (incoming2 < 0.0f) incoming2 = 0.0f;
         incoming2 *= incoming2;
         distance2 += 1.1f * incoming2 / line_length;
@@ -871,11 +871,18 @@ void intro_do(long t, long delta_time)
         DrawMusic(ftime - music_start_time_);
     }
 
+    if (ftime > black_start_time_) {
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
+
     if (ftime > ending_start_time_)
     {
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+        glUseProgram(programID);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         // Draw icon
