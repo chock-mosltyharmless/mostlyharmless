@@ -830,7 +830,7 @@ void intro_do(long t, long delta_time)
         masako_rotation += rotation_adaptation * masako_rotation_error;
 
         // Interpolation with the music stuff
-        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.032f;
+        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.03f;
         if (interpolation < 0.0f || ftime - music_start_time_ < 0.5f) interpolation = 0.0f;
         interpolation *= interpolation;
 
