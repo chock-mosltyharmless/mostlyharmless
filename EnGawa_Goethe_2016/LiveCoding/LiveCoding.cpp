@@ -769,7 +769,7 @@ void intro_do(long t, long delta_time)
         glEnd();
 #endif
         const float line_length = 0.35f;
-        float rotation_speed = 0.05f + 1.0f * interpolatedParameters[13];
+        float rotation_speed = 0.09f + 1.0f * interpolatedParameters[13];
         static float rotation = 0.0f;
         if (rotation > 2.0f * 3.1415928f) rotation -= 2.0f * 3.1415928f;
         float distance1 = interpolatedParameters[2] + 1.0f;
@@ -781,7 +781,7 @@ void intro_do(long t, long delta_time)
             rotation = 2.0f * 3.141529f - 1.5f;
             real_otone_start_time_ = ftime;
         }
-        float incoming1 = (real_otone_start_time_ - ftime) * 0.02f + 0.75f;
+        float incoming1 = (real_otone_start_time_ - ftime) * 0.03f + 0.75f;
         if (incoming1 < 0.0f) incoming1 = 0.0f;
         incoming1 *= incoming1;
         distance1 += 1.1f * incoming1 / line_length;
@@ -819,7 +819,7 @@ void intro_do(long t, long delta_time)
                 real_masako_start_time_ = ftime;
             }
         }
-        float incoming2 = (real_masako_start_time_ - ftime) * 0.02f + 0.75f;
+        float incoming2 = (real_masako_start_time_ - ftime) * 0.03f + 0.75f;
         if (incoming2 < 0.0f) incoming2 = 0.0f;
         incoming2 *= incoming2;
         distance2 += 1.1f * incoming2 / line_length;
@@ -830,7 +830,7 @@ void intro_do(long t, long delta_time)
         masako_rotation += rotation_adaptation * masako_rotation_error;
 
         // Interpolation with the music stuff
-        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.04f;
+        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.032f;
         if (interpolation < 0.0f || ftime - music_start_time_ < 0.5f) interpolation = 0.0f;
         interpolation *= interpolation;
 
