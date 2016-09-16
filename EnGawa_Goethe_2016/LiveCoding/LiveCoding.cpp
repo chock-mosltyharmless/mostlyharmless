@@ -781,7 +781,7 @@ void intro_do(long t, long delta_time)
             rotation = 2.0f * 3.141529f - 1.5f;
             real_otone_start_time_ = ftime;
         }
-        float incoming1 = (real_otone_start_time_ - ftime) * 0.03f + 0.75f;
+        float incoming1 = (real_otone_start_time_ - ftime) * 0.04f + 0.75f;
         if (incoming1 < 0.0f) incoming1 = 0.0f;
         incoming1 *= incoming1;
         distance1 += 1.1f * incoming1 / line_length;
@@ -819,7 +819,7 @@ void intro_do(long t, long delta_time)
                 real_masako_start_time_ = ftime;
             }
         }
-        float incoming2 = (real_masako_start_time_ - ftime) * 0.03f + 0.75f;
+        float incoming2 = (real_masako_start_time_ - ftime) * 0.04f + 0.75f;
         if (incoming2 < 0.0f) incoming2 = 0.0f;
         incoming2 *= incoming2;
         distance2 += 1.1f * incoming2 / line_length;
