@@ -5,6 +5,7 @@
 #include "LiveCoding.h"
 #include "Configuration.h"
 #include "glext.h"
+#include "wglext.h"
 #include "GLNames.h"
 #include "ShaderManager.h"
 #include "TextureManager.h"
@@ -141,7 +142,105 @@ int beatDurations[NUM_BEAT_TIMES] = {900, 1200, 1100, 1000, 1400, 1000, 1000};
 int lastBeatTime = 0;
 float blob = 0.;
 
+static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+static void window_end(WININFO *info)
+{
+    if (info->hRC)
+    {
+        wglMakeCurrent(0, 0);
+        wglDeleteContext(info->hRC);
+    }
+
+    if (info->hDC) ReleaseDC(info->hWnd, info->hDC);
+    if (info->hWnd) DestroyWindow(info->hWnd);
+
+    UnregisterClass(info->wndclass, info->hInstance);
+
+    if (info->full)
+    {
+        ChangeDisplaySettings(0, 0);
+        ShowCursor(1);
+    }
+}
+
+
+static int window_init(WININFO *info, bool use_custom_pixel_format = false, int custom_pixel_format = 0)
+{
+    unsigned int	PixelFormat;
+    DWORD			dwExStyle, dwStyle;
+    DEVMODE			dmScreenSettings;
+    RECT			rec;
+
+    WNDCLASS		wc;
+
+    ZeroMemory(&wc, sizeof(WNDCLASS));
+    wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc = WndProc;
+    wc.hInstance = info->hInstance;
+    wc.lpszClassName = info->wndclass;
+
+    if (!RegisterClass(&wc))
+        return(0);
+
+    if (info->full)
+    {
+        dmScreenSettings.dmSize = sizeof(DEVMODE);
+        dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+        dmScreenSettings.dmBitsPerPel = 24;
+        dmScreenSettings.dmPelsWidth = XRES;
+        dmScreenSettings.dmPelsHeight = YRES;
+        if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+            return(0);
+        dwExStyle = WS_EX_APPWINDOW;
+        dwStyle = WS_VISIBLE | WS_POPUP;// | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+        ShowCursor(0);
+    }
+    else
+    {
+        dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+        dwStyle = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
+    }
+
+    rec.left = 0;
+    rec.top = 0;
+    rec.right = XRES;
+    rec.bottom = YRES;
+    AdjustWindowRect(&rec, dwStyle, 0);
+    windowRect.left = 0;
+    windowRect.top = 0;
+    windowRect.right = XRES;
+    windowRect.bottom = YRES;
+
+    info->hWnd = CreateWindowEx(dwExStyle, wc.lpszClassName, "live coding", dwStyle,
+        (GetSystemMetrics(SM_CXSCREEN) - rec.right + rec.left) >> 1,
+        (GetSystemMetrics(SM_CYSCREEN) - rec.bottom + rec.top) >> 1,
+        rec.right - rec.left, rec.bottom - rec.top, 0, 0, info->hInstance, 0);
+    if (!info->hWnd)
+        return(0);
+
+    if (!(info->hDC = GetDC(info->hWnd)))
+        return(0);
+
+    if (!use_custom_pixel_format) {
+        if (!(PixelFormat = ChoosePixelFormat(info->hDC, &pfd)))
+            return(0);
+
+        if (!SetPixelFormat(info->hDC, PixelFormat, &pfd))
+            return(0);
+    } else {
+        if (!SetPixelFormat(info->hDC, custom_pixel_format, &pfd))
+            return(0);
+    }
+
+    if (!(info->hRC = wglCreateContext(info->hDC)))
+        return(0);
+
+    if (!wglMakeCurrent(info->hDC, info->hRC))
+        return(0);
+
+    return(1);
+}
 
 /*************************************************
  * OpenGL initialization
@@ -152,6 +251,60 @@ static int initGL(WININFO *winInfo)
 
 	// Create openGL functions
 	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
+
+    // NEHE MULTISAMPLE
+    bool    arbMultisampleSupported = false;
+    int arbMultisampleFormat = 0;
+    // Get Our Pixel Format
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
+        (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+    HDC hDC = winInfo->hDC;
+    int pixelFormat;
+    int valid;
+    UINT numFormats;
+    float fAttributes[] = { 0,0 };
+    // These Attributes Are The Bits We Want To Test For In Our Sample
+    // Everything Is Pretty Standard, The Only One We Want To
+    // Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
+    // These Two Are Going To Do The Main Testing For Whether Or Not
+    // We Support Multisampling On This Hardware
+    int iAttributes[] = { WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
+        WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
+        WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
+        WGL_COLOR_BITS_ARB,24,
+        WGL_ALPHA_BITS_ARB,8,
+        WGL_DEPTH_BITS_ARB,0,
+        WGL_STENCIL_BITS_ARB,0,
+        WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
+        WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
+        WGL_SAMPLES_ARB, 4 ,                        // Check For 4x Multisampling
+        0,0 };
+    // First We Check To See If We Can Get A Pixel Format For 4 Samples
+    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
+    // if We Returned True, And Our Format Count Is Greater Than 1
+    if (valid && numFormats >= 1) {
+        arbMultisampleSupported = true;
+        arbMultisampleFormat = pixelFormat;
+    } else {
+        // Our Pixel Format With 4 Samples Failed, Test For 2 Samples
+        iAttributes[19] = 2;
+        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
+        if (valid && numFormats >= 1) {
+            arbMultisampleSupported = true;
+            arbMultisampleFormat = pixelFormat;
+        }
+    }
+    if (arbMultisampleSupported) {
+        //SetPixelFormat(winInfo->hDC, arbMultisampleFormat, &pfd);
+        //wglMakeCurrent(winInfo->hDC, winInfo->hRC);
+        //DestroyWindow(winInfo->hWnd);
+        window_end(winInfo);
+        // Remove all messages...
+        MSG msg;
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE));
+        window_init(winInfo, true, arbMultisampleFormat);
+    }
+    glEnable(GL_MULTISAMPLE_ARB);
 
 	// Create and initialize the shader manager
 	if (shaderManager.init(errorString))
@@ -337,99 +490,6 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     return( DefWindowProc(hWnd,uMsg,wParam,lParam) );
 }
 
-
-static void window_end( WININFO *info )
-{
-    if( info->hRC )
-    {
-        wglMakeCurrent( 0, 0 );
-        wglDeleteContext( info->hRC );
-    }
-
-    if( info->hDC  ) ReleaseDC( info->hWnd, info->hDC );
-    if( info->hWnd ) DestroyWindow( info->hWnd );
-
-    UnregisterClass( info->wndclass, info->hInstance );
-
-    if( info->full )
-    {
-        ChangeDisplaySettings( 0, 0 );
-		ShowCursor( 1 );
-    }
-}
-
-
-static int window_init( WININFO *info )
-{
-	unsigned int	PixelFormat;
-    DWORD			dwExStyle, dwStyle;
-    DEVMODE			dmScreenSettings;
-	RECT			rec;
-
-    WNDCLASS		wc;
-
-    ZeroMemory( &wc, sizeof(WNDCLASS) );
-    wc.style         = CS_OWNDC|CS_HREDRAW|CS_VREDRAW;
-    wc.lpfnWndProc   = WndProc;
-    wc.hInstance     = info->hInstance;
-    wc.lpszClassName = info->wndclass;
-	
-    if( !RegisterClass(&wc) )
-        return( 0 );
-
-    if( info->full )
-    {
-        dmScreenSettings.dmSize       = sizeof(DEVMODE);
-        dmScreenSettings.dmFields     = DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
-        dmScreenSettings.dmBitsPerPel = 24;
-        dmScreenSettings.dmPelsWidth  = XRES;
-        dmScreenSettings.dmPelsHeight = YRES;
-        if( ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
-            return( 0 );
-        dwExStyle = WS_EX_APPWINDOW;
-        dwStyle   = WS_VISIBLE | WS_POPUP;// | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-		ShowCursor( 0 );
-    }
-    else
-    {
-        dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-        dwStyle   = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
-    }
-
-    rec.left   = 0;
-    rec.top    = 0;
-    rec.right  = XRES;
-    rec.bottom = YRES;
-    AdjustWindowRect( &rec, dwStyle, 0 );
-	windowRect.left = 0;
-	windowRect.top = 0;
-	windowRect.right = XRES;
-	windowRect.bottom = YRES;
-
-    info->hWnd = CreateWindowEx( dwExStyle, wc.lpszClassName, "live coding", dwStyle,
-                               (GetSystemMetrics(SM_CXSCREEN)-rec.right+rec.left)>>1,
-                               (GetSystemMetrics(SM_CYSCREEN)-rec.bottom+rec.top)>>1,
-                               rec.right-rec.left, rec.bottom-rec.top, 0, 0, info->hInstance, 0 );
-    if( !info->hWnd )
-        return( 0 );
-
-    if( !(info->hDC=GetDC(info->hWnd)) )
-        return( 0 );
-
-    if( !(PixelFormat=ChoosePixelFormat(info->hDC,&pfd)) )
-        return( 0 );
-
-    if( !SetPixelFormat(info->hDC,PixelFormat,&pfd) )
-        return( 0 );
-
-    if( !(info->hRC=wglCreateContext(info->hDC)) )
-        return( 0 );
-
-    if( !wglMakeCurrent(info->hDC,info->hRC) )
-        return( 0 );
-    
-    return( 1 );
-}
 
 void drawQuad(float startX, float endX, float startY, float endY, float startV, float endV, float alpha)
 {
