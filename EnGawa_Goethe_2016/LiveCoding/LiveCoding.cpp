@@ -389,7 +389,7 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             // start music playback
 #ifdef MUSIC
             BASS_Init(-1, 44100, 0, hWnd, NULL);
-            mp3Str = BASS_StreamCreateFile(FALSE, "Goethe_music.mp3", 0, 0, 0);
+            mp3Str = BASS_StreamCreateFile(FALSE, "Goethe_music_quick.mp3", 0, 0, 0);
             BASS_ChannelPlay(mp3Str, TRUE);
             BASS_Start();
 #endif
@@ -832,8 +832,8 @@ void intro_do(long t, long delta_time)
         float rotation_speed = 0.09f + 1.0f * interpolatedParameters[13];
         static float rotation = 0.0f;
         if (rotation > 2.0f * 3.1415928f) rotation -= 2.0f * 3.1415928f;
-        float distance1 = interpolatedParameters[2] * 0.5f + 1.0f;
-        float distance2 = interpolatedParameters[3] * 0.5f + 1.0f;
+        float distance1 = interpolatedParameters[2] * 0.7f + 1.0f;
+        float distance2 = interpolatedParameters[3] * 0.7f + 1.0f;
 
         if (ftime >= otone_start_time_ &&
             ftime < real_otone_start_time_) {
