@@ -686,8 +686,8 @@ void intro_do(long t, long delta_time)
     // Those are key-Press indicators. I only act on 0-to-1.
     for (int i = 0; i < maxNumParameters; i++)
     {
-        interpolatedParameters[i] = expf(-fdelta_time) * interpolatedParameters[i] +
-            (1.0f - expf(-fdelta_time)) * params.getParam(i, defaultParameters[i]);
+        interpolatedParameters[i] = expf(-2.0f*fdelta_time) * interpolatedParameters[i] +
+            (1.0f - expf(-2.0f*fdelta_time)) * params.getParam(i, defaultParameters[i]);
     }
     // Update key press events.
     for (int i = 0; i < NUM_KEYS; i++)
@@ -832,8 +832,8 @@ void intro_do(long t, long delta_time)
         float rotation_speed = 0.09f + 1.0f * interpolatedParameters[13];
         static float rotation = 0.0f;
         if (rotation > 2.0f * 3.1415928f) rotation -= 2.0f * 3.1415928f;
-        float distance1 = interpolatedParameters[2] + 1.0f;
-        float distance2 = interpolatedParameters[3] + 1.0f;
+        float distance1 = interpolatedParameters[2] * 0.5f + 1.0f;
+        float distance2 = interpolatedParameters[3] * 0.5f + 1.0f;
 
         if (ftime >= otone_start_time_ &&
             ftime < real_otone_start_time_) {
@@ -841,7 +841,7 @@ void intro_do(long t, long delta_time)
             rotation = 2.0f * 3.141529f - 1.5f;
             real_otone_start_time_ = ftime;
         }
-        float incoming1 = (real_otone_start_time_ - ftime) * 0.03f + 0.75f;
+        float incoming1 = (real_otone_start_time_ - ftime) * 0.04f + 0.75f;
         if (incoming1 < 0.0f) incoming1 = 0.0f;
         incoming1 *= incoming1;
         distance1 += 1.1f * incoming1 / line_length;
@@ -879,7 +879,7 @@ void intro_do(long t, long delta_time)
                 real_masako_start_time_ = ftime;
             }
         }
-        float incoming2 = (real_masako_start_time_ - ftime) * 0.03f + 0.75f;
+        float incoming2 = (real_masako_start_time_ - ftime) * 0.04f + 0.75f;
         if (incoming2 < 0.0f) incoming2 = 0.0f;
         incoming2 *= incoming2;
         distance2 += 1.1f * incoming2 / line_length;
@@ -894,7 +894,7 @@ void intro_do(long t, long delta_time)
         if (interpolation < 0.0f || ftime - music_start_time_ < 0.5f) interpolation = 0.0f;
         interpolation *= interpolation;
 
-        float length_difference = 0.75f * interpolatedParameters[4];
+        float length_difference = 1.2f * interpolatedParameters[4];
         if (ftime >= real_otone_start_time_) {
             DrawTearCircle(rotation + inverter * (1.6f - length_difference) / distance1,
                 rotation - inverter * (1.6f - length_difference) / distance1,
