@@ -24,6 +24,9 @@ char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg", "v
 int usedIndex = 0;
 float aspectRatio = (float)XRES / (float)YRES;
 
+// Used to overwrite the move parameter
+int destination_distance_ = -1;  // do not use
+
 float music_start_time_ = -10000.0f;
 float otone_start_time_ = 1.0e20f;
 float real_otone_start_time_ = 1.0e20f;  // triggered by close-to-entrance rotation
@@ -381,6 +384,25 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 		case VK_BACK:
 			break;
 
+        case '0':
+            destination_distance_ = -1;
+            break;
+        case '1':
+            destination_distance_ = 0;
+            break;
+        case '2':
+            destination_distance_ = 1;
+            break;
+        case '3':
+            destination_distance_ = 2;
+            break;
+        case '4':
+            destination_distance_ = 3;
+            break;
+        case '5':
+            destination_distance_ = 4;
+            break;
+
         case 'q':
         case 'Q':
             music_start_time_ = 0.001f * (timeGetTime() - start_time_);
@@ -692,8 +714,13 @@ void intro_do(long t, long delta_time)
     // Those are key-Press indicators. I only act on 0-to-1.
     for (int i = 0; i < maxNumParameters; i++)
     {
+        float destination_value = params.getParam(i, defaultParameters[i]);
+        if (destination_distance_ >= 0) {
+            if (i == 2 || i == 3) destination_value = destination_distance_ * 0.25f;
+            else destination_value = 0.0f;
+        }
         interpolatedParameters[i] = expf(-2.0f*fdelta_time) * interpolatedParameters[i] +
-            (1.0f - expf(-2.0f*fdelta_time)) * params.getParam(i, defaultParameters[i]);
+            (1.0f - expf(-2.0f*fdelta_time)) * destination_value;
     }
     // Update key press events.
     for (int i = 0; i < NUM_KEYS; i++)
@@ -726,6 +753,7 @@ void intro_do(long t, long delta_time)
     GLuint programID;
     shaderManager.getProgramID(usedProgram[usedIndex], &programID, errorText);
     glUseProgram(programID);
+#if 0
     GLuint loc = glGetUniformLocation(programID, "aspectRatio");
     glUniform1f(loc, aspectRatio);
     loc = glGetUniformLocation(programID, "time");
@@ -771,6 +799,7 @@ void intro_do(long t, long delta_time)
     glUniform1f(loc, interpolatedParameters[12]);
     loc = glGetUniformLocation(programID, "slider9");
     glUniform1f(loc, interpolatedParameters[13]);
+#endif
 
     // Set texture identifiers
     GLint texture_location;
@@ -1035,7 +1064,7 @@ void intro_do(long t, long delta_time)
         textureManager.getTextureID("homepage_4x1.tga", &texID, errorString);
         glBindTexture(GL_TEXTURE_2D, texID);
         alpha = 1.0f;
-        if (ftime - ending_start_time_ < 4.5f) alpha = sinf((ftime - ending_start_time_ - 2.5f) * 0.5f * 3.1415 * 0.5f);
+        if (ftime - ending_start_time_ < 4.5f) alpha = sinf((ftime - ending_start_time_ - 2.5f) * 0.5f * 3.1415f * 0.5f);
         if (ftime - ending_start_time_ < 2.5f) alpha = 0.0f;
         drawQuad(-0.5f, 0.5f, -0.4f * aspectRatio, -0.15f * aspectRatio, 0.0f, 1.0f, alpha);
 
