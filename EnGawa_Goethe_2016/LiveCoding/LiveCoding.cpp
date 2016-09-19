@@ -719,8 +719,8 @@ void intro_do(long t, long delta_time)
             if (i == 2 || i == 3) destination_value = destination_distance_ * 0.25f;
             else destination_value = 0.0f;
         }
-        interpolatedParameters[i] = expf(-2.0f*fdelta_time) * interpolatedParameters[i] +
-            (1.0f - expf(-2.0f*fdelta_time)) * destination_value;
+        interpolatedParameters[i] = expf(-2.5f*fdelta_time) * interpolatedParameters[i] +
+            (1.0f - expf(-2.5f*fdelta_time)) * destination_value;
     }
     // Update key press events.
     for (int i = 0; i < NUM_KEYS; i++)
