@@ -831,9 +831,9 @@ void intro_do(long t, long delta_time)
 #endif
 
     // TODO: Here is the rendering done!
-    float red = 1.0f + sinf(ftime * 0.3f) * interpolatedParameters[12];
-    float green = 1.0f + sinf(ftime * 0.4f) * interpolatedParameters[12];
-    float blue = 1.0f - sinf(ftime * 0.3f) * interpolatedParameters[12];
+    float red = 1.0f + sinf(ftime * 0.3f) * interpolatedParameters[6];
+    float green = 1.0f + sinf(ftime * 0.4f) * interpolatedParameters[6];
+    float blue = 1.0f - sinf(ftime * 0.3f) * interpolatedParameters[6];
     glClearColor(red, green, blue, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -864,7 +864,7 @@ void intro_do(long t, long delta_time)
         glEnd();
 #endif
         const float line_length = 0.35f;
-        float rotation_speed = 0.09f + 1.0f * interpolatedParameters[13];
+        float rotation_speed = 0.09f + 0.75f * interpolatedParameters[13];
         static float rotation = 0.0f;
         if (rotation > 2.0f * 3.1415928f) rotation -= 2.0f * 3.1415928f;
         float distance1 = interpolatedParameters[2] * 0.7f + 1.0f;
@@ -893,10 +893,10 @@ void intro_do(long t, long delta_time)
             rotation += 3.1415f * 0.4f;
         }
 
-        float center1_move_x = sinf(ftime * 1.7f) * interpolatedParameters[6] * 0.4f;
-        float center1_move_y = sinf(ftime * 0.57f) * interpolatedParameters[6] * 0.4f;
-        float center2_move_x = sinf(ftime * 1.97f) * interpolatedParameters[6] * 0.4f;
-        float center2_move_y = sinf(ftime * 0.3f) * interpolatedParameters[6] * 0.4f;
+        float center1_move_x = sinf(ftime * 1.7f) * interpolatedParameters[12] * 0.4f;
+        float center1_move_y = sinf(ftime * 0.57f) * interpolatedParameters[12] * 0.4f;
+        float center2_move_x = sinf(ftime * 1.97f) * interpolatedParameters[12] * 0.4f;
+        float center2_move_y = sinf(ftime * 0.3f) * interpolatedParameters[12] * 0.4f;
 
         static float masako_rotation_error = 0.0f;
         if (ftime >= masako_start_time_ &&
@@ -925,7 +925,7 @@ void intro_do(long t, long delta_time)
         masako_rotation += rotation_adaptation * masako_rotation_error;
 
         // Interpolation with the music stuff
-        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.02f;
+        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.015f;
         if (interpolation < 0.0f || ftime - music_start_time_ < 0.5f) interpolation = 0.0f;
         interpolation *= interpolation;
 
