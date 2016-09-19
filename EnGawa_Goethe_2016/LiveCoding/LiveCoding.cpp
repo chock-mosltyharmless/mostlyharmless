@@ -416,7 +416,9 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
             real_otone_start_time_ = otone_start_time_;
             masako_start_time_ = 1.0e20f;
             real_masako_start_time_ = masako_start_time_;
-            black_end_time_ = 0.001f * (timeGetTime() - start_time_);
+            if (black_end_time_ > 0.001f * (timeGetTime() - start_time_)) {
+                black_end_time_ = 0.001f * (timeGetTime() - start_time_);
+            }
             ending_start_time_ = 1.0e20f;
             rotation_stopped_ = false;
             break;
@@ -528,7 +530,7 @@ void DrawTearCircle(float start_angle, float end_angle, float distance,
     float cur_angle = start_angle;
     float delta_angle = (end_angle - start_angle) / kNumSegments;
     float tear_delta_position = 1.0f / (kNumSegments + 1);
-    float tear_position = tear_delta_position / 4.0f;
+    float tear_position = tear_delta_position / 8.0f;
 
     // Initialize OGL stuff
     GLuint programID;
@@ -894,7 +896,7 @@ void intro_do(long t, long delta_time)
         masako_rotation += rotation_adaptation * masako_rotation_error;
 
         // Interpolation with the music stuff
-        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.03f;
+        float interpolation = 1.0f - (ftime - music_start_time_ - 159.0f) * 0.02f;
         if (interpolation < 0.0f || ftime - music_start_time_ < 0.5f) interpolation = 0.0f;
         interpolation *= interpolation;
 
