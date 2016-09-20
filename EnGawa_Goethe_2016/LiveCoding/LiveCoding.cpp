@@ -281,7 +281,7 @@ static int initGL(WININFO *winInfo)
         WGL_STENCIL_BITS_ARB,0,
         WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
         WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
-        WGL_SAMPLES_ARB, 8 ,                        // Check For 4x Multisampling
+        WGL_SAMPLES_ARB, 4,                        // Check For 4x Multisampling
         0,0 };
     // First We Check To See If We Can Get A Pixel Format For 4 Samples
     valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
@@ -291,7 +291,7 @@ static int initGL(WININFO *winInfo)
         arbMultisampleFormat = pixelFormat;
     } else {
         // Our Pixel Format With 4 Samples Failed, Test For 2 Samples
-        iAttributes[19] = 4;
+        iAttributes[19] = 2;
         valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
         if (valid && numFormats >= 1) {
             arbMultisampleSupported = true;
