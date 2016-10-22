@@ -1,0 +1,9 @@
+hot_particle.sdf
+hot_particle.opensdf
+ipch
+Debug
+Release
+.vs
+chockNgt/*.dll
+chockNgt/textures
+*.exe
