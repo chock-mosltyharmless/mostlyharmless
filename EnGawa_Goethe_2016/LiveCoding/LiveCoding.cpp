@@ -831,6 +831,7 @@ void intro_do(long t, long delta_time)
 #endif
 
     // TODO: Here is the rendering done!
+    interpolatedParameters[6] = 0.4f;
     float red = 1.0f + sinf(ftime * 0.3f) * interpolatedParameters[6];
     float green = 1.0f + sinf(ftime * 0.4f) * interpolatedParameters[6];
     float blue = 1.0f - sinf(ftime * 0.3f) * interpolatedParameters[6];
@@ -1066,6 +1067,7 @@ void intro_do(long t, long delta_time)
         alpha = 1.0f;
         if (ftime - ending_start_time_ < 4.5f) alpha = sinf((ftime - ending_start_time_ - 2.5f) * 0.5f * 3.1415f * 0.5f);
         if (ftime - ending_start_time_ < 2.5f) alpha = 0.0f;
+        alpha = 1.0f;
         drawQuad(-0.5f, 0.5f, -0.4f * aspectRatio, -0.15f * aspectRatio, 0.0f, 1.0f, alpha);
 
         glDisable(GL_BLEND);
