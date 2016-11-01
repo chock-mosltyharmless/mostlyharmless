@@ -1,0 +1,6 @@
+.vs
+*.sdf
+*.opensdf
+Debug
+Release
+ipch
