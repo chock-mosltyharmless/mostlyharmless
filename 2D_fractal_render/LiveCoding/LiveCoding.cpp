@@ -387,21 +387,31 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 }
 
 
-void DrawQuad(float startX, float endX, float startY, float endY, float startV, float endV, float alpha)
+void DrawQuad(float transform[2][3], float alpha)
 {
     // set up matrices
     glEnable(GL_TEXTURE_2D);
 
+
+
     glColor4f(1.0f, 1.0f, 1.0f, alpha);
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, endV);
-    glVertex3f(startX, endY, 0.99f);
-    glTexCoord2f(1.0f, endV);
-    glVertex3f(endX, endY, 0.99f);
-    glTexCoord2f(1.0f, startV);
-    glVertex3f(endX, startY, 0.99f);
-    glTexCoord2f(0.0, startV);
-    glVertex3f(startX, startY, 0.99f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f * transform[0][0] + -1.0f * transform[0][1] + transform[0][2],
+               -1.0f * transform[1][0] + -1.0f * transform[1][1] + transform[1][2],
+               0.99f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(+1.0f * transform[0][0] + -1.0f * transform[0][1] + transform[0][2],
+               +1.0f * transform[1][0] + -1.0f * transform[1][1] + transform[1][2],
+               0.99f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(+1.0f * transform[0][0] + +1.0f * transform[0][1] + transform[0][2],
+               +1.0f * transform[1][0] + +1.0f * transform[1][1] + transform[1][2],
+               0.99f);
+    glTexCoord2f(0.0, 0.0f);
+    glVertex3f(-1.0f * transform[0][0] + +1.0f * transform[0][1] + transform[0][2],
+               -1.0f * transform[1][0] + +1.0f * transform[1][1] + transform[1][2],
+               0.99f);
     glEnd();
 }
 
@@ -522,37 +532,78 @@ void intro_do(long t, long delta_time)
     glBindTexture(GL_TEXTURE_3D, textureID);
 
 #if 1
-    glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+    glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
 #endif
 
     // TODO: Here is the rendering done!
     interpolatedParameters[6] = 0.4f;
-    float red = 1.0f;
-    float green = 1.0f;
-    float blue = 1.0f;
-    glClearColor(red, green, blue, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
     glUseProgram(programID);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-    glDisable(GL_BLEND);
+    //glDisable(GL_BLEND);
     glDisable(GL_CULL_FACE);
-    //glEnable(GL_BLEND);
-    //glBlendFunc(GL_DST_COLOR, GL_ZERO);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_DST_COLOR, GL_ZERO);
 
-    // Draw one iteration of the IFS
+    // Texture for first pass is simply black
     textureManager.getTextureID("black.tga", &textureID, errorText);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureID);
-    DrawQuad(0.5f, 0.7f, 0.3f, 0.8f, 0.0f, 1.0f, 1.0f);
 
-#if 1
-	// Copy backbuffer to texture
-    textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+    const int num_passes = 4;
 
+    // TODO: Make the first 1 or 2 passes to the smaller backbuffer
+    for (int pass = 0; pass < num_passes; pass++) {
+        // Set small
+        
+        // In the first pass, use highlight
+        if (pass < num_passes - 3) {
+            glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+        } else if (pass < num_passes - 1) {
+            glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+        } else {
+            // Set the whole screen as viewport so that it is used in the last pass
+            int xres = windowRect.right - windowRect.left;
+            int yres = windowRect.bottom - windowRect.top;
+            glViewport(0, 0, xres, yres);
+        }
+
+        float red = 1.0f;
+        float green = 1.0f;
+        float blue = 1.0f;
+        glClearColor(red, green, blue, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // Draw one iteration of the IFS
+        float transformation[2][3];
+        for (int i = 0; i < 20; i++) {
+            transformation[0][0] = 0.5f * sinf(ftime * 0.133f + 0.3f + 1.3f * i) * sinf(ftime * 0.051f + 2.8f + 4.2f * i);
+            transformation[0][1] = 0.5f * sinf(ftime * 0.051f + 2.8f + 4.2f * i) * sinf(ftime * 0.087f + 4.1f + 2.3f * i);
+            transformation[0][2] = 0.6f * sinf(ftime * 0.087f + 4.1f + 2.3f * i) * sinf(ftime * 0.077f + 3.2f + 6.1f * i);
+            transformation[1][0] = 0.5f * sinf(ftime * 0.077f + 3.2f + 6.1f * i) * sinf(ftime * 0.028f + 7.1f + 1.9f * i);
+            transformation[1][1] = 0.5f * sinf(ftime * 0.028f + 7.1f + 1.9f * i) * sinf(ftime * 0.095f + 2.3f + 0.7f * i);
+            transformation[1][2] = 0.6f * sinf(ftime * 0.095f + 2.3f + 0.7f * i) * sinf(ftime * 0.133f + 0.3f + 1.3f * i);
+            DrawQuad(transformation, 1.0f);
+        }
+
+        // Copy backbuffer to texture
+        if (pass < num_passes - 3) {
+            textureManager.getTextureID(TM_HIGHLIGHT_NAME, &textureID, errorText);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+        } else if (pass < num_passes - 1) {
+            textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, textureID);
+        }
+    }
+
+#if 0
 	// Copy backbuffer to front (so far no improvement)
 	int xres = windowRect.right - windowRect.left;
 	int yres = windowRect.bottom - windowRect.top;

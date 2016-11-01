@@ -8,10 +8,10 @@
 #define YRES (XRES*9/16)
 
 // The resolution of the background stuff
-#define X_OFFSCREEN 256
-#define Y_OFFSCREEN 256
-#define X_HIGHLIGHT 64
-#define Y_HIGHLIGHT 64
+#define X_OFFSCREEN 512
+#define Y_OFFSCREEN 512
+#define X_HIGHLIGHT 128
+#define Y_HIGHLIGHT 128
 
 // The maximum number of chars in an error message.
 // Make error fields one larger!
