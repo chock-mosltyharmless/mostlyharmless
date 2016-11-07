@@ -9,6 +9,8 @@
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
 
+int current_frame_ = 0;
+
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
 // -------------------------------------------------------------------
@@ -195,7 +197,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         float videoTime = fCurTime;
         GLuint texID;
         char errorString[MAX_ERROR_LENGTH + 1];
+#if 0
         if (textureManager.getVideoID("Begrussung_N1.wmv", &texID, errorString, videoTime) < 0) {
+#else
+        if (textureManager.GetVideoFrameID("Begrussung_N1.wmv", &texID, errorString, current_frame_) < 0) {
+#endif
             MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
             return -1;
         }
@@ -225,6 +231,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         PostQuitMessage(0);   /* send a WM_QUIT to the message queue */
         break;
  
+    case WM_KEYDOWN:
+        switch (wParam) {
+        case 'o':
+        case 'O':
+            current_frame_--;
+            if (current_frame_ < 0) current_frame_ = 0;
+            break;
+        case 'p':
+        case 'P':
+            current_frame_++;
+            break;
+        }
+
     default:              /* for messages that we don't deal with */
         return DefWindowProc(hwnd, message, wParam, lParam);
     }

@@ -351,8 +351,10 @@ int TextureManager::GetVideoFrameID(const char *name, GLuint *id, char *errorStr
             *id = videoTextureID[i];
 
             // Go back to first frame if frame is unknown or before current
+            // TODO: Store the last few frames in a buffer, so that I need only restep every N frames
             if (video_frame_index_[i] < 0 || video_frame_index_[i] > frame_index) {
                 av_seek_frame(video_format_context_[i], video_stream_[i], 0, AVSEEK_FLAG_BACKWARD);
+                video_frame_index_[i] = -1;
             }
 
             // Return black on error (need to check how to avoid overflow..)
