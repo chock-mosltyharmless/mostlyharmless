@@ -5,11 +5,18 @@
 //#include "bass.h"
 #include "TextureManager.h"
 #include "Configuration.h"
+#include "TextDisplay.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
 
+// The frame that is currently edited
 int current_frame_ = 0;
+
+// For textDisplay. May have to adjust somehow?
+float aspectRatio = 1.2f;
+
+TextDisplay text_display_;
 
 LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
 
@@ -53,6 +60,12 @@ void glInit()
 		MessageBox(mainWnd, errorString, "Texture Manager Load", MB_OK);
 		return;
 	}
+
+    text_display_.init(&textureManager, errorString);
+
+    glEnable(GL_TEXTURE_2D);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_DEPTH_TEST);
 }
 
 void glUnInit()
@@ -64,11 +77,6 @@ void glUnInit()
 void DrawQuadColor(float startX, float endX, float startY, float endY,
                    float startU, float endU, float startV, float endV,
                    float red, float green, float blue, float alpha) {
-    // set up matrices
-    glEnable(GL_TEXTURE_2D);
-    glDepthMask(GL_FALSE);
-    glDisable(GL_DEPTH_TEST);
-
     glColor4f(red, green, blue, alpha);
     glBegin(GL_QUADS);
     glTexCoord2f(startU, endV);
@@ -80,9 +88,6 @@ void DrawQuadColor(float startX, float endX, float startY, float endY,
     glTexCoord2f(startU, startV);
     glVertex3f(startX, startY, 0.99f);
     glEnd();
-    glDisable(GL_TEXTURE_2D);
-    glDepthMask(GL_TRUE);
-    glEnable(GL_DEPTH_TEST);
 }
 
 void DrawQuadColor(float startX, float endX, float startY, float endY, float red, float green, float blue, float alpha) {
@@ -207,6 +212,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
         glBindTexture(GL_TEXTURE_2D, texID);
         DrawQuad(-0.5f, 0.5f, 0.7f, -0.7f, 0.0f, 1.0f, 1.0f);
+
+        // Show the frame number
+        char frame_number_text[1024];
+        sprintf(frame_number_text, "%d", current_frame_);
+        text_display_.ShowText(0.0f, 0.0f, frame_number_text);
 
 		// swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
