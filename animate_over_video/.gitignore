@@ -1,5 +1,5 @@
-hot_particle.sdf
-hot_particle.opensdf
+*.sdf
+*.opensdf
 ipch
 Debug
 Release

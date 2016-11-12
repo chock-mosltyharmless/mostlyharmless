@@ -6,7 +6,7 @@
 #include "TextureManager.h"
 #include "Configuration.h"
 #include "TextDisplay.h"
-#include "Line.h"
+#include "Frame.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -219,15 +219,24 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         sprintf_s(frame_number_text, sizeof(frame_number_text), "%d", current_frame_);
         text_display_.ShowText(0.0f, 0.0f, frame_number_text);
 
-        // DEBUG: Draw a line
-        Line line;
-        line.AddNode(-0.7f, 0.4f);
-        line.AddNode(-0.3f, 0.3f);
-        line.AddNode(0.7f, -0.4f);
-        line.AddNode(0.8f, -0.7f);
-        textureManager.getTextureID("line.png", &texID, errorString);
-        glBindTexture(GL_TEXTURE_2D, texID);
-        line.Draw();
+        // DEBUG: Draw a frame
+        Frame frame;
+        frame.StartNewLine();
+        frame.AddLineNode(-0.7f, 0.4f);
+        frame.AddLineNode(-0.3f, 0.3f);
+        frame.AddLineNode(0.7f, -0.4f);
+        frame.AddLineNode(0.8f, -0.7f);
+        frame.StartNewLine();
+        frame.AddLineNode(-0.6f, -0.5f);
+        frame.AddLineNode(-0.4f, -0.4f);
+        frame.AddLineNode(-0.3f, -0.1f);
+        frame.AddLineNode(-0.2f, 0.1f);
+        frame.StartNewLine();
+        return_value = frame.Draw(&textureManager, errorString);
+        if (return_value < 0) {
+            MessageBox(mainWnd, errorString, "Could not draw frame", MB_OK);
+            return -1;
+        }
 
 		// swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);

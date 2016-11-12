@@ -96,6 +96,7 @@
   <ItemGroup>
     <ClInclude Include="chockNgt.h" />
     <ClInclude Include="Configuration.h" />
+    <ClInclude Include="Frame.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="Line.h" />
     <ClInclude Include="Resource.h" />
@@ -106,6 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="chockNgt.cpp" />
+    <ClCompile Include="Frame.cpp" />
     <ClCompile Include="Line.cpp" />
     <ClCompile Include="stb_image.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>

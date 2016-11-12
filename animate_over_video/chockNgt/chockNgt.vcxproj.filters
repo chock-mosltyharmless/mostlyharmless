@@ -51,6 +51,9 @@
     <ClInclude Include="Line.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Frame.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -69,6 +72,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Line.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Frame.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
