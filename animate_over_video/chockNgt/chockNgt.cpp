@@ -6,6 +6,7 @@
 #include "TextureManager.h"
 #include "Configuration.h"
 #include "TextDisplay.h"
+#include "Line.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -215,8 +216,18 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         // Show the frame number
         char frame_number_text[1024];
-        sprintf(frame_number_text, "%d", current_frame_);
+        sprintf_s(frame_number_text, sizeof(frame_number_text), "%d", current_frame_);
         text_display_.ShowText(0.0f, 0.0f, frame_number_text);
+
+        // DEBUG: Draw a line
+        Line line;
+        line.AddNode(-0.7f, 0.4f);
+        line.AddNode(-0.3f, 0.3f);
+        line.AddNode(0.7f, -0.4f);
+        line.AddNode(0.8f, -0.7f);
+        textureManager.getTextureID("line.png", &texID, errorString);
+        glBindTexture(GL_TEXTURE_2D, texID);
+        line.Draw();
 
 		// swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
