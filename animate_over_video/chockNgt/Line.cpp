@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Line.h"
 
-const float Line::kLineWidth = 0.01f;
+const float Line::kLineWidth = 0.006f;
 
 Line::Line()
 {

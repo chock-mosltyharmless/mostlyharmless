@@ -25,7 +25,7 @@ void Frame::AddLineNode(float x, float y) {
 }
 
 void Frame::DeleteLastLine() {
-    lines_.pop_back();
+    if (lines_.size() > 0) lines_.pop_back();
 }
 
 int Frame::Draw(TextureManager *texture_manager, char *error_string) {

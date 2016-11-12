@@ -15,7 +15,7 @@ extern float aspectRatio;
 #define ED_CHAR_HEIGHT 0.07f
 #define ED_CHAR_X_BORDER (-0.008f*1.33f)
 #define ED_CHAR_Y_BORDER 0.003f
-#define ED_CHAR_X_OFFSET (-0.975f + (5.0f * ED_CHAR_WIDTH))
+#define ED_CHAR_X_OFFSET (-0.975f + (2.0f * ED_CHAR_WIDTH))
 #define ED_CHAR_Y_OFFSET -0.975f
 
 #include "TextureManager.h"

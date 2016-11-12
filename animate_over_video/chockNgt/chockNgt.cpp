@@ -14,6 +14,9 @@ int Y_OFFSCREEN = 256;
 // The frame that is currently edited
 int current_frame_ = 0;
 
+// Debug: There is just one global frame that can be edited.
+Frame frame_;
+
 // For textDisplay. May have to adjust somehow?
 float aspectRatio = 1.2f;
 
@@ -134,7 +137,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 #endif
 	
 	RECT windowRect;
-	GetWindowRect(mainWnd, &windowRect);
+	GetClientRect(mainWnd, &windowRect);
 	X_OFFSCREEN = windowRect.right - windowRect.left;
 	Y_OFFSCREEN = windowRect.bottom - windowRect.top;
 
@@ -150,7 +153,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	GetAsyncKeyState(VK_ESCAPE);
 
     const float kTransformationMatrix[4][4] = {
-        {1.2f, 0.0f, 0.0f, 0.0f},
+        {1.0f, 0.0f, 0.0f, 0.0f},
         {0.0f, 1.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, 1.0f, 0.0f},
         {0.0f, 0.0f, 0.0f, 1.0f},
@@ -167,8 +170,6 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			}
 		}
 		if (msg.message == WM_QUIT) break; // early exit on quit
-
-		ShowCursor(FALSE);
 
 		// update timer
 		long curTime = timeGetTime() - startTime;
@@ -212,7 +213,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, texID);
-        DrawQuad(-0.5f, 0.5f, 0.7f, -0.7f, 0.0f, 1.0f, 1.0f);
+        DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f);
 
         // Show the frame number
         char frame_number_text[1024];
@@ -220,19 +221,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         text_display_.ShowText(0.0f, 0.0f, frame_number_text);
 
         // DEBUG: Draw a frame
-        Frame frame;
-        frame.StartNewLine();
-        frame.AddLineNode(-0.7f, 0.4f);
-        frame.AddLineNode(-0.3f, 0.3f);
-        frame.AddLineNode(0.7f, -0.4f);
-        frame.AddLineNode(0.8f, -0.7f);
-        frame.StartNewLine();
-        frame.AddLineNode(-0.6f, -0.5f);
-        frame.AddLineNode(-0.4f, -0.4f);
-        frame.AddLineNode(-0.3f, -0.1f);
-        frame.AddLineNode(-0.2f, 0.1f);
-        frame.StartNewLine();
-        return_value = frame.Draw(&textureManager, errorString);
+        return_value = frame_.Draw(&textureManager, errorString);
         if (return_value < 0) {
             MessageBox(mainWnd, errorString, "Could not draw frame", MB_OK);
             return -1;
@@ -254,6 +243,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     HINSTANCE hInstance = GetModuleHandle(NULL);
+    int x = GET_X_LPARAM(lParam);
+    int y = GET_Y_LPARAM(lParam);
+
+    RECT windowRect;
+    GetClientRect(mainWnd, &windowRect);
+    float width = (float)(windowRect.right - windowRect.left);
+    float height = (float)(windowRect.bottom - windowRect.top);
+    float xp = float(x) / width * 2.0f - 1.0f;
+    float yp = 1.0f - float(y) / height * 2.0f;
 
     switch (message)                  /* handle the messages */
     {
@@ -261,6 +259,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         PostQuitMessage(0);   /* send a WM_QUIT to the message queue */
         break;
  
+    case WM_LBUTTONDOWN:
+        frame_.StartNewLine();
+        frame_.AddLineNode(xp, yp);
+        break;
+
+    case WM_MOUSEMOVE:
+        if (wParam & MK_LBUTTON) {
+            frame_.AddLineNode(xp, yp);
+        }
+        break;
+
     case WM_KEYDOWN:
         switch (wParam) {
         case 'o':
@@ -271,6 +280,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 'p':
         case 'P':
             current_frame_++;
+            break;
+        case 'c':  // c: Delete last line of frame
+        case 'C':
+            frame_.DeleteLastLine();
             break;
         }
 
