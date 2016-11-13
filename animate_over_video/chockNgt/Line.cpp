@@ -48,11 +48,11 @@ int Line::Load(FILE * file) {
     return 0;
 }
 
-void Line::Draw() {
+void Line::Draw(float alpha) {
     if (nodes_.size() < 2) return;
     
     glBegin(GL_QUADS);
-    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    glColor4f(alpha * alpha, alpha, 1.0f, alpha);
 
     // Start is just a point
     int index = 0;

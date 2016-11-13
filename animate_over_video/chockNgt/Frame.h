@@ -18,7 +18,7 @@ public:
     // Delete the last line that was created by calling StartNewLine()
     void DeleteLastLine();
 
-    int Draw(TextureManager *texture_manager, char *error_string);
+    int Draw(TextureManager *texture_manager, char *error_string, float alpha = 1.0f);
 
 private:
     std::vector<Line> lines_;

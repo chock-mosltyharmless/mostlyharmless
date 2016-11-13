@@ -17,7 +17,7 @@ public:
     // Assumes:
     //  - Texture line.png set
     //  - No culling
-    void Draw();
+    void Draw(float alpha);
 
 private:
     static const unsigned int kMagicNumber = 0x239841fb;

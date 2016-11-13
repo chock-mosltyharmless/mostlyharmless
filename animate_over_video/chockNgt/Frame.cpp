@@ -28,16 +28,20 @@ void Frame::DeleteLastLine() {
     if (lines_.size() > 0) lines_.pop_back();
 }
 
-int Frame::Draw(TextureManager *texture_manager, char *error_string) {
+int Frame::Draw(TextureManager *texture_manager, char *error_string, float alpha) {
     GLuint tex_id;
     int ret_val = texture_manager->getTextureID("line.png", &tex_id, error_string);
     if (ret_val < 0) return ret_val;
     glBindTexture(GL_TEXTURE_2D, tex_id);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     
     int num_lines = lines_.size();
     for (int i = 0; i < num_lines; i++) {
-        lines_[i].Draw();
+        lines_[i].Draw(alpha);
     }
+
+    glDisable(GL_BLEND);
 
     return 0;
 }

@@ -15,6 +15,7 @@ int Y_OFFSCREEN = 256;
 
 // The frame that is currently edited
 int current_frame_ = 0;
+bool show_shadow_ = false;  // Show some previous frames
 
 // Debug: There is just one global frame that can be edited.
 std::vector<Frame>frames_;
@@ -226,10 +227,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         text_display_.ShowText(0.0f, 0.0f, frame_number_text);
 
         // DEBUG: Draw a frame
-        return_value = frames_[current_frame_].Draw(&textureManager, errorString);
-        if (return_value < 0) {
-            MessageBox(mainWnd, errorString, "Could not draw frame", MB_OK);
-            return -1;
+        for (int draw_frame = current_frame_ - 2; draw_frame <= current_frame_; draw_frame++) {
+            if (draw_frame >= 0 && (draw_frame == current_frame_ || show_shadow_)) {
+                float alpha = 1.0f - 0.3f * (current_frame_ - draw_frame);
+                return_value = frames_[draw_frame].Draw(&textureManager, errorString, alpha);
+                if (return_value < 0) {
+                    MessageBox(mainWnd, errorString, "Could not draw frame", MB_OK);
+                    return -1;
+                }
+            }
         }
 
 		// swap buffers
@@ -299,6 +305,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 'c':  // c: Delete last line of frame
         case 'C':
             frames_[current_frame_].DeleteLastLine();
+            break;
+        case 'm':
+        case 'M':
+            show_shadow_ = !show_shadow_;
             break;
         }
 
