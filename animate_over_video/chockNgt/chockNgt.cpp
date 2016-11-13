@@ -53,6 +53,55 @@ float fCurTime = 0.0f;
 
 TextureManager textureManager;
 
+int Save(const char *filename, char *error_string) {
+    FILE *file;
+
+    fopen_s(&file, filename, "wb");
+    if (NULL == file) {
+        snprintf(error_string, MAX_ERROR_LENGTH, "Could not open file %s", filename);
+        return -1;
+    }
+
+    int num_elements = frames_.size();
+    fwrite(&num_elements, sizeof(num_elements), 1, file);
+
+    for (int i = 0; i < num_elements; i++) {
+        int ret_val = frames_[i].Save(file, error_string);
+        if (ret_val < 0) {
+            fclose(file);
+            return ret_val;
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
+
+int Load(const char *filename, char *error_string) {
+    FILE *file;
+
+    fopen_s(&file, filename, "rb");
+    if (NULL == file) {
+        snprintf(error_string, MAX_ERROR_LENGTH, "Could not open file %s", filename);
+        return -1;
+    }
+
+    int num_elements;
+    fread(&num_elements, sizeof(num_elements), 1, file);
+
+    for (int i = 0; i < num_elements; i++) {
+        frames_.push_back(Frame());
+        int ret_val = frames_[i].Load(file, error_string);
+        if (ret_val < 0) {
+            fclose(file);
+            return ret_val;
+        }
+    }
+
+    fclose(file);
+    return 0;
+}
+
 void glInit()
 {
 	mainDC = GetDC(mainWnd);
@@ -264,6 +313,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     float xp = float(x) / width * 2.0f - 1.0f;
     float yp = 1.0f - float(y) / height * 2.0f;
 
+    char error_string[MAX_ERROR_LENGTH + 1];
+
     switch (message)                  /* handle the messages */
     {
     case WM_DESTROY:
@@ -310,6 +361,17 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 'M':
             show_shadow_ = !show_shadow_;
             break;
+        case 's':
+        case 'S':
+            if (Save("savefile.frames", error_string) < 0) {
+                MessageBox(mainWnd, error_string, "Save", MB_OK);
+            }
+            break;
+        case'l':
+        case'L':
+            if (Load("savefile.frames", error_string) < 0) {
+                MessageBox(mainWnd, error_string, "Load", MB_OK);
+            }
         }
 
     default:              /* for messages that we don't deal with */

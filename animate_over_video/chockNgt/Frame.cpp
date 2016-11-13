@@ -1,14 +1,12 @@
 #include "stdafx.h"
 #include "Frame.h"
+#include "Configuration.h"
 
-
-Frame::Frame()
-{
+Frame::Frame() {
 }
 
 
-Frame::~Frame()
-{
+Frame::~Frame() {
 }
 
 void Frame::StartNewLine() {
@@ -26,6 +24,38 @@ void Frame::AddLineNode(float x, float y) {
 
 void Frame::DeleteLastLine() {
     if (lines_.size() > 0) lines_.pop_back();
+}
+
+int Frame::Save(FILE *file, char *error_string) {
+    fwrite(&kMagicNumber, sizeof(kMagicNumber), 1, file);
+    int num_elements = lines_.size();
+    fwrite(&num_elements, sizeof(num_elements), 1, file);
+
+    for (int i = 0; i < num_elements; i++) {
+        lines_[i].Save(file);
+    }
+
+    return 0;
+}
+
+int Frame::Load(FILE *file, char *error_string) {
+    unsigned int ref_val;
+    fread(&ref_val, sizeof(ref_val), 1, file);
+    if (ref_val != kMagicNumber) {
+        // Not the correct thing.
+        snprintf(error_string, MAX_ERROR_LENGTH, "File does not contain a frame");
+        return -1;
+    }
+
+    int num_elements;
+    fread(&num_elements, sizeof(num_elements), 1, file);
+
+    for (int i = 0; i < num_elements; i++) {
+        lines_.push_back(Line());
+        lines_[i].Load(file);
+    }
+
+    return 0;
 }
 
 int Frame::Draw(TextureManager *texture_manager, char *error_string, float alpha) {

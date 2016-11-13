@@ -6,4 +6,5 @@ Release
 .vs
 chockNgt/*.dll
 chockNgt/textures
+chockNgt/savefile.frames
 *.exe

@@ -18,9 +18,14 @@ public:
     // Delete the last line that was created by calling StartNewLine()
     void DeleteLastLine();
 
+    int Save(FILE *file, char *error_string);
+    int Load(FILE *file, char *error_string);
+
     int Draw(TextureManager *texture_manager, char *error_string, float alpha = 1.0f);
 
 private:
+    static const unsigned int kMagicNumber = 0x8870bc43;
+
     std::vector<Line> lines_;
 };
 
