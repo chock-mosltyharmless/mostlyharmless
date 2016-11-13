@@ -8,6 +8,8 @@
 #include "TextDisplay.h"
 #include "Frame.h"
 
+#include <vector>
+
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
 
@@ -15,7 +17,7 @@ int Y_OFFSCREEN = 256;
 int current_frame_ = 0;
 
 // Debug: There is just one global frame that can be edited.
-Frame frame_;
+std::vector<Frame>frames_;
 
 // For textDisplay. May have to adjust somehow?
 float aspectRatio = 1.2f;
@@ -141,6 +143,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	X_OFFSCREEN = windowRect.right - windowRect.left;
 	Y_OFFSCREEN = windowRect.bottom - windowRect.top;
 
+    // Initialize first frame
+    frames_.push_back(Frame());
+
 	glInit();
 
     ShowWindow(mainWnd,SW_SHOW);
@@ -221,7 +226,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         text_display_.ShowText(0.0f, 0.0f, frame_number_text);
 
         // DEBUG: Draw a frame
-        return_value = frame_.Draw(&textureManager, errorString);
+        return_value = frames_[current_frame_].Draw(&textureManager, errorString);
         if (return_value < 0) {
             MessageBox(mainWnd, errorString, "Could not draw frame", MB_OK);
             return -1;
@@ -260,13 +265,13 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         break;
  
     case WM_LBUTTONDOWN:
-        frame_.StartNewLine();
-        frame_.AddLineNode(xp, yp);
+        frames_[current_frame_].StartNewLine();
+        frames_[current_frame_].AddLineNode(xp, yp);
         break;
 
     case WM_MOUSEMOVE:
         if (wParam & MK_LBUTTON) {
-            frame_.AddLineNode(xp, yp);
+            frames_[current_frame_].AddLineNode(xp, yp);
         }
         break;
 
@@ -274,16 +279,26 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         switch (wParam) {
         case 'o':
         case 'O':
+        case 'z':
+        case 'Z':
             current_frame_--;
             if (current_frame_ < 0) current_frame_ = 0;
+            while (current_frame_ >= (int)frames_.size()) {
+                frames_.push_back(Frame());
+            }
             break;
         case 'p':
         case 'P':
+        case 'x':
+        case 'X':
             current_frame_++;
+            while (current_frame_ >= (int)frames_.size()) {
+                frames_.push_back(Frame());
+            }
             break;
         case 'c':  // c: Delete last line of frame
         case 'C':
-            frame_.DeleteLastLine();
+            frames_[current_frame_].DeleteLastLine();
             break;
         }
 
