@@ -16,6 +16,7 @@ int Y_OFFSCREEN = 256;
 // The frame that is currently edited
 int current_frame_ = 0;
 bool show_shadow_ = false;  // Show some previous frames
+bool show_video_ = true;  // Show the background video (instead of white?)
 
 // Debug: There is just one global frame that can be edited.
 std::vector<Frame>frames_;
@@ -207,11 +208,17 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// start music playback
 	GetAsyncKeyState(VK_ESCAPE);
 
-    const float kTransformationMatrix[4][4] = {
-        {1.0f, 0.0f, 0.0f, 0.0f},
+    const float kTransformationMatrixLeft[4][4] = {
+        {0.5f, 0.0f, 0.0f, 0.0f},
         {0.0f, 1.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, 1.0f, 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f},
+        {-0.5f, 0.0f, 0.0f, 1.0f},
+    };
+    const float kTransformationMatrixRight[4][4] = {
+        { 0.5f, 0.0f, 0.0f, 0.0f },
+        { 0.0f, 1.0f, 0.0f, 0.0f },
+        { 0.0f, 0.0f, 1.0f, 0.0f },
+        { +0.5f, 0.0f, 0.0f, 1.0f },
     };
 
 	do
@@ -239,14 +246,14 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		// Set the stuff to render to "rendertarget"
 		//glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 
-		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 		glDisable(GL_LIGHTING);
         //GLuint tex_id;
 
         glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(kTransformationMatrix[0]);
+        glLoadMatrixf(kTransformationMatrixLeft[0]);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
@@ -259,16 +266,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         float videoTime = fCurTime;
         GLuint texID;
         char errorString[MAX_ERROR_LENGTH + 1];
-#if 0
-        if (textureManager.getVideoID("Begrussung_N1.wmv", &texID, errorString, videoTime) < 0) {
-#else
-        if (textureManager.GetVideoFrameID("Begrussung_N1.wmv", &texID, errorString, current_frame_) < 0) {
-#endif
-            MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
-            return -1;
+
+        if (show_video_) {
+            if (textureManager.GetVideoFrameID("Begrussung_N1.wmv", &texID, errorString, current_frame_) < 0) {
+                MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
+                return -1;
+            }
+            glBindTexture(GL_TEXTURE_2D, texID);
+            DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f);
         }
-        glBindTexture(GL_TEXTURE_2D, texID);
-        DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f);
 
         // Show the frame number
         char frame_number_text[1024];
@@ -285,6 +291,23 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     return -1;
                 }
             }
+        }
+
+        // Draw the right frame without the video
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(kTransformationMatrixRight[0]);
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        if (textureManager.getTextureID("black.png", &texID, errorString) < 0) {
+            MessageBox(mainWnd, errorString, "Texture manager get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, texID);
+        DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f);
+        return_value = frames_[current_frame_].DrawFancy(&textureManager, errorString);
+        if (return_value < 0) {
+            MessageBox(mainWnd, errorString, "Could not fancy draw frame", MB_OK);
+            return -1;
         }
 
 		// swap buffers
@@ -310,7 +333,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     GetClientRect(mainWnd, &windowRect);
     float width = (float)(windowRect.right - windowRect.left);
     float height = (float)(windowRect.bottom - windowRect.top);
-    float xp = float(x) / width * 2.0f - 1.0f;
+    float xp = 2.0f * float(x) / width * 2.0f - 1.0f;
+    if (xp > 1.0f) xp -= 2.0f;
     float yp = 1.0f - float(y) / height * 2.0f;
 
     char error_string[MAX_ERROR_LENGTH + 1];
@@ -360,6 +384,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 'm':
         case 'M':
             show_shadow_ = !show_shadow_;
+            break;
+        case 'n':
+        case 'N':
+            show_video_ = !show_video_;
             break;
         case 's':
         case 'S':

@@ -50,6 +50,7 @@ int Frame::Load(FILE *file, char *error_string) {
     int num_elements;
     fread(&num_elements, sizeof(num_elements), 1, file);
 
+    lines_.clear();
     for (int i = 0; i < num_elements; i++) {
         lines_.push_back(Line());
         lines_[i].Load(file);
@@ -69,6 +70,24 @@ int Frame::Draw(TextureManager *texture_manager, char *error_string, float alpha
     int num_lines = lines_.size();
     for (int i = 0; i < num_lines; i++) {
         lines_[i].Draw(alpha);
+    }
+
+    glDisable(GL_BLEND);
+
+    return 0;
+}
+
+int Frame::DrawFancy(TextureManager *texture_manager, char *error_string) {
+    GLuint tex_id;
+    int ret_val = texture_manager->getTextureID("white.png", &tex_id, error_string);
+    if (ret_val < 0) return ret_val;
+    glBindTexture(GL_TEXTURE_2D, tex_id);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    int num_lines = lines_.size();
+    for (int i = 0; i < num_lines; i++) {
+        lines_[i].DrawFancy();
     }
 
     glDisable(GL_BLEND);

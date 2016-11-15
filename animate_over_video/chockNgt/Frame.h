@@ -22,6 +22,7 @@ public:
     int Load(FILE *file, char *error_string);
 
     int Draw(TextureManager *texture_manager, char *error_string, float alpha = 1.0f);
+    int DrawFancy(TextureManager *texture_manager, char *error_string);
 
 private:
     static const unsigned int kMagicNumber = 0x8870bc43;
