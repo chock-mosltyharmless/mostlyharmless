@@ -2,7 +2,7 @@
 #include "Line.h"
 
 const float Line::kLineWidth = 0.006f;
-const float Line::kMinLineWidth = 0.002f;
+const float Line::kMinLineWidth = 0.001f;
 
 Line::Line()
 {
@@ -60,7 +60,7 @@ void Line::DrawFancy(void) {
         length += sqrtf(dx * dx + dy * dy);
     }
     if (length < 0.001f) length = 0.001f;
-    float width = kLineWidth;
+    float width = kLineWidth * 2.0f;
 
     glBegin(GL_QUADS);
     glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
@@ -84,7 +84,7 @@ void Line::DrawFancy(void) {
         //if (t > 1.0f) t = 2.0f - t;
         float t = current_length / length;
         if (t > 1.0f) t = 1.0f;
-        t = t * t;
+        t = 0.5f * t + 0.5f * t * t;
         t = t * t;
         t = sin(t * 3.1415f);
         float current_width = width * t;

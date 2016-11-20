@@ -21,4 +21,7 @@
 
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <Wingdi.h>
 #include "glext.h"
+#include "wglext.h"
+

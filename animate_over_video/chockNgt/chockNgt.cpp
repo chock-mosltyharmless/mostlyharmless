@@ -26,29 +26,34 @@ float aspectRatio = 1.2f;
 
 TextDisplay text_display_;
 
-LRESULT CALLBACK WindowProc (HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
 
 // -------------------------------------------------------------------
 //                          Constants:
 // -------------------------------------------------------------------
 
 static const PIXELFORMATDESCRIPTOR pfd =
-    {
+{
     sizeof(PIXELFORMATDESCRIPTOR),
     1,
-    PFD_DRAW_TO_WINDOW|PFD_SUPPORT_OPENGL|PFD_DOUBLEBUFFER,
+    PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,
     PFD_TYPE_RGBA,
-    32,
-    0, 0, 0, 0, 0, 0, 8, 0,
-    0, 0, 0, 0, 0,
-    32, 0, 0,
+    24,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,  // accum
+    0,             // zbuffer
+    0,              // stencil!
+    0,              // aux
     PFD_MAIN_PLANE,
     0, 0, 0, 0
-    };
+};
 // main window stuff
 HDC mainDC;
 HGLRC mainRC;
 HWND mainWnd;
+WNDCLASS mainWC;
+HINSTANCE mainInstance;
+const char *className = "hotparticle";
 
 float fCurTime = 0.0f;
 
@@ -103,12 +108,155 @@ int Load(const char *filename, char *error_string) {
     return 0;
 }
 
+static void window_end()
+{
+    if (mainRC) {
+        wglMakeCurrent(0, 0);
+        wglDeleteContext(mainRC);
+    }
+
+    if (mainDC) ReleaseDC(mainWnd, mainDC);
+    if (mainWnd) DestroyWindow(mainWnd);
+
+    UnregisterClass(className, mainWC.hInstance);
+
+#ifdef FULLSCREEN
+    ChangeDisplaySettings(0, 0);
+#endif
+}
+
+static int window_init(bool use_custom_pixel_format = false, int custom_pixel_format = 0)
+{
+    unsigned int	PixelFormat;
+    DWORD			dwExStyle, dwStyle;
+    RECT			rec;
+
+    ZeroMemory(&mainWC, sizeof(WNDCLASS));
+    mainWC.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+    mainWC.lpfnWndProc = WindowProc;
+    mainWC.hInstance = mainInstance;
+    mainWC.lpszClassName = className;
+
+    if (!RegisterClass(&mainWC))
+        return(0);
+
+#ifdef FULLSCREEN
+    DEVMODE			dmScreenSettings;
+    dmScreenSettings.dmSize = sizeof(DEVMODE);
+    dmScreenSettings.dmFields = DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT;
+    dmScreenSettings.dmBitsPerPel = 24;
+    dmScreenSettings.dmPelsWidth = XRES;
+    dmScreenSettings.dmPelsHeight = YRES;
+    if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN) != DISP_CHANGE_SUCCESSFUL)
+        return(0);
+    dwExStyle = WS_EX_APPWINDOW;
+    dwStyle = WS_VISIBLE | WS_POPUP;// | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+#else
+    dwExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
+    dwStyle = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
+#endif
+
+    rec.left = 0;
+    rec.top = 0;
+    rec.right = XRES;
+    rec.bottom = YRES;
+    AdjustWindowRect(&rec, dwStyle, 0);
+#if 0
+    windowRect.left = 0;
+    windowRect.top = 0;
+    windowRect.right = XRES;
+    windowRect.bottom = YRES;
+#endif
+
+    mainWnd = CreateWindowEx(dwExStyle, mainWC.lpszClassName, "animate over video", dwStyle,
+        (GetSystemMetrics(SM_CXSCREEN) - rec.right + rec.left) >> 1,
+        (GetSystemMetrics(SM_CYSCREEN) - rec.bottom + rec.top) >> 1,
+        rec.right - rec.left, rec.bottom - rec.top, 0, 0, mainInstance, 0);
+    if (!mainWnd)
+        return(0);
+
+    if (!(mainDC = GetDC(mainWnd)))
+        return(0);
+
+    if (!use_custom_pixel_format) {
+        if (!(PixelFormat = ChoosePixelFormat(mainDC, &pfd)))
+            return(0);
+
+        if (!SetPixelFormat(mainDC, PixelFormat, &pfd))
+            return(0);
+    }
+    else {
+        if (!SetPixelFormat(mainDC, custom_pixel_format, &pfd))
+            return(0);
+    }
+
+    if (!(mainRC = wglCreateContext(mainDC)))
+        return(0);
+
+    if (!wglMakeCurrent(mainDC, mainRC))
+        return(0);
+
+    return(1);
+}
+
 void glInit()
 {
-	mainDC = GetDC(mainWnd);
-    if( !SetPixelFormat(mainDC,ChoosePixelFormat(mainDC,&pfd),&pfd) ) return;
-    mainRC = wglCreateContext(mainDC);
-    wglMakeCurrent(mainDC, mainRC);
+    mainDC = GetDC(mainWnd);
+
+    // NEHE MULTISAMPLE
+    bool    arbMultisampleSupported = false;
+    int arbMultisampleFormat = 0;
+    // Get Our Pixel Format
+    PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
+        (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
+    HDC hDC = mainDC;
+    int pixelFormat;
+    int valid;
+    UINT numFormats;
+    float fAttributes[] = { 0,0 };
+    // These Attributes Are The Bits We Want To Test For In Our Sample
+    // Everything Is Pretty Standard, The Only One We Want To
+    // Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
+    // These Two Are Going To Do The Main Testing For Whether Or Not
+    // We Support Multisampling On This Hardware
+    int iAttributes[] = { WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
+        WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
+        WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
+        WGL_COLOR_BITS_ARB,24,
+        WGL_ALPHA_BITS_ARB,8,
+        WGL_DEPTH_BITS_ARB,0,
+        WGL_STENCIL_BITS_ARB,0,
+        WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
+        WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
+        WGL_SAMPLES_ARB, 4,                        // Check For 4x Multisampling
+        0,0 };
+    // First We Check To See If We Can Get A Pixel Format For 4 Samples
+    valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
+    // if We Returned True, And Our Format Count Is Greater Than 1
+    if (valid && numFormats >= 1) {
+        arbMultisampleSupported = true;
+        arbMultisampleFormat = pixelFormat;
+    }
+    else {
+        // Our Pixel Format With 4 Samples Failed, Test For 2 Samples
+        iAttributes[19] = 2;
+        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
+        if (valid && numFormats >= 1) {
+            arbMultisampleSupported = true;
+            arbMultisampleFormat = pixelFormat;
+        }
+    }
+    if (arbMultisampleSupported) {
+        //SetPixelFormat(winInfo->hDC, arbMultisampleFormat, &pfd);
+        //wglMakeCurrent(winInfo->hDC, winInfo->hRC);
+        //DestroyWindow(winInfo->hWnd);
+        window_end();
+        // Remove all messages...
+        MSG msg;
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE));
+        window_init(true, arbMultisampleFormat);
+    }
+    glEnable(GL_MULTISAMPLE_ARB);
 
 	// Create and initialize everything needed for texture Management
 	char errorString[MAX_ERROR_LENGTH+1];
@@ -168,25 +316,35 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     MSG msg;
 	msg.message = WM_CREATE;
 
-    WNDCLASS wc;
-    wc.style = CS_HREDRAW|CS_VREDRAW;
-    wc.lpfnWndProc = WindowProc;
-    wc.cbClsExtra = 0;
-    wc.cbWndExtra = 0;
-    wc.hInstance = hInstance;
-    wc.hIcon = LoadIcon(GetModuleHandle(NULL), IDI_APPLICATION);
-    wc.hCursor = LoadCursor (NULL, IDC_ARROW);
-    wc.hbrBackground = (HBRUSH) (COLOR_WINDOW+1);
-    wc.lpszMenuName = NULL;
-    wc.lpszClassName = "hotparticle";
+    mainInstance = hInstance;
 
-    RegisterClass (&wc);
+#if 0
+    mainWC.style = CS_HREDRAW|CS_VREDRAW;
+    mainWC.lpfnWndProc = WindowProc;
+    mainWC.cbClsExtra = 0;
+    mainWC.cbWndExtra = 0;
+    mainWC.hInstance = hInstance;
+    mainWC.hIcon = LoadIcon(GetModuleHandle(NULL), IDI_APPLICATION);
+    mainWC.hCursor = LoadCursor (NULL, IDC_ARROW);
+    mainWC.hbrBackground = (HBRUSH) (COLOR_WINDOW+1);
+    mainWC.lpszMenuName = NULL;
+    mainWC.lpszClassName = className;
+
+    RegisterClass (&mainWC);
 
 	// Create the window
 #ifdef FULLSCREEN
-    mainWnd = CreateWindow(wc.lpszClassName,"hot particle",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
+    mainWnd = CreateWindow(mainWC.lpszClassName,"hot particle",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
 #else
-	mainWnd = CreateWindow(wc.lpszClassName,"hot particle",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,XRES,YRES,0,0,hInstance,0);
+	mainWnd = CreateWindow(mainWC.lpszClassName,"hot particle",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,XRES,YRES,0,0,hInstance,0);
+#endif
+
+#else
+    if (!window_init()) {
+        window_end();
+        MessageBox(0, "window_init()!", "error", MB_OK | MB_ICONEXCLAMATION);
+        return 0;
+    }
 #endif
 	
 	RECT windowRect;
@@ -194,10 +352,10 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	X_OFFSCREEN = windowRect.right - windowRect.left;
 	Y_OFFSCREEN = windowRect.bottom - windowRect.top;
 
+	glInit();
+
     // Initialize first frame
     frames_.push_back(Frame());
-
-	glInit();
 
     ShowWindow(mainWnd,SW_SHOW);
     UpdateWindow(mainWnd);
