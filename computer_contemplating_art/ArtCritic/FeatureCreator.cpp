@@ -3,13 +3,16 @@
 #include "stb_image.h"
 
 FeatureCreator::FeatureCreator() {
+    feature_extraction_ = new FeatureExtraction();
 }
 
 
 FeatureCreator::~FeatureCreator() {
+    delete feature_extraction_;
 }
 
-int FeatureCreator::WriteFeatureFile(const char *jpg_directory, FILE *feature_file) {
+int FeatureCreator::WriteFeatureFile(const char *jpg_directory, FILE *feature_file,
+        int label) {
     // Get all files in the directory with .jpg ending
     HANDLE hFind = INVALID_HANDLE_VALUE;
     WIN32_FIND_DATA ffd;
@@ -40,7 +43,7 @@ int FeatureCreator::WriteFeatureFile(const char *jpg_directory, FILE *feature_fi
         int path_size = dir_size + filename_size + 10;
         char *path_name = new char [path_size + 1];
         sprintf_s(path_name, path_size, "%s/%s", jpg_directory, ffd.cFileName);
-        int ret_val = LoadJPG(path_name);
+        int ret_val = JPGFeatures(path_name, feature_file, label);
         if (ret_val >= 0) num_successful++;
         delete [] path_name;
     } while (FindNextFile(hFind, &ffd));
@@ -51,7 +54,7 @@ int FeatureCreator::WriteFeatureFile(const char *jpg_directory, FILE *feature_fi
     return num_images;  // No error
 }
 
-int FeatureCreator::LoadJPG(const char *filename) {
+int FeatureCreator::JPGFeatures(const char *filename, FILE *feature_file, int label) {
     const int kNumColorComponents = 3;
     int width;
     int height;
@@ -80,6 +83,17 @@ int FeatureCreator::LoadJPG(const char *filename) {
         stbi_image_free(image);
         return -1;
     }
+
+    float *feature_vector;
+    int num_features;
+    int ret_val = feature_extraction_->CalculateFeaturesFromFloat(
+        &feature_vector, &num_features, (float (*)[3])image, width, height);
+
+    fprintf(feature_file, "%d", label);
+    for (int i = 0; i < num_features; i++) {
+        fprintf(feature_file, " %d:%.5f", i+1, feature_vector[i]);
+    }
+    fprintf(feature_file, "\n");
 
     stbi_image_free(image);
     return 0;  // OK

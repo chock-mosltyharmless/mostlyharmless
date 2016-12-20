@@ -20,7 +20,7 @@ int ArtCritic::CreatePositiveTrainFile(const char *filename) {
         return -1;
     }
 
-    feature_creator_->WriteFeatureFile("d:/paintings/da_vinci", fid);
+    feature_creator_->WriteFeatureFile("d:/paintings/da_vinci", fid, +1);
 
     fclose(fid);
     return 0;
@@ -29,7 +29,7 @@ int ArtCritic::CreatePositiveTrainFile(const char *filename) {
 int main(int argc, char *argv[]) {
     ArtCritic critic;
 
-    critic.CreatePositiveTrainFile("train.txt");
+    critic.CreatePositiveTrainFile("data/train.txt");
 
     return 0;
 }

@@ -9,8 +9,10 @@ public:
     // The feature dimension is a return value
     // image must be 8 bit RGB, width == stride [blue == 0]
     // returns negative value on error
-    int CalculateFeatures(float **feature_vector, int *feature_dimension,
+    int CalculateFeaturesFromChar(float **feature_vector, int *feature_dimension,
         unsigned char image[][3], int width, int height);
+    int CalculateFeaturesFromFloat(float **feature_vector, int *feature_dimension,
+        float image[][3], int width, int height);
 
     static int GetPreferredWidth(void) { return kImageWidth; }
     static int GetPreferredHeight(void) { return kImageHeight; }
@@ -18,13 +20,20 @@ public:
 private:
     // Saves the result in image_
     // Saves a grayscale version of the image in image_bw_
-    void Resize(unsigned char image[][3], int width, int height);
+    void ResizeFromChar(unsigned char image[][3], int width, int height);
+    void ResizeFromFloat(float image[][3], int width, int height);
 
-    const static int kFeatureDimension = 6 * 3;
-    float feature_vector_[kFeatureDimension];
+    // Uses images_ and image_bw_
+    // Writes to feature_vector_
+    void calculateFeaturesInternal(void);
 
     const static int kImageWidth = 512;
     const static int kImageHeight = 256;
+    const static int kHistogramSize = 32;
+
+    const static int kFeatureDimension = kHistogramSize;
+    float feature_vector_[kFeatureDimension];
+
     // Float due to resize/normalization.
     // Blue must be 0
     float image_[kImageHeight][kImageWidth][3];

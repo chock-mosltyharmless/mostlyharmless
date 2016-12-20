@@ -11,9 +11,13 @@ public:
     virtual ~FeatureCreator();
 
     // Returns the number of processed files (or -1 on error)
-    int WriteFeatureFile(const char *jpg_directory, FILE *feature_file);
+    int WriteFeatureFile(const char *jpg_directory, FILE *feature_file,
+            int label);
 
 private:
-    int LoadJPG(const char *filename);
+    int JPGFeatures(const char *filename, FILE *feature_file,
+            int label);
+
+    FeatureExtraction *feature_extraction_;
 };
 
