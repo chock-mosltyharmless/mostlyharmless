@@ -12,6 +12,9 @@ public:
     int CalculateFeatures(float **feature_vector, int *feature_dimension,
         unsigned char image[][3], int width, int height);
 
+    static int GetPreferredWidth(void) { return kImageWidth; }
+    static int GetPreferredHeight(void) { return kImageHeight; }
+
 private:
     // Saves the result in image_
     // Saves a grayscale version of the image in image_bw_

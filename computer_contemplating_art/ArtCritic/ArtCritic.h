@@ -1,8 +1,14 @@
 #pragma once
 
-#include "FeatureExtraction.h"
+#include "FeatureCreator.h"
 
 class ArtCritic {
+public:
+    ArtCritic(void);
+    virtual ~ArtCritic(void);
+
+    int CreatePositiveTrainFile(const char *filename);
+
 private:
-    FeatureExtraction feature_extraction_;
+    FeatureCreator *feature_creator_;
 };

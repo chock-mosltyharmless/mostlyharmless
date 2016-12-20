@@ -2,17 +2,14 @@
 
 
 
-FeatureExtraction::FeatureExtraction()
-{
+FeatureExtraction::FeatureExtraction() {
 }
 
-
-FeatureExtraction::~FeatureExtraction()
-{
+FeatureExtraction::~FeatureExtraction() {
 }
 
-int FeatureExtraction::CalculateFeatures(float ** feature_vector, int * feature_dimension, unsigned char image[][3], int width, int height)
-{
+int FeatureExtraction::CalculateFeatures(float ** feature_vector, int * feature_dimension,
+                                         unsigned char image[][3], int width, int height) {
     // clear features
     *feature_vector = feature_vector_;
     *feature_dimension = kFeatureDimension;
@@ -26,9 +23,9 @@ int FeatureExtraction::CalculateFeatures(float ** feature_vector, int * feature_
     return 0;
 }
 
-void FeatureExtraction::Resize(unsigned char image[][3], int width, int height)
-{
+void FeatureExtraction::Resize(unsigned char image[][3], int width, int height) {
     // Create simple point-sampled resize
+    // TODO: I need to at least interpolate for down-sampling.
     for (int y = 0; y < kImageHeight; y++) {
         for (int x = 0; x < kImageWidth; x++) {
             // simple down-round of coordinate
