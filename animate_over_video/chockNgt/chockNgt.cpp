@@ -426,7 +426,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         char errorString[MAX_ERROR_LENGTH + 1];
 
         if (show_video_) {
-            if (textureManager.GetVideoFrameID("Begrussung_N1.wmv", &texID, errorString, current_frame_) < 0) {
+            if (textureManager.GetVideoFrameID("dance.wmv", &texID, errorString, current_frame_) < 0) {
                 MessageBox(mainWnd, errorString, "Texture manager get video ID", MB_OK);
                 return -1;
             }
@@ -440,7 +440,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         text_display_.ShowText(0.0f, 0.0f, frame_number_text);
 
         // DEBUG: Draw a frame
-        for (int draw_frame = current_frame_ - 2; draw_frame <= current_frame_; draw_frame++) {
+        for (int draw_frame = current_frame_ - 1; draw_frame <= current_frame_; draw_frame++) {
             if (draw_frame >= 0 && (draw_frame == current_frame_ || show_shadow_)) {
                 float alpha = 1.0f - 0.3f * (current_frame_ - draw_frame);
                 return_value = frames_[draw_frame].Draw(&textureManager, errorString, alpha);

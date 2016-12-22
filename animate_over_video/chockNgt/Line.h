@@ -24,6 +24,8 @@ private:
     static const unsigned int kMagicNumber = 0x239841fb;
     static const float kLineWidth;
     static const float kMinLineWidth;
+    // Distance up to which neighboring points have an influence on the position of the current node
+    static const float kNeighborInterpolationDistance;
     
     std::vector< std::pair<float, float> >nodes_;
 };
