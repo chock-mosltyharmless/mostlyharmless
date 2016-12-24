@@ -7,7 +7,7 @@ public:
     
     // Returned feature vector may not be freed and is valid until next call to the function
     // The feature dimension is a return value
-    // image must be 8 bit RGB, width == stride [blue == 0]
+    // image must be 8 bit RGB, width == stride [red == 0, blue == 2]
     // returns negative value on error
     int CalculateFeaturesFromChar(float **feature_vector, int *feature_dimension,
         unsigned char image[][3], int width, int height);
@@ -37,6 +37,8 @@ private:
     // Float due to resize/normalization.
     // Blue must be 0
     float image_[kImageHeight][kImageWidth][3];
+    float image_delta_x[kImageHeight][kImageWidth][3];
+    float image_delta_y[kImageHeight][kImageWidth][3];
     // Grayscale version of the image
     float image_bw_[kImageHeight][kImageWidth];
 };

@@ -20,7 +20,7 @@ int ArtCritic::CreatePositiveTrainFile(const char *filename) {
         return -1;
     }
 
-    feature_creator_->WriteFeatureFile("d:/paintings/da_vinci", fid, +1);
+    feature_creator_->WriteFeatureFile("d:/paintings/dali", fid, +1);
 
     fclose(fid);
     return 0;
