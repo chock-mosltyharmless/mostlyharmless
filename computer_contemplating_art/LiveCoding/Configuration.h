@@ -18,6 +18,6 @@
 #define MAX_ERROR_LENGTH (32*1024)
 
 // Play back music during coding
-#define MUSIC
+//#define MUSIC
 
 #endif
