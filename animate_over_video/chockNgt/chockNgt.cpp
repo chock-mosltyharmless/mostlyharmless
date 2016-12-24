@@ -24,6 +24,11 @@ std::vector<Frame>frames_;
 // For textDisplay. May have to adjust somehow?
 float aspectRatio = 1.2f;
 
+// Zooming stuff
+float zoom_amount_ = 1.0f;
+float zoom_scroll_[2] = { 0.0f, 0.0f };
+float last_mouse_pos_[2] = { 0.0f, 0.0f };
+
 TextDisplay text_display_;
 
 LRESULT CALLBACK WindowProc(HWND, UINT, WPARAM, LPARAM);
@@ -411,7 +416,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         //GLuint tex_id;
 
         glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(kTransformationMatrixLeft[0]);
+        float transformation_matrix[4][4];
+        for (int i = 0; i < 4 * 4; i++) {
+            transformation_matrix[0][i] = kTransformationMatrixLeft[0][i];
+        }
+        transformation_matrix[0][0] *= zoom_amount_;
+        transformation_matrix[1][1] *= zoom_amount_;
+        transformation_matrix[3][0] += 0.5f * zoom_scroll_[0];
+        transformation_matrix[3][1] += zoom_scroll_[1];
+        glLoadMatrixf(transformation_matrix[0]);
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
 
@@ -434,11 +447,6 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f);
         }
 
-        // Show the frame number
-        char frame_number_text[1024];
-        sprintf_s(frame_number_text, sizeof(frame_number_text), "%d", current_frame_);
-        text_display_.ShowText(0.0f, 0.0f, frame_number_text);
-
         // DEBUG: Draw a frame
         for (int draw_frame = current_frame_ - 1; draw_frame <= current_frame_; draw_frame++) {
             if (draw_frame >= 0 && (draw_frame == current_frame_ || show_shadow_)) {
@@ -450,6 +458,14 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 }
             }
         }
+
+        // Load unzoomed transformation matrix for frame number
+        glMatrixMode(GL_MODELVIEW);
+        glLoadMatrixf(kTransformationMatrixLeft[0]);
+        // Show the frame number
+        char frame_number_text[1024];
+        sprintf_s(frame_number_text, sizeof(frame_number_text), "%d", current_frame_);
+        text_display_.ShowText(0.0f, 0.0f, frame_number_text);
 
         // Draw the right frame without the video
         glMatrixMode(GL_MODELVIEW);
@@ -492,8 +508,20 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     float width = (float)(windowRect.right - windowRect.left);
     float height = (float)(windowRect.bottom - windowRect.top);
     float xp = 2.0f * float(x) / width * 2.0f - 1.0f;
-    if (xp > 1.0f) xp -= 2.0f;
+    bool left_side = true;
+    if (xp > 1.0f) {
+        xp -= 2.0f;
+        left_side = false;
+    }
     float yp = 1.0f - float(y) / height * 2.0f;
+
+    // Apply inverse zoom
+    if (left_side) {
+        xp /= zoom_amount_;
+        yp /= zoom_amount_;
+        xp -= zoom_scroll_[0] / zoom_amount_;
+        yp -= zoom_scroll_[1] / zoom_amount_;
+    }
 
     char error_string[MAX_ERROR_LENGTH + 1];
 
@@ -509,6 +537,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         break;
 
     case WM_MOUSEMOVE:
+        last_mouse_pos_[0] = xp;
+        last_mouse_pos_[1] = yp;
         if (wParam & MK_LBUTTON) {
             frames_[current_frame_].AddLineNode(xp, yp);
         }
@@ -558,7 +588,27 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             if (Load("savefile.frames", error_string) < 0) {
                 MessageBox(mainWnd, error_string, "Load", MB_OK);
             }
-        }
+            break;
+        
+        case 'q':
+        case 'Q':
+            zoom_amount_ *= 3.0f / 4.0f;
+            zoom_scroll_[0] = -last_mouse_pos_[0] * zoom_amount_;
+            zoom_scroll_[1] = -last_mouse_pos_[1] * zoom_amount_;
+            if (zoom_amount_ < 1.0f) {
+                zoom_amount_ = 1.0f;
+                zoom_scroll_[0] = 0.0f;
+                zoom_scroll_[1] = 0.0f;
+            }
+            break;
+        case 'w':
+        case 'W':
+            zoom_amount_ *= 4.0f / 3.0f;
+            if (zoom_amount_ > 4.0f) zoom_amount_ = 4.0f;
+            zoom_scroll_[0] = -last_mouse_pos_[0] * zoom_amount_;
+            zoom_scroll_[1] = -last_mouse_pos_[1] * zoom_amount_;
+            break;
+        }        
 
     default:              /* for messages that we don't deal with */
         return DefWindowProc(hwnd, message, wParam, lParam);
