@@ -74,7 +74,7 @@ void FeatureExtraction::calculateFeaturesInternal(void) {
                 0.5f * image_[y][x][2];  // Cb
             image_ycbcr_[index][2] = 0.5f * image_[y][x][0] -
                 0.418688f * image_[y][x][1] -
-                0.0081312f * image_[y][x][2];
+                0.081312f * image_[y][x][2];  // Cr
             // Scale to 0..1 range
             image_ycbcr_[index][0] *= 256.0f / 219.0f;
             image_ycbcr_[index][1] *= 256.0f / 219.0f;
@@ -84,62 +84,88 @@ void FeatureExtraction::calculateFeaturesInternal(void) {
         }
     }
 
-    // Create delta images
-    for (int i = 0; i < kImageWidth * kImageHeight * 3; i++) {
-        image_delta_x_[0][i] = 0.0f;
-        image_delta_y_[0][i] = 0.0f;
-    }
-    for (int y = 1; y < kImageHeight - 1; y++) {
-        for (int x = 1; x < kImageWidth - 1; x++) {
-            for (int c = 0; c < 3; c++) {
-                int index = y * kImageWidth + x;
-                int left = index - 1;
-                int right = index + 1;
-                int top = index - kImageWidth;
-                int bottom = index + kImageWidth;
-                int top_left = index - kImageWidth - 1;
-                int top_right = index - kImageWidth + 1;
-                int bottom_left = index + kImageWidth - 1;
-                int bottom_right = index + kImageWidth + 1;
-                image_delta_x_[index][c] =
-                    -image_ycbcr_[top_left][c] +
-                    -2.0f * image_ycbcr_[left][c] +
-                    -image_ycbcr_[bottom_left][c] +
-                    image_ycbcr_[top_right][c] +
-                    2.0f * image_ycbcr_[right][c] +
-                    image_ycbcr_[bottom_right][c];
-                image_delta_x_[index][c] /= 8.0f;  // normalize
-                image_delta_x_[index][c] += 0.5f;
-                image_delta_y_[index][c] =
-                    -image_ycbcr_[top_left][c] +
-                    -2.0f * image_ycbcr_[top][c] +
-                    -image_ycbcr_[top_right][c] +
-                    image_ycbcr_[bottom_left][c] +
-                    2.0f * image_ycbcr_[bottom][c] +
-                    image_ycbcr_[bottom_right][c];
-                image_delta_y_[index][c] /= 8.0f;  // normalize
-                image_delta_y_[index][c] += 0.5f;
+    // Points to the location of the feature index that is currently written.
+    // The final value must be the dimensionality of the feature vector
+    int feature_index = 0;
+
+    for (int scale = 1; scale <= kMaxImageScaling; scale *= 2) {
+        int height = kImageHeight / scale;
+        int width = kImageWidth / scale;
+
+        // Create delta images
+        for (int i = 0; i < width * height * 3; i++) {
+            image_delta_x_[0][i] = 0.0f;
+            image_delta_y_[0][i] = 0.0f;
+        }
+        for (int y = 1; y < height - 1; y++) {
+            for (int x = 1; x < width - 1; x++) {
+                for (int c = 0; c < 3; c++) {
+                    int index = y * width + x;
+                    int left = index - 1;
+                    int right = index + 1;
+                    int top = index - width;
+                    int bottom = index + width;
+                    int top_left = index - width - 1;
+                    int top_right = index - width + 1;
+                    int bottom_left = index + width - 1;
+                    int bottom_right = index + width + 1;
+                    image_delta_x_[index][c] =
+                        -image_ycbcr_[top_left][c] +
+                        -2.0f * image_ycbcr_[left][c] +
+                        -image_ycbcr_[bottom_left][c] +
+                        image_ycbcr_[top_right][c] +
+                        2.0f * image_ycbcr_[right][c] +
+                        image_ycbcr_[bottom_right][c];
+                    image_delta_x_[index][c] /= 8.0f;  // normalize
+                    image_delta_x_[index][c] += 0.5f;
+                    image_delta_y_[index][c] =
+                        -image_ycbcr_[top_left][c] +
+                        -2.0f * image_ycbcr_[top][c] +
+                        -image_ycbcr_[top_right][c] +
+                        image_ycbcr_[bottom_left][c] +
+                        2.0f * image_ycbcr_[bottom][c] +
+                        image_ycbcr_[bottom_right][c];
+                    image_delta_y_[index][c] /= 8.0f;  // normalize
+                    image_delta_y_[index][c] += 0.5f;
+                }
+            }
+        }
+
+        // For debug reasons create an image
+        //PictureWriter::SaveTGA(width, height, image_[0], "fe_0.tga");
+        //PictureWriter::SaveTGA(width, height, image_ycbcr_, "fe_1.tga");
+        //PictureWriter::SaveTGA(width, height, image_delta_x_, "fe_2.tga");
+        //PictureWriter::SaveTGA(width, height, image_delta_y_, "fe_3.tga");
+
+        // Create histograms
+        CreateHistogram(image_ycbcr_[0], 3, width * height,
+            0.0f, 1.0f, kHistogramSize, feature_vector_ + feature_index);
+        feature_index += 3 * kHistogramSize;
+        CreateHistogram(image_delta_x_[0], 3, width * height, 0.0f, 1.0f,
+            kHistogramSize, feature_vector_ + feature_index);
+        feature_index += 3 * kHistogramSize;
+        CreateHistogram(image_delta_y_[0], 3, width * height, 0.0f, 1.0f,
+            kHistogramSize, feature_vector_ + feature_index);
+        feature_index += 3 * kHistogramSize;
+
+        // Down-scale
+        for (int y = 0; y < height / 2; y++) {
+            for (int x = 0; x < width / 2; x++) {
+                int orig_x = x * 2;
+                int orig_y = y * 2;
+                int index = y * (width / 2) + x;
+                int orig_index = orig_y * width + orig_x;
+
+                for (int c = 0; c < 3; c++) {
+                    image_ycbcr_[index][c] = 0.25f *
+                        (image_ycbcr_[orig_index][c] +
+                            image_ycbcr_[orig_index + 1][c] +
+                            image_ycbcr_[orig_index + width][c] +
+                            image_ycbcr_[orig_index + width + 1][c]);
+                }
             }
         }
     }
-
-    // For debug reasons create an image
-    PictureWriter::SaveTGA(kImageWidth, kImageHeight, image_[0], "fe_0.tga");
-    PictureWriter::SaveTGA(kImageWidth, kImageHeight, image_ycbcr_, "fe_1.tga");
-    PictureWriter::SaveTGA(kImageWidth, kImageHeight, image_delta_x_, "fe_2.tga");
-    PictureWriter::SaveTGA(kImageWidth, kImageHeight, image_delta_y_, "fe_3.tga");
-
-    // Create histograms
-    int feature_index = 0;
-    CreateHistogram(image_ycbcr_[0], 3, kImageWidth * kImageHeight,
-        0.0f, 1.0f, kHistogramSize, feature_vector_ + feature_index);
-    feature_index += 3 * kHistogramSize;
-    CreateHistogram(image_delta_x_[0], 3, kImageWidth * kImageHeight, 0.0f, 1.0f,
-        kHistogramSize, feature_vector_ + feature_index);
-    feature_index += 3 * kHistogramSize;
-    CreateHistogram(image_delta_y_[0], 3, kImageWidth * kImageHeight, 0.0f, 1.0f,
-        kHistogramSize, feature_vector_ + feature_index);
-    feature_index += 3 * kHistogramSize;
 
     if (feature_index != kFeatureDimension) {
         fprintf(stderr, "Feature dimension %d incorrect. %d is needed.",

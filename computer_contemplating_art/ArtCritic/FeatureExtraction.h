@@ -32,15 +32,16 @@ private:
     const static int kImageWidth = 512;
     const static int kImageHeight = 256;
     const static int kHistogramSize = 9;
+    const static int kMaxImageScaling = 16;  // Smallest image is kImageHeight / kMaxImageScaling
 
-    const static int kFeatureDimension = 9 * kHistogramSize;
+    const static int kFeatureDimension = 5 * 9 * kHistogramSize;
     float feature_vector_[kFeatureDimension];
 
     // Float due to resize/normalization.
     // Blue must be 0
     float image_[kImageHeight][kImageWidth][3];
     // YCbCr version of the image
-    float image_ycbcr_[kImageHeight  *kImageWidth][3];
+    float image_ycbcr_[kImageHeight * kImageWidth][3];
     float image_delta_x_[kImageHeight * kImageWidth][3];
     float image_delta_y_[kImageHeight * kImageWidth][3];
 };
