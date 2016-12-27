@@ -22,6 +22,8 @@ private:
     // Saves a grayscale version of the image in image_bw_
     void ResizeFromChar(unsigned char image[][3], int width, int height);
     void ResizeFromFloat(float image[][3], int width, int height);
+    static void CreateHistogram(float *data, int num_components, int num_elements,
+        float min_value, float max_value, int num_bins, float *histogram);
 
     // Uses images_ and image_bw_
     // Writes to feature_vector_
@@ -29,17 +31,17 @@ private:
 
     const static int kImageWidth = 512;
     const static int kImageHeight = 256;
-    const static int kHistogramSize = 32;
+    const static int kHistogramSize = 9;
 
-    const static int kFeatureDimension = kHistogramSize;
+    const static int kFeatureDimension = 9 * kHistogramSize;
     float feature_vector_[kFeatureDimension];
 
     // Float due to resize/normalization.
     // Blue must be 0
     float image_[kImageHeight][kImageWidth][3];
-    float image_delta_x[kImageHeight][kImageWidth][3];
-    float image_delta_y[kImageHeight][kImageWidth][3];
-    // Grayscale version of the image
-    float image_bw_[kImageHeight][kImageWidth];
+    // YCbCr version of the image
+    float image_ycbcr_[kImageHeight  *kImageWidth][3];
+    float image_delta_x_[kImageHeight * kImageWidth][3];
+    float image_delta_y_[kImageHeight * kImageWidth][3];
 };
 
