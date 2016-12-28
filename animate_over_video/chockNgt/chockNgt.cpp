@@ -10,13 +10,14 @@
 
 #include <vector>
 
-int X_OFFSCREEN = 512;
-int Y_OFFSCREEN = 256;
+int X_OFFSCREEN = XRES;
+int Y_OFFSCREEN = YRES;
 
 // The frame that is currently edited
 int current_frame_ = 0;
 bool show_shadow_ = false;  // Show some previous frames
 bool show_video_ = true;  // Show the background video (instead of white?)
+bool convert_to_gravity_ = false;  // Nilsify it
 
 // Debug: There is just one global frame that can be edited.
 std::vector<Frame>frames_;
@@ -484,6 +485,31 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             return -1;
         }
 
+        if (convert_to_gravity_) {
+            // Get Backbuffer to image buffer
+            GLuint texture_id;
+            char error_text[MAX_ERROR_LENGTH + 1];
+            unsigned char *pixels = new unsigned char[X_OFFSCREEN * Y_OFFSCREEN * 4];
+            memset(pixels, 0xfe, X_OFFSCREEN * Y_OFFSCREEN * 4);
+            textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text);
+            glBindTexture(GL_TEXTURE_2D, texture_id);
+            glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+            glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+            for (int y = 0; y < Y_OFFSCREEN; y++) {
+                for (int x = X_OFFSCREEN / 2 + 1; x < X_OFFSCREEN; x++) {
+                    int index = (y * X_OFFSCREEN + x) * 4;
+                    if (pixels[index] > 0) {
+                        pixels[index] = 0;  // Set blue to 0
+                    }
+                }
+            }
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+            glMatrixMode(GL_MODELVIEW);
+            glLoadIdentity();
+            DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 1.0f);
+            delete[] pixels;
+        }
+
 		// swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
 
@@ -585,6 +611,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 'N':
             show_video_ = !show_video_;
             break;
+        case 't':
+        case 'T':
+            convert_to_gravity_ = !convert_to_gravity_;
         case 's':
         case 'S':
             if (Save("savefile.frames", error_string) < 0) {
