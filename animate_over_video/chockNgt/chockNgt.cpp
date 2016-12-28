@@ -532,15 +532,23 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         break;
  
     case WM_LBUTTONDOWN:
+        last_mouse_pos_[0] = xp;
+        last_mouse_pos_[1] = yp;
         frames_[current_frame_].StartNewLine();
-        frames_[current_frame_].AddLineNode(xp, yp);
+        frames_[current_frame_].AddLineNode(xp, yp, false);
+        break;
+
+    case WM_LBUTTONUP:
+        last_mouse_pos_[0] = xp;
+        last_mouse_pos_[1] = yp;
+        frames_[current_frame_].AddLineNode(xp, yp, true);
         break;
 
     case WM_MOUSEMOVE:
         last_mouse_pos_[0] = xp;
         last_mouse_pos_[1] = yp;
         if (wParam & MK_LBUTTON) {
-            frames_[current_frame_].AddLineNode(xp, yp);
+            frames_[current_frame_].AddLineNode(xp, yp, false);
         }
         break;
 

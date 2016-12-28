@@ -9,7 +9,8 @@ public:
     Line();
     virtual ~Line();
 
-    void AddNode(float x, float y);
+    void AddNode(float x, float y, bool make_fancy);
+    void MakeFancy(void);
     
     int Save(FILE *file);
     int Load(FILE *file);
@@ -28,5 +29,6 @@ private:
     static const float kNeighborInterpolationDistance;
     
     std::vector< std::pair<float, float> >nodes_;
+    std::vector< std::pair<float, float> >fancy_nodes_;
 };
 

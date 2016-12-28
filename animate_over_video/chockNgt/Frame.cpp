@@ -15,11 +15,11 @@ void Frame::StartNewLine() {
     lines_.push_back(Line());
 }
 
-void Frame::AddLineNode(float x, float y) {
+void Frame::AddLineNode(float x, float y, bool make_fancy) {
     int current_line = lines_.size() - 1;
     if (current_line < 0) return;  // Tried to add a node before calling StartNewLine()
 
-    lines_[current_line].AddNode(x, y);
+    lines_[current_line].AddNode(x, y, make_fancy);
 }
 
 void Frame::DeleteLastLine() {

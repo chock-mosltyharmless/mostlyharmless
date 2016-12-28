@@ -14,7 +14,7 @@ public:
     // Inidicate that there will be one more line
     void StartNewLine();
     // Add one more line to the most recently created node
-    void AddLineNode(float x, float y);
+    void AddLineNode(float x, float y, bool make_fancy);
     // Delete the last line that was created by calling StartNewLine()
     void DeleteLastLine();
 
