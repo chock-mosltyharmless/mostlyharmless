@@ -495,14 +495,62 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             glBindTexture(GL_TEXTURE_2D, texture_id);
             glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
             glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
+
+            // Get an array of non-black pixels
+            int num_set_pixels = 0;
+            const int kMaxSetPixels = 1000000;
+            int *pixel_pos_x = new int[kMaxSetPixels];
+            int *pixel_pos_y = new int[kMaxSetPixels];
+            float *pixel_intensity = new float[kMaxSetPixels];
             for (int y = 0; y < Y_OFFSCREEN; y++) {
                 for (int x = X_OFFSCREEN / 2 + 1; x < X_OFFSCREEN; x++) {
                     int index = (y * X_OFFSCREEN + x) * 4;
-                    if (pixels[index] > 0) {
-                        pixels[index] = 0;  // Set blue to 0
+                    if (pixels[index] > 0 && num_set_pixels < kMaxSetPixels) {
+                        pixel_pos_x[num_set_pixels] = x;
+                        pixel_pos_y[num_set_pixels] = y;
+                        pixel_intensity[num_set_pixels] = pixels[index] / 255.0f;
+                        num_set_pixels++;
                     }
                 }
             }
+
+            // Calculate gravity based on nearby pixels
+            for (int y = 0; y < Y_OFFSCREEN; y++) {
+                for (int x = X_OFFSCREEN / 2 + 1; x < X_OFFSCREEN; x++) {
+                    float gravity_x = 0.0f;
+                    float gravity_y = 0.0f;
+                    for (int attractor = 0; attractor < num_set_pixels; attractor++) {
+                        float distance = 0.0f;
+                        distance += (x - pixel_pos_x[attractor]) * (x - pixel_pos_x[attractor]);
+                        distance += (y - pixel_pos_y[attractor]) * (y - pixel_pos_y[attractor]);
+                        distance = sqrtf(distance);
+                        distance += 1.0f;  // strange normalization for inside pixel
+                        float adjust = 1.0f / (distance * distance * distance);
+                        float amount_x = (pixel_pos_x[attractor] - x) * adjust;
+                        float amount_y = (pixel_pos_y[attractor] - y) * adjust;
+                        float weight = pixel_intensity[attractor];
+                        gravity_x += amount_x * weight;
+                        gravity_y += amount_y * weight;
+                    }
+
+                    gravity_x *= 1.0f;
+                    gravity_y *= 1.0f;
+                    if (gravity_x < -1.0f) gravity_x = -1.0f;
+                    if (gravity_y < -1.0f) gravity_y = -1.0f;
+                    if (gravity_x > 1.0f) gravity_x = 1.0f;
+                    if (gravity_y > 1.0f) gravity_y = 1.0f;
+                    int index = (y * X_OFFSCREEN + x) * 4;
+                    pixels[index] = (int)((gravity_x + 1.0f) * 0.5f * 255.0f);
+                    pixels[index + 1] = (int)((gravity_y + 1.0f) * 0.5f * 255.0f);
+                    pixels[index + 2] = 0;  // No for testing..
+                }
+            }
+
+            delete[] pixel_pos_x;
+            delete[] pixel_pos_y;
+            delete[] pixel_intensity;
+
+            // Draw the pixels back
             glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
             glMatrixMode(GL_MODELVIEW);
             glLoadIdentity();
@@ -614,6 +662,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 't':
         case 'T':
             convert_to_gravity_ = !convert_to_gravity_;
+            break;
         case 's':
         case 'S':
             if (Save("savefile.frames", error_string) < 0) {
