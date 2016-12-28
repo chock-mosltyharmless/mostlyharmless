@@ -29,7 +29,7 @@ int ArtCritic::CreatePositiveTrainFile(const char *filename) {
 int main(int argc, char *argv[]) {
     ArtCritic critic;
 
-    critic.CreatePositiveTrainFile("data/train.txt");
+    critic.CreatePositiveTrainFile("../data/positive_train.txt");
 
     return 0;
 }

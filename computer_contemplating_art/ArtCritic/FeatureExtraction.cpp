@@ -211,7 +211,7 @@ void FeatureExtraction::ResizeFromChar(unsigned char image[][3], int width, int 
 
 void FeatureExtraction::ResizeFromFloat(float image[][3], int width, int height) {
     // For debug reasons create an image
-    PictureWriter::SaveTGA(width, height, image, "fe_0.tga");
+    //PictureWriter::SaveTGA(width, height, image, "fe_0.tga");
 
     // Clamp to target aspect ratio
     float target_aspect_ratio = (float)GetPreferredWidth() / (float)GetPreferredHeight();
