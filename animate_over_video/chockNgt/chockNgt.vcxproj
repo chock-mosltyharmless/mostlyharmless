@@ -14,7 +14,7 @@
     <ProjectGuid>{276B21D8-2189-4A1E-817B-60685CA9645C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Camera_capture</RootNamespace>
-    <ProjectName>hot_particle</ProjectName>
+    <ProjectName>editor</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
