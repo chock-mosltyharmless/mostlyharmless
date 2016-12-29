@@ -65,7 +65,7 @@ float fCurTime = 0.0f;
 
 TextureManager textureManager;
 
-int Save(const char *filename, char *error_string) {
+int Save(const char *filename, char *error_string, bool fancy) {
     FILE *file;
 
     fopen_s(&file, filename, "wb");
@@ -78,7 +78,12 @@ int Save(const char *filename, char *error_string) {
     fwrite(&num_elements, sizeof(num_elements), 1, file);
 
     for (int i = 0; i < num_elements; i++) {
-        int ret_val = frames_[i].Save(file, error_string);
+        int ret_val = 0;
+        if (!fancy) {
+            ret_val = frames_[i].Save(file, error_string);
+        } else {
+            ret_val = frames_[i].Export(file, error_string);
+        }
         if (ret_val < 0) {
             fclose(file);
             return ret_val;
@@ -715,8 +720,14 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             break;
         case 's':
         case 'S':
-            if (Save("savefile.frames", error_string) < 0) {
+            if (Save("savefile.frames", error_string, false) < 0) {
                 MessageBox(mainWnd, error_string, "Save", MB_OK);
+            }
+            break;
+        case 'e':
+        case 'E':
+            if (Save("export.frames", error_string, true) < 0) {
+                MessageBox(mainWnd, error_string, "Export", MB_OK);
             }
             break;
         case'l':

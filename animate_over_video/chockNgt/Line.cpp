@@ -31,6 +31,19 @@ int Line::Save(FILE * file) {
     return 0;
 }
 
+int Line::Export(FILE *file) {
+    MakeFancy();
+    fwrite(&kExportMagicNumber, sizeof(kExportMagicNumber), 1, file);
+    int num_elements = fancy_nodes_.size();
+    fwrite(&num_elements, sizeof(num_elements), 1, file);
+    for (int i = 0; i < num_elements; i++) {
+        fwrite(&(fancy_nodes_[i].first), sizeof(float), 1, file);
+        fwrite(&(fancy_nodes_[i].second), sizeof(float), 1, file);
+    }
+
+    return 0;
+}
+
 void Line::MakeFancy(void) {
     fancy_nodes_.clear();
 

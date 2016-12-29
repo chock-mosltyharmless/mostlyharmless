@@ -19,6 +19,7 @@ public:
     void DeleteLastLine();
 
     int Save(FILE *file, char *error_string);
+    int Export(FILE *file, char *error_string);
     int Load(FILE *file, char *error_string);
 
     int Draw(TextureManager *texture_manager, char *error_string, float alpha = 1.0f);
@@ -26,6 +27,7 @@ public:
 
 private:
     static const unsigned int kMagicNumber = 0x8870bc43;
+    static const unsigned int kExportMagicNumber = 0x723fe231;  // For export format
 
     std::vector<Line> lines_;
 };

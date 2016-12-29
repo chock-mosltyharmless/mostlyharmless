@@ -7,4 +7,6 @@ Release
 chockNgt/*.dll
 chockNgt/textures
 chockNgt/savefile.frames
+chockNgt/export.frames
+animate_over_video.VC.opendb
 *.exe

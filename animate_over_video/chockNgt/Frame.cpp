@@ -38,6 +38,18 @@ int Frame::Save(FILE *file, char *error_string) {
     return 0;
 }
 
+int Frame::Export(FILE *file, char *error_string) {
+    fwrite(&kExportMagicNumber, sizeof(kExportMagicNumber), 1, file);
+    int num_elements = lines_.size();
+    fwrite(&num_elements, sizeof(num_elements), 1, file);
+
+    for (int i = 0; i < num_elements; i++) {
+        lines_[i].Export(file);
+    }
+
+    return 0;
+}
+
 int Frame::Load(FILE *file, char *error_string) {
     unsigned int ref_val;
     fread(&ref_val, sizeof(ref_val), 1, file);
