@@ -514,6 +514,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 }
             }
 
+            // TODO: Covert it to a direct approach with a pre-computed bitmap for the gravity computation
+            // I might even think about using the GPU?
+#if 0
             // Calculate gravity based on nearby pixels
             for (int y = 0; y < Y_OFFSCREEN; y++) {
                 for (int x = X_OFFSCREEN / 2 + 1; x < X_OFFSCREEN; x++) {
@@ -545,6 +548,53 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     pixels[index + 2] = 0;  // No for testing..
                 }
             }
+#else
+            float (*gravity)[2] = new float[X_OFFSCREEN / 2 * Y_OFFSCREEN][2];
+            const int radius = 80;
+            for (int i = 0; i < X_OFFSCREEN / 2 * Y_OFFSCREEN; i++) {
+                gravity[i][0] = 0.0f;
+                gravity[i][1] = 0.0f;
+            }
+            for (int i = 0; i < num_set_pixels; i++) {
+                for (int dy = -radius; dy <= radius; dy++) {
+                    for (int dx = -radius; dx <= radius; dx++) {
+                        if ((dy + pixel_pos_y[i] >= 0) &&
+                            (dy + pixel_pos_y[i] < Y_OFFSCREEN) &&
+                            (dx + pixel_pos_x[i] >= X_OFFSCREEN / 2) &&
+                            (dx + pixel_pos_x[i] < X_OFFSCREEN)) {
+                            float distance = 0.0f;
+                            distance += dx * dx + dy * dy;
+                            distance = sqrtf(distance);
+                            distance += 1.0f;  // strange normalization for inside pixel
+                            float adjust = 1.0f / (distance * distance * distance);
+                            float amount_x = dx * adjust;
+                            float amount_y = dy * adjust;
+                            float weight = pixel_intensity[i];
+                            int index = (pixel_pos_y[i] + dy) * X_OFFSCREEN / 2 + pixel_pos_x[i] + dx - X_OFFSCREEN / 2;
+                            gravity[index][0] += amount_x * weight;
+                            gravity[index][1] += amount_y * weight;
+                        }
+                    }
+                }
+            }
+            // Visualize gravity
+            for (int y = 0; y < Y_OFFSCREEN; y++) {
+                for (int x = 0; x < X_OFFSCREEN / 2; x++) {
+                    int index = y * X_OFFSCREEN / 2 + x;
+                    int r = (int)(gravity[index][0] * 256.0f + 128.0f);
+                    if (r < 0) r = 0;
+                    if (r > 255) r = 255;
+                    int g = (int)(gravity[index][1] * 256.0f + 128.0f);
+                    if (g < 0) g = 0;
+                    if (g > 255) g = 255;
+                    int dest_index = 4 * (y * X_OFFSCREEN + x + X_OFFSCREEN / 2);
+                    pixels[dest_index + 2] = r;
+                    pixels[dest_index + 1] = g;
+                    pixels[dest_index + 0] = 128;
+                }
+            }
+            delete[] gravity;
+#endif
 
             delete[] pixel_pos_x;
             delete[] pixel_pos_y;
