@@ -1,7 +1,11 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual C++ Express 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "chockNgt", "chockNgt\chockNgt.vcxproj", "{276B21D8-2189-4A1E-817B-60685CA9645C}"
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 14 for Windows Desktop
+VisualStudioVersion = 14.0.24720.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "editor", "chockNgt\chockNgt.vcxproj", "{276B21D8-2189-4A1E-817B-60685CA9645C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LiveCoding", "LiveCoding\LiveCoding.vcxproj", "{FBE7306B-DC44-4C8C-BFE9-8DA9E020A9FC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -13,6 +17,10 @@ Global
 		{276B21D8-2189-4A1E-817B-60685CA9645C}.Debug|Win32.Build.0 = Debug|Win32
 		{276B21D8-2189-4A1E-817B-60685CA9645C}.Release|Win32.ActiveCfg = Release|Win32
 		{276B21D8-2189-4A1E-817B-60685CA9645C}.Release|Win32.Build.0 = Release|Win32
+		{FBE7306B-DC44-4C8C-BFE9-8DA9E020A9FC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FBE7306B-DC44-4C8C-BFE9-8DA9E020A9FC}.Debug|Win32.Build.0 = Debug|Win32
+		{FBE7306B-DC44-4C8C-BFE9-8DA9E020A9FC}.Release|Win32.ActiveCfg = Release|Win32
+		{FBE7306B-DC44-4C8C-BFE9-8DA9E020A9FC}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

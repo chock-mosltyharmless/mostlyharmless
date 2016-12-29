@@ -1,0 +1,39 @@
+vec2 rotate(vec2 pos, float angle) {                                  
+return pos*mat2(cos(angle),-sin(angle),sin(angle),cos(angle));        
+}                                                                     
+                                                                      
+void main(void) {                                                     
+float height = ppos.y;                                                
+height += vnoise1(vec3(ppos*0.1, time*0.1) + vnoise8(                 
+vec3(ppos*0.05, spike*0.01), 0.5).rgb).r;                             
+height = smoothstep(-1.5,0.9, height);                                
+vec3 color = mix(vec3(1.5, 0.9, 0.5), vec3(0.0), height);             
+                                                                      
+vec3 rayPos = vec3(0.,0.,-6.);                                        
+vec3 rayDir = normalize(vec3(ppos, 2.));                              
+vec3 totalColor = vec3(0.);                                           
+float totalDensity = 0.;                                              
+                                                                      
+rayDir.xz = rotate(rayDir.xz, time);                                  
+rayPos.xz = rotate(rayPos.xz, time);                                  
+                                                                      
+for (int i = 0; i < 100 && length(rayPos)<12. &&                      
+totalDensity < 0.98; i++) {                                           
+vec4 n = vnoise5(vnoise3(rayPos*0.002,slider4*0.1).rgb -              
+vec3(time)*0.01, slider2 + 0.5*blob);                                 
+float implicit = length(rayPos - n.rgb*5.)-2.;
+                                                                      
+float density = smoothstep(0.,-0.3,implicit);                         
+totalDensity += (1.-totalDensity)*density;                            
+totalDensity += 0.01;                                                 
+totalColor += mix(vec3(0.02, 0.02, 0.03), vec3(0.03, 0.,-0.03),       
+n.a-0.5+slider3);                                                     
+                                                                      
+rayPos += rayDir * max(0.03, abs(implicit)*slider1*.5);               
+}                                                                     
+                                                                      
+color = mix(color,totalColor,totalDensity);                           
+                                                                      
+gl_FragColor = vec4(color, 1.0);                                      
+}                                                                     
+                                                                      
