@@ -555,7 +555,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             }
 #else
             float (*gravity)[2] = new float[X_OFFSCREEN / 2 * Y_OFFSCREEN][2];
-            const int radius = 80;
+            const int radius = 30;
             for (int i = 0; i < X_OFFSCREEN / 2 * Y_OFFSCREEN; i++) {
                 gravity[i][0] = 0.0f;
                 gravity[i][1] = 0.0f;
@@ -572,6 +572,12 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                             distance = sqrtf(distance);
                             distance += 1.0f;  // strange normalization for inside pixel
                             float adjust = 1.0f / (distance * distance * distance);
+                            // Go down to 0 near radius
+                            if (distance > radius - 4) {
+                                float reduction = (radius - distance) / 4.0f;
+                                if (reduction < 0) reduction = 0;
+                                adjust *= reduction;
+                            }
                             float amount_x = dx * adjust;
                             float amount_y = dy * adjust;
                             float weight = pixel_intensity[i];
