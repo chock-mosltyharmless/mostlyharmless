@@ -1,6 +1,6 @@
 #include "FeatureExtraction.h"
-
-
+#include "PictureWriter.h"
+#include "stdafx.h"
 
 FeatureExtraction::FeatureExtraction() {
 }
@@ -36,60 +36,214 @@ int FeatureExtraction::CalculateFeaturesFromFloat(float ** feature_vector, int *
     return 0;
 }
 
+void FeatureExtraction::CreateHistogram(float * data, int num_components, int num_elements,
+        float min_value, float max_value, int num_bins, float * histogram) {
+    for (int bin = 0; bin < num_bins; bin++) {
+        histogram[bin] = 0.0f;
+    }
+    
+    for (int index = 0; index < num_elements; index++) {
+        float *element = data + index * num_components;
+        for (int dim = 0; dim < num_components; dim++) {
+            float value = element[dim];
+            int histogram_index = int((value - min_value) / (max_value - min_value) *
+                num_bins);
+            if (histogram_index < 0) histogram_index = 0;
+            if (histogram_index >= num_bins) histogram_index = num_bins - 1;
+            histogram[histogram_index * num_components + dim] += 1.0f / num_elements;
+        }
+    }
+}
+
 void FeatureExtraction::calculateFeaturesInternal(void) {
     // Clear all features
     for (int i = 0; i < kFeatureDimension; i++) {
         feature_vector_[i] = 0.0f;
     }
 
-    // Calculate bw histogram
+    // Convert to YCbCr
+    // TODO: 2 is really blue?
     for (int y = 0; y < kImageHeight; y++) {
         for (int x = 0; x < kImageWidth; x++) {
-            int index = (int)(image_bw_[y][x] * kHistogramSize + 0.5f);
-            if (index < 0) index = 0;
-            if (index >= kHistogramSize) index = kHistogramSize - 1;
-            feature_vector_[index] += 1.0f / (kImageHeight * kImageWidth);
+            int index = y * kImageWidth + x;
+            image_ycbcr_[index][0] = 0.299f * image_[y][x][0] +
+                0.587f * image_[y][x][1] +
+                0.114f * image_[y][x][2];  // Y'
+            image_ycbcr_[index][1] = -0.168736f * image_[y][x][0] -
+                0.331264f * image_[y][x][1] +
+                0.5f * image_[y][x][2];  // Cb
+            image_ycbcr_[index][2] = 0.5f * image_[y][x][0] -
+                0.418688f * image_[y][x][1] -
+                0.081312f * image_[y][x][2];  // Cr
+            // Scale to 0..1 range
+            image_ycbcr_[index][0] *= 256.0f / 219.0f;
+            image_ycbcr_[index][1] *= 256.0f / 219.0f;
+            image_ycbcr_[index][2] *= 256.0f / 219.0f;
+            image_ycbcr_[index][1] += 0.5f;
+            image_ycbcr_[index][2] += 0.5f;
         }
+    }
+
+    // Points to the location of the feature index that is currently written.
+    // The final value must be the dimensionality of the feature vector
+    int feature_index = 0;
+
+    for (int scale = 1; scale <= kMaxImageScaling; scale *= 2) {
+        int height = kImageHeight / scale;
+        int width = kImageWidth / scale;
+
+        // Create delta images
+        for (int i = 0; i < width * height * 3; i++) {
+            image_delta_x_[0][i] = 0.0f;
+            image_delta_y_[0][i] = 0.0f;
+        }
+        for (int y = 1; y < height - 1; y++) {
+            for (int x = 1; x < width - 1; x++) {
+                for (int c = 0; c < 3; c++) {
+                    int index = y * width + x;
+                    int left = index - 1;
+                    int right = index + 1;
+                    int top = index - width;
+                    int bottom = index + width;
+                    int top_left = index - width - 1;
+                    int top_right = index - width + 1;
+                    int bottom_left = index + width - 1;
+                    int bottom_right = index + width + 1;
+                    image_delta_x_[index][c] =
+                        -image_ycbcr_[top_left][c] +
+                        -2.0f * image_ycbcr_[left][c] +
+                        -image_ycbcr_[bottom_left][c] +
+                        image_ycbcr_[top_right][c] +
+                        2.0f * image_ycbcr_[right][c] +
+                        image_ycbcr_[bottom_right][c];
+                    image_delta_x_[index][c] /= 8.0f;  // normalize
+                    image_delta_x_[index][c] += 0.5f;
+                    image_delta_y_[index][c] =
+                        -image_ycbcr_[top_left][c] +
+                        -2.0f * image_ycbcr_[top][c] +
+                        -image_ycbcr_[top_right][c] +
+                        image_ycbcr_[bottom_left][c] +
+                        2.0f * image_ycbcr_[bottom][c] +
+                        image_ycbcr_[bottom_right][c];
+                    image_delta_y_[index][c] /= 8.0f;  // normalize
+                    image_delta_y_[index][c] += 0.5f;
+                }
+            }
+        }
+
+        // For debug reasons create an image
+        //PictureWriter::SaveTGA(width, height, image_[0], "fe_0.tga");
+        //PictureWriter::SaveTGA(width, height, image_ycbcr_, "fe_1.tga");
+        //PictureWriter::SaveTGA(width, height, image_delta_x_, "fe_2.tga");
+        //PictureWriter::SaveTGA(width, height, image_delta_y_, "fe_3.tga");
+
+        // Create histograms
+        CreateHistogram(image_ycbcr_[0], 3, width * height,
+            0.0f, 1.0f, kHistogramSize, feature_vector_ + feature_index);
+        feature_index += 3 * kHistogramSize;
+        CreateHistogram(image_delta_x_[0], 3, width * height, 0.0f, 1.0f,
+            kHistogramSize, feature_vector_ + feature_index);
+        feature_index += 3 * kHistogramSize;
+        CreateHistogram(image_delta_y_[0], 3, width * height, 0.0f, 1.0f,
+            kHistogramSize, feature_vector_ + feature_index);
+        feature_index += 3 * kHistogramSize;
+
+        // Down-scale
+        for (int y = 0; y < height / 2; y++) {
+            for (int x = 0; x < width / 2; x++) {
+                int orig_x = x * 2;
+                int orig_y = y * 2;
+                int index = y * (width / 2) + x;
+                int orig_index = orig_y * width + orig_x;
+
+                for (int c = 0; c < 3; c++) {
+                    image_ycbcr_[index][c] = 0.25f *
+                        (image_ycbcr_[orig_index][c] +
+                            image_ycbcr_[orig_index + 1][c] +
+                            image_ycbcr_[orig_index + width][c] +
+                            image_ycbcr_[orig_index + width + 1][c]);
+                }
+            }
+        }
+    }
+
+    if (feature_index != kFeatureDimension) {
+        fprintf(stderr, "Feature dimension %d incorrect. %d is needed.",
+            kFeatureDimension, feature_index);
+        exit(1);
     }
 }
 
 void FeatureExtraction::ResizeFromChar(unsigned char image[][3], int width, int height) {
+    // Clamp to target aspect ratio
+    float target_aspect_ratio = (float)GetPreferredWidth() / (float)GetPreferredHeight();
+    float aspect_ratio = (float)width / (float)height;
+    float x_offset = 0.0f;
+    float adjusted_width = (float)width;
+    float y_offset = 0.0f;
+    float adjusted_height = (float)height;
+    if (aspect_ratio > target_aspect_ratio) {
+        adjusted_width = height * target_aspect_ratio;
+        x_offset = (width - adjusted_width) / 2.0f;
+    } else {
+        adjusted_height = width / target_aspect_ratio;
+        y_offset = (height - adjusted_height) / 2.0f;
+    }
+
     // Create simple point-sampled resize
     // TODO: I need to at least interpolate for down-sampling.
     for (int y = 0; y < kImageHeight; y++) {
         for (int x = 0; x < kImageWidth; x++) {
             // simple down-round of coordinate
-            int source_x = x * width / kImageWidth;
-            int source_y = y * height / kImageHeight;
+            int source_x = (int)(x * adjusted_width / kImageWidth + x_offset);
+            int source_y = (int)(y * adjusted_height / kImageHeight + y_offset);
+            if (source_x >= width) source_x = width - 1;
+            if (source_x < 0) source_x = 0;
+            if (source_y >= height) source_y = height - 1;
+            if (source_y < 0) source_y = 0;
             int index = source_y * width + source_x;
             image_[y][x][0] = ((float)(image[index][0])) / 255.0f;
             image_[y][x][1] = ((float)(image[index][1])) / 255.0f;
             image_[y][x][2] = ((float)(image[index][2])) / 255.0f;
-            // TODO: is 0 really blue?
-            image_bw_[y][x] = 0.21f * image_[y][x][2] +
-                0.71f * image_[y][x][1] +
-                0.08f * image_[y][x][0];
         }
     }
 }
 
 void FeatureExtraction::ResizeFromFloat(float image[][3], int width, int height) {
+    // For debug reasons create an image
+    //PictureWriter::SaveTGA(width, height, image, "fe_0.tga");
+
+    // Clamp to target aspect ratio
+    float target_aspect_ratio = (float)GetPreferredWidth() / (float)GetPreferredHeight();
+    float aspect_ratio = (float)width / (float)height;
+    float x_offset = 0.0f;
+    float adjusted_width = (float)width;
+    float y_offset = 0.0f;
+    float adjusted_height = (float)height;
+    if (aspect_ratio > target_aspect_ratio) {
+        adjusted_width = height * target_aspect_ratio;
+        x_offset = (width - adjusted_width) / 2.0f;
+    }
+    else {
+        adjusted_height = width / target_aspect_ratio;
+        y_offset = (height - adjusted_height) / 2.0f;
+    }
+
     // Create simple point-sampled resize
     // TODO: I need to at least interpolate for down-sampling.
     for (int y = 0; y < kImageHeight; y++) {
         for (int x = 0; x < kImageWidth; x++) {
             // simple down-round of coordinate
-            int source_x = x * width / kImageWidth;
-            int source_y = y * height / kImageHeight;
+            int source_x = (int)(x * adjusted_width / kImageWidth + x_offset);
+            int source_y = (int)(y * adjusted_height / kImageHeight + y_offset);
+            if (source_x >= width) source_x = width - 1;
+            if (source_x < 0) source_x = 0;
+            if (source_y >= height) source_y = height - 1;
+            if (source_y < 0) source_y = 0;
             int index = source_y * width + source_x;
             image_[y][x][0] = image[index][0];
             image_[y][x][1] = image[index][1];
             image_[y][x][2] = image[index][2];
-            // TODO: is 0 really blue?
-            image_bw_[y][x] = 0.21f * image_[y][x][2] +
-                0.71f * image_[y][x][1] +
-                0.08f * image_[y][x][0];
         }
     }
 }
-

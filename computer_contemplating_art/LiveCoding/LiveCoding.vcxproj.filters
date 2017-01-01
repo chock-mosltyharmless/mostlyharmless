@@ -59,9 +59,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="bass.lib" />
-  </ItemGroup>
-  <ItemGroup>
     <ResourceCompile Include="LiveCoding.rc" />
   </ItemGroup>
   <ItemGroup>

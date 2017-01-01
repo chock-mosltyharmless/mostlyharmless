@@ -15,11 +15,11 @@ void Frame::StartNewLine() {
     lines_.push_back(Line());
 }
 
-void Frame::AddLineNode(float x, float y) {
+void Frame::AddLineNode(float x, float y, bool make_fancy) {
     int current_line = lines_.size() - 1;
     if (current_line < 0) return;  // Tried to add a node before calling StartNewLine()
 
-    lines_[current_line].AddNode(x, y);
+    lines_[current_line].AddNode(x, y, make_fancy);
 }
 
 void Frame::DeleteLastLine() {
@@ -33,6 +33,18 @@ int Frame::Save(FILE *file, char *error_string) {
 
     for (int i = 0; i < num_elements; i++) {
         lines_[i].Save(file);
+    }
+
+    return 0;
+}
+
+int Frame::Export(FILE *file, char *error_string) {
+    fwrite(&kExportMagicNumber, sizeof(kExportMagicNumber), 1, file);
+    int num_elements = lines_.size();
+    fwrite(&num_elements, sizeof(num_elements), 1, file);
+
+    for (int i = 0; i < num_elements; i++) {
+        lines_[i].Export(file);
     }
 
     return 0;

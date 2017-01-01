@@ -91,7 +91,10 @@ int FeatureCreator::JPGFeatures(const char *filename, FILE *feature_file, int la
 
     fprintf(feature_file, "%d", label);
     for (int i = 0; i < num_features; i++) {
-        fprintf(feature_file, " %d:%.5f", i+1, feature_vector[i]);
+        float min_value = 0.000005f;
+        if (feature_vector[i] < -min_value || feature_vector[i] > min_value) {
+            fprintf(feature_file, " %d:%.5f", i + 1, feature_vector[i]);
+        }
     }
     fprintf(feature_file, "\n");
 

@@ -12,7 +12,7 @@
 //#include "FluidSimulation.h"
 #include "Editor.h"
 #include "Parameter.h"
-#include "bass.h"
+//#include "bass.h"
 
 #define MAX_LOADSTRING 100
 #define BLOB_FADE_SPEED 0.01f
@@ -27,7 +27,7 @@ float aspectRatio = (float)XRES / (float)YRES;
 long start_time_ = 0;
 
 //FluidSimulation fluid_simulation_;
-HSTREAM mp3Str;
+//HSTREAM mp3Str;
 
 /*************************************************
  * GL Core variables
