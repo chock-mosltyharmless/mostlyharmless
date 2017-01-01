@@ -115,7 +115,7 @@ void Line::DrawFancy(void) {
         current_length += sqrtf(dx * dx + dy * dy);
         //float t = 2.0f * current_length / length;
         //if (t > 1.0f) t = 2.0f - t;
-        float t = current_length / length;
+        float t = 1.0f - current_length / length;
         if (t > 1.0f) t = 1.0f;
         t = 0.5f * t + 0.5f * t * t;
         t = t * t;
