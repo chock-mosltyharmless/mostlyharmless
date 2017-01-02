@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "ArtCritic.h"
 
-const char *ArtCritic::train_painters_[] = {
+const char *train_painters_[] = {
     "d:/paintings/artemisia/",
     "d:/paintings/bacon/",
     "d:/paintings/blake/",
@@ -96,7 +96,7 @@ const char *ArtCritic::train_painters_[] = {
     "d:/paintings/tizian/",
 };
 
-const char *ArtCritic::test_painters_[] = {
+const char *test_painters_[] = {
     "d:/paintings/turner/",
     "d:/paintings/uccello/",
     "d:/paintings/van_gogh/",
@@ -117,7 +117,8 @@ ArtCritic::~ArtCritic(void) {
     delete feature_creator_;
 }
 
-int ArtCritic::CreatePositiveTrainFile(const char *filename) {
+int ArtCritic::CreatePositiveFeatureFile(const char *filename,
+        const char **file_list, int file_list_length) {
     FILE *fid = NULL;
     errno_t error = fopen_s(&fid, filename, "w");
     if (0 != error) {
@@ -125,9 +126,8 @@ int ArtCritic::CreatePositiveTrainFile(const char *filename) {
         return -1;
     }
 
-    int num_train_painters = sizeof(train_painters_) / sizeof(const char *);
-    for (int i = 0; i < num_train_painters; i++) {
-        feature_creator_->WriteFeatureFile(train_painters_[i], fid, +1);
+    for (int i = 0; i < file_list_length; i++) {
+        feature_creator_->WriteFeatureFile(file_list[i], fid, +1);
     }
 
     fclose(fid);
@@ -137,7 +137,13 @@ int ArtCritic::CreatePositiveTrainFile(const char *filename) {
 int main(int argc, char *argv[]) {
     ArtCritic critic;
 
-    critic.CreatePositiveTrainFile("../data/positive_train.txt");
+    int num_train_painters = sizeof(train_painters_) / sizeof(const char *);
+    critic.CreatePositiveFeatureFile("../data/positive_train.txt",
+                                     train_painters_, num_train_painters);
+
+    int num_test_painters = sizeof(test_painters_) / sizeof(const char *);
+    critic.CreatePositiveFeatureFile("../data/positive_test.txt",
+                                     test_painters_, num_test_painters);
 
     return 0;
 }

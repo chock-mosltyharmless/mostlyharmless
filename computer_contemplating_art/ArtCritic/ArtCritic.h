@@ -7,10 +7,9 @@ public:
     ArtCritic(void);
     virtual ~ArtCritic(void);
 
-    int CreatePositiveTrainFile(const char *filename);
+    int CreatePositiveFeatureFile(const char *filename,
+        const char **file_list, int file_list_length);
 
 private:
     FeatureCreator *feature_creator_;
-    const static char *train_painters_[];
-    const static char *test_painters_[];
 };
