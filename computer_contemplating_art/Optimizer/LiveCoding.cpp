@@ -607,6 +607,48 @@ void intro_do(long t, long delta_time)
     }
 }
 
+// returns number of features
+int GetFeatures(float **features, FeatureExtraction *feature_extraction) {
+    char errorText[MAX_ERROR_LENGTH + 1];
+    // Get Backbuffer to image buffer
+    GLuint texture_id;
+    unsigned char *pixels = new unsigned char[X_OFFSCREEN * Y_OFFSCREEN * 3];
+    memset(pixels, 0xfe, X_OFFSCREEN * Y_OFFSCREEN * 3);
+    textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, errorText);
+    glBindTexture(GL_TEXTURE_2D, texture_id);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+
+    // Only get inner 512x256
+    int target_x = feature_extraction->GetPreferredWidth();
+    int target_y = feature_extraction->GetPreferredHeight();
+    float (*image)[3] = new float[target_x * target_y][3];
+    for (int y = 0; y < target_y; y++) {
+        for (int x = 0; x < target_x; x++) {
+            int src_x = (X_OFFSCREEN - target_x) / 2 + x;
+            int src_y = (Y_OFFSCREEN - target_y) / 2 + y;
+            for (int c = 0; c < 3; c++) {
+                int col = pixels[(src_y * X_OFFSCREEN + src_x) * 3 + c];
+                image[y * target_x + x][c] = col / 255.0f;
+            }
+        }
+    }
+    int feature_dimension;
+    feature_extraction->CalculateFeaturesFromFloat(features, &feature_dimension, image, target_x, target_y);
+    delete [] pixels;
+    delete [] image;
+    return feature_dimension;
+}
+
+void RandomIFS(void) {
+    for (int i = 0; i < kNumIFSFunctions; i++) {
+        for (int j = 0; j < 2 * 3; j++) {
+            ifs_transformation_parameters_[i][0][j] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
+        }
+        for (int j = 0; j < 3; j++) {
+            ifs_color_parameters_[i][j] = 0.5f + 0.5f * sinf(rand() * 0.001f);
+        }
+    }
+}
 
 int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
@@ -665,14 +707,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     svm_features = new struct svm_node [FeatureExtraction::FeatureDimension() + 1];
 
     // Set initial IFS parameters
-    for (int i = 0; i < kNumIFSFunctions; i++) {
-        for (int j = 0; j < 2 * 3; j++) {
-            ifs_transformation_parameters_[i][0][j] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-        }
-        for (int j = 0; j < 3; j++) {
-            ifs_color_parameters_[i][j] = 0.5f + 0.5f * sinf(rand() * 0.001f);
-        }
-    }
+    RandomIFS();
+
+    FeatureExtraction *feature_extraction = new FeatureExtraction();
 
     double old_art_probability = 0.0;  // No art at first!
     int num_failed_updates = 0;
@@ -699,7 +736,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             }
             for (int j = 0; j < 3; j++) {
                 ifs_color_saved_[i][j] = ifs_color_parameters_[i][j];
-                ifs_color_parameters_[i][j] += 0.1f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
+                ifs_color_parameters_[i][j] += 0.3f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
                 if (ifs_color_parameters_[i][j] < 0.0f) ifs_color_parameters_[i][j] = 0.0f;
                 if (ifs_color_parameters_[i][j] > 1.0f) ifs_color_parameters_[i][j] = 1.0f;
             }
@@ -707,33 +744,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         intro_do(t, t - last_time);
         last_time = t;
-
-        // Get Backbuffer to image buffer
-        GLuint texture_id;
-        unsigned char *pixels = new unsigned char[X_OFFSCREEN * Y_OFFSCREEN * 3];
-        memset(pixels, 0xfe, X_OFFSCREEN * Y_OFFSCREEN * 3);
-        textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, errorText);
-        glBindTexture(GL_TEXTURE_2D, texture_id);
-        glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-
-        // Only get inner 512x256
-        FeatureExtraction *feature_extraction = new FeatureExtraction();
-        int target_x = feature_extraction->GetPreferredWidth();
-        int target_y = feature_extraction->GetPreferredHeight();
-        float (*image)[3] = new float[target_x * target_y][3];
-        for (int y = 0; y < target_y; y++) {
-            for (int x = 0; x < target_x; x++) {
-                int src_x = (X_OFFSCREEN - target_x) / 2 + x;
-                int src_y = (Y_OFFSCREEN - target_y) / 2 + y;
-                for (int c = 0; c < 3; c++) {
-                    int col = pixels[(src_y * X_OFFSCREEN + src_x) * 3 + c];
-                    image[y * target_x + x][c] = col / 255.0f;
-                }
-            }
-        }
         float *feature_vector;
-        int feature_dimension;
-        feature_extraction->CalculateFeaturesFromFloat(&feature_vector, &feature_dimension, image, target_x, target_y);
+        int feature_dimension = GetFeatures(&feature_vector, feature_extraction);
 
         // Convert to format that can be read by libsvm
         for (int i = 0; i < feature_dimension; i++) {
@@ -765,18 +777,10 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         if (num_failed_updates > 100) {
-            // Doesn't improve. Reset.
-            for (int i = 0; i < kNumIFSFunctions; i++) {
-                for (int j = 0; j < 2 * 3; j++) {
-                    ifs_transformation_parameters_[i][0][j] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-                }
-                for (int j = 0; j < 3; j++) {
-                    ifs_color_parameters_[i][j] = 0.5f + 0.5f * sinf(rand() * 0.001f);
-                }
-            }
-            old_art_probability = 0.0;
-            num_failed_updates = 0;
             if (new_art_probability > 0.7) {
+                intro_do(t, t - last_time);
+                feature_dimension = GetFeatures(&feature_vector, feature_extraction);
+
                 // Save this to false positive file
                 fprintf(feature_file, "0");
                 for (int i = 0; i < feature_dimension; i++) {
@@ -788,16 +792,19 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 fprintf(feature_file, "\n");
                 Sleep(2000);
             }
-        }
 
-        delete[] image;
-        delete feature_extraction;
-        delete[] pixels;
+            // Didn't improve -> Reset.
+            RandomIFS();
+            old_art_probability = 0.0;
+            num_failed_updates = 0;
+        }
 
 		SwapBuffers( info->hDC );
 	}
 
     fclose(feature_file);
+
+    delete feature_extraction;
 
     // Shutdown libSVM
     svm_free_and_destroy_model(&svm_model);
