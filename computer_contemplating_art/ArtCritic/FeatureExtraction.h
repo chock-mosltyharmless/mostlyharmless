@@ -16,6 +16,7 @@ public:
 
     static int GetPreferredWidth(void) { return kImageWidth; }
     static int GetPreferredHeight(void) { return kImageHeight; }
+    static int FeatureDimension(void) { return kFeatureDimension; }
 
 private:
     // Saves the result in image_

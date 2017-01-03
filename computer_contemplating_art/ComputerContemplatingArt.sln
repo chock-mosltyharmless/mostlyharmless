@@ -1,13 +1,15 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Express 14 for Windows Desktop
-VisualStudioVersion = 14.0.24720.0
+VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LiveCoding", "LiveCoding\LiveCoding.vcxproj", "{FBE7306B-DC44-4C8C-BFE9-8DA9E020A9FC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArtCritic", "ArtCritic\ArtCritic.vcxproj", "{7EDEE364-D2FC-4BCF-A82B-3AEC7CF2E675}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FailCritic", "FailCritic\FailCritic.vcxproj", "{B492F143-4AB4-4A13-BF0C-12CBAA00196D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Optimizer", "Optimizer\Optimizer.vcxproj", "{B37EB912-211C-4D6B-BC55-D70EEAC11737}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +39,12 @@ Global
 		{B492F143-4AB4-4A13-BF0C-12CBAA00196D}.Release|Win32.ActiveCfg = Release|Win32
 		{B492F143-4AB4-4A13-BF0C-12CBAA00196D}.Release|Win32.Build.0 = Release|Win32
 		{B492F143-4AB4-4A13-BF0C-12CBAA00196D}.Release|x64.ActiveCfg = Release|Win32
+		{B37EB912-211C-4D6B-BC55-D70EEAC11737}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B37EB912-211C-4D6B-BC55-D70EEAC11737}.Debug|Win32.Build.0 = Debug|Win32
+		{B37EB912-211C-4D6B-BC55-D70EEAC11737}.Debug|x64.ActiveCfg = Debug|Win32
+		{B37EB912-211C-4D6B-BC55-D70EEAC11737}.Release|Win32.ActiveCfg = Release|Win32
+		{B37EB912-211C-4D6B-BC55-D70EEAC11737}.Release|Win32.Build.0 = Release|Win32
+		{B37EB912-211C-4D6B-BC55-D70EEAC11737}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
