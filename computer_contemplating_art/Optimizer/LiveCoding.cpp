@@ -549,7 +549,10 @@ void intro_do(long t, long delta_time)
     glBlendFunc(GL_ONE, GL_ONE);
 
     // Texture for first pass is simply white
-    textureManager.getTextureID("white.tga", &textureID, errorText);
+    if (textureManager.getTextureID("white.tga", &textureID, errorText) != 0) {
+        MessageBox(0, errorText, "loading texture", MB_OK);
+        exit(-1);
+    }
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
@@ -579,7 +582,8 @@ void intro_do(long t, long delta_time)
         glClearColor(red, green, blue, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Draw one iteration of the IFS
+        // Draw one iteration of the IFS -> No texture?
+        glBindTexture(GL_TEXTURE_2D, textureID);
         for (int i = 0; i < 20; i++) {
             DrawQuad(ifs_transformation_parameters_[i], ifs_color_parameters_[i][0],
                 ifs_color_parameters_[i][1], ifs_color_parameters_[i][2], 1.0f);
@@ -656,18 +660,16 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Set initial IFS parameters
     for (int i = 0; i < kNumIFSFunctions; i++) {
-        ifs_transformation_parameters_[i][0][0] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-        ifs_transformation_parameters_[i][0][1] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-        ifs_transformation_parameters_[i][0][2] = 0.5f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-        ifs_transformation_parameters_[i][1][0] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-        ifs_transformation_parameters_[i][1][1] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-        ifs_transformation_parameters_[i][1][2] = 0.5f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-        ifs_color_parameters_[i][0] = 0.5f + 0.5f * sinf(rand() * 0.001f);
-        ifs_color_parameters_[i][1] = 0.5f + 0.5f * sinf(rand() * 0.001f);
-        ifs_color_parameters_[i][2] = 0.5f + 0.5f * sinf(rand() * 0.001f);
+        for (int j = 0; j < 2 * 3; j++) {
+            ifs_transformation_parameters_[i][0][j] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
+        }
+        for (int j = 0; j < 3; j++) {
+            ifs_color_parameters_[i][j] = 0.5f + 0.5f * sinf(rand() * 0.001f);
+        }
     }
 
     double old_art_probability = 0.0;  // No art at first!
+    int num_failed_updates = 0;
     while (!done) {
 		long t = timeGetTime() - start_time_;
 
@@ -750,8 +752,28 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                     ifs_color_parameters_[i][j] = ifs_color_saved_[i][j];
                 }
             }
+            num_failed_updates++;
         } else {
             old_art_probability = new_art_probability;
+            num_failed_updates = 0;
+        }
+
+        if (num_failed_updates > 100) {
+            // Doesn't improve. Reset.
+            for (int i = 0; i < kNumIFSFunctions; i++) {
+                for (int j = 0; j < 2 * 3; j++) {
+                    ifs_transformation_parameters_[i][0][j] = 0.7f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
+                }
+                for (int j = 0; j < 3; j++) {
+                    ifs_color_parameters_[i][j] = 0.5f + 0.5f * sinf(rand() * 0.001f);
+                }
+            }
+            old_art_probability = 0.0;
+            num_failed_updates = 0;
+            if (new_art_probability > 0.7) {
+                // Save this to false positive file
+                Sleep(2000);
+            }
         }
 
         delete[] image;

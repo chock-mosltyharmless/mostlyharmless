@@ -541,7 +541,10 @@ void intro_do(long t, long delta_time)
     glBlendFunc(GL_ONE, GL_ONE);
 
     // Texture for first pass is simply white
-    textureManager.getTextureID("white.tga", &textureID, errorText);
+    if (textureManager.getTextureID("white.tga", &textureID, errorText) != 0) {
+        MessageBox(0, errorText, "loading texture", MB_OK);
+        exit(-1);
+    }
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
