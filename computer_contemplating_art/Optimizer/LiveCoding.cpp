@@ -641,6 +641,12 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	char filename[SM_MAX_FILENAME_LENGTH+1];
 	sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "shaders/%s", usedShader[usedIndex]);
 
+    FILE *feature_file = fopen("../data/false_positive_ifs_features.txt", "w");
+    if (feature_file == NULL) {
+        MessageBox(info->hWnd, "Could not open feature file for writing", "IO error", MB_OK);
+        return -1;
+    }
+
     start_time_ = timeGetTime();
     long last_time = 0;
 
@@ -772,6 +778,14 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             num_failed_updates = 0;
             if (new_art_probability > 0.7) {
                 // Save this to false positive file
+                fprintf(feature_file, "0");
+                for (int i = 0; i < feature_dimension; i++) {
+                    float min_value = 0.000005f;
+                    if (feature_vector[i] < -min_value || feature_vector[i] > min_value) {
+                        fprintf(feature_file, " %d:%.5f", i + 1, feature_vector[i]);
+                    }
+                }
+                fprintf(feature_file, "\n");
                 Sleep(2000);
             }
         }
@@ -782,6 +796,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 		SwapBuffers( info->hDC );
 	}
+
+    fclose(feature_file);
 
     // Shutdown libSVM
     svm_free_and_destroy_model(&svm_model);
