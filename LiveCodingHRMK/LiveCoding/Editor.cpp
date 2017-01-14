@@ -82,20 +82,20 @@ void Editor::render(long iTime)
 	}
 	float scrollSpeed = ED_SCROLL_SPEED * scrollDifference;
 	float scrollAdd = scrollSpeed * (iTime - lastRenderTime);
-	if (abs(scrollAdd) > abs(scrollDifference)) scrollAdd = scrollDifference;
+	if (fabsf(scrollAdd) > fabsf(scrollDifference)) scrollAdd = scrollDifference;
 	scrollPos += scrollAdd;
 	if (scrollPos < 0) scrollPos = 0;
 
 	// update alpha
 	if (isErrorFading)
 	{
-		errorDisplayAlpha *= exp(-(float)(iTime - lastRenderTime) * ED_FADE_SPEED);
+		errorDisplayAlpha *= (float)exp(-(float)(iTime - lastRenderTime) * ED_FADE_SPEED);
 		errorDisplayAlpha = errorDisplayAlpha > 1.0f ? 1.0f : errorDisplayAlpha;
 		errorDisplayAlpha = errorDisplayAlpha < 0.0f ? 0.0f : errorDisplayAlpha;
 	}
 	if (isTextFading)
 	{
-		textDisplayAlpha *= exp(-(float)(iTime - lastRenderTime) * ED_FADE_SPEED);
+		textDisplayAlpha *= (float)exp(-(float)(iTime - lastRenderTime) * ED_FADE_SPEED);
 		textDisplayAlpha = textDisplayAlpha > 1.0f ? 1.0f : textDisplayAlpha;
 		textDisplayAlpha = textDisplayAlpha < 0.0f ? 0.0f : textDisplayAlpha;
 	}
@@ -158,7 +158,7 @@ void Editor::render(long iTime)
 	}
 
 	// Render the cursor
-	float alpha = 0.5f * sin((float)iTime * ED_CURSOR_BLINK_SPEED) + 0.5f;
+	float alpha = 0.5f * sinf((float)iTime * ED_CURSOR_BLINK_SPEED) + 0.5f;
 	alpha *= textDisplayAlpha;
 	glColor4f(ED_TEXT_RED, ED_TEXT_GREEN, ED_TEXT_BLUE, alpha);
 	float indent = indentation[cursorPos[1]] * ED_INDENTATION_WIDTH / aspectRatio;
