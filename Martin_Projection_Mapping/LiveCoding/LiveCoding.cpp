@@ -413,7 +413,7 @@ static int window_init( WININFO *info )
 }
 
 
-void intro_do(long t)
+void intro_do(long t, float music_loudness)
 {
 	char errorText[MAX_ERROR_LENGTH+1];
 	float ftime = 0.001f*(float)t;
@@ -454,6 +454,9 @@ void intro_do(long t)
 	static float lastFTime = 0.f;
 	blob *= (float)exp(-(float)(ftime - lastFTime) * BLOB_FADE_SPEED);
 	lastFTime = ftime;
+
+    // Set spike to music loudness
+    spike = music_loudness;
 
 	// Set the program uniforms
 	GLuint programID;
@@ -603,6 +606,40 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	BASS_Start();
 #endif
 
+
+    // Initialize Wave input
+    HWAVEIN hWaveIn = 0;
+    WAVEFORMATEX WaveFormat;
+    WAVEHDR WaveHdr;
+    MMRESULT MMResult;
+    WaveFormat.wFormatTag=WAVE_FORMAT_PCM;     // simple, uncompressed format
+    WaveFormat.nChannels=1;                    // 1=mono, 2=stereo
+    WaveFormat.nSamplesPerSec=44100;
+    WaveFormat.wBitsPerSample=16;
+    WaveFormat.nBlockAlign=
+        WaveFormat.nChannels*(WaveFormat.wBitsPerSample/8);
+    WaveFormat.nAvgBytesPerSec=
+        WaveFormat.nSamplesPerSec*WaveFormat.nBlockAlign;
+    WaveFormat.cbSize=0;
+    int num_samples = WaveFormat.nSamplesPerSec/30;
+    WaveHdr.dwBufferLength =
+         num_samples * (WaveFormat.wBitsPerSample/8) * WaveFormat.nChannels;
+    WaveHdr.dwBytesRecorded = 0L;
+    WaveHdr.dwUser = 0L;
+    WaveHdr.dwFlags = 0L;
+    WaveHdr.dwLoops = 0L;
+    short *wave_data = new short[WaveHdr.dwBufferLength / sizeof(short)];
+    WaveHdr.lpData = (char *)wave_data;
+    // open device
+    MMResult = waveInOpen(&hWaveIn,WAVE_MAPPER,&WaveFormat,0,0,CALLBACK_NULL);
+    // prepare header
+    MMResult = waveInPrepareHeader(hWaveIn, &WaveHdr, sizeof(WAVEHDR));
+    // send buffer to Windows
+    MMResult = waveInAddBuffer(hWaveIn, &WaveHdr, sizeof(WAVEHDR));
+    // start input
+    MMResult = waveInStart(hWaveIn);
+    float music_loudness = 0.0f;
+
 	// Initialize COM
 	HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)) exit(-1);
@@ -632,7 +669,21 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
-        intro_do(t);
+        // Get Music:
+        if (waveInUnprepareHeader(hWaveIn, &WaveHdr, sizeof(WAVEHDR)) != WAVERR_STILLPLAYING) {
+            double cumulative_square = 0.0f;
+            for (int i = 0; i < num_samples; i++) {
+                cumulative_square += (double)wave_data[i] * (double)wave_data[i];
+            }
+            if (cumulative_square < 1.0f) cumulative_square = 1.0f;
+            music_loudness = (float)(log(cumulative_square));
+            MMResult = waveInStop(hWaveIn);
+            MMResult = waveInPrepareHeader(hWaveIn, &WaveHdr, sizeof(WAVEHDR));
+            MMResult = waveInAddBuffer(hWaveIn, &WaveHdr, sizeof(WAVEHDR));
+            MMResult = waveInStart(hWaveIn);
+        }
+
+        intro_do(t, music_loudness);
 		editor.render(t);
 
 		SwapBuffers( info->hDC );
