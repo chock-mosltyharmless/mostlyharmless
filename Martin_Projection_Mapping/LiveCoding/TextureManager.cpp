@@ -561,7 +561,7 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
         background_depth_[index] = 65536;
     }
     int num_seen = 0;
-    while (num_seen < 20) {
+    while (num_seen < 10) {
         IDepthFrame *depth_frame_interface = NULL;
         hr = depth_frame_reader_->AcquireLatestFrame(&depth_frame_interface);
         if (FAILED(hr)) {
@@ -595,7 +595,7 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
 
     // Try to fill nearby errors
     int *bg_copy = new int[nWidth * nHeight];
-    for (int iteration = 0; iteration < 10; iteration++) {
+    for (int iteration = 0; iteration < 1; iteration++) {
         for (int index = 0; index < nWidth * nHeight; index++) {
             bg_copy[index] = background_depth_[index];
         }
@@ -705,15 +705,14 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 
 	int next = next_smoothed_depth_sensor_buffer_;
 	int cur = 1 - next_smoothed_depth_sensor_buffer_;
+    next = 0;
+    cur = 1;
 
 	// Set interpolated depth buffer to the max where it should be
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			int index = y * width + x;
-			if (smoothed_depth_sensor_buffer_[cur][index] < cpu_depth_sensor_buffer_[index] ||
-                true) {  // always update!
-				smoothed_depth_sensor_buffer_[cur][index] = cpu_depth_sensor_buffer_[index];
-			}
+    		smoothed_depth_sensor_buffer_[cur][index] = cpu_depth_sensor_buffer_[index];
 		}
 	}
 
@@ -752,20 +751,70 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			int index = y * width + x;
-			if (smoothed_depth_sensor_buffer_[next][index] < 0.0f) {
-				smoothed_depth_sensor_buffer_[next][index] = 0.0f;
+			if (smoothed_depth_sensor_buffer_[cur][index] < 0.0f) {
+				smoothed_depth_sensor_buffer_[cur][index] = 0.0f;
 			}
-			if (smoothed_depth_sensor_buffer_[next][index] > 1.0f) {
-				smoothed_depth_sensor_buffer_[next][index] = 1.0f;
+			if (smoothed_depth_sensor_buffer_[cur][index] > 1.0f) {
+				smoothed_depth_sensor_buffer_[cur][index] = 1.0f;
 			}
 		}
 	}
 	next_smoothed_depth_sensor_buffer_ = cur;
 
+    // Box filtering of depth buffer
+    const int kFilterWidth = 20;
+    float normalizer = 1.5f / (kFilterWidth * 2 + 1);
+    
+    for (int i = 0; i < 3; i++) {
+        // Horizontal
+        for (int y = 0; y < height; y++) {
+            float accumulator = 0.0f;
+            for (int x = -kFilterWidth; x < width + kFilterWidth; x++) {
+                int index = y * width + x;
+                if (x + kFilterWidth < width) {
+                    accumulator += smoothed_depth_sensor_buffer_[cur][index + kFilterWidth];
+                }
+                if (x - kFilterWidth >= 0) {
+                    accumulator -= smoothed_depth_sensor_buffer_[cur][index - kFilterWidth];
+                }
+                if (x >= 0 && x < width) {
+                    float value = accumulator * normalizer;
+                    if (value > 1.0f) value = 1.0f;
+                    smoothed_depth_sensor_buffer_[next][index] = value;
+                }
+            }
+        }
+        next = 1 - next;
+        cur = 1 - cur;
+
+        // Vertical
+        for (int x = 0; x < width; x++) {
+            float accumulator = 0.0f;
+            for (int y = -kFilterWidth; y < height + kFilterWidth; y++) {
+                int index = y * width + x;
+                int up = (y - kFilterWidth) * width + x;
+                int down = (y + kFilterWidth) * width + x;
+                if (y + kFilterWidth < height) {
+                    accumulator += smoothed_depth_sensor_buffer_[cur][down];
+                }
+                if (y - kFilterWidth >= 0) {
+                    accumulator -= smoothed_depth_sensor_buffer_[cur][up];
+                }
+                if (y >= 0 && y < height) {
+                    float value = accumulator * normalizer;
+                    if (value > 1.0f) value = 1.0f;
+                    smoothed_depth_sensor_buffer_[next][index] = value;
+                }
+            }
+        }
+        next = 1 - next;
+        cur = 1 - cur;
+    }
+
 	// Send data to GPU
 	glTexSubImage2D(GL_TEXTURE_2D, 0,
 		0, 0, width, height,
-		GL_RED, GL_FLOAT, smoothed_depth_sensor_buffer_[next]);
+		GL_RED, GL_FLOAT, smoothed_depth_sensor_buffer_[cur]);
 
 	return 0;
 }

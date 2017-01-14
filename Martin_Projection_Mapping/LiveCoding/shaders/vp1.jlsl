@@ -2,7 +2,7 @@ void main(void) {
 float depth = sDepth(ppos);                                           
                                                                       
 vec4 noise1 = vnoise8(vec3(ppos.xyx*0.2 +                             
-0.05 * vec3(0.3*time, -time, -0.3*time)), 0.3);                       
+0.1 * vec3(0.5*time, -time, -0.3*time)), 0.3);                        
 vec3 noisepos = ppos.yxx + noise1.xyz;                                
 vec4 noise2 = vnoise8(vec3(noisepos*0.2),                             
 0.4);                                                                 
@@ -13,11 +13,16 @@ vec4 noise3 = vnoise8(vec3(noisepos2*0.2),
 float brightness = vnoise5(ppos.xyx*0.03 +                            
 0.02 * vec3(time, 0., -time), 0.7).x;                                 
 brightness *= brightness;                                             
-brightness -= 0.3;                                                    
+brightness -= 0.1;                                                    
+brightness -= ppos.y * 0.5;                                           
                                                                       
 brightness += depth;                                                  
                                                                       
-vec3 color = vec3(noise3.x+0.5) * brightness;                         
+float amount = (noise3.x + 0.5) * brightness;                         
+amount = smoothstep(0.0, 1.0, amount*1.3);                            
+vec3 color = mix(vec3(-0.2, -0.4, -0.6),                              
+vec3(2.0, 1.5, 1.0), amount);                                         
+//color = vec3(amount);                                               
                                                                       
 gl_FragColor = vec4(color,1.);                                        
-}                                        
+}                                                                     
