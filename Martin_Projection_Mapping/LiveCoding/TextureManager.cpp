@@ -561,7 +561,7 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
         background_depth_[index] = 65536;
     }
     int num_seen = 0;
-    while (num_seen < 60) {
+    while (num_seen < 20) {
         IDepthFrame *depth_frame_interface = NULL;
         hr = depth_frame_reader_->AcquireLatestFrame(&depth_frame_interface);
         if (FAILED(hr)) {
@@ -591,6 +591,30 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
         }
 
         depth_frame_interface->Release();
+    }
+
+    // Try to fill nearby errors
+    int *bg_copy = new int[nWidth * nHeight];
+    for (int iteration = 0; iteration < 10; iteration++) {
+        for (int index = 0; index < nWidth * nHeight; index++) {
+            bg_copy[index] = background_depth_[index];
+        }
+        for (int index = nWidth + 1; index < nWidth * (nHeight - 1) - 1; index++) {
+            if (background_depth_[index] >= 65536 || true) {
+                if (bg_copy[index - 1] < background_depth_[index]) {
+                    background_depth_[index] = bg_copy[index - 1];
+                }
+                if (bg_copy[index + 1] < background_depth_[index]) {
+                    background_depth_[index] = bg_copy[index + 1];
+                }
+                if (bg_copy[index - nWidth] < background_depth_[index]) {
+                    background_depth_[index] = bg_copy[index - nWidth];
+                }
+                if (bg_copy[index + nWidth] < background_depth_[index]) {
+                    background_depth_[index] = bg_copy[index + nWidth];
+                }
+            }
+        }
     }
 
 	return 0;
