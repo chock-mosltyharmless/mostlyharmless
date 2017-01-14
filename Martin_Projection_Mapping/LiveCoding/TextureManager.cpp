@@ -23,6 +23,7 @@ TextureManager::TextureManager(void)
 	smoothed_depth_sensor_buffer_[0] = NULL;
 	smoothed_depth_sensor_buffer_[1] = NULL;
 	next_smoothed_depth_sensor_buffer_ = 0;
+    background_depth_ = NULL;
 }
 
 TextureManager::~TextureManager(void)
@@ -58,6 +59,8 @@ void TextureManager::releaseAll(void)
 		delete[] smoothed_depth_sensor_buffer_[1];
 		smoothed_depth_sensor_buffer_[0] = NULL;
 	}
+
+    if (background_depth_) delete [] background_depth_;
 }
 
 int TextureManager::loadTGA(const char *filename, char *errorString)
@@ -538,8 +541,8 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
 	}
 	smoothed_depth_sensor_buffer_[0] = new float[nWidth * nHeight];
 	smoothed_depth_sensor_buffer_[1] = new float[nWidth * nHeight];
-	memset(smoothed_depth_sensor_buffer_[0], 0, nWidth*nHeight);
-	memset(smoothed_depth_sensor_buffer_[1], 0, nWidth*nHeight);
+	memset(smoothed_depth_sensor_buffer_[0], 0, nWidth*nHeight*sizeof(float));
+	memset(smoothed_depth_sensor_buffer_[1], 0, nWidth*nHeight*sizeof(float));
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F,
 		nWidth, nHeight,
@@ -551,6 +554,44 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
 
 	pFrameDescription->Release();
 	pDepthFrame->Release();
+
+    // Get information about background depth
+    background_depth_ = new int[nWidth * nHeight];
+    for (int index = 0; index < nWidth * nHeight; index++) {
+        background_depth_[index] = 65536;
+    }
+    int num_seen = 0;
+    while (num_seen < 60) {
+        IDepthFrame *depth_frame_interface = NULL;
+        hr = depth_frame_reader_->AcquireLatestFrame(&depth_frame_interface);
+        if (FAILED(hr)) {
+            // Could not aquire new frame -> just ignore
+            continue;
+        }
+
+        INT64 current_frame_time;
+        depth_frame_interface->get_RelativeTime(&current_frame_time);
+        if (current_frame_time == last_frame_time_) {
+            // Frame did not change --> ignore
+            depth_frame_interface->Release();
+            continue;
+        }
+        last_frame_time_ = current_frame_time;
+        num_seen++;
+
+        UINT buffer_size = 0;
+        UINT16 *buffer = NULL;
+
+        hr = depth_frame_interface->AccessUnderlyingBuffer(&buffer_size, &buffer);
+
+        for (int index = 0; index < nWidth * nHeight; index++) {
+            int depth = buffer[index];
+            if (depth < 4) depth = 65536;
+            if (depth < background_depth_[index]) background_depth_[index] = depth;
+        }
+
+        depth_frame_interface->Release();
+    }
 
 	return 0;
 }
@@ -589,15 +630,22 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	
 	// Transform depth buffer to 32-bit float with range 0..1
 	float min_depth = 3.0f; // always?
-	float max_depth = (7000.0f * params.getParam(14, 0.2f)) + min_depth + 1.0f;
+	//float max_depth = (7000.0f * params.getParam(14, 0.2f)) + min_depth + 1.0f;
+    float max_depth = 4000.0f;
 	for (int y = 1; y < height-1; y++) {
-		UINT16 *source_pointer = buffer + width * y;
+		int source_index = width * y;
 		float *dest_pointer = cpu_depth_sensor_buffer_ + width * y;
 		for (int x = 1; x < width-1; x++) {
-			float depth = (float)*source_pointer;
+            int adjusted_depth = 65536;
+			if (buffer[source_index] < background_depth_[source_index] - 100 &&
+                buffer[source_index] > 3) {
+                adjusted_depth = (int)(min_depth + 2.0f);
+            }
+
+            float depth = (float)adjusted_depth;
 			if (depth > max_depth) depth = max_depth;
 			if (depth < min_depth) depth = max_depth;
-			depth = (max_depth - depth) / max_depth;  // Go to range 0..1
+			depth = (max_depth - depth) / (max_depth - min_depth);  // Go to range 0..1
 #if 0
 			float y_to_border = fminf((float)y, (float)(height - y));
 			float x_to_border = fminf((float)x, (float)(width - x));
@@ -607,6 +655,7 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 			float amount = 1.0f;
 #endif
 
+#if 0
 			// Ignore singular pixels
 			int active = 0;
 			if (*(source_pointer - width) > (int)min_depth) active++;
@@ -616,10 +665,14 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 			if (active > 3) {
 				*dest_pointer = depth * amount;
 			} else {
-				*dest_pointer -= 0.003f;
-				if (*dest_pointer < 0) *dest_pointer = 0;
+				//*dest_pointer -= 0.003f;
+				//if (*dest_pointer < 0) *dest_pointer = 0;
+                *dest_pointer = 0.0f;
 			}
-			source_pointer++;
+#else
+            *dest_pointer = depth * amount;
+#endif
+			source_index++;
 			dest_pointer++;
 		}
 	}
@@ -633,14 +686,16 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
 			int index = y * width + x;
-			if (smoothed_depth_sensor_buffer_[cur][index] < cpu_depth_sensor_buffer_[index]) {
+			if (smoothed_depth_sensor_buffer_[cur][index] < cpu_depth_sensor_buffer_[index] ||
+                true) {  // always update!
 				smoothed_depth_sensor_buffer_[cur][index] = cpu_depth_sensor_buffer_[index];
 			}
 		}
 	}
 
 	// Gravitate the depth buffer
-	const float cGravitate = 0.2f * params.getParam(15, 0.5f) * params.getParam(15, 0.5f);
+#if 0
+	const float cGravitate = 0.2f * params.getParam(15, 0.4f) * params.getParam(15, 0.4f);
 	for (int y = 1; y < height - 1; y++) {
 		for (int x = 1; x < width - 1; x++) {
 			int index = y * width + x;
@@ -661,11 +716,13 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 				smoothed_depth_sensor_buffer_[cur][index - width] +
 					smoothed_depth_sensor_buffer_[cur][index + width];
 			surround /= 4.0;
+
+            smoothed_depth_sensor_buffer_[next][index] =
+                surround - cGravitate;
 #endif
-			smoothed_depth_sensor_buffer_[next][index] =
-				surround - cGravitate;
 		}
 	}
+#endif
 
 	// Set interpolated depth buffer to the max where it should be
 	for (int y = 0; y < height; y++) {

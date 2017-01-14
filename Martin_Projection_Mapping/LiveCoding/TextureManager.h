@@ -102,5 +102,7 @@ private: // data
 	float *cpu_depth_sensor_buffer_;
 	float *smoothed_depth_sensor_buffer_[2];
 	int next_smoothed_depth_sensor_buffer_;
+    // The depth information at startup
+    int *background_depth_;
 };
 
