@@ -561,7 +561,7 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
         background_depth_[index] = 65536;
     }
     int num_seen = 0;
-    while (num_seen < 10) {
+    while (num_seen < 30) {
         IDepthFrame *depth_frame_interface = NULL;
         hr = depth_frame_reader_->AcquireLatestFrame(&depth_frame_interface);
         if (FAILED(hr)) {
@@ -595,7 +595,7 @@ int TextureManager::CreateSensorTexture(char *errorString, const char *name) {
 
     // Try to fill nearby errors
     int *bg_copy = new int[nWidth * nHeight];
-    for (int iteration = 0; iteration < 1; iteration++) {
+    for (int iteration = 0; iteration < 5; iteration++) {
         for (int index = 0; index < nWidth * nHeight; index++) {
             bg_copy[index] = background_depth_[index];
         }
@@ -762,8 +762,8 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	next_smoothed_depth_sensor_buffer_ = cur;
 
     // Box filtering of depth buffer
-    const int kFilterWidth = 8;
-    float normalizer = 1.3f / (kFilterWidth * 2 + 1);
+    const int kFilterWidth = 12;
+    float normalizer = 1.4f / (kFilterWidth * 2 + 1);
     
     for (int i = 0; i < 3; i++) {
         // Horizontal

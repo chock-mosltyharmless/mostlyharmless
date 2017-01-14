@@ -97,8 +97,8 @@ const static float defaultParameters[maxNumParameters] =
 {
 	-1.0f, -1.0f,
 	//0.0f, 0.0f,	0.0f, 0.0f, 0.0f,	// 2-6 ~= 1-5
-    0.5f, 0.5f, // x
-    0.5f, 0.5f, // y
+    0.19f, 0.48f, // x2:0.190(24) 3:0.480(61) 4:0.230(29) 5:0.490(63) 
+    0.23f, 0.49f, // y
 	-1.0f,
 	0.0f, 0.0f,						// 8,9 ~= 6,7
 	-1.0f, -1.0f,
@@ -621,7 +621,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WaveFormat.nAvgBytesPerSec=
         WaveFormat.nSamplesPerSec*WaveFormat.nBlockAlign;
     WaveFormat.cbSize=0;
-    int num_samples = WaveFormat.nSamplesPerSec/30;
+    int num_samples = WaveFormat.nSamplesPerSec/20;
     WaveHdr.dwBufferLength =
          num_samples * (WaveFormat.wBitsPerSample/8) * WaveFormat.nChannels;
     WaveHdr.dwBytesRecorded = 0L;
