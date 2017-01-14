@@ -44,6 +44,59 @@ Parameter::~Parameter(void)
 	}
 }
 
+static bool CopyToClipboard(char *strText)
+{
+    bool bRet = true;
+
+    if (strlen(strText) > 0)
+    {
+        HGLOBAL		hGlobalMemory;
+        LPVOID		lpGlobalMemory;
+
+        // allocate global memory
+        hGlobalMemory = GlobalAlloc(GHND, strlen(strText) + 1);
+        if (hGlobalMemory)
+        {
+            // lock block to get a pointer to it
+            lpGlobalMemory = GlobalLock(hGlobalMemory);
+            // copy string to the block
+            lpGlobalMemory = strcpy((char *)lpGlobalMemory, strText);
+
+            // open clipboard for task
+            if (OpenClipboard(0))
+            {
+                EmptyClipboard();
+                // try writing if successful
+                if (!SetClipboardData(CF_TEXT, hGlobalMemory))
+                {
+                    // error writing to clipboard
+                    bRet = false;
+                }
+                CloseClipboard();
+            }
+
+            // free memory
+            //GlobalUnlock(hGlobalMemory);
+        }
+    }
+    return bRet;
+}
+
+void Parameter::SaveToClipboard(void) {
+    static char string[NUM_PARAMETERS*24];
+    char tmpString[24];
+
+    /* Save to clipboard... */
+    string[0] = 0;
+    for (int par = 0; par < NUM_PARAMETERS; par++) {
+        if (changed[par]) {
+            sprintf(tmpString, "%d:%.3f(%d) ", par, value[par], (int)(value[par]*128.0f + 0.49f));
+            strcat(string, tmpString);
+        }
+    }
+    CopyToClipboard(string);
+}
+
 float Parameter::getParam(int index, float defaultValue)
 {
 	if (!changed[index])

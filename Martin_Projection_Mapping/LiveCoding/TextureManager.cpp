@@ -762,8 +762,8 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	next_smoothed_depth_sensor_buffer_ = cur;
 
     // Box filtering of depth buffer
-    const int kFilterWidth = 20;
-    float normalizer = 1.5f / (kFilterWidth * 2 + 1);
+    const int kFilterWidth = 8;
+    float normalizer = 1.3f / (kFilterWidth * 2 + 1);
     
     for (int i = 0; i < 3; i++) {
         // Horizontal
@@ -809,6 +809,16 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
         }
         next = 1 - next;
         cur = 1 - cur;
+    }
+
+    // Clear border
+    for (int x = 0; x < width; x++) {
+        smoothed_depth_sensor_buffer_[cur][x] = 0.0f;
+        smoothed_depth_sensor_buffer_[cur][x + (height - 1)*width] = 0.0f;
+    }
+    for (int y = 0; y < height; y++) {
+        smoothed_depth_sensor_buffer_[cur][y * width] = 0.0f;
+        smoothed_depth_sensor_buffer_[cur][y * width + width - 1] = 0.0f;
     }
 
 	// Send data to GPU

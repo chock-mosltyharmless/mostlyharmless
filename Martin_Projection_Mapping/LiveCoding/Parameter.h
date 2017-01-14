@@ -18,6 +18,7 @@ public:
 	/* In the range 0.0 to 1.0 */
 	float getParam(int index, float defaultValue = 0.0f);
 	static void CALLBACK MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2);
+    void SaveToClipboard(void);
 
 private:
 	float value[NUM_PARAMETERS];

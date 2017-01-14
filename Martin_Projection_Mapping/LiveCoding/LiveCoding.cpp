@@ -96,7 +96,9 @@ const int maxNumParameters = 25;
 const static float defaultParameters[maxNumParameters] = 
 {
 	-1.0f, -1.0f,
-	0.0f, 0.0f,	0.0f, 0.0f, 0.0f,	// 2-6 ~= 1-5
+	//0.0f, 0.0f,	0.0f, 0.0f, 0.0f,	// 2-6 ~= 1-5
+    0.5f, 0.5f, // x
+    0.5f, 0.5f, // y
 	-1.0f,
 	0.0f, 0.0f,						// 8,9 ~= 6,7
 	-1.0f, -1.0f,
@@ -423,8 +425,8 @@ void intro_do(long t)
 	// Those are key-Press indicators. I only act on 0-to-1.
 	for (int i = 0; i < maxNumParameters; i++)
 	{
-		interpolatedParameters[i] = 0.95f * interpolatedParameters[i] +
-									0.05f * params.getParam(i, defaultParameters[i]);
+		interpolatedParameters[i] = 0.0f * interpolatedParameters[i] +
+									1.0f * params.getParam(i, defaultParameters[i]);
 	}
 	// Update key press events.
 	for (int i = 0; i < NUM_KEYS; i++)
@@ -634,7 +636,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		editor.render(t);
 
 		SwapBuffers( info->hDC );
-	}
+	}    
+
+    params.SaveToClipboard();
 
     window_end( info );
 

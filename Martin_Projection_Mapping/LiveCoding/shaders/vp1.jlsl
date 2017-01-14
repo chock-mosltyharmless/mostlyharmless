@@ -13,7 +13,7 @@ vec4 noise3 = vnoise8(vec3(noisepos2*0.2),
 float brightness = vnoise5(ppos.xyx*0.03 +                            
 0.02 * vec3(time, 0., -time), 0.7).x;                                 
 brightness *= brightness;                                             
-brightness -= 0.1;                                                    
+brightness += 0.1;                                                    
 brightness -= ppos.y * 0.5;                                           
                                                                       
 brightness += depth;                                                  
