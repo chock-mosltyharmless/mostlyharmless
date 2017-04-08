@@ -19,6 +19,9 @@
 // Size of a buffer with random numbers
 #define RANDOM_BUFFER_SIZE 65536
 
+// Accumulated volume of the drums
+double accumulated_drum_volume = 0.0;
+
 static float randomBuffer[RANDOM_BUFFER_SIZE];
 static float lowNoise[RANDOM_BUFFER_SIZE];
 // The same as random Buffer, but contains exp(4*(randomBuffer-1))
@@ -71,6 +74,8 @@ static double exp2jo(double f)
 static float floatOutput[MZK_BLOCK_SIZE][2];
 void mzkPlayBlock(short *blockBuffer)
 {
+    float cur_accumulated_drum_volume = 0.0f;
+
 	// clear audio block
 	for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 	{
@@ -94,7 +99,8 @@ void mzkPlayBlock(short *blockBuffer)
         if (speedup > 0.5f) speedup = 0.5f;
         speedup += (float)((last_drum_position + skipped_drum_position) % (kDrumStep*4)) / (kDrumStep*4) / 2;
         float multiplier = 1.0f / speedup;
-        float total_speed = (float)(sampleID) / (1<<22);
+        //float total_speed = (float)(sampleID) / (1<<22);
+        float total_speed = sinf(sampleID * 0.0000005f) * 0.5f;
         if (total_speed > 0.5f) total_speed = 0.5f;
         //total_speed = 0.5f;
         fdrum_position += speedup * total_speed;
@@ -107,6 +113,7 @@ void mzkPlayBlock(short *blockBuffer)
         // Count ones before the first zero
         // I may do this more intelligent by divinding by 2 given some stuffs
         float drum_loudness = 0.0f;
+        float log_drum_loudness = 0.0f;
         if (drum_position != last_drum_position) {
             if (!(drum_position & (2 * kMinDrumStep - 1))) {
                 if (drum_position & (2 * kMinDrumStep)) {
@@ -118,26 +125,34 @@ void mzkPlayBlock(short *blockBuffer)
                                         if (drum_position & (128 * kMinDrumStep)) {
                                             if (drum_position & (256 * kMinDrumStep)) {
                                                 drum_loudness = 1.0f;
+                                                log_drum_loudness = 9.0f;
                                             } else {
                                                 drum_loudness = (0.5f) * multiplier;
+                                                log_drum_loudness = 7.0f + multiplier;
                                             }
                                         } else {
                                             drum_loudness = (0.25f) * multiplier;
+                                            log_drum_loudness = 6.0f + multiplier;
                                         }
                                     } else {
                                         drum_loudness = (0.125f) * multiplier;
+                                        log_drum_loudness = 4.0f + multiplier;
                                     }
                                 } else {
                                     drum_loudness = (0.0625f) * multiplier;
+                                    log_drum_loudness = 2.0f + multiplier;
                                 }
                             } else {
                                 drum_loudness = (0.03125f) * multiplier;
+                                log_drum_loudness = 1.0f + multiplier;
                             }
                         } else {
                             drum_loudness = (0.015625f) * multiplier;
+                            log_drum_loudness = 0.5f + multiplier;
                         }
                     } else {
                         drum_loudness = (0.0078125f) * multiplier;
+                        log_drum_loudness = multiplier;
                     }
                 } else {
                     drum_loudness = (0.00390625f) * multiplier;
@@ -151,6 +166,7 @@ void mzkPlayBlock(short *blockBuffer)
             loudness = drum_loudness;
         }
         //loudness += drum_loudness;
+        cur_accumulated_drum_volume += log_drum_loudness * loudness;
 
         const float kAmplitudeReduction = 1.0f - 0.001f * (total_speed + 0.05f);
         floatOutput[sample][0] = (total_speed + 0.02f) * 32.0f * loudness * lowNoise[sampleID % RANDOM_BUFFER_SIZE];
@@ -164,7 +180,7 @@ void mzkPlayBlock(short *blockBuffer)
         const float kMinBaseFrequency = 200.0f;
         static float base_frequency = kMinBaseFrequency;
         static float base_offset = 0.0f;
-        base_frequency *= 1.000002f;
+        base_frequency *= 1.0000015f;
         if (base_frequency > 2.0f * kMinBaseFrequency) {
             base_frequency -= kMinBaseFrequency;
         }
@@ -182,7 +198,7 @@ void mzkPlayBlock(short *blockBuffer)
             if (overtone_loudness > 0.0f) {
                 overtone_loudness *= overtone_loudness;
                 overtone_loudness *= overtone_loudness;
-                overtone_loudness *= 0.02f;
+                overtone_loudness *= 0.002f;
                 float offset = overtone * base_offset;
                 float overtone_multiplier = 1.0f;
                 if (overtone & 1) overtone_multiplier = half_overtone_amount;
@@ -215,6 +231,8 @@ void mzkPlayBlock(short *blockBuffer)
 		blockBuffer[sample] = ftoi_fast(val);
 #endif
 	}
+
+    accumulated_drum_volume += cur_accumulated_drum_volume;
 
 #ifdef WRITE_MUSIC
     FILE *fid = fopen("music.raw", "ab");
