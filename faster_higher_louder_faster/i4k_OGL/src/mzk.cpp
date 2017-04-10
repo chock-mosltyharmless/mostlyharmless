@@ -100,7 +100,7 @@ void mzkPlayBlock(short *blockBuffer)
         speedup += (float)((last_drum_position + skipped_drum_position) % (kDrumStep*4)) / (kDrumStep*4) / 2;
         float multiplier = 1.0f / speedup;
         //float total_speed = (float)(sampleID) / (1<<22);
-        float total_speed = sinf(sampleID * 0.0000005f) * 0.5f;
+        float total_speed = sinf(sampleID * 0.00000025f + 0.1f) * 0.5f;
         if (total_speed > 0.5f) total_speed = 0.5f;
         //total_speed = 0.5f;
         fdrum_position += speedup * total_speed;

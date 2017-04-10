@@ -42,11 +42,22 @@ static const GLchar *fragmentMainBackground=
  "varying mat4 p;"
  "void main()"
  "{"
-    "float is_center = 0.0f;"
-    "vec2 rot_pos = o.xy * vec2(1.6f, 0.9f);"
-    "rot_pos *= mat2(p[0][1],-p[0][0],p[0][0],p[0][1]);"
-    "is_center = smoothstep(0.053, 0.05, abs(rot_pos.x));"
-    "gl_FragColor = vec4(vec3(is_center), 1.0);"
+    "vec2 rot_pos = o.xy * vec2(1.6, 0.9);"
+    "vec2 rot_pos2 = rot_pos * mat2(p[0][1],-p[0][0],p[0][0],p[0][1]);"
+    "vec2 rot_pos3 = rot_pos * mat2(p[0][1],p[0][0],-p[0][0],p[0][1]);"
+    "rot_pos3 = rot_pos;"
+    "float is_center = smoothstep(0.074, 0.07, abs(rot_pos2.x));"
+    "float noisy = 0.0;"
+    // I have to fade-in topmost stuff somehow...
+    "float zoom_out = fract(0.3 * pow(p[3][3], 1.3));"
+    "const float zoom_step = 0.65;"
+    "float zoom = 9.0 * pow(1.0 / zoom_step, zoom_out);"
+    "for (int overtones = 1; overtones < 16; overtones++) {"
+        "float amount = sin((overtones - zoom_out) / 16.0 * 3.1);"
+        "noisy += texture3D(t, vec3(zoom * rot_pos3, (overtones - zoom_out) * 0.05)).r * amount;"
+        "zoom *= zoom_step;"
+    "}"
+    "gl_FragColor = vec4(vec3(1.0, 1.2, 1.5) * (is_center + noisy), 1.0);"
  "}";
 
 #pragma data_seg(".vertex_main_object")
@@ -227,7 +238,7 @@ void intro_do( long itime )
 
     parameterMatrix[0] = (float)sin(accumulated_drum_volume*0.125);
     parameterMatrix[1] = (float)cos(accumulated_drum_volume*0.125);
-	parameterMatrix[14] = ftime; // time	
+	parameterMatrix[15] = ftime; // time	
 	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen
