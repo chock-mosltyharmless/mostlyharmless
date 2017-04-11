@@ -46,7 +46,7 @@ static const GLchar *fragmentMainBackground=
     "vec2 rot_pos2 = rot_pos * mat2(p[0][1],-p[0][0],p[0][0],p[0][1]);"
     "vec2 rot_pos3 = rot_pos * mat2(p[0][1],p[0][0],-p[0][0],p[0][1]);"
     "rot_pos3 = rot_pos;"
-    "float is_center = smoothstep(0.074, 0.07, abs(rot_pos2.x));"
+    "float is_center = smoothstep(0.074, 0.07, abs(rot_pos2.x)) * 2.0f;"
     "float noisy = 0.0;"
     // I have to fade-in topmost stuff somehow...
     "float zoom_out = fract(0.3 * pow(p[3][3], 1.3));"
@@ -57,7 +57,10 @@ static const GLchar *fragmentMainBackground=
         "noisy += texture3D(t, vec3(zoom * rot_pos3, (overtones - zoom_out) * 0.05)).r * amount;"
         "zoom *= zoom_step;"
     "}"
-    "gl_FragColor = vec4(vec3(1.0, 1.2, 1.5) * (is_center + noisy), 1.0);"
+    //"gl_FragColor = vec4(vec3(1.0, 1.2, 1.5) * (is_center + noisy), 1.0);"
+    "vec3 color = mix(vec3(1.0, 1.0, 1.0), vec3(0.47, 0.25, 0.15), smoothstep(2.0, 1.0, is_center + noisy));"
+    "color = mix(color, vec3(0.1, 0.1, 0.07), smoothstep(1.0, 0.0, is_center + noisy));"
+    "gl_FragColor = vec4(color, 1.0);"
  "}";
 
 #pragma data_seg(".vertex_main_object")
@@ -110,7 +113,7 @@ static float parameterMatrix[16];
 static GLuint offscreenTexture;
 // Name of the 32x32x32 noise texture
 #define FLOAT_TEXTURE
-#define NOISE_TEXTURE_SIZE 16 // try smaller?
+#define NOISE_TEXTURE_SIZE 32 // try smaller?
 static GLuint noiseTexture;
 #ifdef FLOAT_TEXTURE
 static float noiseData[NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * NOISE_TEXTURE_SIZE * 4];

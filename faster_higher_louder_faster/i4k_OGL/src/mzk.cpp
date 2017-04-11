@@ -177,7 +177,7 @@ void mzkPlayBlock(short *blockBuffer)
         
         // And the sin:
         //const float kOvertoneMultiplier = 0.7f;
-        const float kMinBaseFrequency = 200.0f;
+        float kMinBaseFrequency = 800.0f * (total_speed + 0.1f);
         static float base_frequency = kMinBaseFrequency;
         static float base_offset = 0.0f;
         base_frequency *= 1.0000015f;
@@ -192,13 +192,14 @@ void mzkPlayBlock(short *blockBuffer)
         if (base_offset > PI * 2.0f) base_offset -= 2.0f * PI;
         //float overtone_loudness = 0.02f;
         float total = 0.0f;
+        const float max_frequency = (4.0f * total_speed * total_speed) * 16000.0f + 2000.0f;
         for (int overtone = 1; overtone < 64; overtone++) {
             float frequency = overtone * base_frequency;
-            float overtone_loudness = cosf(frequency / 16000.0f * PI);
-            if (overtone_loudness > 0.0f) {
+            float overtone_loudness = cosf(frequency / max_frequency * PI * 0.5f);
+            if (frequency < max_frequency) {
                 overtone_loudness *= overtone_loudness;
-                overtone_loudness *= overtone_loudness;
-                overtone_loudness *= 0.002f;
+                overtone_loudness *= overtone_loudness * (total_speed + 0.2f);
+                overtone_loudness *= 0.06f;
                 float offset = overtone * base_offset;
                 float overtone_multiplier = 1.0f;
                 if (overtone & 1) overtone_multiplier = half_overtone_amount;
