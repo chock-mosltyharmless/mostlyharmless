@@ -21,6 +21,7 @@
 
 // Accumulated volume of the drums
 double accumulated_drum_volume = 0.0;
+bool has_ended = false;
 
 static float randomBuffer[RANDOM_BUFFER_SIZE];
 static float lowNoise[RANDOM_BUFFER_SIZE];
@@ -70,6 +71,14 @@ static double exp2jo(double f)
 	return f;
 }
 
+static int startSampleID = 0;
+static float fdrum_position = 0;
+static float last_loudness = 1.0f;
+static int last_drum_position = 0;
+static int skipped_drum_position = 0;
+static float base_frequency = 80.0f;
+static float base_offset = 0.0f;
+
 #pragma code_seg(".mzkPlayBlock")
 static float floatOutput[MZK_BLOCK_SIZE][2];
 void mzkPlayBlock(short *blockBuffer)
@@ -83,13 +92,8 @@ void mzkPlayBlock(short *blockBuffer)
 		floatOutput[0][sample] = 0;
 	}
 
-    static int startSampleID = 0;
-    static float fdrum_position = 0;
     int sampleID = startSampleID;
-    static float last_loudness = 1.0f;
     float loudness = last_loudness;
-    static int last_drum_position = 0;
-    static int skipped_drum_position = 0;
 
     for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++) {
         const int kMinDrumStep = 64;
@@ -102,6 +106,7 @@ void mzkPlayBlock(short *blockBuffer)
         //float total_speed = (float)(sampleID) / (1<<22);
         float total_speed = sinf(sampleID * 0.00000025f + 0.1f) * 0.5f;
         if (total_speed > 0.5f) total_speed = 0.5f;
+
         //total_speed = 0.5f;
         fdrum_position += speedup * total_speed;
         if (fdrum_position > kDrumStep) {
@@ -109,7 +114,8 @@ void mzkPlayBlock(short *blockBuffer)
             skipped_drum_position += kDrumStep;
         }
 
-        int drum_position = (int)(fdrum_position);
+        int drum_position = ftoi_fast(fdrum_position);
+
         // Count ones before the first zero
         // I may do this more intelligent by divinding by 2 given some stuffs
         float drum_loudness = 0.0f;
@@ -162,9 +168,18 @@ void mzkPlayBlock(short *blockBuffer)
             }
         }
         last_drum_position = drum_position;
+
+        if (sampleID >= MZK_NUMSAMPLES - 100000) {
+            total_speed = 0.0f;
+            if (sampleID == MZK_NUMSAMPLES - 100000) drum_loudness = 20.0f;
+            else drum_loudness = 0.0f;
+            has_ended = true;
+        }
+
         if (drum_loudness > loudness) {
             loudness = drum_loudness;
         }
+
         //loudness += drum_loudness;
         cur_accumulated_drum_volume += log_drum_loudness * loudness;
 
@@ -177,9 +192,7 @@ void mzkPlayBlock(short *blockBuffer)
         
         // And the sin:
         //const float kOvertoneMultiplier = 0.7f;
-        float kMinBaseFrequency = 800.0f * (total_speed + 0.1f);
-        static float base_frequency = kMinBaseFrequency;
-        static float base_offset = 0.0f;
+        float kMinBaseFrequency = 800.0f * (total_speed + 0.01f);
         base_frequency *= 1.0000015f;
         if (base_frequency > 2.0f * kMinBaseFrequency) {
             base_frequency -= kMinBaseFrequency;
@@ -192,13 +205,13 @@ void mzkPlayBlock(short *blockBuffer)
         if (base_offset > PI * 2.0f) base_offset -= 2.0f * PI;
         //float overtone_loudness = 0.02f;
         float total = 0.0f;
-        const float max_frequency = (4.0f * total_speed * total_speed) * 16000.0f + 2000.0f;
+        const float max_frequency = (4.0f * total_speed * total_speed + 0.01f) * 16000.0f + 2000.0f;
         for (int overtone = 1; overtone < 64; overtone++) {
             float frequency = overtone * base_frequency;
             float overtone_loudness = cosf(frequency / max_frequency * PI * 0.5f);
             if (frequency < max_frequency) {
                 overtone_loudness *= overtone_loudness;
-                overtone_loudness *= overtone_loudness * (total_speed + 0.2f);
+                overtone_loudness *= overtone_loudness * (total_speed);
                 overtone_loudness *= 0.06f;
                 float offset = overtone * base_offset;
                 float overtone_multiplier = 1.0f;

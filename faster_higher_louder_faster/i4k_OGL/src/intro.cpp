@@ -30,6 +30,7 @@ inline int ftoi_fast(float f)
 }
 
 extern double accumulated_drum_volume;
+extern bool has_ended;
 
 // -------------------------------------------------------------------
 //                          SHADER CODE:
@@ -46,21 +47,25 @@ static const GLchar *fragmentMainBackground=
     "vec2 rot_pos2 = rot_pos * mat2(p[0][1],-p[0][0],p[0][0],p[0][1]);"
     "vec2 rot_pos3 = rot_pos * mat2(p[0][1],p[0][0],-p[0][0],p[0][1]);"
     "rot_pos3 = rot_pos;"
-    "float is_center = smoothstep(0.074, 0.07, abs(rot_pos2.x)) * 2.0f;"
+    "float is_center = smoothstep(p[0][2]+ 0.04, p[0][2], abs(rot_pos2.x)) * 2.0;"
     "float noisy = 0.0;"
     // I have to fade-in topmost stuff somehow...
-    "float zoom_out = fract(0.3 * pow(p[3][3], 1.3));"
+    "float new_time = p[3][3] - 0.5;"
+    "if (p[3][3] < 1.0) {new_time = p[3][3] * p[3][3] * 0.5;}"
+    "float zoom_out = fract(pow(0.25 * new_time, 1.5));"
     "const float zoom_step = 0.65;"
     "float zoom = 9.0 * pow(1.0 / zoom_step, zoom_out);"
     "for (int overtones = 1; overtones < 16; overtones++) {"
-        "float amount = sin((overtones - zoom_out) / 16.0 * 3.1);"
-        "noisy += texture3D(t, vec3(zoom * rot_pos3, (overtones - zoom_out) * 0.05)).r * amount;"
+        "float amount = sin((float(overtones) - zoom_out) / 16.0 * 3.1);"
+        "noisy += texture3D(t, vec3(zoom * rot_pos3, (float(overtones) - zoom_out) * 0.05)).r * amount;"
         "zoom *= zoom_step;"
     "}"
     //"gl_FragColor = vec4(vec3(1.0, 1.2, 1.5) * (is_center + noisy), 1.0);"
     "vec3 color = mix(vec3(1.0, 1.0, 1.0), vec3(0.47, 0.25, 0.15), smoothstep(2.0, 1.0, is_center + noisy));"
-    "color = mix(color, vec3(0.1, 0.1, 0.07), smoothstep(1.0, 0.0, is_center + noisy));"
-    "gl_FragColor = vec4(color, 1.0);"
+    "color = mix(color, vec3(0.22, 0.20, 0.05), smoothstep(0.8, 0.0, is_center + noisy));"
+    "color = mix(color, vec3(0., 0., 0.0), smoothstep(0.6, -0.6, is_center + noisy));"
+    "float brightness = 1.0 - p[3][3] * 0.005;"
+    "gl_FragColor = vec4(color * brightness, 1.0);"
  "}";
 
 #pragma data_seg(".vertex_main_object")
@@ -241,7 +246,12 @@ void intro_do( long itime )
 
     parameterMatrix[0] = (float)sin(accumulated_drum_volume*0.125);
     parameterMatrix[1] = (float)cos(accumulated_drum_volume*0.125);
+    parameterMatrix[2] = 0.07f;
 	parameterMatrix[15] = ftime; // time	
+    if (has_ended) {
+        parameterMatrix[2] = 2.0f;
+        parameterMatrix[15] = ftime * 0.05f;
+    }
 	glLoadMatrixf(parameterMatrix);
 
 	// draw offscreen
