@@ -6,8 +6,8 @@
 
 // This header contains all the configuration macros that are
 // used to set the resolution and so on.
-#define XRES 2048
-#define YRES 768
+#define XRES 800
+#define YRES (XRES * 3 / 4)
 
 // The resolution of the background stuff
 //#define X_OFFSCREEN 512

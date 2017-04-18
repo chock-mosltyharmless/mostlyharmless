@@ -53,13 +53,32 @@ static const PIXELFORMATDESCRIPTOR pfd =
     PFD_MAIN_PLANE,
     0, 0, 0, 0
 };
+const float fAttributes[] = { 0,0 };
+// These Attributes Are The Bits We Want To Test For In Our Sample
+// Everything Is Pretty Standard, The Only One We Want To
+// Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
+// These Two Are Going To Do The Main Testing For Whether Or Not
+// We Support Multisampling On This Hardware
+const int iAttributes[] = { WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
+    WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
+    WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
+    WGL_COLOR_BITS_ARB,24,
+    WGL_ALPHA_BITS_ARB,8,
+    WGL_DEPTH_BITS_ARB,0,
+    WGL_STENCIL_BITS_ARB,0,
+    WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
+    WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
+    WGL_SAMPLES_ARB, 4,                        // Check For 4x Multisampling
+    0,0 };
 // main window stuff
-HDC mainDC;
-HGLRC mainRC;
-HWND mainWnd;
-WNDCLASS mainWC;
-HINSTANCE mainInstance;
-const char *className = "hotparticle";
+HDC mainDC, fancyDC;
+HGLRC mainRC, fancyRC;
+HWND mainWnd, fancyWnd;
+WNDCLASS instanceWC;
+const char *window_class_name = "aov_main";
+HINSTANCE instance;
+int arbMultisampleFormat = 0;
+bool arbMultisampleSupported = false;
 
 float fCurTime = 0.0f;
 
@@ -119,37 +138,26 @@ int Load(const char *filename, char *error_string) {
     return 0;
 }
 
-static void window_end()
+static void window_end(HWND *wnd, HGLRC *rc, HDC *dc)
 {
-    if (mainRC) {
+    if (*rc) {
         wglMakeCurrent(0, 0);
-        wglDeleteContext(mainRC);
+        wglDeleteContext(*rc);
     }
-
-    if (mainDC) ReleaseDC(mainWnd, mainDC);
-    if (mainWnd) DestroyWindow(mainWnd);
-
-    UnregisterClass(className, mainWC.hInstance);
+    if (*dc) ReleaseDC(*wnd, *dc);
+    if (*wnd) DestroyWindow(*wnd);
 
 #ifdef FULLSCREEN
     ChangeDisplaySettings(0, 0);
 #endif
 }
 
-static int window_init(bool use_custom_pixel_format = false, int custom_pixel_format = 0)
+static int window_init(bool use_custom_pixel_format, int custom_pixel_format,
+                       HWND *wnd, HGLRC *rc, HDC *dc)
 {
     unsigned int	PixelFormat;
     DWORD			dwExStyle, dwStyle;
     RECT			rec;
-
-    ZeroMemory(&mainWC, sizeof(WNDCLASS));
-    mainWC.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-    mainWC.lpfnWndProc = WindowProc;
-    mainWC.hInstance = mainInstance;
-    mainWC.lpszClassName = className;
-
-    if (!RegisterClass(&mainWC))
-        return(0);
 
 #ifdef FULLSCREEN
     DEVMODE			dmScreenSettings;
@@ -172,122 +180,84 @@ static int window_init(bool use_custom_pixel_format = false, int custom_pixel_fo
     rec.right = XRES;
     rec.bottom = YRES;
     AdjustWindowRect(&rec, dwStyle, 0);
-#if 0
-    windowRect.left = 0;
-    windowRect.top = 0;
-    windowRect.right = XRES;
-    windowRect.bottom = YRES;
-#endif
 
-    mainWnd = CreateWindowEx(dwExStyle, mainWC.lpszClassName, "animate over video", dwStyle,
+    *wnd = CreateWindowEx(dwExStyle, instanceWC.lpszClassName, "animate over video", dwStyle,
         (GetSystemMetrics(SM_CXSCREEN) - rec.right + rec.left) >> 1,
         (GetSystemMetrics(SM_CYSCREEN) - rec.bottom + rec.top) >> 1,
-        rec.right - rec.left, rec.bottom - rec.top, 0, 0, mainInstance, 0);
-    if (!mainWnd)
-        return(0);
+        rec.right - rec.left, rec.bottom - rec.top, 0, 0, instance, 0);
+    if (!(*wnd)) return(0);
 
-    if (!(mainDC = GetDC(mainWnd)))
-        return(0);
+    if (!(*dc = GetDC(*wnd))) return(0);
 
     if (!use_custom_pixel_format) {
-        if (!(PixelFormat = ChoosePixelFormat(mainDC, &pfd)))
-            return(0);
-
-        if (!SetPixelFormat(mainDC, PixelFormat, &pfd))
-            return(0);
-    }
-    else {
-        if (!SetPixelFormat(mainDC, custom_pixel_format, &pfd))
-            return(0);
+        if (!(PixelFormat = ChoosePixelFormat(*dc, &pfd))) return(0);
+        if (!SetPixelFormat(*dc, PixelFormat, &pfd)) return(0);
+    } else {
+        if (!SetPixelFormat(*dc, custom_pixel_format, &pfd)) return(0);
     }
 
-    if (!(mainRC = wglCreateContext(mainDC)))
-        return(0);
+    if (!(*rc = wglCreateContext(*dc))) return(0);
 
-    if (!wglMakeCurrent(mainDC, mainRC))
-        return(0);
+    if (!wglMakeCurrent(*dc, *rc)) return(0);
 
     return(1);
 }
 
-void glInit()
+void glInit(HWND *wnd, HGLRC *rc, HDC *dc)
 {
-    mainDC = GetDC(mainWnd);
-
+    wglMakeCurrent(*dc, *rc);
+    
     // NEHE MULTISAMPLE
-    bool    arbMultisampleSupported = false;
-    int arbMultisampleFormat = 0;
+    arbMultisampleSupported = false;
+    arbMultisampleFormat = 0;
     // Get Our Pixel Format
     PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
         (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-    HDC hDC = mainDC;
+    HDC hDC = *dc;
     int pixelFormat;
     int valid;
     UINT numFormats;
-    float fAttributes[] = { 0,0 };
-    // These Attributes Are The Bits We Want To Test For In Our Sample
-    // Everything Is Pretty Standard, The Only One We Want To
-    // Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
-    // These Two Are Going To Do The Main Testing For Whether Or Not
-    // We Support Multisampling On This Hardware
-    int iAttributes[] = { WGL_DRAW_TO_WINDOW_ARB,GL_TRUE,
-        WGL_SUPPORT_OPENGL_ARB,GL_TRUE,
-        WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
-        WGL_COLOR_BITS_ARB,24,
-        WGL_ALPHA_BITS_ARB,8,
-        WGL_DEPTH_BITS_ARB,0,
-        WGL_STENCIL_BITS_ARB,0,
-        WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
-        WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
-        WGL_SAMPLES_ARB, 4,                        // Check For 4x Multisampling
-        0,0 };
     // First We Check To See If We Can Get A Pixel Format For 4 Samples
     valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
     // if We Returned True, And Our Format Count Is Greater Than 1
     if (valid && numFormats >= 1) {
         arbMultisampleSupported = true;
         arbMultisampleFormat = pixelFormat;
-    }
-    else {
-        // Our Pixel Format With 4 Samples Failed, Test For 2 Samples
-        iAttributes[19] = 2;
-        valid = wglChoosePixelFormatARB(hDC, iAttributes, fAttributes, 1, &pixelFormat, &numFormats);
-        if (valid && numFormats >= 1) {
-            arbMultisampleSupported = true;
-            arbMultisampleFormat = pixelFormat;
-        }
+    } else {
+        arbMultisampleSupported = true;
+        arbMultisampleFormat = 0;
     }
     if (arbMultisampleSupported) {
         //SetPixelFormat(winInfo->hDC, arbMultisampleFormat, &pfd);
         //wglMakeCurrent(winInfo->hDC, winInfo->hRC);
         //DestroyWindow(winInfo->hWnd);
-        window_end();
+        window_end(wnd, rc, dc);
         // Remove all messages...
         MSG msg;
-        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE));
-        window_init(true, arbMultisampleFormat);
+        while (PeekMessage(&msg, *wnd, 0, 0, PM_REMOVE));
+        window_init(true, arbMultisampleFormat, wnd, rc, dc);
     }
     glEnable(GL_MULTISAMPLE_ARB);
 
 	// Create and initialize everything needed for texture Management
 	char errorString[MAX_ERROR_LENGTH+1];
-	if (textureManager.init(errorString, mainDC))
-	{
-		MessageBox(mainWnd, errorString, "Texture Manager Load", MB_OK);
-		return;
-	}
+    if (*dc == mainDC) {
+	    if (textureManager.init(errorString, *dc)) {
+		    MessageBox(mainWnd, errorString, "Texture Manager Load", MB_OK);
+		    return;
+	    }
 
-    text_display_.init(&textureManager, errorString);
+        text_display_.init(&textureManager, errorString);
+    }
 
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
 }
 
-void glUnInit()
-{
-	wglDeleteContext(mainRC);
-	ReleaseDC(mainWnd, mainDC);
+void glUnInit(HWND *wnd, HGLRC *rc, HDC *dc) {
+	wglDeleteContext(*rc);
+	ReleaseDC(*wnd, *dc);
 }
 
 void DrawQuadColor(float startX, float endX, float startY, float endY,
@@ -327,67 +297,52 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
     MSG msg;
 	msg.message = WM_CREATE;
 
-    mainInstance = hInstance;
+    instance = hInstance;
+    ZeroMemory(&instanceWC, sizeof(WNDCLASS));
+    instanceWC.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+    instanceWC.lpfnWndProc = WindowProc;
+    instanceWC.hInstance = instance;
+    instanceWC.lpszClassName = window_class_name;
+    if (!RegisterClass(&instanceWC)) return(0);
 
-#if 0
-    mainWC.style = CS_HREDRAW|CS_VREDRAW;
-    mainWC.lpfnWndProc = WindowProc;
-    mainWC.cbClsExtra = 0;
-    mainWC.cbWndExtra = 0;
-    mainWC.hInstance = hInstance;
-    mainWC.hIcon = LoadIcon(GetModuleHandle(NULL), IDI_APPLICATION);
-    mainWC.hCursor = LoadCursor (NULL, IDC_ARROW);
-    mainWC.hbrBackground = (HBRUSH) (COLOR_WINDOW+1);
-    mainWC.lpszMenuName = NULL;
-    mainWC.lpszClassName = className;
-
-    RegisterClass (&mainWC);
-
-	// Create the window
-#ifdef FULLSCREEN
-    mainWnd = CreateWindow(mainWC.lpszClassName,"hot particle",WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,hInstance,0);
-#else
-	mainWnd = CreateWindow(mainWC.lpszClassName,"hot particle",WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|WS_MAXIMIZEBOX,CW_USEDEFAULT,CW_USEDEFAULT,XRES,YRES,0,0,hInstance,0);
-#endif
-
-#else
-    if (!window_init()) {
-        window_end();
-        MessageBox(0, "window_init()!", "error", MB_OK | MB_ICONEXCLAMATION);
+    if (!window_init(false, 0, &mainWnd, &mainRC, &mainDC)) {
+        window_end(&mainWnd, &mainRC, &mainDC);
+        MessageBox(0, "window_init(main)!", "error", MB_OK | MB_ICONEXCLAMATION);
         return 0;
     }
-#endif
 	
 	RECT windowRect;
 	GetClientRect(mainWnd, &windowRect);
 	X_OFFSCREEN = windowRect.right - windowRect.left;
 	Y_OFFSCREEN = windowRect.bottom - windowRect.top;
 
-	glInit();
+	glInit(&mainWnd, &mainRC, &mainDC);
+
+    if (!window_init(arbMultisampleSupported, arbMultisampleFormat, &fancyWnd, &fancyRC, &fancyDC)) {
+        window_end(&fancyWnd, &fancyRC, &fancyDC);
+        MessageBox(0, "window_init(main)!", "error", MB_OK | MB_ICONEXCLAMATION);
+        return 0;
+    }
 
     // Initialize first frame
     frames_.push_back(Frame());
 
-    ShowWindow(mainWnd,SW_SHOW);
+    ShowWindow(mainWnd, SW_SHOW);
     UpdateWindow(mainWnd);
- 
+    ShowWindow(fancyWnd, SW_SHOW);
+    UpdateWindow(fancyWnd);
+
 	int startTime = timeGetTime();
 	long lastTime = 0;
 
 	// start music playback
 	GetAsyncKeyState(VK_ESCAPE);
 
-    const float kTransformationMatrixLeft[4][4] = {
-        {0.5f, 0.0f, 0.0f, 0.0f},
+    const float kTransformationMatrix[4][4] = {
+        {1.0f, 0.0f, 0.0f, 0.0f},
         {0.0f, 1.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, 1.0f, 0.0f},
-        {-0.5f, 0.0f, 0.0f, 1.0f},
-    };
-    const float kTransformationMatrixRight[4][4] = {
-        { 0.5f, 0.0f, 0.0f, 0.0f },
-        { 0.0f, 1.0f, 0.0f, 0.0f },
-        { 0.0f, 0.0f, 1.0f, 0.0f },
-        { +0.5f, 0.0f, 0.0f, 1.0f },
+        {0.0f, 0.0f, 0.0f, 1.0f},
     };
 
 	do
@@ -409,7 +364,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		float fDeltaTime = (float) deltaTime * 0.001f;
 		lastTime = curTime;
 
-		// render
+		// render main window
 		wglMakeCurrent(mainDC, mainRC);
 		
 		// Set the stuff to render to "rendertarget"
@@ -424,11 +379,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         glMatrixMode(GL_MODELVIEW);
         float transformation_matrix[4][4];
         for (int i = 0; i < 4 * 4; i++) {
-            transformation_matrix[0][i] = kTransformationMatrixLeft[0][i];
+            transformation_matrix[0][i] = kTransformationMatrix[0][i];
         }
         transformation_matrix[0][0] *= zoom_amount_;
         transformation_matrix[1][1] *= zoom_amount_;
-        transformation_matrix[3][0] += 0.5f * zoom_scroll_[0];
+        transformation_matrix[3][0] += zoom_scroll_[0];
         transformation_matrix[3][1] += zoom_scroll_[1];
         glLoadMatrixf(transformation_matrix[0]);
         glMatrixMode(GL_PROJECTION);
@@ -467,23 +422,22 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         // Load unzoomed transformation matrix for frame number
         glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(kTransformationMatrixLeft[0]);
+        glLoadMatrixf(kTransformationMatrix[0]);
         // Show the frame number
         char frame_number_text[1024];
         sprintf_s(frame_number_text, sizeof(frame_number_text), "%d", current_frame_);
         text_display_.ShowText(0.0f, 0.0f, frame_number_text);
 
+        // swap buffers
+        SwapBuffers(mainDC);
+
         // Draw the right frame without the video
+        wglMakeCurrent(fancyDC, fancyRC);
+        glClearColor(0.2f, 0.1f, 0.05f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
         glMatrixMode(GL_MODELVIEW);
-        glLoadMatrixf(kTransformationMatrixRight[0]);
+        glLoadMatrixf(kTransformationMatrix[0]);
         glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        if (textureManager.getTextureID("black.png", &texID, errorString) < 0) {
-            MessageBox(mainWnd, errorString, "Texture manager get texture ID", MB_OK);
-            return -1;
-        }
-        glBindTexture(GL_TEXTURE_2D, texID);
-        DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 1.0f);
         return_value = frames_[current_frame_].DrawFancy(&textureManager, errorString);
         if (return_value < 0) {
             MessageBox(mainWnd, errorString, "Could not fancy draw frame", MB_OK);
@@ -555,7 +509,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             }
 #else
             float (*gravity)[2] = new float[X_OFFSCREEN / 2 * Y_OFFSCREEN][2];
-            const int radius = 80;
+            const int radius = 30;
             for (int i = 0; i < X_OFFSCREEN / 2 * Y_OFFSCREEN; i++) {
                 gravity[i][0] = 0.0f;
                 gravity[i][1] = 0.0f;
@@ -572,6 +526,12 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                             distance = sqrtf(distance);
                             distance += 1.0f;  // strange normalization for inside pixel
                             float adjust = 1.0f / (distance * distance * distance);
+                            // Go down to 0 near radius
+                            if (distance > radius - 4) {
+                                float reduction = (radius - distance) / 4.0f;
+                                if (reduction < 0) reduction = 0;
+                                adjust *= reduction;
+                            }
                             float amount_x = dx * adjust;
                             float amount_y = dy * adjust;
                             float weight = pixel_intensity[i];
@@ -613,14 +573,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
             delete[] pixels;
         }
 
-		// swap buffers
-		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
-
+        // swap buffers
+        SwapBuffers(fancyDC);
 		//Sleep(5);
     //} while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE));
     } while (msg.message != WM_QUIT);
 
-	glUnInit();
+	glUnInit(&mainWnd, &mainRC, &mainDC);
+    glUnInit(&fancyWnd, &fancyRC, &fancyDC);
+    UnregisterClass(window_class_name, instance);
 	
     return msg.wParam;
 }
@@ -633,7 +594,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
     int y = GET_Y_LPARAM(lParam);
 
     RECT windowRect;
-    GetClientRect(mainWnd, &windowRect);
+    GetClientRect(hwnd, &windowRect);
     float width = (float)(windowRect.right - windowRect.left);
     float height = (float)(windowRect.bottom - windowRect.top);
     float xp = 2.0f * float(x) / width * 2.0f - 1.0f;
@@ -721,19 +682,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         case 's':
         case 'S':
             if (Save("savefile.frames", error_string, false) < 0) {
-                MessageBox(mainWnd, error_string, "Save", MB_OK);
+                MessageBox(hwnd, error_string, "Save", MB_OK);
             }
             break;
         case 'e':
         case 'E':
             if (Save("export.frames", error_string, true) < 0) {
-                MessageBox(mainWnd, error_string, "Export", MB_OK);
+                MessageBox(hwnd, error_string, "Export", MB_OK);
             }
             break;
         case'l':
         case'L':
             if (Load("savefile.frames", error_string) < 0) {
-                MessageBox(mainWnd, error_string, "Load", MB_OK);
+                MessageBox(hwnd, error_string, "Load", MB_OK);
             }
             break;
         
