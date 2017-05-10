@@ -655,7 +655,7 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
 	// Transform depth buffer to 32-bit float with range 0..1
 	float min_depth = 3.0f; // always?
 	//float max_depth = (7000.0f * params.getParam(14, 0.2f)) + min_depth + 1.0f;
-    float max_depth = 4000.0f;
+    float max_depth = 6000.0f;
 	for (int y = 1; y < height-1; y++) {
 		int source_index = width * y;
 		float *dest_pointer = cpu_depth_sensor_buffer_ + width * y;
@@ -665,37 +665,15 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
                 buffer[source_index] > 3) {
                 adjusted_depth = (int)(min_depth + 2.0f);
             }
+            //adjusted_depth = buffer[source_index];
 
             float depth = (float)adjusted_depth;
 			if (depth > max_depth) depth = max_depth;
 			if (depth < min_depth) depth = max_depth;
 			depth = (max_depth - depth) / (max_depth - min_depth);  // Go to range 0..1
-#if 0
-			float y_to_border = fminf((float)y, (float)(height - y));
-			float x_to_border = fminf((float)x, (float)(width - x));
-			float distance_to_border = fminf(x_to_border, y_to_border);
-			float amount = fminf(distance_to_border / 64.0f, 1.0f);
-#else
 			float amount = 1.0f;
-#endif
 
-#if 0
-			// Ignore singular pixels
-			int active = 0;
-			if (*(source_pointer - width) > (int)min_depth) active++;
-			if (*(source_pointer + width) > (int)min_depth) active++;
-			if (*(source_pointer + 1) > (int)min_depth) active++;
-			if (*(source_pointer - 1) > (int)min_depth) active++;
-			if (active > 3) {
-				*dest_pointer = depth * amount;
-			} else {
-				//*dest_pointer -= 0.003f;
-				//if (*dest_pointer < 0) *dest_pointer = 0;
-                *dest_pointer = 0.0f;
-			}
-#else
             *dest_pointer = depth * amount;
-#endif
 			source_index++;
 			dest_pointer++;
 		}
@@ -715,37 +693,6 @@ int TextureManager::UpdateSensorTexture(char *error_string, GLuint texture_index
     		smoothed_depth_sensor_buffer_[cur][index] = cpu_depth_sensor_buffer_[index];
 		}
 	}
-
-	// Gravitate the depth buffer
-#if 0
-	const float cGravitate = 0.2f * params.getParam(15, 0.4f) * params.getParam(15, 0.4f);
-	for (int y = 1; y < height - 1; y++) {
-		for (int x = 1; x < width - 1; x++) {
-			int index = y * width + x;
-#if 1
-			float surround = fmaxf(fmaxf(smoothed_depth_sensor_buffer_[cur][index - 1],
-					  smoothed_depth_sensor_buffer_[cur][index + 1]),
-				fmaxf(smoothed_depth_sensor_buffer_[cur][index - width],
-				      smoothed_depth_sensor_buffer_[cur][index + width]));
-			surround += smoothed_depth_sensor_buffer_[cur][index - 1] +
-				smoothed_depth_sensor_buffer_[cur][index + 1] +
-				smoothed_depth_sensor_buffer_[cur][index - width] +
-				smoothed_depth_sensor_buffer_[cur][index + width];
-			surround /= 5.0;
-			
-#else
-			float surround = smoothed_depth_sensor_buffer_[cur][index - 1] +
-				smoothed_depth_sensor_buffer_[cur][index + 1] +
-				smoothed_depth_sensor_buffer_[cur][index - width] +
-					smoothed_depth_sensor_buffer_[cur][index + width];
-			surround /= 4.0;
-
-            smoothed_depth_sensor_buffer_[next][index] =
-                surround - cGravitate;
-#endif
-		}
-	}
-#endif
 
 	// Set interpolated depth buffer to the max where it should be
 	for (int y = 0; y < height; y++) {
