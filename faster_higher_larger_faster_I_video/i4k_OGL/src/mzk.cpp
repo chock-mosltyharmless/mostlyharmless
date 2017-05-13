@@ -30,6 +30,11 @@ static float expRandomBuffer[RANDOM_BUFFER_SIZE];
 
 static unsigned long seed;
 
+#pragma code_seg(".rand")
+void srand(unsigned int new_seed) {
+    seed = new_seed;
+}
+
 // create random value between -65534 and 65534?
 #pragma code_seg(".rand")
 int rand()

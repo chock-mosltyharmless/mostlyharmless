@@ -17,7 +17,7 @@
 #define OFFSCREEN_HEIGHT 450
 
 // Use midi to check parameter values
-//#define EDIT_PARAMETERS
+#define EDIT_PARAMETERS
 #define EFFECT_START_TIME 0.0f
 #ifndef EDIT_PARAMETERS
 #define USEDSOUND
