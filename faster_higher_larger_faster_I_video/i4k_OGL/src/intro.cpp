@@ -14,6 +14,7 @@
 #include "config.h"
 #include "intro.h"
 #include "mzk.h"
+#include "Parameter.h"
 
 float frand();
 int rand();
@@ -342,6 +343,20 @@ void DrawQuad(float transform[2][3], float red, float green, float blue, float a
     glEnd();
 }
 
+// I am missing tilt...
+void DrawFunction(float rotation, float width, float height, float x, float y,
+                  float red, float green, float blue, float alpha, float zoom) {
+    rotation *= 3.1416f * 2.0f;
+    float transform[2][3];
+    transform[0][0] = (float)cos(rotation) * width * zoom;
+    transform[0][1] = -(float)sin(rotation) * height * 16.0f / 9.0f * zoom;
+    transform[1][0] = (float)sin(rotation) * width * zoom;
+    transform[1][1] = (float)cos(rotation) * height * 16.0f / 9.0f * zoom;
+    transform[0][2] = x * zoom;
+    transform[1][2] = y * 16.0f / 9.0f * zoom;
+    DrawQuad(transform, red, green, blue, alpha);
+}
+
 #pragma code_seg(".intro_do")
 void intro_do( long itime )
 {
@@ -401,7 +416,7 @@ void intro_do( long itime )
     int last_offscreen_id = -1;
     glUseProgram(shaderProgram);
     for (int pass = 0; pass < num_passes; pass++) {
-        srand(itime >> 6);
+        srand(1);
         int offscreen_id = ((num_passes - pass) >> 2) - 2;  // So that last pass is on offscreen_id;
         if (offscreen_id >= NUM_OFFSCREEN_TEXTURES) offscreen_id = NUM_OFFSCREEN_TEXTURES - 1;
         if (offscreen_id < 0) offscreen_id = 0;
@@ -427,7 +442,8 @@ void intro_do( long itime )
 
         // Draw one iteration of the IFS
         float zoom = 1.0f;
-        if (pass == num_passes - 1) zoom = 3.0f;
+        if (pass == num_passes - 1) zoom = 2.0f;
+#if 0
         float transformation[2][3];
         for (int i = 0; i < 12; i++) {
             float size = 0.7f + 0.3f * sinf(rand() * 0.001f);
@@ -441,8 +457,34 @@ void intro_do( long itime )
             rgb outcolor = hsv2rgb(incolor);
             DrawQuad(transformation, (float)outcolor.r, (float)outcolor.g, (float)outcolor.b, 1.0f);
         }
+#else 
+        // 2 3 4 5 6 8   9 12 13 14 15 16      17 18 19 20 21 22
+        DrawFunction(params.getParam(2, 1.18f),
+            params.getParam(3, 1.11f),
+            params.getParam(4, 0.29f),
+            params.getParam(5, 0.47f) - 0.5f,
+            params.getParam(6, 0.39f) - 0.5f,
+            0.9f, 0.9f, 0.9f, 1.0f, zoom);
+
+        DrawFunction(params.getParam(9, 0.16f),
+            params.getParam(12, 0.8f),
+            params.getParam(13, 0.15f),
+            params.getParam(14, 0.63f) - 0.5f,
+            params.getParam(15, 0.56f) - 0.5f,
+            1.0f, 0.95f, 0.8f, 1.0f, zoom);
+
+        DrawFunction(params.getParam(17, 0.94f),
+            params.getParam(18, 0.32f),
+            params.getParam(19, 0.56f),
+            params.getParam(20, 0.41f) - 0.5f,
+            params.getParam(21, 0.58f) - 0.5f,
+            0.8f, 0.95f, 1.0f, 1.0f, zoom);
+#endif
 
         last_offscreen_id = offscreen_id;
     }
 }
 
+// Here I do something if keys are pressed on the Midi device
+void registerParameterChange(int keyID) {
+}
