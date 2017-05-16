@@ -417,7 +417,7 @@ void intro_do( long itime )
     glUseProgram(shaderProgram);
     for (int pass = 0; pass < num_passes; pass++) {
         srand(1);
-        int offscreen_id = ((num_passes - pass) >> 2) - 2;  // So that last pass is on offscreen_id;
+        int offscreen_id = ((num_passes - pass) >> 2) - 6;  // So that last pass is on offscreen_id;
         if (offscreen_id >= NUM_OFFSCREEN_TEXTURES) offscreen_id = NUM_OFFSCREEN_TEXTURES - 1;
         if (offscreen_id < 0) offscreen_id = 0;
 
@@ -442,7 +442,7 @@ void intro_do( long itime )
 
         // Draw one iteration of the IFS
         float zoom = 1.0f;
-        if (pass == num_passes - 1) zoom = 2.0f;
+        if (pass == num_passes - 1) zoom = 1.0f;
 #if 0
         float transformation[2][3];
         for (int i = 0; i < 12; i++) {
@@ -459,26 +459,35 @@ void intro_do( long itime )
         }
 #else 
         // 2 3 4 5 6 8   9 12 13 14 15 16      17 18 19 20 21 22
-        DrawFunction(params.getParam(2, 1.18f),
-            params.getParam(3, 1.11f),
-            params.getParam(4, 0.29f),
-            params.getParam(5, 0.47f) - 0.5f,
-            params.getParam(6, 0.39f) - 0.5f,
+        // 2:1.130(145) 3:0.860(110) 4:0.240(31) 5:1.070(137) 6:0.390(50) 8:0.300(38) 9:0.360(46) 12:0.300(38)
+        //   13:0.350(45) 14:0.480(61) 15:0.690(88) 16:0.080(10) 17:0.660(84) 18:0.320(41) 19:0.510(65)
+        DrawFunction(params.getParam(2, 1.13f),
+            params.getParam(5, 1.07f),
+            params.getParam(9, 0.36f),
+            params.getParam(14, 0.48f) - 0.5f,
+            params.getParam(17, 0.66f) - 0.5f,
             0.9f, 0.9f, 0.9f, 1.0f, zoom);
 
-        DrawFunction(params.getParam(9, 0.16f),
-            params.getParam(12, 0.8f),
-            params.getParam(13, 0.15f),
-            params.getParam(14, 0.63f) - 0.5f,
-            params.getParam(15, 0.56f) - 0.5f,
+        DrawFunction(params.getParam(3, 0.86f),
+            params.getParam(6, 0.39f),
+            params.getParam(12, 0.30f),
+            params.getParam(15, 0.69f) - 0.5f,
+            params.getParam(18, 0.32f) - 0.5f,
             1.0f, 0.95f, 0.8f, 1.0f, zoom);
 
-        DrawFunction(params.getParam(17, 0.94f),
-            params.getParam(18, 0.32f),
-            params.getParam(19, 0.56f),
-            params.getParam(20, 0.41f) - 0.5f,
-            params.getParam(21, 0.58f) - 0.5f,
+        DrawFunction(params.getParam(4, 0.24f),
+            params.getParam(8, 0.30f),
+            params.getParam(13, 0.35f),
+            params.getParam(16, 0.08f) - 0.5f,
+            params.getParam(19, 0.51f) - 0.5f,
             0.8f, 0.95f, 1.0f, 1.0f, zoom);
+
+        DrawFunction(0.0f,
+            0.01f,
+            0.01f,
+            0.0f,
+            0.0f,
+            1.0f, 1.0f, 1.0f, 1.0f, zoom);
 #endif
 
         last_offscreen_id = offscreen_id;
