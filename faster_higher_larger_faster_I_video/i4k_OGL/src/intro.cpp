@@ -106,6 +106,16 @@ typedef void (*GenFP)(void); // pointer to openGL functions
 static GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 static GLuint shaderProgram;
 
+
+// This datastructure holds the transformations that shall be rendered. The first four are the core ones.
+// If one of the size values is too large, it is not rendered (see disabled structure), and the 4 children are created
+const int kMaxNumTransforms = 100000;  // Not active ones, but total ones
+const float kMaxSize = 0.4f;
+int num_transforms_;  // Not active ones, but total ones
+bool transform_is_used_[kMaxNumTransforms];
+float transform_[kMaxNumTransforms][2][3];  // Last row is implicitly 0 0 1
+float color_[kMaxNumTransforms][3];  // may be larger than 1?
+
 // -------------------------------------------------------------------
 //                          Code:
 // -------------------------------------------------------------------
@@ -324,19 +334,19 @@ void DrawQuad(float transform[2][3], float red, float green, float blue, float a
 
     glColor4f(red, green, blue, alpha);
     glBegin(GL_QUADS);
-    glTexCoord2f(0.0f, 1.0f);
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3f(-1.0f * transform[0][0] + -1.0f * transform[0][1] + transform[0][2],
         -1.0f * transform[1][0] + -1.0f * transform[1][1] + transform[1][2],
         0.99f);
-    glTexCoord2f(1.0f, 1.0f);
+    glTexCoord2f(1.0f, 0.0f);
     glVertex3f(+1.0f * transform[0][0] + -1.0f * transform[0][1] + transform[0][2],
         +1.0f * transform[1][0] + -1.0f * transform[1][1] + transform[1][2],
         0.99f);
-    glTexCoord2f(1.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f);
     glVertex3f(+1.0f * transform[0][0] + +1.0f * transform[0][1] + transform[0][2],
         +1.0f * transform[1][0] + +1.0f * transform[1][1] + transform[1][2],
         0.99f);
-    glTexCoord2f(0.0, 0.0f);
+    glTexCoord2f(0.0, 1.0f);
     glVertex3f(-1.0f * transform[0][0] + +1.0f * transform[0][1] + transform[0][2],
         -1.0f * transform[1][0] + +1.0f * transform[1][1] + transform[1][2],
         0.99f);
@@ -345,16 +355,80 @@ void DrawQuad(float transform[2][3], float red, float green, float blue, float a
 
 // I am missing tilt...
 void DrawFunction(float rotation, float width, float height, float x, float y,
-                  float red, float green, float blue, float alpha, float zoom) {
+                  float red, float green, float blue) {
+    if (num_transforms_ >= kMaxNumTransforms) return;
     rotation *= 3.1416f * 2.0f;
-    float transform[2][3];
-    transform[0][0] = (float)cos(rotation) * width * zoom;
-    transform[0][1] = -(float)sin(rotation) * height * 16.0f / 9.0f * zoom;
-    transform[1][0] = (float)sin(rotation) * width * zoom;
-    transform[1][1] = (float)cos(rotation) * height * 16.0f / 9.0f * zoom;
-    transform[0][2] = x * zoom;
-    transform[1][2] = y * 16.0f / 9.0f * zoom;
-    DrawQuad(transform, red, green, blue, alpha);
+    transform_[num_transforms_][0][0] = (float)cos(rotation) * width;
+    transform_[num_transforms_][0][1] = -(float)sin(rotation) * height;
+    transform_[num_transforms_][1][0] = (float)sin(rotation) * width * 16.0f / 9.0f;
+    transform_[num_transforms_][1][1] = (float)cos(rotation) * height * 16.0f / 9.0f;
+    transform_[num_transforms_][0][2] = x;
+    transform_[num_transforms_][1][2] = y * 16.0f / 9.0f;
+    transform_is_used_[num_transforms_] = true;
+    color_[num_transforms_][0] = red;
+    color_[num_transforms_][1] = green;
+    color_[num_transforms_][2] = blue;
+    num_transforms_++;
+    //DrawQuad(transform, red, green, blue, alpha);
+}
+
+// first is executed before last, so I do last*first.
+void MultiplyTransforms(float first[2][3], float last[2][3], float result[2][3]) {
+    result[0][0] = last[0][0] * first[0][0] + last[0][1] * first[1][0];
+    result[0][1] = last[0][0] * first[0][1] + last[0][1] * first[1][1];
+    result[0][2] = last[0][0] * first[0][2] + last[0][1] * first[1][2] + last[0][2];
+    result[1][0] = last[1][0] * first[0][0] + last[1][1] * first[1][0];
+    result[1][1] = last[1][0] * first[0][1] + last[1][1] * first[1][1];
+    result[1][2] = last[1][0] * first[0][2] + last[1][1] * first[1][2] + last[1][2];
+}
+
+// Applies two colors in succession (dot product)
+void MultiplyColors(float first[3], float last[3], float result[3]) {
+    for (int i = 0; i < 3; i++) {
+        result[i] = first[i] * last[i];
+    }
+}
+
+void DrawAll(float zoom) {
+    // Split up the large stuff
+    // Note that the ending criterion is not pre-determined, as num_transforms_ may increase.
+    for (int i = 0; i < num_transforms_; i++) {
+        if (num_transforms_ > kMaxNumTransforms - 4) {
+            break;  // No more space left
+        }
+        if (transform_is_used_[i]) {
+            if (fabsf(transform_[i][0][0]) > kMaxSize ||
+                fabsf(transform_[i][0][1]) > kMaxSize ||
+                fabsf(transform_[i][1][0]) > kMaxSize ||
+                fabsf(transform_[i][1][1]) > kMaxSize) {
+                transform_is_used_[i] = false;
+                MultiplyTransforms(transform_[0], transform_[i], transform_[num_transforms_]);
+                MultiplyColors(color_[0], color_[i], color_[num_transforms_]);
+                transform_is_used_[num_transforms_] = true;
+                num_transforms_++;
+                MultiplyTransforms(transform_[1], transform_[i], transform_[num_transforms_]);
+                MultiplyColors(color_[1], color_[i], color_[num_transforms_]);
+                transform_is_used_[num_transforms_] = true;
+                num_transforms_++;
+                MultiplyTransforms(transform_[2], transform_[i], transform_[num_transforms_]);
+                MultiplyColors(color_[2], color_[i], color_[num_transforms_]);
+                transform_is_used_[num_transforms_] = true;
+                num_transforms_++;
+                MultiplyTransforms(transform_[3], transform_[i], transform_[num_transforms_]);
+                MultiplyColors(color_[3], color_[i], color_[num_transforms_]);
+                transform_is_used_[num_transforms_] = true;
+                num_transforms_++;
+            }
+        }
+    }
+
+    // Draw all that is there
+    for (int i = 0; i < num_transforms_; i++) {
+        if (transform_is_used_[i]) {
+            for (int j = 0; j < 6; j++) transform_[i][0][j] *= zoom;
+            DrawQuad(transform_[i], color_[i][0], color_[i][1], color_[i][2], 1.0f);
+        }
+    }
 }
 
 #pragma code_seg(".intro_do")
@@ -412,12 +486,12 @@ void intro_do( long itime )
 #endif
 
     // TODO: Make the first 1 or 2 passes to the smaller backbuffer
-    int num_passes = 32;
+    int num_passes = 10;
     int last_offscreen_id = -1;
     glUseProgram(shaderProgram);
     for (int pass = 0; pass < num_passes; pass++) {
         srand(1);
-        int offscreen_id = ((num_passes - pass) >> 2) - 6;  // So that last pass is on offscreen_id;
+        int offscreen_id = ((num_passes - pass) << 0) - 1;  // So that last pass is on offscreen_id;
         if (offscreen_id >= NUM_OFFSCREEN_TEXTURES) offscreen_id = NUM_OFFSCREEN_TEXTURES - 1;
         if (offscreen_id < 0) offscreen_id = 0;
 
@@ -459,35 +533,34 @@ void intro_do( long itime )
         }
 #else 
         // 2 3 4 5 6 8   9 12 13 14 15 16      17 18 19 20 21 22
-        // 2:1.130(145) 3:0.860(110) 4:0.240(31) 5:1.070(137) 6:0.390(50) 8:0.300(38) 9:0.360(46) 12:0.300(38)
-        //   13:0.350(45) 14:0.480(61) 15:0.690(88) 16:0.080(10) 17:0.660(84) 18:0.320(41) 19:0.510(65)
-        DrawFunction(params.getParam(2, 1.13f),
-            params.getParam(5, 1.07f),
+        // 2:1.060(136) 3:1.120(143) 4:0.450(58) 5:1.040(133) 6:0.390(50) 8:0.340(44) 9:0.360(46) 12:0.310(40)
+        // 13:0.210(27) 14:0.620(79) 15:0.510(65) 16:0.010(1) 17:0.470(60) 18:0.580(74) 19:0.550(70)
+        num_transforms_ = 0;  // Reset
+        DrawFunction(params.getParam(2, 1.06f),
+            params.getParam(5, 1.04f),
             params.getParam(9, 0.36f),
-            params.getParam(14, 0.48f) - 0.5f,
-            params.getParam(17, 0.66f) - 0.5f,
-            0.9f, 0.9f, 0.9f, 1.0f, zoom);
-
-        DrawFunction(params.getParam(3, 0.86f),
+            params.getParam(14, 0.62f) - 0.5f,
+            params.getParam(17, 0.47f) - 0.5f,
+            1.0f, 1.0f, 1.0f);
+        DrawFunction(params.getParam(3, 1.12f),
             params.getParam(6, 0.39f),
-            params.getParam(12, 0.30f),
-            params.getParam(15, 0.69f) - 0.5f,
-            params.getParam(18, 0.32f) - 0.5f,
-            1.0f, 0.95f, 0.8f, 1.0f, zoom);
-
-        DrawFunction(params.getParam(4, 0.24f),
-            params.getParam(8, 0.30f),
-            params.getParam(13, 0.35f),
-            params.getParam(16, 0.08f) - 0.5f,
-            params.getParam(19, 0.51f) - 0.5f,
-            0.8f, 0.95f, 1.0f, 1.0f, zoom);
-
+            params.getParam(12, 0.31f),
+            params.getParam(15, 0.51f) - 0.5f,
+            params.getParam(18, 0.58f) - 0.5f,
+            0.9f, 1.0f, 1.1f);
+        DrawFunction(params.getParam(4, 0.45f),
+            params.getParam(8, 0.34f),
+            params.getParam(13, 0.21f),
+            params.getParam(16, 0.01f) - 0.5f,
+            params.getParam(19, 0.55f) - 0.5f,
+            1.1f, 1.0f, 0.9f);
         DrawFunction(0.0f,
             0.01f,
             0.01f,
             0.0f,
             0.0f,
-            1.0f, 1.0f, 1.0f, 1.0f, zoom);
+            1.0f, 1.0f, 1.0f);
+        DrawAll(zoom);
 #endif
 
         last_offscreen_id = offscreen_id;
