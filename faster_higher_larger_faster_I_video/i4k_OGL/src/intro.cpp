@@ -66,11 +66,12 @@ HWND hWnd;
 #define MAX_GL_NAME_LENGTH 16
 #pragma data_seg(".gl_names")
 #ifdef SHADER_DEBUG
-#define NUM_GL_NAMES 10
+#define NUM_GL_NAMES 11
 const static char* glnames[NUM_GL_NAMES]={
      "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
      "glAttachShader", "glLinkProgram", "glUseProgram",
 	 "glTexImage3D", "glGetShaderiv","glGetShaderInfoLog",
+     "glGenerateMipmap"
 };
 #else
 #define NUM_GL_NAMES 8
@@ -91,6 +92,7 @@ const static char glnames[NUM_GL_NAMES][MAX_GL_NAME_LENGTH]={
 #define glTexImage3D ((PFNGLTEXIMAGE3DPROC)glFP[7])
 #define glGetShaderiv ((PFNGLGETSHADERIVPROC)glFP[8])
 #define glGetShaderInfoLog ((PFNGLGETSHADERINFOLOGPROC)glFP[9])
+#define glGenerateMipmap ((PFNGLGENERATEMIPMAPPROC)glFP[10])
 
 // The model matrix is used to send the parameters to the hardware...
 static float parameterMatrix[16];
@@ -298,6 +300,7 @@ void intro_init( void )
         glBindTexture(GL_TEXTURE_2D, offscreen_texture_[i]);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         offscreen_size_[i][0] = XRES >> i;
@@ -305,6 +308,11 @@ void intro_init( void )
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8,
             offscreen_size_[i][0], offscreen_size_[i][1],
             0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+        // Anisotropic filtering
+        float fLargest;
+        glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
+        glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
     }
 
     // Create a purely white texture
@@ -360,10 +368,10 @@ void DrawFunction(float rotation, float width, float height, float x, float y,
     rotation *= 3.1416f * 2.0f;
     transform_[num_transforms_][0][0] = (float)cos(rotation) * width;
     transform_[num_transforms_][0][1] = -(float)sin(rotation) * height;
-    transform_[num_transforms_][1][0] = (float)sin(rotation) * width * 16.0f / 9.0f;
-    transform_[num_transforms_][1][1] = (float)cos(rotation) * height * 16.0f / 9.0f;
+    transform_[num_transforms_][1][0] = (float)sin(rotation) * width;
+    transform_[num_transforms_][1][1] = (float)cos(rotation) * height;
     transform_[num_transforms_][0][2] = x;
-    transform_[num_transforms_][1][2] = y * 16.0f / 9.0f;
+    transform_[num_transforms_][1][2] = y;
     transform_is_used_[num_transforms_] = true;
     color_[num_transforms_][0] = red;
     color_[num_transforms_][1] = green;
@@ -389,7 +397,7 @@ void MultiplyColors(float first[3], float last[3], float result[3]) {
     }
 }
 
-void DrawAll(float zoom) {
+void DrawAll(float zoom, float aspect) {
     // Split up the large stuff
     // Note that the ending criterion is not pre-determined, as num_transforms_ may increase.
     for (int i = 0; i < num_transforms_; i++) {
@@ -397,10 +405,10 @@ void DrawAll(float zoom) {
             break;  // No more space left
         }
         if (transform_is_used_[i]) {
-            if (fabsf(transform_[i][0][0]) > kMaxSize ||
-                fabsf(transform_[i][0][1]) > kMaxSize ||
-                fabsf(transform_[i][1][0]) > kMaxSize ||
-                fabsf(transform_[i][1][1]) > kMaxSize) {
+            if (zoom * fabsf(transform_[i][0][0]) > kMaxSize ||
+                zoom * fabsf(transform_[i][0][1]) > kMaxSize ||
+                zoom * fabsf(transform_[i][1][0]) > kMaxSize ||
+                zoom * fabsf(transform_[i][1][1]) > kMaxSize) {
                 transform_is_used_[i] = false;
                 MultiplyTransforms(transform_[0], transform_[i], transform_[num_transforms_]);
                 MultiplyColors(color_[0], color_[i], color_[num_transforms_]);
@@ -426,6 +434,7 @@ void DrawAll(float zoom) {
     for (int i = 0; i < num_transforms_; i++) {
         if (transform_is_used_[i]) {
             for (int j = 0; j < 6; j++) transform_[i][0][j] *= zoom;
+            for (int j = 0; j < 3; j++) transform_[i][1][j] *= aspect;
             DrawQuad(transform_[i], color_[i][0], color_[i][1], color_[i][2], 1.0f);
         }
     }
@@ -489,6 +498,7 @@ void intro_do( long itime )
     int num_passes = 10;
     int last_offscreen_id = -1;
     glUseProgram(shaderProgram);
+    float progress = (float)(ftime * 0.04f - floor(ftime * 0.04f));
     for (int pass = 0; pass < num_passes; pass++) {
         srand(1);
         int offscreen_id = ((num_passes - pass) << 0) - 1;  // So that last pass is on offscreen_id;
@@ -504,6 +514,7 @@ void intro_do( long itime )
             glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0,
                 offscreen_size_[last_offscreen_id][0],
                 offscreen_size_[last_offscreen_id][1]);  // Copy backbuffer to texture
+            glGenerateMipmap(GL_TEXTURE_2D);
         } else {
             glBindTexture(GL_TEXTURE_2D, white_texture_);
         }
@@ -516,7 +527,13 @@ void intro_do( long itime )
 
         // Draw one iteration of the IFS
         float zoom = 1.0f;
-        if (pass == num_passes - 1) zoom = 1.0f;
+        float aspect = 1.0f;
+        if (pass == num_passes - 1) {
+            //zoom = sinf(ftime * 0.4f) * 80.0f + 81.0f;
+            zoom = (float)(exp(progress * log(100.0f) + 2.f));
+            aspect = 16.0f / 9.0f;
+            aspect = 1.0f;  // done later.
+        }
 #if 0
         float transformation[2][3];
         for (int i = 0; i < 12; i++) {
@@ -533,38 +550,54 @@ void intro_do( long itime )
         }
 #else 
         // 2 3 4 5 6 8   9 12 13 14 15 16      17 18 19 20 21 22
-        // 2:1.060(136) 3:1.120(143) 4:0.450(58) 5:1.040(133) 6:0.390(50) 8:0.340(44) 9:0.360(46) 12:0.310(40)
-        // 13:0.210(27) 14:0.620(79) 15:0.510(65) 16:0.010(1) 17:0.470(60) 18:0.580(74) 19:0.550(70)
+        // 2:0.620(79) 3:1.060(136) 4:0.880(113) 5:0.700(90) 6:0.720(92) 8:0.720(92) 9:0.460(59) 12:0.500(64)
+        //   13:0.460(59) 14:0.120(15) 15:0.500(64) 16:0.960(123) 17:0.670(86) 18:0.340(44) 19:0.480(61) 
+        // --> 2:0.280(36) 14:0.230(29) 15:0.390(50) 17:0.700(90) 
+        // --> 2:0.270(35) 3:1.070(137) 4:0.890(114) 8:0.700(90) 9:0.470(60) 12:0.460(59) 
         num_transforms_ = 0;  // Reset
-        DrawFunction(params.getParam(2, 1.06f),
-            params.getParam(5, 1.04f),
-            params.getParam(9, 0.36f),
-            params.getParam(14, 0.62f) - 0.5f,
-            params.getParam(17, 0.47f) - 0.5f,
-            1.0f, 1.0f, 1.0f);
-        DrawFunction(params.getParam(3, 1.12f),
-            params.getParam(6, 0.39f),
-            params.getParam(12, 0.31f),
-            params.getParam(15, 0.51f) - 0.5f,
-            params.getParam(18, 0.58f) - 0.5f,
-            0.9f, 1.0f, 1.1f);
-        DrawFunction(params.getParam(4, 0.45f),
-            params.getParam(8, 0.34f),
-            params.getParam(13, 0.21f),
-            params.getParam(16, 0.01f) - 0.5f,
-            params.getParam(19, 0.55f) - 0.5f,
-            1.1f, 1.0f, 0.9f);
-        DrawFunction(0.0f,
+        DrawFunction(params.getParam(2, 0.27f),
+            params.getParam(5, 0.70f),
+            params.getParam(9, 0.47f),
+            params.getParam(14, 0.23f) - 0.5f,
+            params.getParam(17, 0.70f) - 0.5f,
+            1.04f, 1.04f, 0.9f);
+        DrawFunction(params.getParam(3, 1.07f),
+            params.getParam(6, 0.72f),
+            params.getParam(12, 0.46f),
+            params.getParam(15, 0.39f) - 0.5f,
+            params.getParam(18, 0.34f) - 0.5f,
+            0.94f, 0.9f, 1.04f);
+        DrawFunction(params.getParam(4, 0.89f),
+            params.getParam(8, 0.70f),
+            params.getParam(13, 0.46f),
+            params.getParam(16, 0.96f) - 0.5f,
+            params.getParam(19, 0.48f) - 0.5f,
+            .9f, 1.04f, 1.04f);
+        DrawFunction(3.141592f * 0.0f,
             0.01f,
             0.01f,
             0.0f,
             0.0f,
             1.0f, 1.0f, 1.0f);
-        DrawAll(zoom);
+        DrawAll(zoom, aspect);
 #endif
 
         last_offscreen_id = offscreen_id;
     }
+
+#if 1
+    // copy to front
+    glBindTexture(GL_TEXTURE_2D, offscreen_texture_[0]);
+    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, XRES, YRES);   //Copy back buffer to texture
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glUseProgram(shaderProgram);
+    glColor4f(1.0, 0.5, 0.5, 1.0);
+    float rot = -progress * 3.1415f * 2.0f;
+    float identity[2][3] = {{1.2f*cosf(rot), 1.2f*-sinf(rot), 0.0f},{1.2f*16.0f / 9.0f * sinf(rot), 1.2f*16.0f / 9.0f * cosf(rot), 0.0f}};
+    DrawQuad(identity, 1.0f, 1.0f, 1.0f, 1.0f);
+#endif
 }
 
 // Here I do something if keys are pressed on the Midi device
