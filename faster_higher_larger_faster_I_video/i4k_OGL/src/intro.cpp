@@ -112,9 +112,9 @@ static GLuint shaderProgram;
 // This datastructure holds the transformations that shall be rendered. The first four are the core ones.
 // If one of the size values is too large, it is not rendered (see disabled structure), and the 4 children are created
 const int kMaxNumTransforms = 100000;  // Not active ones, but total ones
-const float kMaxSize = 0.4f;
+const float kMaxSize = 0.5f;
 int num_transforms_;  // Not active ones, but total ones
-bool transform_is_used_[kMaxNumTransforms];
+float transform_alpha_[kMaxNumTransforms];
 float transform_[kMaxNumTransforms][2][3];  // Last row is implicitly 0 0 1
 float color_[kMaxNumTransforms][3];  // may be larger than 1?
 
@@ -372,7 +372,7 @@ void DrawFunction(float rotation, float width, float height, float x, float y,
     transform_[num_transforms_][1][1] = (float)cos(rotation) * height;
     transform_[num_transforms_][0][2] = x;
     transform_[num_transforms_][1][2] = y;
-    transform_is_used_[num_transforms_] = true;
+    transform_alpha_[num_transforms_] = 1.0f;
     color_[num_transforms_][0] = red;
     color_[num_transforms_][1] = green;
     color_[num_transforms_][2] = blue;
@@ -404,27 +404,32 @@ void DrawAll(float zoom, float aspect) {
         if (num_transforms_ > kMaxNumTransforms - 4) {
             break;  // No more space left
         }
-        if (transform_is_used_[i]) {
-            if (zoom * fabsf(transform_[i][0][0]) > kMaxSize ||
-                zoom * fabsf(transform_[i][0][1]) > kMaxSize ||
-                zoom * fabsf(transform_[i][1][0]) > kMaxSize ||
-                zoom * fabsf(transform_[i][1][1]) > kMaxSize) {
-                transform_is_used_[i] = false;
+        if (transform_alpha_[i] > 0.0f) {
+            float size = max(fabsf(transform_[i][0][0]),
+                             max(fabsf(transform_[i][0][1]),
+                             max(fabsf(transform_[i][1][0]), fabsf(transform_[i][1][1])))) * zoom;
+            float distance = max(fabsf(transform_[i][0][2]), fabsf(transform_[i][1][2])) * zoom;
+            if (size > kMaxSize && (distance - size) < 4.0f) {
+                float old_amount = (0.1f + kMaxSize - size) * 10.0f;  // LOD alpha
+                if (old_amount < 0.0f) old_amount = 0.0f;
+                if (old_amount > 1.0f) old_amount = 1.0f;
+                float new_alpha = transform_alpha_[i] * (1.0f - old_amount);
                 MultiplyTransforms(transform_[0], transform_[i], transform_[num_transforms_]);
                 MultiplyColors(color_[0], color_[i], color_[num_transforms_]);
-                transform_is_used_[num_transforms_] = true;
+                transform_alpha_[num_transforms_] = new_alpha;
                 num_transforms_++;
                 MultiplyTransforms(transform_[1], transform_[i], transform_[num_transforms_]);
                 MultiplyColors(color_[1], color_[i], color_[num_transforms_]);
-                transform_is_used_[num_transforms_] = true;
+                transform_alpha_[num_transforms_] = new_alpha;
                 num_transforms_++;
                 MultiplyTransforms(transform_[2], transform_[i], transform_[num_transforms_]);
                 MultiplyColors(color_[2], color_[i], color_[num_transforms_]);
-                transform_is_used_[num_transforms_] = true;
+                transform_alpha_[num_transforms_] = new_alpha;
                 num_transforms_++;
                 MultiplyTransforms(transform_[3], transform_[i], transform_[num_transforms_]);
                 MultiplyColors(color_[3], color_[i], color_[num_transforms_]);
-                transform_is_used_[num_transforms_] = true;
+                transform_alpha_[num_transforms_] = new_alpha;
+                transform_alpha_[i] *= old_amount;
                 num_transforms_++;
             }
         }
@@ -432,10 +437,14 @@ void DrawAll(float zoom, float aspect) {
 
     // Draw all that is there
     for (int i = 0; i < num_transforms_; i++) {
-        if (transform_is_used_[i]) {
+        if (transform_alpha_[i] > 0.0f) {
             for (int j = 0; j < 6; j++) transform_[i][0][j] *= zoom;
             for (int j = 0; j < 3; j++) transform_[i][1][j] *= aspect;
-            DrawQuad(transform_[i], color_[i][0], color_[i][1], color_[i][2], 1.0f);
+            DrawQuad(transform_[i],
+                     color_[i][0] * transform_alpha_[i],
+                     color_[i][1] * transform_alpha_[i],
+                     color_[i][2] * transform_alpha_[i],
+                     1.0f);
         }
     }
 }
@@ -534,45 +543,53 @@ void intro_do( long itime )
             aspect = 16.0f / 9.0f;
             aspect = 1.0f;  // done later.
         }
-#if 0
-        float transformation[2][3];
-        for (int i = 0; i < 12; i++) {
-            float size = 0.7f + 0.3f * sinf(rand() * 0.001f);
-            transformation[0][0] = zoom * 0.7f * sinf(rand() * 0.001f) * size;
-            transformation[0][1] = zoom * 0.7f * sinf(rand() * 0.001f) * size;
-            transformation[0][2] = zoom * 0.3f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-            transformation[1][0] = zoom * 0.7f * sinf(rand() * 0.001f) * size;
-            transformation[1][1] = zoom * 0.7f * sinf(rand() * 0.001f) * size;
-            transformation[1][2] = zoom * 0.3f * sinf(rand() * 0.001f) * sinf(rand() * 0.001f);
-            hsv incolor = {(float)(rand() % 1000), 0.3f, 0.6f};
-            rgb outcolor = hsv2rgb(incolor);
-            DrawQuad(transformation, (float)outcolor.r, (float)outcolor.g, (float)outcolor.b, 1.0f);
-        }
-#else 
+
         // 2 3 4 5 6 8   9 12 13 14 15 16      17 18 19 20 21 22
         // 2:0.620(79) 3:1.060(136) 4:0.880(113) 5:0.700(90) 6:0.720(92) 8:0.720(92) 9:0.460(59) 12:0.500(64)
         //   13:0.460(59) 14:0.120(15) 15:0.500(64) 16:0.960(123) 17:0.670(86) 18:0.340(44) 19:0.480(61) 
         // --> 2:0.280(36) 14:0.230(29) 15:0.390(50) 17:0.700(90) 
         // --> 2:0.270(35) 3:1.070(137) 4:0.890(114) 8:0.700(90) 9:0.470(60) 12:0.460(59) 
         num_transforms_ = 0;  // Reset
+#if 1
         DrawFunction(params.getParam(2, 0.27f),
             params.getParam(5, 0.70f),
             params.getParam(9, 0.47f),
             params.getParam(14, 0.23f) - 0.5f,
             params.getParam(17, 0.70f) - 0.5f,
-            1.04f, 1.04f, 0.9f);
+            1.04f * 0.5f + 0.5f, 0.94f * 0.5f + 0.5f, 0.9f * 0.5f + 0.5f);
         DrawFunction(params.getParam(3, 1.07f),
             params.getParam(6, 0.72f),
             params.getParam(12, 0.46f),
             params.getParam(15, 0.39f) - 0.5f,
             params.getParam(18, 0.34f) - 0.5f,
-            0.94f, 0.9f, 1.04f);
+            0.9f * 0.5f + 0.5f, 0.87f * 0.5f + 0.5f, 0.7f * 0.5f + 0.5f);
         DrawFunction(params.getParam(4, 0.89f),
             params.getParam(8, 0.70f),
             params.getParam(13, 0.46f),
             params.getParam(16, 0.96f) - 0.5f,
             params.getParam(19, 0.48f) - 0.5f,
-            .9f, 1.04f, 1.04f);
+            0.68f * 0.5f + 0.5f, 0.76f * 0.5f + 0.5f, 0.99f * 0.5f + 0.5f);
+#else
+        // 2:1.040(133) 3:0.940(120) 4:0.900(115) 5:0.900(115) 6:0.870(111) 8:0.700(90) 9:0.680(87) 12:0.760(97) 13:0.990(127) 
+        DrawFunction(0.27f,
+            0.70f,
+            0.47f,
+            0.23f - 0.5f,
+            0.70f - 0.5f,
+            params.getParam(2, 1.04f) * 0.5f + 0.5f, params.getParam(3, 0.94f) * 0.5f + 0.5f, params.getParam(4, 0.9f) * 0.5f + 0.5f);
+        DrawFunction(1.07f,
+            0.72f,
+            0.46f,
+            0.39f - 0.5f,
+            0.34f - 0.5f,
+            params.getParam(5, 0.9f) * 0.5f + 0.5f, params.getParam(6, 0.87f) * 0.5f + 0.5f, params.getParam(8, 0.7f) * 0.5f + 0.5f);
+        DrawFunction(0.89f,
+            0.70f,
+            0.46f,
+            0.96f - 0.5f,
+            0.48f - 0.5f,
+            params.getParam(9, 0.68f) * 0.5f + 0.5f, params.getParam(12, 0.76f) * 0.5f + 0.5f, params.getParam(13, 0.99f) * 0.5f + 0.5f);
+#endif
         DrawFunction(3.141592f * 0.0f,
             0.01f,
             0.01f,
@@ -580,7 +597,6 @@ void intro_do( long itime )
             0.0f,
             1.0f, 1.0f, 1.0f);
         DrawAll(zoom, aspect);
-#endif
 
         last_offscreen_id = offscreen_id;
     }
