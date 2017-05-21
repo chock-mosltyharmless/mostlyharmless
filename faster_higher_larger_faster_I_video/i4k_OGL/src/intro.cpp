@@ -507,7 +507,8 @@ void intro_do( long itime )
     int num_passes = 10;
     int last_offscreen_id = -1;
     glUseProgram(shaderProgram);
-    float progress = (float)(ftime * 0.04f - floor(ftime * 0.04f));
+    //float progress = (float)(ftime * 0.04f - floor(ftime * 0.04f));
+    float progress = (float)(accumulated_drum_volume * 0.005f - floor(accumulated_drum_volume * 0.005f));
     for (int pass = 0; pass < num_passes; pass++) {
         srand(1);
         int offscreen_id = ((num_passes - pass) << 0) - 1;  // So that last pass is on offscreen_id;
@@ -539,7 +540,7 @@ void intro_do( long itime )
         float aspect = 1.0f;
         if (pass == num_passes - 1) {
             //zoom = sinf(ftime * 0.4f) * 80.0f + 81.0f;
-            zoom = (float)(exp(progress * log(100.0f) + 2.f));
+            zoom = (float)(exp(progress * log(1000.0f) + 2.f));
             aspect = 16.0f / 9.0f;
             aspect = 1.0f;  // done later.
         }
@@ -591,8 +592,8 @@ void intro_do( long itime )
             params.getParam(9, 0.68f) * 0.5f + 0.5f, params.getParam(12, 0.76f) * 0.5f + 0.5f, params.getParam(13, 0.99f) * 0.5f + 0.5f);
 #endif
         DrawFunction(3.141592f * 0.0f,
-            0.01f,
-            0.01f,
+            0.001f,
+            0.001f,
             0.0f,
             0.0f,
             1.0f, 1.0f, 1.0f);

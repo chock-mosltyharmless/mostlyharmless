@@ -81,7 +81,7 @@ static float fdrum_position = 0;
 static float last_loudness = 1.0f;
 static int last_drum_position = 0;
 static int skipped_drum_position = 0;
-static float kMinBaseFrequency = 250.0f;
+static float kMinBaseFrequency = 200.0f;
 // Start "in the middle" to offset beat and tone reset
 static float base_frequency = kMinBaseFrequency * 1.5f;
 static float base_offset = 0.0f;
@@ -195,10 +195,10 @@ void mzkPlayBlock(short *blockBuffer)
         cur_accumulated_drum_volume += log_drum_loudness * loudness;
 
         const float kAmplitudeReduction = 1.0f - 0.001f * (total_speed + 0.05f);
-        floatOutput[sample][0] = (total_speed + 0.02f) * 32.0f * loudness * lowNoise[sampleID % RANDOM_BUFFER_SIZE];
-        //floatOutput[sample][0] = loudness;
-        floatOutput[sample][1] = (total_speed + 0.02f) * 32.0f * loudness * lowNoise[(sampleID+800) % RANDOM_BUFFER_SIZE];;
-        //floatOutput[0][sample] = loudness * sinf(sampleID * 0.01f);
+        //floatOutput[sample][0] = (total_speed + 0.02f) * 32.0f * loudness * lowNoise[sampleID % RANDOM_BUFFER_SIZE];
+        floatOutput[sample][0] = 0.0f;
+        //floatOutput[sample][1] = (total_speed + 0.02f) * 32.0f * loudness * lowNoise[(sampleID+800) % RANDOM_BUFFER_SIZE];;
+        floatOutput[sample][1] = 0.0f;
         loudness *= kAmplitudeReduction;
         
         // And the sin:
@@ -230,8 +230,8 @@ void mzkPlayBlock(short *blockBuffer)
                 //overtone_loudness *= kOvertoneMultiplier;
             }
         }
-        floatOutput[sample][0] += total;
-        floatOutput[sample][1] += total;
+        floatOutput[sample][0] += loudness * total * 4.0f;
+        floatOutput[sample][1] += loudness * total * 4.0f;
         
         sampleID++;
     }
