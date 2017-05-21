@@ -111,8 +111,8 @@ static GLuint shaderProgram;
 
 // This datastructure holds the transformations that shall be rendered. The first four are the core ones.
 // If one of the size values is too large, it is not rendered (see disabled structure), and the 4 children are created
-const int kMaxNumTransforms = 100000;  // Not active ones, but total ones
-const float kMaxSize = 0.5f;
+const int kMaxNumTransforms = 1000000;  // Not active ones, but total ones
+const float kMaxSize = 0.3f;
 int num_transforms_;  // Not active ones, but total ones
 float transform_alpha_[kMaxNumTransforms];
 float transform_[kMaxNumTransforms][2][3];  // Last row is implicitly 0 0 1
@@ -410,7 +410,7 @@ void DrawAll(float zoom, float aspect) {
                              max(fabsf(transform_[i][1][0]), fabsf(transform_[i][1][1])))) * zoom;
             float distance = max(fabsf(transform_[i][0][2]), fabsf(transform_[i][1][2])) * zoom;
             if (size > kMaxSize && (distance - size) < 4.0f) {
-                float old_amount = (0.1f + kMaxSize - size) * 10.0f;  // LOD alpha
+                float old_amount = (0.05f + kMaxSize - size) * 20.0f;  // LOD alpha
                 if (old_amount < 0.0f) old_amount = 0.0f;
                 if (old_amount > 1.0f) old_amount = 1.0f;
                 float new_alpha = transform_alpha_[i] * (1.0f - old_amount);
@@ -507,8 +507,11 @@ void intro_do( long itime )
     int num_passes = 10;
     int last_offscreen_id = -1;
     glUseProgram(shaderProgram);
-    //float progress = (float)(ftime * 0.04f - floor(ftime * 0.04f));
-    float progress = (float)(accumulated_drum_volume * 0.005f - floor(accumulated_drum_volume * 0.005f));
+#ifdef USEDSOUND    
+    float progress = (float)(accumulated_drum_volume * 0.004f - floor(accumulated_drum_volume * 0.004f));
+#else
+    float progress = (float)(ftime * 0.04f - floor(ftime * 0.04f));
+#endif
     for (int pass = 0; pass < num_passes; pass++) {
         srand(1);
         int offscreen_id = ((num_passes - pass) << 0) - 1;  // So that last pass is on offscreen_id;
@@ -540,7 +543,7 @@ void intro_do( long itime )
         float aspect = 1.0f;
         if (pass == num_passes - 1) {
             //zoom = sinf(ftime * 0.4f) * 80.0f + 81.0f;
-            zoom = (float)(exp(progress * log(1000.0f) + 2.f));
+            zoom = (float)(exp(progress * log(10000.0f) + 2.f));
             aspect = 16.0f / 9.0f;
             aspect = 1.0f;  // done later.
         }
@@ -550,50 +553,53 @@ void intro_do( long itime )
         //   13:0.460(59) 14:0.120(15) 15:0.500(64) 16:0.960(123) 17:0.670(86) 18:0.340(44) 19:0.480(61) 
         // --> 2:0.280(36) 14:0.230(29) 15:0.390(50) 17:0.700(90) 
         // --> 2:0.270(35) 3:1.070(137) 4:0.890(114) 8:0.700(90) 9:0.470(60) 12:0.460(59) 
+        // --> 9:0.290(37) 12:0.500(64) 13:0.500(64) 
         num_transforms_ = 0;  // Reset
 #if 1
         DrawFunction(params.getParam(2, 0.27f),
             params.getParam(5, 0.70f),
-            params.getParam(9, 0.47f),
+            params.getParam(9, 0.29f),
             params.getParam(14, 0.23f) - 0.5f,
             params.getParam(17, 0.70f) - 0.5f,
-            1.04f * 0.5f + 0.5f, 0.94f * 0.5f + 0.5f, 0.9f * 0.5f + 0.5f);
+            0.93f * 0.5f + 0.5f, 0.95f * 0.5f + 0.5f, 1.16f * 0.5f + 0.5f);
         DrawFunction(params.getParam(3, 1.07f),
             params.getParam(6, 0.72f),
-            params.getParam(12, 0.46f),
+            params.getParam(12, 0.50f),
             params.getParam(15, 0.39f) - 0.5f,
             params.getParam(18, 0.34f) - 0.5f,
-            0.9f * 0.5f + 0.5f, 0.87f * 0.5f + 0.5f, 0.7f * 0.5f + 0.5f);
+            1.10f * 0.5f + 0.5f, 0.98f * 0.5f + 0.5f, 0.89f * 0.5f + 0.5f);
         DrawFunction(params.getParam(4, 0.89f),
             params.getParam(8, 0.70f),
-            params.getParam(13, 0.46f),
+            params.getParam(13, 0.50f),
             params.getParam(16, 0.96f) - 0.5f,
             params.getParam(19, 0.48f) - 0.5f,
-            0.68f * 0.5f + 0.5f, 0.76f * 0.5f + 0.5f, 0.99f * 0.5f + 0.5f);
+            0.91f * 0.5f + 0.5f, 1.01f * 0.5f + 0.5f, 0.93f * 0.5f + 0.5f);
 #else
         // 2:1.040(133) 3:0.940(120) 4:0.900(115) 5:0.900(115) 6:0.870(111) 8:0.700(90) 9:0.680(87) 12:0.760(97) 13:0.990(127) 
+        // 2:0.890(114) 3:0.890(114) 4:1.080(138) 5:1.010(129) 6:0.890(114) 8:0.840(108) 9:0.850(109) 12:0.930(119) 13:0.860(110) 
+        // 2:0.930(119) 3:0.950(122) 4:1.160(148) 5:1.100(141) 6:0.980(125) 8:0.890(114) 9:0.910(116) 12:1.010(129) 13:0.930(119) 
         DrawFunction(0.27f,
             0.70f,
-            0.47f,
+            0.29f,
             0.23f - 0.5f,
             0.70f - 0.5f,
             params.getParam(2, 1.04f) * 0.5f + 0.5f, params.getParam(3, 0.94f) * 0.5f + 0.5f, params.getParam(4, 0.9f) * 0.5f + 0.5f);
         DrawFunction(1.07f,
             0.72f,
-            0.46f,
+            0.50f,
             0.39f - 0.5f,
             0.34f - 0.5f,
             params.getParam(5, 0.9f) * 0.5f + 0.5f, params.getParam(6, 0.87f) * 0.5f + 0.5f, params.getParam(8, 0.7f) * 0.5f + 0.5f);
         DrawFunction(0.89f,
             0.70f,
-            0.46f,
+            0.50f,
             0.96f - 0.5f,
             0.48f - 0.5f,
             params.getParam(9, 0.68f) * 0.5f + 0.5f, params.getParam(12, 0.76f) * 0.5f + 0.5f, params.getParam(13, 0.99f) * 0.5f + 0.5f);
 #endif
         DrawFunction(3.141592f * 0.0f,
-            0.001f,
-            0.001f,
+            0.0001f,
+            0.0001f,
             0.0f,
             0.0f,
             1.0f, 1.0f, 1.0f);
