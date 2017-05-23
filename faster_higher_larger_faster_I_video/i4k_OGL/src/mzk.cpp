@@ -19,7 +19,7 @@
 // Size of a buffer with random numbers
 #define RANDOM_BUFFER_SIZE 65536
 
-// Accumulated volume of the drums
+// Accumulated volume of the drums (wraps at 157.1797414240835)
 double accumulated_drum_volume = 0.0;
 bool has_ended = false;
 

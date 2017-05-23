@@ -508,6 +508,7 @@ void intro_do( long itime )
     int last_offscreen_id = -1;
     glUseProgram(shaderProgram);
 #ifdef USEDSOUND    
+    const float progress_normalizer = 1.0f / 157.1797414240835 / 6.0f;
     float progress = (float)(accumulated_drum_volume * 0.004f - floor(accumulated_drum_volume * 0.004f));
 #else
     float progress = (float)(ftime * 0.04f - floor(ftime * 0.04f));
@@ -617,7 +618,7 @@ void intro_do( long itime )
     glClear(GL_COLOR_BUFFER_BIT);
     glUseProgram(shaderProgram);
     glColor4f(1.0, 0.5, 0.5, 1.0);
-    float rot = -progress * 3.1415f * 2.0f;
+    float rot = -progress * 3.141592653589793238f * 2.0f;
     float identity[2][3] = {{1.2f*cosf(rot), 1.2f*-sinf(rot), 0.0f},{1.2f*16.0f / 9.0f * sinf(rot), 1.2f*16.0f / 9.0f * cosf(rot), 0.0f}};
     DrawQuad(identity, 1.0f, 1.0f, 1.0f, 1.0f);
 #endif
