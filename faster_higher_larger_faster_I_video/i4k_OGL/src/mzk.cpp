@@ -211,11 +211,13 @@ void mzkPlayBlock(short *blockBuffer)
             (base_frequency - kMinBaseFrequency) / kMinBaseFrequency;
         // yeah, well, almost...
         float half_overtone_amount = half_overtone_kinda_log_amount * half_overtone_kinda_log_amount;
+        half_overtone_amount *= half_overtone_amount;
         base_offset += base_frequency / 44100.0f * PI * 2.0f;
         if (base_offset > PI * 2.0f) base_offset -= 2.0f * PI;
         //float overtone_loudness = 0.02f;
         float total = 0.0f;
-        const float max_frequency = (4.0f * total_speed * total_speed + 0.01f) * 16000.0f + 2000.0f;
+        //const float max_frequency = (4.0f * total_speed * total_speed + 0.01f) * 16000.0f + 2000.0f;
+        const float max_frequency = 20000.0f;
         for (int overtone = 1; overtone < 64; overtone++) {
             float frequency = overtone * base_frequency;
             float overtone_loudness = cosf(frequency / max_frequency * PI * 0.5f);
@@ -230,8 +232,10 @@ void mzkPlayBlock(short *blockBuffer)
                 //overtone_loudness *= kOvertoneMultiplier;
             }
         }
-        floatOutput[sample][0] += loudness * total * 4.0f;
-        floatOutput[sample][1] += loudness * total * 4.0f;
+        float used_loudness = loudness;
+        if (used_loudness > 1.0f) used_loudness = 1.0f;
+        floatOutput[sample][0] += used_loudness * total * 4.0f;
+        floatOutput[sample][1] += used_loudness * total * 4.0f;
         
         sampleID++;
     }
