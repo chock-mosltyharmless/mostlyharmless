@@ -118,6 +118,10 @@ float transform_alpha_[kMaxNumTransforms];
 float transform_[kMaxNumTransforms][2][3];  // Last row is implicitly 0 0 1
 float color_[kMaxNumTransforms][3];  // may be larger than 1?
 
+// Stuff for motion blur
+#define NUM_MOTION_BLURS 64
+double last_drum_progress_ = 0.0;
+
 // -------------------------------------------------------------------
 //                          Code:
 // -------------------------------------------------------------------
@@ -250,6 +254,8 @@ static char err[4097];
 #pragma code_seg(".intro_init")
 void intro_init( void )
 {
+    last_drum_progress_ = accumulated_drum_volume;
+
 	// create openGL functions
 	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
 
@@ -477,42 +483,26 @@ void intro_do( long itime )
 //	glBindTexture(GL_TEXTURE_3D, noiseTexture);
 //	glRectf(-1., -1., 1., 1.);
 
+    // TODO: Make the first 1 or 2 passes to the smaller backbuffer
+    int num_passes = 10;
+    int last_offscreen_id = -1;
+    glUseProgram(shaderProgram);
+
+#ifdef USEDSOUND    
+    const float progress_normalizer = 3.0f / 157.1797414240835 / 6.0f;
+    float progress = (float)(last_drum_progress_ * progress_normalizer -
+        floor(last_drum_progress_ * progress_normalizer));
+#else
+    float progress = (float)(ftime * 0.04f - floor(ftime * 0.04f));
+#endif
+
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
     glEnable(GL_BLEND);
     //glBlendFunc(GL_DST_COLOR, GL_ZERO);
     glBlendFunc(GL_ONE, GL_ONE);
 
-#if 0
-    // draw offscreen
-    glBindTexture(GL_TEXTURE_2D, white_texture_);
-    glUseProgram(shaderProgram);
-    glColor4f(1.0, 1.0, 1.0, 1.0);
-    //glRectf(-1.0, -1.0, 0.0, 0.0);
-    float transform[2][3] = {{0.5f, 0.0f, 0.0f},{0.0f,0.5f, 0.0f}};
-    DrawQuad(transform, 0.7f, 0.9f, 1.0f, 1.0f);
-
-    // copy to front
-    glBindTexture(GL_TEXTURE_2D, offscreen_texture_[0]);
-    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, XRES, YRES);   //Copy back buffer to texture
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    glUseProgram(shaderProgram);
-    glColor4f(1.0, 0.5, 0.5, 1.0);
-    float identity[2][3] = {{1.0f, 0.0f, 0.0f},{0.0f, 1.0f, 0.0f}};
-    DrawQuad(identity, 1.0f, 1.0f, 1.0f, 1.0f);
-#endif
-
-    // TODO: Make the first 1 or 2 passes to the smaller backbuffer
-    int num_passes = 10;
-    int last_offscreen_id = -1;
-    glUseProgram(shaderProgram);
-#ifdef USEDSOUND    
-    const float progress_normalizer = 1.0f / 157.1797414240835 / 6.0f;
-    float progress = (float)(accumulated_drum_volume * 0.004f - floor(accumulated_drum_volume * 0.004f));
-#else
-    float progress = (float)(ftime * 0.04f - floor(ftime * 0.04f));
-#endif
+    float zoom = 1.0f;  // used later for zoom - adjust
     for (int pass = 0; pass < num_passes; pass++) {
         srand(1);
         int offscreen_id = ((num_passes - pass) << 0) - 1;  // So that last pass is on offscreen_id;
@@ -540,7 +530,6 @@ void intro_do( long itime )
         glClear(GL_COLOR_BUFFER_BIT);
 
         // Draw one iteration of the IFS
-        float zoom = 1.0f;
         float aspect = 1.0f;
         if (pass == num_passes - 1) {
             //zoom = sinf(ftime * 0.4f) * 80.0f + 81.0f;
@@ -610,18 +599,30 @@ void intro_do( long itime )
     }
 
 #if 1
-    // copy to front
     glBindTexture(GL_TEXTURE_2D, offscreen_texture_[0]);
     glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, XRES, YRES);   //Copy back buffer to texture
     glGenerateMipmap(GL_TEXTURE_2D);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
-    glUseProgram(shaderProgram);
-    glColor4f(1.0, 0.5, 0.5, 1.0);
-    float rot = -progress * 3.141592653589793238f * 2.0f;
-    float identity[2][3] = {{1.2f*cosf(rot), 1.2f*-sinf(rot), 0.0f},{1.2f*16.0f / 9.0f * sinf(rot), 1.2f*16.0f / 9.0f * cosf(rot), 0.0f}};
-    DrawQuad(identity, 1.0f, 1.0f, 1.0f, 1.0f);
+
+    // copy to front (blurry - with blur zoom)
+    for (int i = 0; i < NUM_MOTION_BLURS; i++) {
+        glUseProgram(shaderProgram);
+        double cur_progress = i * (accumulated_drum_volume - last_drum_progress_) / NUM_MOTION_BLURS + last_drum_progress_;
+        float progress = (float)(cur_progress * progress_normalizer -
+            floor(cur_progress * progress_normalizer));
+        float new_zoom = (float)(exp(progress * log(10000.0f) + 2.f));
+        float rel_zoom = 1.2f * new_zoom / zoom;
+        if (rel_zoom < 0.12f || rel_zoom > 12.0f) rel_zoom = 1.2f;
+        float brightness_amount = 1.0f / NUM_MOTION_BLURS;
+        float rot = -progress * 3.141592653589793238f * 2.0f;
+        float identity[2][3] = {{rel_zoom*cosf(rot), rel_zoom*-sinf(rot), 0.0f},
+                                {rel_zoom*16.0f/9.0f*sinf(rot), rel_zoom*16.0f/9.0f*cosf(rot), 0.0f}};
+        DrawQuad(identity, brightness_amount, brightness_amount, brightness_amount, 1.0f);
+    }
 #endif
+
+    last_drum_progress_ = accumulated_drum_volume * 0.4 + last_drum_progress_ * 0.6;
 }
 
 // Here I do something if keys are pressed on the Midi device

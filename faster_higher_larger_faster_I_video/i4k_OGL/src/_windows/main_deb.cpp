@@ -257,8 +257,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return( 0 );
     }
 
-    intro_init();
-
 	// open audio device
 	if (waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 
 					0, 0, CALLBACK_NULL) != MMSYSERR_NOERROR)
@@ -277,6 +275,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		waveOutPrepareHeader(hWaveOut, &(header[i]), sizeof(WAVEHDR));
 		waveOutWrite(hWaveOut, &(header[i]), sizeof(WAVEHDR));
 	}
+
+    intro_init();
 
     // Wait for keypress to start
 #if 0
