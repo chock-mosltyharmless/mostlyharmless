@@ -604,25 +604,27 @@ void intro_do( long itime )
     glGenerateMipmap(GL_TEXTURE_2D);
     glClearColor(0.0, 0.0, 0.0, 0.0);
     glClear(GL_COLOR_BUFFER_BIT);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // copy to front (blurry - with blur zoom)
     for (int i = 0; i < NUM_MOTION_BLURS; i++) {
         glUseProgram(shaderProgram);
         double cur_progress = i * (accumulated_drum_volume - last_drum_progress_) / NUM_MOTION_BLURS + last_drum_progress_;
         float progress = (float)(cur_progress * progress_normalizer -
-            floor(cur_progress * progress_normalizer));
+            floor(last_drum_progress_ * progress_normalizer));
         float new_zoom = (float)(exp(progress * log(10000.0f) + 2.f));
         float rel_zoom = 1.2f * new_zoom / zoom;
         if (rel_zoom < 0.12f || rel_zoom > 12.0f) rel_zoom = 1.2f;
-        float brightness_amount = 1.0f / NUM_MOTION_BLURS;
+        //float brightness_amount = 1.0f / NUM_MOTION_BLURS;
         float rot = -progress * 3.141592653589793238f * 2.0f;
         float identity[2][3] = {{rel_zoom*cosf(rot), rel_zoom*-sinf(rot), 0.0f},
                                 {rel_zoom*16.0f/9.0f*sinf(rot), rel_zoom*16.0f/9.0f*cosf(rot), 0.0f}};
-        DrawQuad(identity, brightness_amount, brightness_amount, brightness_amount, 1.0f);
+        float src_alpha = 1.0f / (i + 1);
+        DrawQuad(identity, 1.0f, 1.0f, 1.0f, src_alpha);
     }
 #endif
 
-    last_drum_progress_ = accumulated_drum_volume * 0.4 + last_drum_progress_ * 0.6;
+    last_drum_progress_ = accumulated_drum_volume * 0.5 + last_drum_progress_ * 0.5;
 }
 
 // Here I do something if keys are pressed on the Midi device
