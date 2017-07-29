@@ -2,10 +2,14 @@
 // iq / rgba  .  tiny codes  .  2008                                        //
 //--------------------------------------------------------------------------//
 
+_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+
 #include <math.h>
 #include "mzk.h"
 #include "music.h"
 #include <emmintrin.h>
+#include <fenv.h>
+#include "xmmintrin.h"
 
 #define MZK_BLOCK_SIZE AUDIO_BUFFER_SIZE
 
@@ -148,6 +152,9 @@ void mzk_prepare_block(short *blockBuffer)
     static int startSampleID = 0;
     int sampleID;
 
+    //set_mxcsr_on(FTZ_BIT);
+    //set_mxcsr_off(UNDERFLOW_EXCEPTION_MASK);
+
     // clear audio block
     for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
     {
@@ -157,6 +164,10 @@ void mzk_prepare_block(short *blockBuffer)
 
     for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     {
+        // Everything * 16 as only every 16th sample it's done.
+        const int kADSRSuperSample = 64;
+        const float kSuperSample = (float)kADSRSuperSample;
+
         // Go over all samples
         sampleID = startSampleID;
 
@@ -164,7 +175,7 @@ void mzk_prepare_block(short *blockBuffer)
         // Get parameters locally
         float vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
         float panning = float_instrument_parameters_[instrument][K_MASTER_PANNING];
-        float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
+        float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
 
         // Set the reverberation buffer length at key start (no interpolation)
         reverbBufferLength[0] = instrumentParams[instrument][K_DELAY_LENGTH] * DELAY_MULTIPLICATOR + 1;
@@ -205,7 +216,7 @@ void mzk_prepare_block(short *blockBuffer)
                 iADSR[instrument] = 2; // Release
             }
 
-            invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
+            invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
 
             // Go to next note location
             currentNoteIndex[instrument]++;
@@ -221,21 +232,22 @@ void mzk_prepare_block(short *blockBuffer)
         //float baseFreq = freqtab[currentNote[instrument] & 0x7f] * fScaler;
         float baseFreq = 8.175f * (float)exp2jo((float)currentNote[instrument] * (1.0f/12.0f)) * fScaler;
 
-        for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++)
+        
+        for (int super_sample = 0; super_sample < MZK_BLOCK_SIZE; super_sample += kADSRSuperSample)
         {
-            // Process ADSR envelope
+            float deathVolume = 1.0f;
+
             // Process ADSR envelope
             if (iADSR[instrument] == 0) {
                 fADSRVal[instrument] += (1.0f - fADSRVal[instrument]) *
-                    (float_instrument_parameters_[instrument][K_ADSR_SPEED + 0] / 1024.0f);
+                    (float_instrument_parameters_[instrument][K_ADSR_SPEED + 0] / 1024.0f) * kSuperSample;
             }
             // Go from attack to decay
             if (iADSR[instrument] == 0 && fADSRVal[instrument] > 0.75) {
                 iADSR[instrument] = 1;
-                invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
+                invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
             }
 
-#if 1
             // interpolate volume according to ADSR envelope
             for (int i = 0; i < 6; i++) {
                 adsrData[instrument][i] += (float_instrument_parameters_[instrument][i*4 + iADSR[instrument] + 1] - adsrData[instrument][i]) * invADSRSpeed;
@@ -243,113 +255,111 @@ void mzk_prepare_block(short *blockBuffer)
             for (int i = 0; i < NUM_OVERTONES; i++) {
                 adsrData[instrument][adsrShape + i] += (fShape[instrument][iADSR[instrument] + 1][i] - adsrData[instrument][adsrShape + i]) * invADSRSpeed;
             }
-#endif
 
             // fade out on new instrument (but not on noteoff...)
             // (deathcounter)
-            float deathVolume = 1.0f;
             if (savedNoteTime[instrument][currentNoteIndex[instrument]] == 0 &&
-                sample >= MZK_BLOCK_SIZE - 512 &&
+                super_sample >= MZK_BLOCK_SIZE - 512 &&
                 savedNote[instrument][currentNoteIndex[instrument]] != -128)
             {
-                deathVolume = (MZK_BLOCK_SIZE - sample) / 512.0f;
+                deathVolume = (MZK_BLOCK_SIZE - super_sample) / 512.0f;
             }
 
-            // Some optimziation?
-            //if (fADSRVal[instrument] < 1.0f / 65536.0f) fADSRVal[instrument] = 0.0f;
+            for (int sample = super_sample; sample < super_sample + kADSRSuperSample; sample++) {            
+                // Some optimziation?
+                //if (fADSRVal[instrument] < 1.0f / 65536.0f) fADSRVal[instrument] = 0.0f;
 
-            float outAmplitude[NUM_Stereo_VOICES] = {0};
+                float outAmplitude[NUM_Stereo_VOICES] = {0};
 
 #if 1
-            int maxOvertones = (int)(3.0f / baseFreq);
-            float overtoneLoudness = 1.0f;
-            float overallLoudness = 0.0f;
-            if (adsrData[instrument][adsrVolume] > 1e-4 || float_instrument_parameters_[instrument][K_VOLUME + iADSR[instrument] + 1] > 1e-4)
-                for (int i = 0; i < NUM_OVERTONES; i++)
-                {
-                    if (i < maxOvertones)
+                int maxOvertones = (int)(3.0f / baseFreq);
+                float overtoneLoudness = 1.0f;
+                float overallLoudness = 0.0f;
+                if (adsrData[instrument][adsrVolume] > 1e-4 || float_instrument_parameters_[instrument][K_VOLUME + iADSR[instrument] + 1] > 1e-4)
+                    for (int i = 0; i < NUM_OVERTONES; i++)
                     {
-                        outAmplitude[0] += sinf(fPhase[instrument][i]) * overtoneLoudness *
-                            adsrData[instrument][adsrShape+i] * (1.0f - panning);
-                        outAmplitude[1] += sinf(fPhase[instrument][i]) * overtoneLoudness *
-                            adsrData[instrument][adsrShape+i] * panning;
-                        fPhase[instrument][i] += baseFreq * (i+1) * (adsrData[instrument][adsrFreq]*4.0f) *
-                            (1.0f + adsrData[instrument][adsrDetune] * detuneFactor[i] * 0.5f);
-                        while (fPhase[instrument][i] > 2.0f * PI) fPhase[instrument][i] -= 2.0f * (float)PI;
+                        if (i < maxOvertones)
+                        {
+                            outAmplitude[0] += sinf(fPhase[instrument][i]) * overtoneLoudness *
+                                adsrData[instrument][adsrShape+i] * (1.0f - panning);
+                            outAmplitude[1] += sinf(fPhase[instrument][i]) * overtoneLoudness *
+                                adsrData[instrument][adsrShape+i] * panning;
+                            fPhase[instrument][i] += baseFreq * (i+1) * (adsrData[instrument][adsrFreq]*4.0f) *
+                                (1.0f + adsrData[instrument][adsrDetune] * detuneFactor[i] * 0.5f);
+                            while (fPhase[instrument][i] > 2.0f * PI) fPhase[instrument][i] -= 2.0f * (float)PI;
+                        }
+                        overallLoudness += overtoneLoudness * adsrData[instrument][adsrShape+i];
+                        overtoneLoudness *= adsrData[instrument][adsrQuak] * 2.0f;
                     }
-                    overallLoudness += overtoneLoudness * adsrData[instrument][adsrShape+i];
-                    overtoneLoudness *= adsrData[instrument][adsrQuak] * 2.0f;
-                }
 #else
-            float overallLoudness = 1.0f;
-            outAmplitude[0] += (float)sin(fPhase[instrument][0]);
-            fPhase[instrument][0] += baseFreq;
-            while (fPhase[instrument][0] > 2.0f * PI) fPhase[instrument][0] -= 2.0f * (float)PI;
+                float overallLoudness = 1.0f;
+                outAmplitude[0] += (float)sin(fPhase[instrument][0]);
+                fPhase[instrument][0] += baseFreq;
+                while (fPhase[instrument][0] > 2.0f * PI) fPhase[instrument][0] -= 2.0f * (float)PI;
 #endif
 
 #if 1
-            // Ring modulation with noise
-            for (int i = 0; i < 2; i++)
-            {
                 // Ring modulation with noise
-                outAmplitude[i] *= 1.0f + (lowNoise[sampleID % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise];
-            }
+                for (int i = 0; i < 2; i++)
+                {
+                    // Ring modulation with noise
+                    outAmplitude[i] *= 1.0f + (lowNoise[sampleID % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise];
+                }
 #endif
 
-            // adjust amplitude
-            for (int i = 0; i < NUM_Stereo_VOICES; i++) {
-                // TODO: This is an evil hack to avoid silence?
-                if (overallLoudness > 1.0f / (float)(1<<24)) outAmplitude[i] /= overallLoudness;
+                // adjust amplitude
+                for (int i = 0; i < NUM_Stereo_VOICES; i++) {
+                    // TODO: This is an evil hack to avoid silence?
+                    if (overallLoudness > 1.0f / (float)(1<<24)) outAmplitude[i] /= overallLoudness;
 
-                // Distort
-#if 1
-                float distortMult = (float)exp2jo(LOG_2_E * 6.0f*adsrData[instrument][adsrDistort]);
-                outAmplitude[i] *= distortMult;
-                outAmplitude[i] = 2.0f * (1.0f / (1.0f + (float)exp2jo(LOG_2_E * -outAmplitude[i])) - 0.5f);
-                outAmplitude[i] /= distortMult;
+                    // Distort
+                    float distortMult = (float)exp2jo(LOG_2_E * 6.0f*adsrData[instrument][adsrDistort]);
+                    outAmplitude[i] *= distortMult;
+                    outAmplitude[i] = 2.0f * (1.0f / (1.0f + (float)exp2jo(LOG_2_E * -outAmplitude[i])) - 0.5f);
+                    outAmplitude[i] /= distortMult;
+                }
+
+                // Put everything into the reverb buffers
+                int reverbPos = sampleID % MAX_DELAY_LENGTH;
+                for (int j = 0; j < NUM_Stereo_VOICES; j++)
+                {
+                    reverbBuffer[instrument][reverbPos][j] = outAmplitude[j] * vol * adsrData[instrument][adsrVolume] * deathVolume * midi_volume_[instrument];
+
+                    // Do the reverb feedback
+                    int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
+                    int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]);
+                    reverbBuffer[instrument][reverbPos][j] += float_instrument_parameters_[instrument][K_DELAY_FEED] * reverbBuffer[instrument][fromLocation % MAX_DELAY_LENGTH][fromBuffer];
+                    if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
+                }
+
+#if 0
+                // Put everything into the reverb buffers
+                int reverbPos = sampleID % MAX_DELAY_LENGTH;
+                float totalLoudness = 0.5f;
+
+                // Adjust volume
+                float ampl = outAmplitude[0];
+
+                reverbBuffer[instrument][reverbPos][0] = totalLoudness * ampl;
 #endif
-            }
-
-            // Put everything into the reverb buffers
-            int reverbPos = sampleID % MAX_DELAY_LENGTH;
-            for (int j = 0; j < NUM_Stereo_VOICES; j++)
-            {
-                reverbBuffer[instrument][reverbPos][j] = outAmplitude[j] * vol * adsrData[instrument][adsrVolume] * deathVolume * midi_volume_[instrument];
 
                 // Do the reverb feedback
+#if 0
                 int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
-                int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]);
-                reverbBuffer[instrument][reverbPos][j] += float_instrument_parameters_[instrument][K_DELAY_FEED] * reverbBuffer[instrument][fromLocation % MAX_DELAY_LENGTH][fromBuffer];
-                if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
+                int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]) % 
+                    MAX_DELAY_LENGTH;
+                reverbBuffer[instrument][reverbPos][j] += fDelayFeed * reverbBuffer[instrument][fromLocation][fromBuffer];
+#endif
+                // Ignore denormals..
+                //if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
+
+                floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][0];
+                floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][2];
+                floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][1];
+                floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][3];
+
+                sampleID++;
             }
-
-#if 0
-            // Put everything into the reverb buffers
-            int reverbPos = sampleID % MAX_DELAY_LENGTH;
-            float totalLoudness = 0.5f;
-
-            // Adjust volume
-            float ampl = outAmplitude[0];
-
-            reverbBuffer[instrument][reverbPos][0] = totalLoudness * ampl;
-#endif
-
-            // Do the reverb feedback
-#if 0
-            int fromBuffer = (j + 1) % NUM_Stereo_VOICES;
-            int fromLocation = (reverbPos + MAX_DELAY_LENGTH - reverbBufferLength[fromBuffer]) % 
-                MAX_DELAY_LENGTH;
-            reverbBuffer[instrument][reverbPos][j] += fDelayFeed * reverbBuffer[instrument][fromLocation][fromBuffer];
-#endif
-            // Ignore denormals..
-            //if (fabsf(reverbBuffer[instrument][reverbPos][j]) < 1.0e-12) reverbBuffer[instrument][reverbPos][j] = 0.0f;
-
-            floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][0];
-            floatOutput[sample][0] += reverbBuffer[instrument][reverbPos][2];
-            floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][1];
-            floatOutput[sample][1] += reverbBuffer[instrument][reverbPos][3];
-
-            sampleID++;
         }
     }
 

@@ -6,7 +6,8 @@
 #define _MZK_H_
 
 // I dislike MZK_DURATION???
-#define MZK_DURATION    2750
+//#define MZK_DURATION    2750
+#define MZK_DURATION    2700
 #define MZK_RATE        44100
 #define MZK_NUMCHANNELS 2
 // Audio buffer size in samples
