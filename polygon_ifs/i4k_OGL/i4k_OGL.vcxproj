@@ -172,7 +172,6 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="shaders\fragment_main_particle.txt" />
-    <Text Include="shaders\geometry_main_particle.txt" />
     <Text Include="shaders\vertex_main_particle.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

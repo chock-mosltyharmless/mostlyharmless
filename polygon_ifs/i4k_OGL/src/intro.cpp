@@ -26,7 +26,7 @@
 //                          Constants:
 // -------------------------------------------------------------------
 
-#define NUM_PARTICLES_PER_DIM 128
+#define NUM_PARTICLES_PER_DIM 16
 #define TOTAL_NUM_PARTICLES (NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM)
 
 // This is only used if SHADER_DEBUG is on, but I will leave it for now.
@@ -72,7 +72,7 @@ void LoadTextFile(const char *filename, char *data, int data_size) {
 	fclose(fid);
 }
 
-// Create the particle locations and move them to the GPU
+// Create the particle locations
 void GenerateParticles(void) {
     unsigned int seed = 23690984;
 
@@ -88,9 +88,9 @@ void GenerateParticles(void) {
                 vertices_[vertex_id++] = xp + 2.0f * frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
                 vertices_[vertex_id++] = yp + 2.0f * frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
                 vertices_[vertex_id++] = zp + 2.0f * frand(&seed) / (float)NUM_PARTICLES_PER_DIM;
-                colors_[color_id++] = 0.9f;
-                colors_[color_id++] = 0.7f;
-                colors_[color_id++] = 0.5f;
+                colors_[color_id++] = frand(&seed);
+                colors_[color_id++] = frand(&seed);
+                colors_[color_id++] = frand(&seed);
                 // fran
                 colors_[color_id++] = frand(&seed);
                 //colors_[color_id - 1] = 0.5f;
@@ -104,7 +104,6 @@ void intro_init( void ) {
 
 	// init objects:
 	GLuint vMainParticle = glCreateShader(GL_VERTEX_SHADER);
-	GLuint gMainParticle = glCreateShader(GL_GEOMETRY_SHADER_EXT);
 	GLuint fMainParticle = glCreateShader(GL_FRAGMENT_SHADER);
 	shaderPrograms[0] = glCreateProgram();
 	// compile sources:
@@ -113,9 +112,6 @@ void intro_init( void ) {
 	LoadTextFile("shaders/vertex_main_particle.txt", shader_text, kMaxShaderLength);
 	glShaderSource(vMainParticle, 1, (const GLchar**)&shader_text, NULL);
 	glCompileShader(vMainParticle);
-	LoadTextFile("shaders/geometry_main_particle.txt", shader_text, kMaxShaderLength);
-	glShaderSource(gMainParticle, 1, (const GLchar**)&shader_text, NULL);
-	glCompileShader(gMainParticle);
 	LoadTextFile("shaders/fragment_main_particle.txt", shader_text, kMaxShaderLength);
 	glShaderSource(fMainParticle, 1, (const GLchar**)&shader_text, NULL);
 	glCompileShader(fMainParticle);
@@ -132,14 +128,6 @@ void intro_init( void ) {
 		MessageBox(hWnd, err, "vMainParticle shader error", MB_OK);
 		return;
 	}
-	glGetShaderiv(gMainParticle, GL_COMPILE_STATUS, &tmp);
-	if (!tmp)
-	{
-		glGetShaderInfoLog(gMainParticle, 4096, &tmp2, err);
-		err[tmp2]=0;
-		MessageBox(hWnd, err, "gMainParticle shader error", MB_OK);
-		return;
-	}
 	glGetShaderiv(fMainParticle, GL_COMPILE_STATUS, &tmp);
 	if (!tmp)
 	{
@@ -152,7 +140,6 @@ void intro_init( void ) {
 
 	// link shaders:
 	glAttachShader(shaderPrograms[0], vMainParticle);
-	glAttachShader(shaderPrograms[0], gMainParticle);
 	glAttachShader(shaderPrograms[0], fMainParticle);
 	glLinkProgram(shaderPrograms[0]);
 
@@ -227,31 +214,12 @@ void intro_do( long itime )
 	lastTime = itime;
 
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
 
 	// Set the render matrix
 	float parameterMatrix[4][4];
 	parameterMatrix[0][0] = itime / 44100.0f;
-
-    // Set parameters to other locations
-    parameterMatrix[0][1] = params.getParam(2, 0.5f);
-    parameterMatrix[0][2] = params.getParam(3, 0.5f);
-    parameterMatrix[0][3] = params.getParam(4, 0.5f);
-
-    parameterMatrix[1][0] = params.getParam(5, 0.5f);
-    parameterMatrix[1][1] = params.getParam(6, 0.5f);
-    parameterMatrix[1][2] = params.getParam(8, 0.5f);
-    parameterMatrix[1][3] = params.getParam(9, 0.5f);
-
-    parameterMatrix[2][0] = params.getParam(12, 0.5f);
-    parameterMatrix[2][1] = params.getParam(13, 0.5f);
-    parameterMatrix[2][2] = params.getParam(14, 0.5f);
-    parameterMatrix[2][3] = params.getParam(15, 0.5f);
-
-    parameterMatrix[3][0] = params.getParam(16, 0.5f);
-    parameterMatrix[3][1] = params.getParam(17, 0.5f);
-    parameterMatrix[3][2] = params.getParam(18, 0.5f);
-    parameterMatrix[3][3] = params.getParam(19, 0.5f);
 
 	int location = glGetUniformLocation(shaderPrograms[0], "r");
 	glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
@@ -266,5 +234,5 @@ void intro_do( long itime )
 	
 	glUseProgram(shaderPrograms[0]);
 
-    glDrawArrays(GL_POINTS, 0, TOTAL_NUM_PARTICLES);
+    glDrawArrays(GL_TRIANGLES, 0, TOTAL_NUM_PARTICLES);
 }

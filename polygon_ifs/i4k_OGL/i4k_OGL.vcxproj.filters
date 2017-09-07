@@ -50,9 +50,6 @@
     <Text Include="shaders\fragment_main_particle.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>
-    <Text Include="shaders\geometry_main_particle.txt">
-      <Filter>Source Files\shaders</Filter>
-    </Text>
     <Text Include="shaders\vertex_main_particle.txt">
       <Filter>Source Files\shaders</Filter>
     </Text>

@@ -35,7 +35,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     32,
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,
-    0, 0, 0,
+    32, 0, 0,
     PFD_MAIN_PLANE,
     0, 0, 0, 0
     };

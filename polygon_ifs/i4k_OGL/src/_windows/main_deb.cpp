@@ -41,7 +41,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     32,
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,  // accum
-    0,             // zbuffer
+    32,             // zbuffer
     0,              // stencil!
     0,              // aux
     PFD_MAIN_PLANE,
