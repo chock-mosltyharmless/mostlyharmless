@@ -4,6 +4,7 @@
 #include "stdafx.h"
 
 #include "Configuration.h"
+#include "ThreadInformation.h"
 
 // Global Variables:
 HINSTANCE instance_handle_ = 0;  // main instance
@@ -117,12 +118,31 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     }
     glEnable(GL_MULTISAMPLE_ARB);
 
-    MSG msg;
+    // Set transformation matrix to do aspect ratio adjustment
+    RECT window_rectangle;
+    GetWindowRect(window_handle_, &window_rectangle);
+    float stretch_matrix[4][4] = {
+        {1.0f, 0.0f, 0.0f, 0.0f},
+        {0.0f, 1.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 1.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f, 1.0f}
+    };
+    int width = window_rectangle.right - window_rectangle.left;
+    int height = window_rectangle.bottom - window_rectangle.top;
+    stretch_matrix[1][1] = static_cast<float>(width) / static_cast<float>(height);
+    glLoadIdentity();  // Reset The View
+    glLoadMatrixf(stretch_matrix[0]);
+
+    // The main container holding all the thread information
+    ThreadInformation thread_information;
+    // Debug: Add some data
+    thread_information.AddThread(-0.6f, 0.4f, 2, 0.5f, -0.1f, 52);
 
     // Main message loop:
     long start_time_ = timeGetTime();
     bool done = false;
 
+    MSG msg;
     while (!done) {
         long t = timeGetTime() - start_time_;
 
@@ -134,8 +154,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glLoadIdentity();  // Reset The View
 
+#if 0
         glBegin(GL_TRIANGLES);
         glColor3f(1.0f, 0.7f, 0.3f);
         glVertex3f(0.0f, 0.7f, 0.0f);
@@ -144,6 +164,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glColor3f(0.3f, 0.7f, 1.0f);
         glVertex3f(0.7f, -0.7f, 0.0f);
         glEnd();
+#endif
+        thread_information.Draw(1.0f, 0.7f, 0.3f, 0.1f);
 
         SwapBuffers(device_context_handle_);
     }
@@ -168,26 +190,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 bool InitInstance(HINSTANCE instance, int nCmdShow,
                   bool use_custom_pixel_format,
                   int custom_pixel_format) {
-   instance_handle_ = instance; // Store instance handle in our global variable
-   DWORD window_style;
-   RECT	window_rectangle;
-   unsigned int	pixel_format;
+    instance_handle_ = instance; // Store instance handle in our global variable
+    DWORD window_style;
+    RECT window_rectangle;
+    unsigned int	pixel_format;
 
-   WNDCLASSA window_class;
+    WNDCLASSA window_class;
 
-   ZeroMemory(&window_class, sizeof(window_class));
-   window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
-   window_class.lpfnWndProc = WndProc;
-   window_class.hInstance = instance;
-   window_class.lpszClassName = kWindowClassName;
+    ZeroMemory(&window_class, sizeof(window_class));
+    window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+    window_class.lpfnWndProc = WndProc;
+    window_class.hInstance = instance;
+    window_class.lpszClassName = kWindowClassName;
 
-   RegisterClassA(&window_class);
+    RegisterClassA(&window_class);
 
-   // Set default window size (if not fullscreen)
-   window_rectangle.left   = 0;
-   window_rectangle.top    = 0;
-   window_rectangle.right  = XRES;
-   window_rectangle.bottom = YRES;
+    // Set default window size (if not fullscreen)
+    window_rectangle.left   = 0;
+    window_rectangle.top    = 0;
+    window_rectangle.right  = XRES;
+    window_rectangle.bottom = YRES;
 
 #ifdef FULLSCREEN
     window_style = WS_VISIBLE | WS_POPUP | WS_MAXIMIZE;  // | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
