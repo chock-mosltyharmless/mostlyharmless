@@ -1,3 +1,5 @@
+Debug
+Release
 .vs
 *.sdf
-Debug
+ipch
