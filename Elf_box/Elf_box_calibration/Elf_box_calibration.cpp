@@ -4,7 +4,22 @@
 #include "stdafx.h"
 
 #include "Configuration.h"
+#include "Parameter.h"
 #include "ThreadInformation.h"
+
+// State in the q1234s chain...
+enum {
+    IDLE,
+    NUMBER_1_TENS,
+    NUMBER_1_ONES,
+    NUMBER_2_TENS,
+    NUMBER_2_ONES,
+    NUMBER_ALL_ENTERED,
+    SAVE
+};
+int edit_state_ = IDLE;
+int edit_number1_ = 0;
+int edit_number2_ = 0;
 
 // Global Variables:
 HINSTANCE instance_handle_ = 0;  // main instance
@@ -136,15 +151,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     // The main container holding all the thread information
     ThreadInformation thread_information;
     // Debug: Add some data
-    thread_information.AddThread(-0.6f, 0.4f, 2, 0.5f, -0.1f, 52);
-
+    //thread_information.AddThread(-0.6f, 0.4f, 2, 0.5f, -0.1f, 52);
+    
     // Main message loop:
     long start_time_ = timeGetTime();
     bool done = false;
 
     MSG msg;
     while (!done) {
-        long t = timeGetTime() - start_time_;
+        // Create one thread as the currently edited one:
+        Thread new_add_thread;
+
+        // Set position of the edit thread
+        float x1 = 1.0f * (-params.getParam(2, 0.75f)) + 0.2f * (params.getParam(14, 0.5) - 0.5f);
+        float x2 = 1.0f * (+params.getParam(3, 0.75f)) + 0.2f * (params.getParam(15, 0.5) - 0.5f);
+        float y1 = 2.0f * (params.getParam(6, 0.5f) - 0.5f) + 0.2f * (params.getParam(18, 0.5) - 0.5f);
+        float y2 = 2.0f * (params.getParam(8, 0.5f) - 0.5f) + 0.2f * (params.getParam(19, 0.5) - 0.5f);
+        new_add_thread.SetData(x1, y1, 0, x2, y2, 0);  // Uses dummy thread index
 
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE) ) {
             if (msg.message == WM_QUIT) done = 1;
@@ -155,17 +178,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-#if 0
+        thread_information.Draw(0.3f, 0.5f, 0.7f, 0.005f);
+
+        // Draw the thread that will be added next
         glBegin(GL_TRIANGLES);
-        glColor3f(1.0f, 0.7f, 0.3f);
-        glVertex3f(0.0f, 0.7f, 0.0f);
-        glColor3f(0.7f, 1.0f, 0.3f);
-        glVertex3f(-0.7f, -0.7f, 0.0f);
-        glColor3f(0.3f, 0.7f, 1.0f);
-        glVertex3f(0.7f, -0.7f, 0.0f);
+        float edit_width = 0.3f * (params.getParam(13, 1.0f)) + 0.003f;
+        new_add_thread.Draw(0.7f, 0.0f, 0.0f, edit_width);
+        new_add_thread.Draw(0.3f, 1.0f, 1.0f, edit_width / 5.0f);
         glEnd();
-#endif
-        thread_information.Draw(1.0f, 0.7f, 0.3f, 0.1f);
+
+        if (edit_state_ == SAVE) {
+            thread_information.AddThread(x1, y1, edit_number1_, x2, y2, edit_number2_);
+            edit_state_ = IDLE;
+        }
 
         SwapBuffers(device_context_handle_);
     }
@@ -245,33 +270,9 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
         }
     }
 
-#if 0
-    // create attribute context
-    HGLRC temp_opengl_context;
-    if (!(temp_opengl_context = wglCreateContext(device_context_handle_))) return false;
-    if (!wglMakeCurrent(device_context_handle_, temp_opengl_context)) return false;
-    if (!(resource_context_handle_ = wglCreateContextAttribsARB(device_context_handle_, NULL, glAttribs))) return 0;
-    wglMakeCurrent(NULL, NULL);
-    wglDeleteContext(temp_opengl_context);
-#else
     // create basic context
     if (!(resource_context_handle_ = wglCreateContext(device_context_handle_))) return false;
-#endif
     if (!wglMakeCurrent(device_context_handle_, resource_context_handle_)) return false;
-
-    // Create openGL functions
-#if 0
-    for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
-#endif
-
-#if 0
-    // Test GL version
-    int major_version = -1;
-    int minor_version = -1;
-    glGetIntegerv(GL_MAJOR_VERSION, &major_version);
-    glGetIntegerv(GL_MINOR_VERSION, &minor_version);
-    printf("Reported GL Version %d.%d [Supported]\n", major_version, minor_version);
-#endif
 
     ShowWindow(window_handle_, nCmdShow);
     UpdateWindow(window_handle_);
@@ -302,6 +303,53 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         return 0;
     }
 
+    // Handle editing messages
+    if (message == WM_KEYDOWN) {
+        switch (wParam) {
+        case 'Q':
+            if (edit_state_ == IDLE) edit_state_ = NUMBER_1_TENS;
+            else edit_state_ = IDLE;
+            break;
+        case 'X':
+            edit_state_ = IDLE;
+            break;
+        case 'S':
+            if (edit_state_ == NUMBER_ALL_ENTERED) edit_state_ = SAVE;
+            else edit_state_ = IDLE;
+            break;
+        default:            
+            if (wParam >= '0' && wParam <= '9') {
+                int digit = wParam - '0';
+                switch(edit_state_) {
+                case NUMBER_1_TENS:
+                    edit_number1_ = digit * 10;
+                    edit_state_ = NUMBER_1_ONES;
+                    break;
+                case NUMBER_1_ONES:
+                    edit_number1_ += digit;
+                    edit_state_ = NUMBER_2_TENS;
+                    break;
+                case NUMBER_2_TENS:
+                    edit_number2_ = digit * 10;
+                    edit_state_ = NUMBER_2_ONES;
+                    break;
+                case NUMBER_2_ONES:
+                    edit_number2_ += digit;
+                    edit_state_ = NUMBER_ALL_ENTERED;
+                    break;
+                default:
+                    // Wrong state -> go to idle
+                    edit_state_ = IDLE;
+                    break;
+                }
+            } else {
+                // Wrong key -> go to idle
+                edit_state_ = IDLE;
+            }
+            break;
+        }
+    }
+
     if (message == WM_CHAR) {
         if (wParam == VK_ESCAPE ) {
             PostQuitMessage(0);
@@ -310,4 +358,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     }
 
     return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+// Called by Parameter.cpp if a key has changed its value
+void registerParameterChange(int keyID) {
 }

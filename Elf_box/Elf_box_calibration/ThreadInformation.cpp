@@ -100,10 +100,15 @@ void Thread::Draw(float red, float green, float blue, float width) {
     along[0] = screen_location_[1][0] - screen_location_[0][0];
     along[1] = screen_location_[1][1] - screen_location_[0][1];
     float length = sqrtf(along[0] * along[0] + along[1] * along[1]);
-    along[0] /= length;
-    along[1] /= length;
-    along[0] *= width;
-    along[1] *= width;
+    if (length > 1e-7f) {
+        along[0] /= length;
+        along[1] /= length;
+        along[0] *= width;
+        along[1] *= width;
+    } else {
+        along[0] = width;
+        along[1] = 0.0f;
+    }
     float normal[2];
     normal[0] = -along[1];
     normal[1] = along[0];

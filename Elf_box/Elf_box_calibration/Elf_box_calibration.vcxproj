@@ -149,6 +149,7 @@
   <ItemGroup>
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="glext.h" />
+    <ClInclude Include="Parameter.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="ThreadInformation.h" />
@@ -156,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Elf_box_calibration.cpp" />
+    <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
