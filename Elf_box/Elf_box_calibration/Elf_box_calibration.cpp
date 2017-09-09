@@ -61,10 +61,6 @@ static void WindowEnd(void) {
     }
 
     UnregisterClass(kWindowClassName, instance_handle_);
-
-#ifdef FULLSCREEN
-    ShowCursor(1);
-#endif
 }
 
 
@@ -133,21 +129,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     }
     glEnable(GL_MULTISAMPLE_ARB);
 
-    // Set transformation matrix to do aspect ratio adjustment
-    RECT window_rectangle;
-    GetWindowRect(window_handle_, &window_rectangle);
-    float stretch_matrix[4][4] = {
-        {1.0f, 0.0f, 0.0f, 0.0f},
-        {0.0f, 1.0f, 0.0f, 0.0f},
-        {0.0f, 0.0f, 1.0f, 0.0f},
-        {0.0f, 0.0f, 0.0f, 1.0f}
-    };
-    int width = window_rectangle.right - window_rectangle.left;
-    int height = window_rectangle.bottom - window_rectangle.top;
-    stretch_matrix[1][1] = static_cast<float>(width) / static_cast<float>(height);
-    glLoadIdentity();  // Reset The View
-    glLoadMatrixf(stretch_matrix[0]);
-
     // The main container holding all the thread information
     const char *kAutoSaveFileName = "auto_save.ti";
     ThreadInformation thread_information;
@@ -181,6 +162,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Set transformation matrix to do aspect ratio adjustment
+        RECT window_rectangle;
+        GetWindowRect(window_handle_, &window_rectangle);
+        float stretch_matrix[4][4] = {
+            {1.0f, 0.0f, 0.0f, 0.0f},
+            {0.0f, 1.0f, 0.0f, 0.0f},
+            {0.0f, 0.0f, 1.0f, 0.0f},
+            {0.0f, 0.0f, 0.0f, 1.0f}
+        };
+        int width = window_rectangle.right - window_rectangle.left;
+        int height = window_rectangle.bottom - window_rectangle.top;
+        stretch_matrix[1][1] = static_cast<float>(width) / static_cast<float>(height);
+        glLoadIdentity();  // Reset The View
+        glLoadMatrixf(stretch_matrix[0]);
 
         thread_information.Draw(0.3f, 0.5f, 0.7f, 0.005f);
 
@@ -239,19 +235,14 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
 
     RegisterClassA(&window_class);
 
-    // Set default window size (if not fullscreen)
+    // Set default window size
     window_rectangle.left   = 0;
     window_rectangle.top    = 0;
     window_rectangle.right  = XRES;
     window_rectangle.bottom = YRES;
 
-#ifdef FULLSCREEN
-    window_style = WS_VISIBLE | WS_POPUP | WS_MAXIMIZE;  // | WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
-    ShowCursor(0);
-#else
     window_style   = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
     AdjustWindowRect(&window_rectangle, window_style, 0);
-#endif
 
     window_handle_ = CreateWindowA(kWindowClassName, "OpenGL 1 sample", window_style,
         (GetSystemMetrics(SM_CXSCREEN) - window_rectangle.right + window_rectangle.left) / 2,
@@ -325,6 +316,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
         case 'S':
             if (edit_state_ == NUMBER_ALL_ENTERED) edit_state_ = SAVE;
             else edit_state_ = IDLE;
+            break;
+        case 'M':
+            if (GetAsyncKeyState(VK_CONTROL) < 0) {
+                RECT window_rect;
+                // TODO: Minimization again.
+                SetWindowLong(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+                ShowWindow(hWnd, SW_MAXIMIZE);
+                GetClientRect(hWnd, &window_rect);
+                glViewport(0, 0,
+                    window_rect.right - window_rect.left,
+                    abs(window_rect.bottom - window_rect.top));
+                ShowCursor(false);
+            }
             break;
         default:            
             if (wParam >= '0' && wParam <= '9') {
