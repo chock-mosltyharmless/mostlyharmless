@@ -168,6 +168,31 @@ int Thread::GetMaxNumReferencePoints(void) {
         sizeof(kReferencePointLocation[0]));
 }
 
+bool Thread::Load(FILE * fid) {
+    int file_version;
+    fread(&file_version, sizeof(int), 1, fid);
+
+    if (file_version != 1) return false;
+
+    fread(screen_location_[0], sizeof(float), 4, fid);
+    fread(reference_point_index_, sizeof(int), 2, fid);
+
+    return true;
+}
+
+bool Thread::Save(FILE * fid) {
+    const int kFileVersion = 1;
+
+    // Rudementary header
+    fwrite(&kFileVersion, sizeof(int), 1, fid);
+
+    // Data
+    fwrite(screen_location_[0], sizeof(float), 4, fid);
+    fwrite(reference_point_index_, sizeof(int), 2, fid);
+
+    return true;
+}
+
 bool Thread::SetData(float x1, float y1, int thread_index1, float x2, float y2, int thread_index2) {
     if (thread_index1 < 0 || thread_index1 >= GetMaxNumReferencePoints()) return false;
     if (thread_index2 < 0 || thread_index2 >= GetMaxNumReferencePoints()) return false;
@@ -214,4 +239,43 @@ void ThreadInformation::Draw(float red, float green, float blue, float width) {
         thread_container_[i].Draw(red, green, blue, width);
     }
     glEnd();
+}
+
+bool ThreadInformation::Load(FILE *fid) {    
+    thread_container_.clear();
+
+    int file_version;
+    fread(&file_version, sizeof(int), 1, fid);
+    if (file_version != 1) return false;
+    
+    int num_threads;
+    fread(&num_threads, sizeof(int), 1, fid);
+
+    for (int i = 0; i < num_threads; i++) {
+        Thread load_thread;
+        if (!load_thread.Load(fid)) {
+            thread_container_.clear();
+            return false;
+        }
+        thread_container_.push_back(load_thread);
+    }
+
+    return true;
+}
+
+bool ThreadInformation::Save(FILE *fid) {
+    const int kFileVersion = 1;
+    
+    // Rudementary header
+    fwrite(&kFileVersion, sizeof(int), 1, fid);
+
+    // Data
+    int num_threads = GetNumThreads();
+    fwrite(&num_threads, sizeof(int), 1, fid);
+
+    for (int i = 0; i < num_threads; i++) {
+        if (!thread_container_[i].Save(fid)) return false;
+    }
+
+    return true;
 }

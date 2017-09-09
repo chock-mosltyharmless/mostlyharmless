@@ -149,10 +149,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     glLoadMatrixf(stretch_matrix[0]);
 
     // The main container holding all the thread information
+    const char *kAutoSaveFileName = "auto_save.ti";
     ThreadInformation thread_information;
-    // Debug: Add some data
-    //thread_information.AddThread(-0.6f, 0.4f, 2, 0.5f, -0.1f, 52);
-    
+    FILE *fid;
+    if (!fopen_s(&fid, kAutoSaveFileName, "rb")) {
+        thread_information.Load(fid);
+        fclose(fid);
+    }
+
     // Main message loop:
     long start_time_ = timeGetTime();
     bool done = false;
@@ -190,6 +194,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         if (edit_state_ == SAVE) {
             thread_information.AddThread(x1, y1, edit_number1_, x2, y2, edit_number2_);
             edit_state_ = IDLE;
+            FILE *fid;
+            if (!fopen_s(&fid, kAutoSaveFileName, "wb")) {
+                thread_information.Save(fid);
+                fclose(fid);
+            }
         }
 
         SwapBuffers(device_context_handle_);
@@ -319,7 +328,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
             break;
         default:            
             if (wParam >= '0' && wParam <= '9') {
-                int digit = wParam - '0';
+                int digit = static_cast<int>(wParam - '0');
                 switch(edit_state_) {
                 case NUMBER_1_TENS:
                     edit_number1_ = digit * 10;

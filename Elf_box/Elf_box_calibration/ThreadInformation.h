@@ -28,6 +28,9 @@ public:
 
     int GetMaxNumReferencePoints(void);
 
+    bool Load(FILE *fid);
+    bool Save(FILE *fid);
+
     // x, y in screen space, each in range [-1..1]
     float screen_location_[2][2];
 
@@ -72,10 +75,10 @@ public:
 
     void Draw(float red, float green, float blue, float width);
 
-private:
-    // First coordinate is from front, second is from top
-    static const double kReferencePointLocation[][2];
+    bool Load(FILE *fid);
+    bool Save(FILE *fid);
 
+private:
     // The actual threads
     std::vector<Thread> thread_container_;
 };
