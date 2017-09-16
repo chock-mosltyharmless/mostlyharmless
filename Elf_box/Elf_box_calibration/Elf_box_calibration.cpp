@@ -148,7 +148,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         Thread new_add_thread;
 
         // Set position of the edit thread
-        float x1 = 1.0f * (+params.getParam(2, 0.75f)) + 0.2f * (params.getParam(14, 0.5) - 0.5f);
+        float x1 = 1.0f * (+params.getParam(2, 0.75f)) - 0.2f * (params.getParam(14, 0.5) - 0.5f);
         float x2 = 1.0f * (-params.getParam(3, 0.75f)) - 0.2f * (params.getParam(15, 0.5) - 0.5f);
         float y1 = 2.0f * (params.getParam(6, 0.5f) - 0.5f) + 0.2f * (params.getParam(18, 0.5) - 0.5f);
         float y2 = 2.0f * (params.getParam(8, 0.5f) - 0.5f) + 0.2f * (params.getParam(19, 0.5) - 0.5f);
@@ -178,7 +178,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glLoadIdentity();  // Reset The View
         glLoadMatrixf(stretch_matrix[0]);
 
-        thread_information.Draw(0.3f, 0.5f, 0.7f, 0.005f);
+        thread_information.Draw(0.4f, 0.7f, 1.0f, 0.0075f);
 
         // Draw the thread that will be added next
         glBegin(GL_TRIANGLES);
