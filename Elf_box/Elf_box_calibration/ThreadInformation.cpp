@@ -198,7 +198,7 @@ bool Thread::SetData(float x1, float y1, int thread_index1, float x2, float y2, 
     if (thread_index2 < 0 || thread_index2 >= GetMaxNumReferencePoints()) return false;
 
     // Sort thread index according to x, making left-right correct
-    if (x1 < x2 && thread_index1 < thread_index2) {
+    if (x1 > x2 && thread_index1 < thread_index2) {
         int temp = thread_index2;
         thread_index2 = thread_index1;
         thread_index1 = temp;

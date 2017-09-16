@@ -148,8 +148,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         Thread new_add_thread;
 
         // Set position of the edit thread
-        float x1 = 1.0f * (-params.getParam(2, 0.75f)) + 0.2f * (params.getParam(14, 0.5) - 0.5f);
-        float x2 = 1.0f * (+params.getParam(3, 0.75f)) + 0.2f * (params.getParam(15, 0.5) - 0.5f);
+        float x1 = 1.0f * (+params.getParam(2, 0.75f)) + 0.2f * (params.getParam(14, 0.5) - 0.5f);
+        float x2 = 1.0f * (-params.getParam(3, 0.75f)) - 0.2f * (params.getParam(15, 0.5) - 0.5f);
         float y1 = 2.0f * (params.getParam(6, 0.5f) - 0.5f) + 0.2f * (params.getParam(18, 0.5) - 0.5f);
         float y2 = 2.0f * (params.getParam(8, 0.5f) - 0.5f) + 0.2f * (params.getParam(19, 0.5) - 0.5f);
         new_add_thread.SetData(x1, y1, 0, x2, y2, 0);  // Uses dummy thread index
