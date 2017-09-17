@@ -95,7 +95,27 @@ const double Thread::kReferencePointLocation[][2] = {
     {32.3, 39.2}  // 78
 };
 
-void Thread::Draw(float red, float green, float blue, float width) {
+void Thread::Draw(float red, float green, float blue, float width,
+                  bool invisible) {
+    float depth1 = 0.0f;
+    float depth2 = 0.0f;
+    float alpha = 1.0f;
+
+    if (reference_point_index_[0] >= 0) {
+        depth1 = 1.0f - static_cast<float>(
+            kReferencePointLocation[reference_point_index_[0]][1] * kDepthScaling);
+    }
+    if (reference_point_index_[1] >= 0) {
+        depth2 = 1.0f - static_cast<float>(
+            kReferencePointLocation[reference_point_index_[1]][1] * kDepthScaling);
+    }
+    if (invisible) {
+        constexpr float kDepthBias = 1e-4f;
+        depth1 += kDepthBias;
+        depth2 += kDepthBias;
+        red = green = blue = alpha = 0.0f;
+    }
+
     float along[2];
     along[0] = screen_location_[1][0] - screen_location_[0][0];
     along[1] = screen_location_[1][1] - screen_location_[0][1];
@@ -114,53 +134,52 @@ void Thread::Draw(float red, float green, float blue, float width) {
     normal[1] = along[0];
 
     // left end triangle
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex2f(screen_location_[0][0] - along[0] - normal[0],
-               screen_location_[0][1] - along[1] - normal[1]);
-    glVertex2f(screen_location_[0][0] - along[0] + normal[0],
-               screen_location_[0][1] - along[1] + normal[1]);
-    glColor3f(red, green, blue);
-    glVertex2f(screen_location_[0][0], screen_location_[0][1]);
+    glColor4f(0.0f, 0.0f, 0.0f, alpha);
+    glVertex3f(screen_location_[0][0] - along[0] - normal[0],
+               screen_location_[0][1] - along[1] - normal[1], depth1);
+    glVertex3f(screen_location_[0][0] - along[0] + normal[0],
+               screen_location_[0][1] - along[1] + normal[1], depth1);
+    glColor4f(red, green, blue, alpha);
+    glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
 
     // right end triangle
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex2f(screen_location_[1][0] + along[0] - normal[0],
-        screen_location_[1][1] + along[1] - normal[1]);
-    glVertex2f(screen_location_[1][0] + along[0] + normal[0],
-        screen_location_[1][1] + along[1] + normal[1]);
-    glColor3f(red, green, blue);
-    glVertex2f(screen_location_[1][0], screen_location_[1][1]);
+    glColor4f(0.0f, 0.0f, 0.0f, alpha);
+    glVertex3f(screen_location_[1][0] + along[0] - normal[0],
+        screen_location_[1][1] + along[1] - normal[1], depth2);
+    glVertex3f(screen_location_[1][0] + along[0] + normal[0],
+        screen_location_[1][1] + along[1] + normal[1], depth2);
+    glColor4f(red, green, blue, alpha);
+    glVertex3f(screen_location_[1][0], screen_location_[1][1], depth2);
 
     // Bottom rect
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex2f(screen_location_[0][0] - along[0] + normal[0],
-        screen_location_[0][1] - along[1] + normal[1]);
-    glVertex2f(screen_location_[1][0] + along[0] + normal[0],
-        screen_location_[1][1] + along[1] + normal[1]);
-    glColor3f(red, green, blue);
-    glVertex2f(screen_location_[0][0], screen_location_[0][1]);
+    glColor4f(0.0f, 0.0f, 0.0f, alpha);
+    glVertex3f(screen_location_[0][0] - along[0] + normal[0],
+        screen_location_[0][1] - along[1] + normal[1], depth1);
+    glVertex3f(screen_location_[1][0] + along[0] + normal[0],
+        screen_location_[1][1] + along[1] + normal[1], depth2);
+    glColor4f(red, green, blue, alpha);
+    glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
 
-    glVertex2f(screen_location_[1][0], screen_location_[1][1]);
-    glVertex2f(screen_location_[0][0], screen_location_[0][1]);
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex2f(screen_location_[1][0] + along[0] + normal[0],
-        screen_location_[1][1] + along[1] + normal[1]);
+    glVertex3f(screen_location_[1][0], screen_location_[1][1], depth2);
+    glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
+    glColor4f(0.0f, 0.0f, 0.0f, alpha);
+    glVertex3f(screen_location_[1][0] + along[0] + normal[0],
+        screen_location_[1][1] + along[1] + normal[1], depth2);
 
     // Top rect
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex2f(screen_location_[0][0] - along[0] - normal[0],
-        screen_location_[0][1] - along[1] - normal[1]);
-    glVertex2f(screen_location_[1][0] + along[0] - normal[0],
-        screen_location_[1][1] + along[1] - normal[1]);
-    glColor3f(red, green, blue);
-    glVertex2f(screen_location_[0][0], screen_location_[0][1]);
+    glColor4f(0.0f, 0.0f, 0.0f, alpha);
+    glVertex3f(screen_location_[0][0] - along[0] - normal[0],
+        screen_location_[0][1] - along[1] - normal[1], depth1);
+    glVertex3f(screen_location_[1][0] + along[0] - normal[0],
+        screen_location_[1][1] + along[1] - normal[1], depth2);
+    glColor4f(red, green, blue, alpha);
+    glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
 
-    glVertex2f(screen_location_[1][0], screen_location_[1][1]);
-    glVertex2f(screen_location_[0][0], screen_location_[0][1]);
-    glColor3f(0.0f, 0.0f, 0.0f);
-    glVertex2f(screen_location_[1][0] + along[0] - normal[0],
-        screen_location_[1][1] + along[1] - normal[1]);
-
+    glVertex3f(screen_location_[1][0], screen_location_[1][1], depth2);
+    glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
+    glColor4f(0.0f, 0.0f, 0.0f, alpha);
+    glVertex3f(screen_location_[1][0] + along[0] - normal[0],
+        screen_location_[1][1] + along[1] - normal[1], depth2);
 }
 
 int Thread::GetMaxNumReferencePoints(void) {
@@ -194,11 +213,11 @@ bool Thread::Save(FILE * fid) {
 }
 
 bool Thread::SetData(float x1, float y1, int thread_index1, float x2, float y2, int thread_index2) {
-    if (thread_index1 < 0 || thread_index1 >= GetMaxNumReferencePoints()) return false;
-    if (thread_index2 < 0 || thread_index2 >= GetMaxNumReferencePoints()) return false;
+    if (thread_index1 >= GetMaxNumReferencePoints()) return false;
+    if (thread_index2 >= GetMaxNumReferencePoints()) return false;
 
     // Sort thread index according to x, making left-right correct
-    if (x1 > x2 && thread_index1 < thread_index2) {
+    if (x1 < x2 && thread_index1 < thread_index2) {
         int temp = thread_index2;
         thread_index2 = thread_index1;
         thread_index1 = temp;
@@ -230,13 +249,24 @@ bool ThreadInformation::AddThread(float x1, float y1, int thread_index1, float x
     return true;
 }
 
-void ThreadInformation::Draw(float red, float green, float blue, float width) {
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glBegin(GL_TRIANGLES);
+void ThreadInformation::DrawDepthMask(float width) {
+    glDepthMask(true);
+    
     int num_threads = GetNumThreads();
+    glBegin(GL_TRIANGLES);
     for (int i = 0; i < num_threads; i++) {
-        thread_container_[i].Draw(red, green, blue, width);
+        thread_container_[i].Draw(0.0f, 0.0f, 0.0f, width, true);
+    }
+    glEnd();
+
+    glDepthMask(false);
+}
+
+void ThreadInformation::Draw(float red, float green, float blue, float width) {    
+    int num_threads = GetNumThreads();
+    glBegin(GL_TRIANGLES);
+    for (int i = 0; i < num_threads; i++) {
+        thread_container_[i].Draw(red, green, blue, width, false);
     }
     glEnd();
 }

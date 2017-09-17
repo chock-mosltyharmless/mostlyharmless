@@ -24,7 +24,9 @@ public:
     }
 
     // Assumes additive drawing with glBegin(TRIANGLES)
-    void Draw(float red, float green, float blue, float width);
+    // Set invisible = true to pre-draw distance field
+    void Draw(float red, float green, float blue, float width,
+              bool invisible = false);
 
     int GetMaxNumReferencePoints(void);
 
@@ -40,6 +42,8 @@ public:
 private:
     // First coordinate is from front, second is from top
     static const double kReferencePointLocation[][2];
+
+    static constexpr float kDepthScaling = 1.0f / 50.0f;
 };
 
 class ThreadInformation {
@@ -73,6 +77,7 @@ public:
     bool AddThread(float x1, float y1, int thread_index1,
                    float x2, float y2, int thread_index2);
 
+    void DrawDepthMask(float width);
     void Draw(float red, float green, float blue, float width);
 
     bool Load(FILE *fid);

@@ -100,7 +100,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
         WGL_COLOR_BITS_ARB, 24,
         WGL_ALPHA_BITS_ARB, 8,
-        WGL_DEPTH_BITS_ARB, 0,
+        WGL_DEPTH_BITS_ARB, 32,
         WGL_STENCIL_BITS_ARB, 0,
         WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
         WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
@@ -152,7 +152,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         float x2 = 1.0f * (-params.getParam(3, 0.75f)) - 0.2f * (params.getParam(15, 0.5) - 0.5f);
         float y1 = 2.0f * (params.getParam(6, 0.5f) - 0.5f) + 0.2f * (params.getParam(18, 0.5) - 0.5f);
         float y2 = 2.0f * (params.getParam(8, 0.5f) - 0.5f) + 0.2f * (params.getParam(19, 0.5) - 0.5f);
-        new_add_thread.SetData(x1, y1, 0, x2, y2, 0);  // Uses dummy thread index
+        new_add_thread.SetData(x1, y1, -1, x2, y2, -1);  // Uses dummy thread index
 
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE) ) {
             if (msg.message == WM_QUIT) done = 1;
@@ -161,7 +161,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         }
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LESS);
 
         // Set transformation matrix to do aspect ratio adjustment
         RECT window_rectangle;
@@ -178,13 +183,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glLoadIdentity();  // Reset The View
         glLoadMatrixf(stretch_matrix[0]);
 
-        thread_information.Draw(0.4f, 0.7f, 1.0f, 0.0075f);
+        float thread_width = 0.0075f;
+        thread_information.DrawDepthMask(thread_width);
+        thread_information.Draw(0.4f, 0.7f, 1.0f, thread_width);
 
         // Draw the thread that will be added next
         glBegin(GL_TRIANGLES);
         float edit_width = 0.3f * (params.getParam(13, 1.0f)) + 0.003f;
-        new_add_thread.Draw(0.7f, 0.0f, 0.0f, edit_width);
-        new_add_thread.Draw(0.3f, 1.0f, 1.0f, edit_width / 5.0f);
+        new_add_thread.Draw(0.7f, 0.0f, 0.0f, edit_width, false);
+        new_add_thread.Draw(0.3f, 1.0f, 1.0f, edit_width / 5.0f, false);
         glEnd();
 
         if (edit_state_ == SAVE) {
