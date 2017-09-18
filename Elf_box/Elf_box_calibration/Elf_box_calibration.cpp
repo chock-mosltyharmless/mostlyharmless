@@ -21,6 +21,9 @@ int edit_state_ = IDLE;
 int edit_number1_ = 0;
 int edit_number2_ = 0;
 
+// Display properties (thread draw mode
+int thread_draw_mode_ = ThreadInformation::DEFAULT_MODE;
+
 // Global Variables:
 HINSTANCE instance_handle_ = 0;  // main instance
 HWND window_handle_ = 0;  // main window
@@ -89,7 +92,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     int valid;
     UINT numFormats;
     float fAttributes[] = { 0, 0 };
-    const int kMaxNumMultisamples = 16;
+    //const int kMaxNumMultisamples = 16;
+    const int kMaxNumMultisamples = 1;
     // These Attributes Are The Bits We Want To Test For In Our Sample
     // Everything Is Pretty Standard, The Only One We Want To
     // Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
@@ -139,13 +143,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     }
 
     // Main message loop:
-    long start_time_ = timeGetTime();
+    long start_time = timeGetTime();
     bool done = false;
 
     MSG msg;
     while (!done) {
         // Create one thread as the currently edited one:
         Thread new_add_thread;
+
+        long cur_time = timeGetTime() - start_time;
+        float time_seconds = 0.001f * static_cast<float>(cur_time);
 
         // Set position of the edit thread
         float x1 = 1.0f * (+params.getParam(2, 0.75f)) - 0.2f * (params.getParam(14, 0.5) - 0.5f);
@@ -185,7 +192,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
         float thread_width = 0.0075f;
         thread_information.DrawDepthMask(thread_width);
-        thread_information.Draw(0.4f, 0.7f, 1.0f, thread_width);
+        thread_information.Draw(thread_width, thread_draw_mode_, time_seconds);
 
         // Draw the thread that will be added next
         glBegin(GL_TRIANGLES);
@@ -313,6 +320,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
     // Handle editing messages
     if (message == WM_KEYDOWN) {
         switch (wParam) {
+        case 'P':
+            thread_draw_mode_ = ThreadInformation::DEFAULT_MODE;
+            break;
+        case 'O':
+            thread_draw_mode_ = ThreadInformation::CYCLE_MODE;
+            break;
+        case 'I':
+            thread_draw_mode_ = ThreadInformation::DEPTH_MODE;
+            break;
         case 'Q':
             if (edit_state_ == IDLE) edit_state_ = NUMBER_1_TENS;
             else edit_state_ = IDLE;

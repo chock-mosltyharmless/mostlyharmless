@@ -25,8 +25,11 @@ public:
 
     // Assumes additive drawing with glBegin(TRIANGLES)
     // Set invisible = true to pre-draw distance field
-    void Draw(float red, float green, float blue, float width,
-              bool invisible = false);
+    void Draw(float red, float green, float blue, float width, bool invisible);
+    void Draw(float red1, float green1, float blue1,
+              float red2, float green2, float blue2,
+              float width, bool invisible);
+    void DrawDepth(float width);
 
     int GetMaxNumReferencePoints(void);
 
@@ -78,10 +81,17 @@ public:
                    float x2, float y2, int thread_index2);
 
     void DrawDepthMask(float width);
-    void Draw(float red, float green, float blue, float width);
+    void Draw(float width, int mode, float time_seconds);
 
     bool Load(FILE *fid);
     bool Save(FILE *fid);
+
+    // Normal debug drawing of all threads
+    static constexpr int DEFAULT_MODE = 1;
+    // Cycle through the threads one at a time
+    static constexpr int CYCLE_MODE = 2;
+    // Draw the depth by means of the depth
+    static constexpr int DEPTH_MODE = 3;
 
 private:
     // The actual threads

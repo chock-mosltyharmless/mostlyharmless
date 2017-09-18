@@ -95,8 +95,36 @@ const double Thread::kReferencePointLocation[][2] = {
     {32.3, 39.2}  // 78
 };
 
+void Thread::DrawDepth(float width) {
+    float depth1 = 0.0f;
+    float depth2 = 0.0f;
+
+    if (reference_point_index_[0] >= 0) {
+        depth1 = 1.0f - static_cast<float>(
+            kReferencePointLocation[reference_point_index_[0]][1] * kDepthScaling);
+    }
+    if (reference_point_index_[1] >= 0) {
+        depth2 = 1.0f - static_cast<float>(
+            kReferencePointLocation[reference_point_index_[1]][1] * kDepthScaling);
+    }
+
+    float green1 = depth1;
+    float green2 = depth2;
+    float blue1 = 1.0f - depth1;
+    float blue2 = 1.0f - depth2;
+    float red1 = blue1;
+    float red2 = blue2;
+    Draw(red1, green1, blue1, red2, green2, blue2, width, false);
+}
+
 void Thread::Draw(float red, float green, float blue, float width,
                   bool invisible) {
+    Draw(red, green, blue, red, green, blue, width, invisible);
+}
+
+void Thread::Draw(float red1, float green1, float blue1,
+                  float red2, float green2, float blue2,
+                  float width, bool invisible) {
     float depth1 = 0.0f;
     float depth2 = 0.0f;
     float alpha = 1.0f;
@@ -113,7 +141,8 @@ void Thread::Draw(float red, float green, float blue, float width,
         constexpr float kDepthBias = 1e-4f;
         depth1 += kDepthBias;
         depth2 += kDepthBias;
-        red = green = blue = alpha = 0.0f;
+        red1 = green1 = blue1 = alpha = 0.0f;
+        red2 = green2 = blue2 = alpha = 0.0f;
     }
 
     float along[2];
@@ -139,7 +168,7 @@ void Thread::Draw(float red, float green, float blue, float width,
                screen_location_[0][1] - along[1] - normal[1], depth1);
     glVertex3f(screen_location_[0][0] - along[0] + normal[0],
                screen_location_[0][1] - along[1] + normal[1], depth1);
-    glColor4f(red, green, blue, alpha);
+    glColor4f(red1, green1, blue1, alpha);
     glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
 
     // right end triangle
@@ -148,7 +177,7 @@ void Thread::Draw(float red, float green, float blue, float width,
         screen_location_[1][1] + along[1] - normal[1], depth2);
     glVertex3f(screen_location_[1][0] + along[0] + normal[0],
         screen_location_[1][1] + along[1] + normal[1], depth2);
-    glColor4f(red, green, blue, alpha);
+    glColor4f(red2, green2, blue2, alpha);
     glVertex3f(screen_location_[1][0], screen_location_[1][1], depth2);
 
     // Bottom rect
@@ -157,10 +186,12 @@ void Thread::Draw(float red, float green, float blue, float width,
         screen_location_[0][1] - along[1] + normal[1], depth1);
     glVertex3f(screen_location_[1][0] + along[0] + normal[0],
         screen_location_[1][1] + along[1] + normal[1], depth2);
-    glColor4f(red, green, blue, alpha);
+    glColor4f(red1, green1, blue1, alpha);
     glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
 
+    glColor4f(red2, green2, blue2, alpha);
     glVertex3f(screen_location_[1][0], screen_location_[1][1], depth2);
+    glColor4f(red1, green1, blue1, alpha);
     glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
     glColor4f(0.0f, 0.0f, 0.0f, alpha);
     glVertex3f(screen_location_[1][0] + along[0] + normal[0],
@@ -172,10 +203,12 @@ void Thread::Draw(float red, float green, float blue, float width,
         screen_location_[0][1] - along[1] - normal[1], depth1);
     glVertex3f(screen_location_[1][0] + along[0] - normal[0],
         screen_location_[1][1] + along[1] - normal[1], depth2);
-    glColor4f(red, green, blue, alpha);
+    glColor4f(red1, green1, blue1, alpha);
     glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
 
+    glColor4f(red2, green2, blue2, alpha);
     glVertex3f(screen_location_[1][0], screen_location_[1][1], depth2);
+    glColor4f(red1, green1, blue1, alpha);
     glVertex3f(screen_location_[0][0], screen_location_[0][1], depth1);
     glColor4f(0.0f, 0.0f, 0.0f, alpha);
     glVertex3f(screen_location_[1][0] + along[0] - normal[0],
@@ -262,11 +295,34 @@ void ThreadInformation::DrawDepthMask(float width) {
     glDepthMask(false);
 }
 
-void ThreadInformation::Draw(float red, float green, float blue, float width) {    
+void ThreadInformation::Draw(float width, int mode, float time_seconds) {
+    int index;
     int num_threads = GetNumThreads();
     glBegin(GL_TRIANGLES);
-    for (int i = 0; i < num_threads; i++) {
-        thread_container_[i].Draw(red, green, blue, width, false);
+    
+    switch (mode) {
+    case CYCLE_MODE:
+        index = static_cast<int>(fabsf(time_seconds));
+        index = index % num_threads;
+        thread_container_[index].Draw(1.0f, 1.0f, 1.0f, width, false);
+        break;
+    case DEPTH_MODE:
+        for (int i = 0; i < num_threads; i++) {
+            float red = 0.4f;
+            float green = 0.7f;
+            float blue = 1.0f;
+            thread_container_[i].DrawDepth(width);
+        }
+        break;
+    case DEFAULT_MODE:
+    default:
+        for (int i = 0; i < num_threads; i++) {
+            float red = 0.4f;
+            float green = 0.7f;
+            float blue = 1.0f;
+            thread_container_[i].Draw(red, green, blue, width, false);
+        }
+        break;
     }
     glEnd();
 }
