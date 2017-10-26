@@ -190,13 +190,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glLoadIdentity();  // Reset The View
         glLoadMatrixf(stretch_matrix[0]);
 
-        float thread_width = 0.0075f;
+        float thread_width = 0.006f * 2.0f;
         thread_information.DrawDepthMask(thread_width);
+        thread_width = 0.006f;
         thread_information.Draw(thread_width, thread_draw_mode_, time_seconds);
 
         // Draw the thread that will be added next
         glBegin(GL_TRIANGLES);
-        float edit_width = 0.3f * (params.getParam(13, 1.0f)) + 0.003f;
+        float edit_width = 0.1f * (params.getParam(13, 0.1f)) + 0.003f;
         new_add_thread.Draw(0.7f, 0.0f, 0.0f, edit_width, false);
         new_add_thread.Draw(0.3f, 1.0f, 1.0f, edit_width / 5.0f, false);
         glEnd();
