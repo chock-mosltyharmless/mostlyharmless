@@ -30,6 +30,8 @@ public:
               float red2, float green2, float blue2,
               float width, bool invisible);
     void DrawDepth(float width);
+    void DrawSphere(float red, float green, float blue, float width,
+                    float x, float y, float z, float radius);
 
     int GetMaxNumReferencePoints(void);
 

@@ -117,6 +117,10 @@ void Thread::DrawDepth(float width) {
     Draw(red1, green1, blue1, red2, green2, blue2, width, false);
 }
 
+void Thread::DrawSphere(float red, float green, float blue, float width,
+                        float x, float y, float z, float radius) {
+}
+
 void Thread::Draw(float red, float green, float blue, float width,
                   bool invisible) {
     Draw(red, green, blue, red, green, blue, width, invisible);
