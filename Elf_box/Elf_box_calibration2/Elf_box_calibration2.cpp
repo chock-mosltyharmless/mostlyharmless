@@ -66,7 +66,9 @@ WindowHandles main_window_;  // For rendering to beamer
 //HWND window_handle_ = 0;  // main window
 //HDC device_context_handle_ = 0;  // OpenGL device context
 //HGLRC resource_context_handle_= 0;  // OpenGL resource context
-static const LPCSTR kMainWindowClassName = "OPENGL_1_SAMPLE";
+static const LPCSTR kMainWindowClassName = "MAIN_CALIBRATOR";
+static const LPCSTR kCameraWindowClassName = "CAMERA_CALIBRATOR";
+
 static const PIXELFORMATDESCRIPTOR kPixelFormatDescriptor = {
     sizeof(PIXELFORMATDESCRIPTOR),
     1,
@@ -75,7 +77,7 @@ static const PIXELFORMATDESCRIPTOR kPixelFormatDescriptor = {
     32,
     0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,  // accum
-    32,             // zbuffer
+    0,             // zbuffer (32?)
     0,              // stencil!
     0,              // aux
     PFD_MAIN_PLANE,
@@ -90,7 +92,8 @@ WindowHandles camera_window_;
 bool InitInstance(HINSTANCE instance, int nCmdShow,
                   bool use_custom_pixel_format,
                   int custom_pixel_format,
-                  LPCSTR window_class_name);
+                  LPCSTR window_class_name,
+                  WindowHandles *handles);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 // Some camera testing
@@ -219,7 +222,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     // TODO: Place code here.
 
     // Perform application initialization:
-    if (!InitInstance(instance, nCmdShow, false, 0, kMainWindowClassName)) {
+    if (!InitInstance(instance, nCmdShow, false, 0, kMainWindowClassName, &main_window_)) {
         return FALSE;
     }
 
@@ -235,7 +238,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     UINT numFormats;
     float fAttributes[] = { 0, 0 };
     //const int kMaxNumMultisamples = 16;
-    const int kMaxNumMultisamples = 1;
+    const int kMaxNumMultisamples = 8;
     // These Attributes Are The Bits We Want To Test For In Our Sample
     // Everything Is Pretty Standard, The Only One We Want To
     // Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
@@ -246,7 +249,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         WGL_ACCELERATION_ARB,WGL_FULL_ACCELERATION_ARB,
         WGL_COLOR_BITS_ARB, 24,
         WGL_ALPHA_BITS_ARB, 8,
-        WGL_DEPTH_BITS_ARB, 32,
+        WGL_DEPTH_BITS_ARB, 0, //32
         WGL_STENCIL_BITS_ARB, 0,
         WGL_DOUBLE_BUFFER_ARB,GL_TRUE,
         WGL_SAMPLE_BUFFERS_ARB,GL_TRUE,
@@ -269,11 +272,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         // Remove all messages...
         MSG msg;
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE));
-        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat, kMainWindowClassName)) {
+        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat, kMainWindowClassName, &main_window_)) {
             return FALSE;
         }
     }
     glEnable(GL_MULTISAMPLE_ARB);
+
+    if (arbMultisampleSupported) {
+        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat, kCameraWindowClassName, &camera_window_)) {
+            return FALSE;
+        }
+    } else {
+        if (!InitInstance(instance, nCmdShow, false, 0, kCameraWindowClassName, &camera_window_)) {
+            return FALSE;
+        }
+    }
 
     // The main container holding all the thread information
     const char *kAutoSaveFileName = "auto_save.cali";
@@ -338,10 +351,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         SwapBuffers(main_window_.device_context_handle_);
 
         // Render camera window
+        if (!wglMakeCurrent(camera_window_.device_context_handle_, camera_window_.resource_context_handle_)) return false;
+
+        glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        glClearDepth(1.0f);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Set transformation matrix to do aspect ratio adjustment
+        glLoadIdentity();  // Reset The View
+
+        // TEST rendering
+        glBegin(GL_TRIANGLES);
+        glColor3f(0.0f, 0.6f, 1.0f);
+        glVertex2f(-0.7f, 0.3f);
+        glVertex2f(0.9f, 0.1f);
+        glVertex2f(0.2f, -0.2f);
+        glEnd();
+
+        SwapBuffers(camera_window_.device_context_handle_);
     }
 
     // Cleanup
     main_window_.End();
+    camera_window_.End();
 
     return (int) msg.wParam;
 }
@@ -360,7 +392,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 bool InitInstance(HINSTANCE instance, int nCmdShow,
                   bool use_custom_pixel_format,
                   int custom_pixel_format,
-                  LPCSTR window_class_name) {
+                  LPCSTR window_class_name,
+                  WindowHandles *handles) {
     instance_handle_ = instance; // Store instance handle in our global variable
     DWORD window_style;
     RECT window_rectangle;
@@ -375,7 +408,7 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
     window_class.lpszClassName = window_class_name;
 
     RegisterClassA(&window_class);
-    main_window_.window_class_name_ = window_class_name;
+    handles->window_class_name_ = window_class_name;
 
     // Set default window size
     window_rectangle.left   = 0;
@@ -386,7 +419,7 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
     window_style   = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
     AdjustWindowRect(&window_rectangle, window_style, 0);
 
-    main_window_.window_handle_ = CreateWindowA(window_class_name, "OpenGL 1 sample", window_style,
+    handles->window_handle_ = CreateWindowA(window_class_name, "OpenGL 1 sample", window_style,
         (GetSystemMetrics(SM_CXSCREEN) - window_rectangle.right + window_rectangle.left) / 2,
         (GetSystemMetrics(SM_CYSCREEN) - window_rectangle.bottom + window_rectangle.top) / 2,
         window_rectangle.right - window_rectangle.left,
@@ -395,29 +428,29 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
         0,  // Menu
         instance_handle_,
         0);  // lParam
-    if (!main_window_.window_handle_) return false;
+    if (!handles->window_handle_) return false;
 
-    if (!(main_window_.device_context_handle_ = GetDC(main_window_.window_handle_))) return false;
+    if (!(handles->device_context_handle_ = GetDC(handles->window_handle_))) return false;
 
     if (!use_custom_pixel_format) {
-        if (!(pixel_format = ChoosePixelFormat(main_window_.device_context_handle_, &kPixelFormatDescriptor))) {
+        if (!(pixel_format = ChoosePixelFormat(handles->device_context_handle_, &kPixelFormatDescriptor))) {
             return false;
         }
-        if (!SetPixelFormat(main_window_.device_context_handle_, pixel_format, &kPixelFormatDescriptor)) {
+        if (!SetPixelFormat(handles->device_context_handle_, pixel_format, &kPixelFormatDescriptor)) {
             return false;
         }
     } else {
-        if (!SetPixelFormat(main_window_.device_context_handle_, custom_pixel_format, &kPixelFormatDescriptor)) {
+        if (!SetPixelFormat(handles->device_context_handle_, custom_pixel_format, &kPixelFormatDescriptor)) {
             return false;
         }
     }
 
     // create basic context
-    if (!(main_window_.resource_context_handle_ = wglCreateContext(main_window_.device_context_handle_))) return false;
-    if (!wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_)) return false;
+    if (!(handles->resource_context_handle_ = wglCreateContext(handles->device_context_handle_))) return false;
+    if (!wglMakeCurrent(handles->device_context_handle_, handles->resource_context_handle_)) return false;
 
-    ShowWindow(main_window_.window_handle_, nCmdShow);
-    UpdateWindow(main_window_.window_handle_);
+    ShowWindow(handles->window_handle_, nCmdShow);
+    UpdateWindow(handles->window_handle_);
 
     return true;
 }
@@ -455,6 +488,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) 
                 SetWindowLong(hWnd, GWL_STYLE, WS_POPUP | WS_VISIBLE);
                 ShowWindow(hWnd, SW_MAXIMIZE);
                 GetClientRect(hWnd, &window_rect);
+                if (hWnd == main_window_.window_handle_) {
+                    wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_);
+                } else {
+                    wglMakeCurrent(camera_window_.device_context_handle_, camera_window_.resource_context_handle_);
+                }
                 glViewport(0, 0,
                     window_rect.right - window_rect.left,
                     abs(window_rect.bottom - window_rect.top));
