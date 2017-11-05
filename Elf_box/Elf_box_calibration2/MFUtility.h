@@ -23,7 +23,7 @@
 
 //using namespace System;
 
-#define CHECK_HR(hr, msg) if (hr != S_OK) { printf(msg); printf("Error: %.2X.\n", hr); goto done; }
+#define CHECK_HR(hr, msg) if (hr != S_OK) { MessageBox(NULL, msg, "ERROR", MB_OK); return -1; }
 
 #define CHECKHR_GOTO(x, y) if(FAILED(x)) goto y
 

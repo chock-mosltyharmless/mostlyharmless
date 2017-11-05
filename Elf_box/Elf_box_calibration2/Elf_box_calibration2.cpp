@@ -28,13 +28,45 @@
 //using namespace System::IO;
 //using namespace System::Runtime::InteropServices;
 
+// For rendering with openGL
+extern HINSTANCE instance_handle_;  // main instance
+struct WindowHandles {
+    WindowHandles() {
+        window_handle_ = 0;
+        device_context_handle_ = 0;
+        resource_context_handle_ = 0;
+        window_class_name_ = 0;
+    }
+
+    void End() {
+        if (resource_context_handle_) {
+            wglMakeCurrent(0, 0);
+            wglDeleteContext(resource_context_handle_);
+        }
+
+        if (window_handle_) {
+            if (device_context_handle_) ReleaseDC(window_handle_, device_context_handle_);
+            DestroyWindow(window_handle_);
+        }
+
+        if (window_class_name_) {
+            UnregisterClass(window_class_name_, instance_handle_);
+        }
+    }
+
+    LPCSTR window_class_name_;
+    HWND window_handle_;
+    HDC device_context_handle_;
+    HGLRC resource_context_handle_;
+};
 
 // Global Variables:
 HINSTANCE instance_handle_ = 0;  // main instance
-HWND window_handle_ = 0;  // main window
-HDC device_context_handle_ = 0;  // OpenGL device context
-HGLRC resource_context_handle_= 0;  // OpenGL resource context
-static const LPCSTR kWindowClassName = "OPENGL_1_SAMPLE";
+WindowHandles main_window_;  // For rendering to beamer
+//HWND window_handle_ = 0;  // main window
+//HDC device_context_handle_ = 0;  // OpenGL device context
+//HGLRC resource_context_handle_= 0;  // OpenGL resource context
+static const LPCSTR kMainWindowClassName = "OPENGL_1_SAMPLE";
 static const PIXELFORMATDESCRIPTOR kPixelFormatDescriptor = {
     sizeof(PIXELFORMATDESCRIPTOR),
     1,
@@ -50,44 +82,30 @@ static const PIXELFORMATDESCRIPTOR kPixelFormatDescriptor = {
     0, 0, 0, 0
 };
 
+// For Camera detection stuff
+IMFSourceReader *video_reader_ = NULL;
+WindowHandles camera_window_;
 
 // Forward declarations of functions included in this code module:
 bool InitInstance(HINSTANCE instance, int nCmdShow,
                   bool use_custom_pixel_format,
-                  int custom_pixel_format);
+                  int custom_pixel_format,
+                  LPCSTR window_class_name);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-static void WindowEnd(void) {
-    if (resource_context_handle_) {
-        wglMakeCurrent(0, 0);
-        wglDeleteContext(resource_context_handle_);
-    }
-
-    if (window_handle_) {
-        if (device_context_handle_) ReleaseDC(window_handle_, device_context_handle_);
-        DestroyWindow(window_handle_);
-    }
-
-    UnregisterClass(kWindowClassName, instance_handle_);
-}
-
 // Some camera testing
-int TestCamera() {
+int InitCamera() {
     const int WEBCAM_DEVICE_INDEX = 1;	// <--- Set to 0 to use default system webcam.
     const int MEDIA_TYPE_INDEX = 43;  // 160x120, YUY2, 30 FPS, ~9MBPS
-    const int SAMPLE_COUNT = 10;
 
     std::string intent = "WEBCAM_DEVICE_INDEX = " + std::to_string(WEBCAM_DEVICE_INDEX) + "\n";
     intent += "MEDIA_TYPE_INDEX = " + std::to_string(MEDIA_TYPE_INDEX) + "\n";
     MessageBox(NULL, intent.c_str(), "Intent for Camera usage", MB_OK);
 
-    std::ofstream outputBuffer("rawframes.yuv", std::ios::out | std::ios::binary);
-
     IMFActivate **videoDevices = NULL;
     UINT32 videoDeviceCount = 0;
     IMFMediaSource *videoSource = NULL;
     IMFAttributes *videoConfig = NULL;
-    IMFSourceReader *videoReader = NULL;
     IMFMediaType*videoSourceOutputType = NULL;
     IMFMediaType *pSrcOutMediaType = NULL;
 
@@ -113,14 +131,14 @@ int TestCamera() {
     CHECK_HR(MFCreateSourceReaderFromMediaSource(
         videoSource,
         videoConfig,
-        &videoReader), "Error creating video source reader.\n");
+        &video_reader_), "Error creating video source reader.\n");
 
     // Show a list of all the subtypes
-    ListModes(videoReader);
+    ListModes(video_reader_);
 
 #if 1
     // Choose one
-    CHECK_HR(videoReader->GetNativeMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, MEDIA_TYPE_INDEX, &pSrcOutMediaType),
+    CHECK_HR(video_reader_->GetNativeMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, MEDIA_TYPE_INDEX, &pSrcOutMediaType),
              "Error retreaving selected media type");
 #else
     // Note the webcam needs to support this media type. The list of media types supported can be obtained using the ListTypes function in MFUtility.h.
@@ -130,16 +148,22 @@ int TestCamera() {
     MFSetAttributeSize(pSrcOutMediaType, MF_MT_FRAME_SIZE, 640, 480);
 #endif
 
-    CHECK_HR(videoReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pSrcOutMediaType), "Failed to set media type on source reader.\n");
+    CHECK_HR(video_reader_->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pSrcOutMediaType), "Failed to set media type on source reader.\n");
 
+    return 0;
+}
+
+int GetFrame() {
     IMFSample *videoSample = NULL;
     DWORD streamIndex, flags;
     LONGLONG llVideoTimeStamp, llSampleDuration;
     int sampleCount = 0;
+    const int SAMPLE_COUNT = 10;
+    std::ofstream outputBuffer("rawframes.yuv", std::ios::out | std::ios::binary);
 
     while (sampleCount <= SAMPLE_COUNT)
     {
-        CHECK_HR(videoReader->ReadSample(
+        CHECK_HR(video_reader_->ReadSample(
             MF_SOURCE_READER_FIRST_VIDEO_STREAM,
             0,                              // Flags.
             &streamIndex,                   // Receives the actual stream index. 
@@ -182,11 +206,6 @@ int TestCamera() {
 
     outputBuffer.close();
 
-done:
-
-    printf("finished.\n");
-    getchar();
-
     return 0;
 }
 
@@ -200,7 +219,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     // TODO: Place code here.
 
     // Perform application initialization:
-    if (!InitInstance(instance, nCmdShow, false, 0)) {
+    if (!InitInstance(instance, nCmdShow, false, 0, kMainWindowClassName)) {
         return FALSE;
     }
 
@@ -210,7 +229,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     // Get Our Pixel Format
     PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB =
         (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-    HDC hDC = device_context_handle_;
+    HDC hDC = main_window_.device_context_handle_;
     int pixelFormat;
     int valid;
     UINT numFormats;
@@ -246,11 +265,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     }
 
     if (arbMultisampleSupported) {
-        WindowEnd();
+        main_window_.End();
         // Remove all messages...
         MSG msg;
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE));
-        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat)) {
+        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat, kMainWindowClassName)) {
             return FALSE;
         }
     }
@@ -267,7 +286,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     long start_time = timeGetTime();
     bool done = false;
 
-    TestCamera();
+    if (InitCamera() < 0) return -1;
+    if (GetFrame() < 0) return -1;
 
     MSG msg;
     while (!done) {
@@ -281,6 +301,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             DispatchMessage(&msg);
         }
 
+        // Draw main window:
+        if (!wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_)) return false;
+
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -291,7 +314,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
         // Set transformation matrix to do aspect ratio adjustment
         RECT window_rectangle;
-        GetWindowRect(window_handle_, &window_rectangle);
+        GetWindowRect(main_window_.window_handle_, &window_rectangle);
         float stretch_matrix[4][4] = {
             {1.0f, 0.0f, 0.0f, 0.0f},
             {0.0f, 1.0f, 0.0f, 0.0f},
@@ -304,11 +327,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glLoadIdentity();  // Reset The View
         glLoadMatrixf(stretch_matrix[0]);
 
-        SwapBuffers(device_context_handle_);
+        // TEST rendering
+        glBegin(GL_TRIANGLES);
+        glColor3f(1.0f, 0.6f, 0.3f);
+        glVertex2f(-0.2f, 0.6f);
+        glVertex2f(0.7f, 0.3f);
+        glVertex2f(0.2f, -0.6f);
+        glEnd();
+
+        SwapBuffers(main_window_.device_context_handle_);
+
+        // Render camera window
     }
 
     // Cleanup
-    WindowEnd();
+    main_window_.End();
 
     return (int) msg.wParam;
 }
@@ -326,7 +359,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 //
 bool InitInstance(HINSTANCE instance, int nCmdShow,
                   bool use_custom_pixel_format,
-                  int custom_pixel_format) {
+                  int custom_pixel_format,
+                  LPCSTR window_class_name) {
     instance_handle_ = instance; // Store instance handle in our global variable
     DWORD window_style;
     RECT window_rectangle;
@@ -338,9 +372,10 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
     window_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
     window_class.lpfnWndProc = WndProc;
     window_class.hInstance = instance;
-    window_class.lpszClassName = kWindowClassName;
+    window_class.lpszClassName = window_class_name;
 
     RegisterClassA(&window_class);
+    main_window_.window_class_name_ = window_class_name;
 
     // Set default window size
     window_rectangle.left   = 0;
@@ -351,7 +386,7 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
     window_style   = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
     AdjustWindowRect(&window_rectangle, window_style, 0);
 
-    window_handle_ = CreateWindowA(kWindowClassName, "OpenGL 1 sample", window_style,
+    main_window_.window_handle_ = CreateWindowA(window_class_name, "OpenGL 1 sample", window_style,
         (GetSystemMetrics(SM_CXSCREEN) - window_rectangle.right + window_rectangle.left) / 2,
         (GetSystemMetrics(SM_CYSCREEN) - window_rectangle.bottom + window_rectangle.top) / 2,
         window_rectangle.right - window_rectangle.left,
@@ -360,29 +395,29 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
         0,  // Menu
         instance_handle_,
         0);  // lParam
-    if (!window_handle_) return false;
+    if (!main_window_.window_handle_) return false;
 
-    if (!(device_context_handle_ = GetDC(window_handle_))) return false;
+    if (!(main_window_.device_context_handle_ = GetDC(main_window_.window_handle_))) return false;
 
     if (!use_custom_pixel_format) {
-        if (!(pixel_format = ChoosePixelFormat(device_context_handle_, &kPixelFormatDescriptor))) {
+        if (!(pixel_format = ChoosePixelFormat(main_window_.device_context_handle_, &kPixelFormatDescriptor))) {
             return false;
         }
-        if (!SetPixelFormat(device_context_handle_, pixel_format, &kPixelFormatDescriptor)) {
+        if (!SetPixelFormat(main_window_.device_context_handle_, pixel_format, &kPixelFormatDescriptor)) {
             return false;
         }
     } else {
-        if (!SetPixelFormat(device_context_handle_, custom_pixel_format, &kPixelFormatDescriptor)) {
+        if (!SetPixelFormat(main_window_.device_context_handle_, custom_pixel_format, &kPixelFormatDescriptor)) {
             return false;
         }
     }
 
     // create basic context
-    if (!(resource_context_handle_ = wglCreateContext(device_context_handle_))) return false;
-    if (!wglMakeCurrent(device_context_handle_, resource_context_handle_)) return false;
+    if (!(main_window_.resource_context_handle_ = wglCreateContext(main_window_.device_context_handle_))) return false;
+    if (!wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_)) return false;
 
-    ShowWindow(window_handle_, nCmdShow);
-    UpdateWindow(window_handle_);
+    ShowWindow(main_window_.window_handle_, nCmdShow);
+    UpdateWindow(main_window_.window_handle_);
 
     return true;
 }
