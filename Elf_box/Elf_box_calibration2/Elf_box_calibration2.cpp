@@ -85,8 +85,26 @@ static const PIXELFORMATDESCRIPTOR kPixelFormatDescriptor = {
 };
 
 // For Camera detection stuff
-IMFSourceReader *video_reader_ = NULL;
 WindowHandles camera_window_;
+struct Camera {
+    Camera() {
+        video_reader_ = NULL;
+        buffer_ = NULL;
+    }
+
+    ~Camera() {
+        delete [] buffer_;
+        buffer_ = NULL;
+        // TODO: Release video_reader_
+    }
+
+    IMFSourceReader *video_reader_ = NULL;
+    int width_;
+    int height_;
+    GLuint texture_id_;
+    unsigned char *buffer_;  // RGBA texture data converted from video
+};
+Camera camera_;
 
 // Forward declarations of functions included in this code module:
 bool InitInstance(HINSTANCE instance, int nCmdShow,
@@ -99,7 +117,7 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 // Some camera testing
 int InitCamera() {
     const int WEBCAM_DEVICE_INDEX = 1;	// <--- Set to 0 to use default system webcam.
-    const int MEDIA_TYPE_INDEX = 43;  // 160x120, YUY2, 30 FPS, ~9MBPS
+    const int MEDIA_TYPE_INDEX = 29;  // 320x240, YUY2, 30 FPS, ~9MBPS
 
     std::string intent = "WEBCAM_DEVICE_INDEX = " + std::to_string(WEBCAM_DEVICE_INDEX) + "\n";
     intent += "MEDIA_TYPE_INDEX = " + std::to_string(MEDIA_TYPE_INDEX) + "\n";
@@ -134,14 +152,14 @@ int InitCamera() {
     CHECK_HR(MFCreateSourceReaderFromMediaSource(
         videoSource,
         videoConfig,
-        &video_reader_), "Error creating video source reader.\n");
+        &(camera_.video_reader_)), "Error creating video source reader.\n");
 
     // Show a list of all the subtypes
-    ListModes(video_reader_);
+    ListModes(camera_.video_reader_);
 
 #if 1
     // Choose one
-    CHECK_HR(video_reader_->GetNativeMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, MEDIA_TYPE_INDEX, &pSrcOutMediaType),
+    CHECK_HR(camera_.video_reader_->GetNativeMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, MEDIA_TYPE_INDEX, &pSrcOutMediaType),
              "Error retreaving selected media type");
 #else
     // Note the webcam needs to support this media type. The list of media types supported can be obtained using the ListTypes function in MFUtility.h.
@@ -151,63 +169,116 @@ int InitCamera() {
     MFSetAttributeSize(pSrcOutMediaType, MF_MT_FRAME_SIZE, 640, 480);
 #endif
 
-    CHECK_HR(video_reader_->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pSrcOutMediaType), "Failed to set media type on source reader.\n");
+    CHECK_HR(camera_.video_reader_->SetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM, NULL, pSrcOutMediaType), "Failed to set media type on source reader.\n");
+
+    // Get relevant information
+    UINT64 value;
+    CHECK_HR(pSrcOutMediaType->GetUINT64(MF_MT_FRAME_SIZE, &value), "Could not get video dimension");
+    camera_.width_ = HI32(value);
+    camera_.height_ = LO32(value);
+    int texture_size = camera_.width_ * camera_.height_ * 4;
+    camera_.buffer_ = new unsigned char[texture_size];
+    for (int i = 0; i < texture_size; i++) {
+        camera_.buffer_[i] = i;
+    }
+
+    // Create OpenGL texture suitable for the camera picture
+    glGenTextures(1, &(camera_.texture_id_));
+    glBindTexture(GL_TEXTURE_2D, camera_.texture_id_);
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);	// Linear Filtering
+    glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);	// Linear Filtering
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
+    //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
+    glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+        camera_.width_, camera_.height_,
+        0, GL_BGRA, GL_UNSIGNED_BYTE, camera_.buffer_);
 
     return 0;
+}
+
+// Clip in range 0..255
+int clip(int x) {
+    if (x < 0) return 0;
+    if (x > 255) return 255;
+    return x;
 }
 
 int GetFrame() {
     IMFSample *videoSample = NULL;
     DWORD streamIndex, flags;
     LONGLONG llVideoTimeStamp, llSampleDuration;
-    int sampleCount = 0;
-    const int SAMPLE_COUNT = 10;
-    std::ofstream outputBuffer("rawframes.yuv", std::ios::out | std::ios::binary);
 
-    while (sampleCount <= SAMPLE_COUNT)
+    CHECK_HR(camera_.video_reader_->ReadSample(
+        MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+        0,                              // Flags.
+        &streamIndex,                   // Receives the actual stream index. 
+        &flags,                         // Receives status flags.
+        &llVideoTimeStamp,              // Receives the time stamp.
+        &videoSample                    // Receives the sample or NULL.
+        ), "Error reading video sample.");
+
+    if (flags & MF_SOURCE_READERF_STREAMTICK)
     {
-        CHECK_HR(video_reader_->ReadSample(
-            MF_SOURCE_READER_FIRST_VIDEO_STREAM,
-            0,                              // Flags.
-            &streamIndex,                   // Receives the actual stream index. 
-            &flags,                         // Receives status flags.
-            &llVideoTimeStamp,              // Receives the time stamp.
-            &videoSample                    // Receives the sample or NULL.
-            ), "Error reading video sample.");
-
-        if (flags & MF_SOURCE_READERF_STREAMTICK)
-        {
-            printf("Stream tick.\n");
-        }
-
-        if (videoSample)
-        {
-            printf("Writing sample %i.\n", sampleCount);
-
-            CHECK_HR(videoSample->SetSampleTime(llVideoTimeStamp), "Error setting the video sample time.\n");
-            CHECK_HR(videoSample->GetSampleDuration(&llSampleDuration), "Error getting video sample duration.\n");
-
-            IMFMediaBuffer *buf = NULL;
-            DWORD bufLength;
-            CHECK_HR(videoSample->ConvertToContiguousBuffer(&buf), "ConvertToContiguousBuffer failed.\n");
-            CHECK_HR(buf->GetCurrentLength(&bufLength), "Get buffer length failed.\n");
-
-            printf("Sample length %i.\n", bufLength);
-
-            byte *byteBuffer;
-            DWORD buffCurrLen = 0;
-            DWORD buffMaxLen = 0;
-            buf->Lock(&byteBuffer, &buffMaxLen, &buffCurrLen);
-
-            outputBuffer.write((char *)byteBuffer, bufLength);
-
-            buf->Release();
-        }
-
-        sampleCount++;
+        //printf("Stream tick.\n");
     }
 
-    outputBuffer.close();
+    if (videoSample)
+    {
+        //CHECK_HR(videoSample->SetSampleTime(llVideoTimeStamp), "Error setting the video sample time.\n");
+        //CHECK_HR(videoSample->GetSampleDuration(&llSampleDuration), "Error getting video sample duration.\n");
+
+        IMFMediaBuffer *buf = NULL;
+        DWORD bufLength;
+        CHECK_HR(videoSample->ConvertToContiguousBuffer(&buf), "ConvertToContiguousBuffer failed.\n");
+        CHECK_HR(buf->GetCurrentLength(&bufLength), "Get buffer length failed.\n");
+
+        //printf("Sample length %i.\n", bufLength);
+
+        byte *byteBuffer;
+        DWORD buffCurrLen = 0;
+        DWORD buffMaxLen = 0;
+        buf->Lock(&byteBuffer, &buffMaxLen, &buffCurrLen);
+
+        // Convert to RGBA in camera_.buffer
+        unsigned char *ptrOut = camera_.buffer_;
+        byte *ptrIn = byteBuffer;
+        for (int y = 0; y < camera_.height_; y++) {
+            for (int x = 0; x < camera_.width_; x += 2) {
+                int y0 = ptrIn[0];
+                int u0 = ptrIn[1];
+                int y1 = ptrIn[2];
+                int v0 = ptrIn[3];
+                ptrIn += 4;
+                int c = y0 - 16;
+                int d = u0 - 128;
+                int e = v0 - 128;
+                ptrOut[0] = clip(( 298 * c + 516 * d + 128) >> 8); // blue
+                ptrOut[1] = clip(( 298 * c - 100 * d - 208 * e + 128) >> 8); // green
+                ptrOut[2] = clip(( 298 * c + 409 * e + 128) >> 8); // red
+                ptrOut[3] = 255;
+                c = y1 - 16;
+                ptrOut[4] = clip(( 298 * c + 516 * d + 128) >> 8); // blue
+                ptrOut[5] = clip(( 298 * c - 100 * d - 208 * e + 128) >> 8); // green
+                ptrOut[6] = clip(( 298 * c + 409 * e + 128) >> 8); // red
+                ptrOut[7] = 255;
+
+                //ptrOut[0] = ptrOut[1] = ptrOut[2] = x;
+                //ptrOut[4] = ptrOut[5] = ptrOut[6] = x;
+
+                ptrOut += 8;
+            }
+        }
+
+        // Update texture
+        glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
+        glBindTexture(GL_TEXTURE_2D, camera_.texture_id_);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, camera_.width_, camera_.height_,
+            GL_BGRA, GL_UNSIGNED_BYTE, camera_.buffer_);
+
+        buf->Release();
+        videoSample->Release();
+    }
 
     return 0;
 }
@@ -300,13 +371,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     bool done = false;
 
     if (InitCamera() < 0) return -1;
-    if (GetFrame() < 0) return -1;
 
     MSG msg;
     while (!done) {
         // Create one thread as the currently edited one:
         long cur_time = timeGetTime() - start_time;
         float time_seconds = 0.001f * static_cast<float>(cur_time);
+
+        GetFrame();  // Check return value?
 
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE) ) {
             if (msg.message == WM_QUIT) done = 1;
@@ -360,12 +432,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         // Set transformation matrix to do aspect ratio adjustment
         glLoadIdentity();  // Reset The View
 
+        glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
+        glBindTexture(GL_TEXTURE_2D, camera_.texture_id_);
+
         // TEST rendering
         glBegin(GL_TRIANGLES);
-        glColor3f(0.0f, 0.6f, 1.0f);
-        glVertex2f(-0.7f, 0.3f);
-        glVertex2f(0.9f, 0.1f);
-        glVertex2f(0.2f, -0.2f);
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex2f(-1.0f, 1.0f);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex2f(+1.0f, 1.0f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(+1.0f, -1.0f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex2f(+1.0f, -1.0f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex2f(-1.0f, -1.0f);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex2f(-1.0f, +1.0f);
         glEnd();
 
         SwapBuffers(camera_window_.device_context_handle_);
