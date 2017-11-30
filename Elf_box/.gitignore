@@ -4,3 +4,4 @@ Release
 *.sdf
 ipch
 *.opensdf
+latency.ms.txt

@@ -5,7 +5,6 @@
 
 #include "Configuration.h"
 
-
 #include <stdio.h>
 #include <tchar.h>
 #include <evr.h>
@@ -93,9 +92,33 @@ struct Camera {
     }
 
     ~Camera() {
-        delete [] buffer_;
+        delete[] buffer_;
         buffer_ = NULL;
         // TODO: Release video_reader_
+    }
+
+    // update background image and calculate delta
+    void Update() {
+        for (int i = 0; i < width_ * height_ * 4; i++) {
+            float input = static_cast<float>(buffer_[i]);
+            float output = input - background_average_[i];
+            if (output < 0) output = 0;
+            if (output > 255) output = 255;
+            const float kAlpha = 0.95f;
+            background_average_[i] = kAlpha * background_average_[i] + (1.0f - kAlpha) * input;
+            buffer_[i] = static_cast<unsigned char>(output);
+        }
+    }
+
+    // Sets to 1 if flash is detected in delta image
+    bool DetectFlash() {
+        int count = 0;
+        const float kFlashThreshold = 64;
+        const int kCountThreshold = 5000;
+        for (int i = 0; i < width_ * height_ * 4; i++) {
+            if (buffer_[i] >= kFlashThreshold) count++;
+        }
+        return (count >= kCountThreshold);
     }
 
     IMFSourceReader *video_reader_ = NULL;
@@ -103,6 +126,9 @@ struct Camera {
     int height_;
     GLuint texture_id_;
     unsigned char *buffer_;  // RGBA texture data converted from video
+
+    // low-pass filtered color representing background image
+    float *background_average_;
 };
 Camera camera_;
 
@@ -144,7 +170,7 @@ int InitCamera() {
     // Enumerate devices
     CHECK_HR(MFEnumDeviceSources(videoConfig, &videoDevices, &videoDeviceCount), "Error enumerating devices");
 
-    ListCameras(videoDevices, videoDeviceCount);
+    //ListCameras(videoDevices, videoDeviceCount);
 
     CHECK_HR(videoDevices[WEBCAM_DEVICE_INDEX]->ActivateObject(IID_PPV_ARGS(&videoSource)), "Error activating video device.\n");
 
@@ -155,7 +181,7 @@ int InitCamera() {
         &(camera_.video_reader_)), "Error creating video source reader.\n");
 
     // Show a list of all the subtypes
-    ListModes(camera_.video_reader_);
+    //ListModes(camera_.video_reader_);
 
 #if 1
     // Choose one
@@ -179,7 +205,11 @@ int InitCamera() {
     int texture_size = camera_.width_ * camera_.height_ * 4;
     camera_.buffer_ = new unsigned char[texture_size];
     for (int i = 0; i < texture_size; i++) {
-        camera_.buffer_[i] = i;
+        camera_.buffer_[i] = 0;
+    }
+    camera_.background_average_ = new float[texture_size];
+    for (int i = 0; i < texture_size; i++) {
+        camera_.background_average_[i] = static_cast<float>(camera_.buffer_[i]);
     }
 
     // Create OpenGL texture suitable for the camera picture
@@ -269,6 +299,9 @@ int GetFrame() {
                 ptrOut += 8;
             }
         }
+
+        // Update with background
+        camera_.Update();
 
         // Update texture
         glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
@@ -368,17 +401,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
     // Main message loop:
     long start_time = timeGetTime();
+    long last_flash = 0;
     bool done = false;
 
+#ifdef USE_CAMERA
     if (InitCamera() < 0) return -1;
+#endif
 
     MSG msg;
     while (!done) {
-        // Create one thread as the currently edited one:
         long cur_time = timeGetTime() - start_time;
         float time_seconds = 0.001f * static_cast<float>(cur_time);
 
+#ifdef USE_CAMERA
         GetFrame();  // Check return value?
+#endif
 
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE) ) {
             if (msg.message == WM_QUIT) done = 1;
@@ -389,7 +426,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         // Draw main window:
         if (!wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_)) return false;
 
+        // Flash for latency testing
+        const int kWaitFlashTime = 1000;
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        if (cur_time - last_flash >= kWaitFlashTime) {
+            glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+            if (camera_.DetectFlash()) {
+                if (!fopen_s(&fid, "latency.ms.txt", "ab")) {
+                    fprintf(fid, "%d\n", cur_time - last_flash - kWaitFlashTime);
+                    fclose(fid);
+                }
+                last_flash = cur_time;
+            }
+        }
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_BLEND);
@@ -412,16 +461,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glLoadIdentity();  // Reset The View
         glLoadMatrixf(stretch_matrix[0]);
 
-        // TEST rendering
+#if 0
+        // TEST rendering of some triangles
         glBegin(GL_TRIANGLES);
         glColor3f(1.0f, 0.6f, 0.3f);
         glVertex2f(-0.2f, 0.6f);
         glVertex2f(0.7f, 0.3f);
         glVertex2f(0.2f, -0.6f);
         glEnd();
+#endif
 
         SwapBuffers(main_window_.device_context_handle_);
 
+        
         // Render camera window
         if (!wglMakeCurrent(camera_window_.device_context_handle_, camera_window_.resource_context_handle_)) return false;
 
@@ -435,7 +487,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
         glBindTexture(GL_TEXTURE_2D, camera_.texture_id_);
 
-        // TEST rendering
+        // Rendering of the camera rect
         glBegin(GL_TRIANGLES);
         glColor3f(1.0f, 1.0f, 1.0f);
         glTexCoord2f(0.0f, 0.0f);
