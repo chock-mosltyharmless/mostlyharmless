@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="calibration.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="MFUtility.h" />

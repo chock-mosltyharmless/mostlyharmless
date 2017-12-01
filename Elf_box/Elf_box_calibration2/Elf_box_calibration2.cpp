@@ -104,7 +104,7 @@ struct Camera {
             float output = input - background_average_[i];
             if (output < 0) output = 0;
             if (output > 255) output = 255;
-            const float kAlpha = 0.95f;
+            const float kAlpha = 0.97f;
             background_average_[i] = kAlpha * background_average_[i] + (1.0f - kAlpha) * input;
             buffer_[i] = static_cast<unsigned char>(output);
         }
@@ -119,6 +119,33 @@ struct Camera {
             if (buffer_[i] >= kFlashThreshold) count++;
         }
         return (count >= kCountThreshold);
+    }
+
+    // Find the brightest spot (single pixel?) in delta image and return its brightness
+    float FindBrightestPixel(float *x_pos, float *y_pos) {
+        *x_pos = 0.0f;
+        *y_pos = 0.0f;
+        int brightest = -1;
+        int brightest_x = 0;
+        int brightest_y = 0;
+        for (int y = 0; y < height_; y++) {
+            for (int x = 0; x < width_; x++) {
+                int brightness = 0;
+                for (int colors = 0; colors < 3; colors++) {
+                    int index = (y * width_ + x) * 4;
+                    brightness += buffer_[index];
+                }
+                if (brightness > brightest) {
+                    brightest_x = x;
+                    brightest_y = y;
+                    brightest = brightness;
+                }
+            }
+        }
+
+        *x_pos = static_cast<float>(brightest_x) / width_ * 2.0f - 1.0f;
+        *y_pos = static_cast<float>(brightest_y) / height_ * 2.0f - 1.0f;
+        return static_cast<float>(brightest) / (255 * 3);
     }
 
     IMFSourceReader *video_reader_ = NULL;
@@ -142,12 +169,11 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 // Some camera testing
 int InitCamera() {
-    const int WEBCAM_DEVICE_INDEX = 1;	// <--- Set to 0 to use default system webcam.
-    const int MEDIA_TYPE_INDEX = 29;  // 320x240, YUY2, 30 FPS, ~9MBPS
-
     std::string intent = "WEBCAM_DEVICE_INDEX = " + std::to_string(WEBCAM_DEVICE_INDEX) + "\n";
     intent += "MEDIA_TYPE_INDEX = " + std::to_string(MEDIA_TYPE_INDEX) + "\n";
+#ifdef LIST_DEVICES
     MessageBox(NULL, intent.c_str(), "Intent for Camera usage", MB_OK);
+#endif
 
     IMFActivate **videoDevices = NULL;
     UINT32 videoDeviceCount = 0;
@@ -170,7 +196,9 @@ int InitCamera() {
     // Enumerate devices
     CHECK_HR(MFEnumDeviceSources(videoConfig, &videoDevices, &videoDeviceCount), "Error enumerating devices");
 
-    //ListCameras(videoDevices, videoDeviceCount);
+#ifdef LIST_DEVICES
+    ListCameras(videoDevices, videoDeviceCount);
+#endif
 
     if (WEBCAM_DEVICE_INDEX >= videoDeviceCount) {
         MessageBox(NULL, "Not enough cameras installed.", "Camera not fount", MB_OK);
@@ -185,7 +213,9 @@ int InitCamera() {
         &(camera_.video_reader_)), "Error creating video source reader.\n");
 
     // Show a list of all the subtypes
-    //ListModes(camera_.video_reader_);
+#ifdef LIST_DEVICES
+    ListModes(camera_.video_reader_);
+#endif
 
 #if 1
     // Choose one
@@ -241,7 +271,7 @@ int clip(int x) {
 int GetFrame() {
     IMFSample *videoSample = NULL;
     DWORD streamIndex, flags;
-    LONGLONG llVideoTimeStamp, llSampleDuration;
+    LONGLONG llVideoTimeStamp;
 
     CHECK_HR(camera_.video_reader_->ReadSample(
         MF_SOURCE_READER_FIRST_VIDEO_STREAM,
@@ -430,9 +460,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         // Draw main window:
         if (!wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_)) return false;
 
-        // Flash for latency testing
-        const int kWaitFlashTime = 1000;
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        
+        // Flash for latency testing
+#ifdef LATENCY_MEASUREMENT
+        const int kWaitFlashTime = 1000;
         if (cur_time - last_flash >= kWaitFlashTime) {
             glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
             if (camera_.DetectFlash()) {
@@ -443,6 +475,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 last_flash = cur_time;
             }
         }
+#endif
+
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         glEnable(GL_BLEND);
@@ -450,29 +484,68 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         //glEnable(GL_DEPTH_TEST);
         //glDepthFunc(GL_LESS);
 
-        // Set transformation matrix to do aspect ratio adjustment
-        RECT window_rectangle;
-        GetWindowRect(main_window_.window_handle_, &window_rectangle);
-        float stretch_matrix[4][4] = {
-            {1.0f, 0.0f, 0.0f, 0.0f},
-            {0.0f, 1.0f, 0.0f, 0.0f},
-            {0.0f, 0.0f, 1.0f, 0.0f},
-            {0.0f, 0.0f, 0.0f, 1.0f}
-        };
-        int width = window_rectangle.right - window_rectangle.left;
-        int height = window_rectangle.bottom - window_rectangle.top;
-        stretch_matrix[1][1] = static_cast<float>(width) / static_cast<float>(height);
         glLoadIdentity();  // Reset The View
-        glLoadMatrixf(stretch_matrix[0]);
 
-#if 0
-        // TEST rendering of some triangles
-        glBegin(GL_TRIANGLES);
-        glColor3f(1.0f, 0.6f, 0.3f);
-        glVertex2f(-0.2f, 0.6f);
-        glVertex2f(0.7f, 0.3f);
-        glVertex2f(0.2f, -0.6f);
-        glEnd();
+#ifdef POINT_CALIBRATION
+        static float brightness[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
+        static float calibration_x[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
+        static float calibration_y[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
+        static int last_index = -1;
+        const int kCalibrationDelay = 10 * 1000;  // 10 seconds delay
+        int index = (cur_time - kCalibrationDelay) / USE_LATENCY;
+        
+        if (index > last_index) {
+            // This is the last time that the last spot is shown, check it
+            if (last_index >= 0 && last_index < CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
+                int x_index = (last_index % CALIBRATION_X_RESOLUTION);
+                int z_index = (last_index / CALIBRATION_Z_RESOLUTION);
+                brightness[z_index][x_index] = camera_.FindBrightestPixel(
+                    &(calibration_x[z_index][x_index]), &(calibration_y[z_index][x_index]));
+            }
+            last_index = index;
+        }
+
+        if (index >= 0 && index < CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
+            float width = 2.0f / CALIBRATION_X_RESOLUTION;
+            float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
+            float x_pos = (index % CALIBRATION_X_RESOLUTION) * width - 1.0f;
+            float z_pos = (index / CALIBRATION_Z_RESOLUTION) * depth - 1.0f;
+            glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+        }
+
+        // Save data
+        if (last_index >= CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION || last_index >= 100) {
+            if (!fopen_s(&fid, "calibration.h", "wb")) {
+                fprintf(fid, "float calibration_brightness_[%d][%d] = {", CALIBRATION_Z_RESOLUTION, CALIBRATION_X_RESOLUTION);
+                for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
+                    fprintf(fid, "\n  {");
+                    for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
+                        fprintf(fid, "%f, ", brightness[z][x]);
+                    }
+                    fprintf(fid, "},");
+                }
+                fprintf(fid, "\n};\n\n");
+                fprintf(fid, "float calibration_x_[%d][%d] = {", CALIBRATION_Z_RESOLUTION, CALIBRATION_X_RESOLUTION);
+                for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
+                    fprintf(fid, "\n  {");
+                    for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
+                        fprintf(fid, "%f, ", calibration_x[z][x]);
+                    }
+                    fprintf(fid, "},");
+                }
+                fprintf(fid, "\n};\n\n");
+                fprintf(fid, "float calibration_y_[%d][%d] = {", CALIBRATION_Z_RESOLUTION, CALIBRATION_X_RESOLUTION);
+                for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
+                    fprintf(fid, "\n  {");
+                    for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
+                        fprintf(fid, "%f, ", calibration_y[z][x]);
+                    }
+                    fprintf(fid, "},");
+                }
+                fprintf(fid, "\n};\n\n");
+                fclose(fid);
+            }
+        }
 #endif
 
         SwapBuffers(main_window_.device_context_handle_);
@@ -560,8 +633,8 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
     AdjustWindowRect(&window_rectangle, window_style, 0);
 
     handles->window_handle_ = CreateWindowA(window_class_name, "OpenGL 1 sample", window_style,
-        (GetSystemMetrics(SM_CXSCREEN) - window_rectangle.right + window_rectangle.left) / 2,
-        (GetSystemMetrics(SM_CYSCREEN) - window_rectangle.bottom + window_rectangle.top) / 2,
+        CW_USEDEFAULT,
+        CW_USEDEFAULT,
         window_rectangle.right - window_rectangle.left,
         window_rectangle.bottom - window_rectangle.top,
         0,  // Parent window
