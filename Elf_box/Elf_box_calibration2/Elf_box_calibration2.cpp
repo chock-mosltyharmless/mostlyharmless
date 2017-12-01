@@ -491,7 +491,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         static float calibration_x[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static float calibration_y[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static int last_index = -1;
-        const int kCalibrationDelay = 10 * 1000;  // 10 seconds delay
+        const int kCalibrationDelay = 15 * 1000;  // 15 seconds delay
         int index = (cur_time - kCalibrationDelay) / USE_LATENCY;
         
         if (index > last_index) {
@@ -514,7 +514,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         }
 
         // Save data
-        if (last_index >= CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION || last_index >= 100) {
+        if (last_index >= CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
             if (!fopen_s(&fid, "calibration.h", "wb")) {
                 fprintf(fid, "float calibration_brightness_[%d][%d] = {", CALIBRATION_Z_RESOLUTION, CALIBRATION_X_RESOLUTION);
                 for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
@@ -544,6 +544,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 }
                 fprintf(fid, "\n};\n\n");
                 fclose(fid);
+                break;  // Processing is done
             }
         }
 #endif
