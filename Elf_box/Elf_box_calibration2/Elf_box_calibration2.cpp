@@ -172,6 +172,10 @@ int InitCamera() {
 
     //ListCameras(videoDevices, videoDeviceCount);
 
+    if (WEBCAM_DEVICE_INDEX >= videoDeviceCount) {
+        MessageBox(NULL, "Not enough cameras installed.", "Camera not fount", MB_OK);
+        return -1;
+    }
     CHECK_HR(videoDevices[WEBCAM_DEVICE_INDEX]->ActivateObject(IID_PPV_ARGS(&videoSource)), "Error activating video device.\n");
 
     // Create a source reader.
