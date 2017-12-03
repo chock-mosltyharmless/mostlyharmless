@@ -491,7 +491,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         static float calibration_x[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static float calibration_y[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static int last_index = -1;
-        const int kCalibrationDelay = 15 * 1000;  // 15 seconds delay
+        //const int kCalibrationDelay = 15 * 1000;  // 15 seconds delay
+        const int kCalibrationDelay = 10 * 60 * 1000;  // 10 minutes delay
         int index = (cur_time - kCalibrationDelay) / USE_LATENCY;
         
         if (index > last_index) {
