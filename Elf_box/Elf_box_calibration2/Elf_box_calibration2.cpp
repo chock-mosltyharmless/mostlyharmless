@@ -16,6 +16,9 @@
 #include <fstream>
 #include "MFUtility.h"
 
+// Gathered calibration data
+#include "calibration.h"
+
 #pragma comment(lib, "mf.lib")
 #pragma comment(lib, "mfplat.lib")
 #pragma comment(lib, "mfplay.lib")
@@ -89,24 +92,42 @@ struct Camera {
     Camera() {
         video_reader_ = NULL;
         buffer_ = NULL;
+        accumulate_buffer_ = NULL;
     }
 
     ~Camera() {
         delete[] buffer_;
         buffer_ = NULL;
+        delete accumulate_buffer_;
+        accumulate_buffer_ = NULL;
         // TODO: Release video_reader_
     }
 
     // update background image and calculate delta
-    void Update() {
+    void Update(bool update_background, bool refresh_accumulate) {
+        if (NULL == accumulate_buffer_) {
+            accumulate_buffer_ = new int[width_ * height_ * 4];
+        }
+
         for (int i = 0; i < width_ * height_ * 4; i++) {
+            if (refresh_accumulate) {
+                accumulate_buffer_[i] = 0;
+            }
             float input = static_cast<float>(buffer_[i]);
             float output = input - background_average_[i];
             if (output < 0) output = 0;
             if (output > 255) output = 255;
-            const float kAlpha = 0.97f;
-            background_average_[i] = kAlpha * background_average_[i] + (1.0f - kAlpha) * input;
+            const double kAlpha = 0.9f;
+            if (update_background) {
+                background_average_[i] = kAlpha * background_average_[i] + (1.0f - kAlpha) * input;
+            }
             buffer_[i] = static_cast<unsigned char>(output);
+            accumulate_buffer_[i] += static_cast<int>(buffer_[i]);
+
+            // Use accumulate buffer instead of buffer
+            output = accumulate_buffer_[i] / 4;
+            if (output > 255) output = 255;
+            buffer_[i] = output;
         }
     }
 
@@ -132,8 +153,8 @@ struct Camera {
             for (int x = 0; x < width_; x++) {
                 int brightness = 0;
                 for (int colors = 0; colors < 3; colors++) {
-                    int index = (y * width_ + x) * 4;
-                    brightness += buffer_[index];
+                    int index = (y * width_ + x) * 4 + colors;
+                    brightness += accumulate_buffer_[index];
                 }
                 if (brightness > brightest) {
                     brightest_x = x;
@@ -153,9 +174,10 @@ struct Camera {
     int height_;
     GLuint texture_id_;
     unsigned char *buffer_;  // RGBA texture data converted from video
+    int *accumulate_buffer_;  // RGBA sum of values over time, if no background update is done
 
     // low-pass filtered color representing background image
-    float *background_average_;
+    double *background_average_;
 };
 Camera camera_;
 
@@ -241,9 +263,9 @@ int InitCamera() {
     for (int i = 0; i < texture_size; i++) {
         camera_.buffer_[i] = 0;
     }
-    camera_.background_average_ = new float[texture_size];
+    camera_.background_average_ = new double[texture_size];
     for (int i = 0; i < texture_size; i++) {
-        camera_.background_average_[i] = static_cast<float>(camera_.buffer_[i]);
+        camera_.background_average_[i] = static_cast<double>(camera_.buffer_[i]);
     }
 
     // Create OpenGL texture suitable for the camera picture
@@ -268,7 +290,7 @@ int clip(int x) {
     return x;
 }
 
-int GetFrame() {
+int GetFrame(bool update_background, bool refresh_accumulate) {
     IMFSample *videoSample = NULL;
     DWORD streamIndex, flags;
     LONGLONG llVideoTimeStamp;
@@ -335,7 +357,7 @@ int GetFrame() {
         }
 
         // Update with background
-        camera_.Update();
+        camera_.Update(update_background, refresh_accumulate);
 
         // Update texture
         glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
@@ -437,6 +459,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     long start_time = timeGetTime();
     long last_flash = 0;
     bool done = false;
+    int num_accumulated = 0;
+    int index = 0;  // Index of currently handled point/line
 
 #ifdef USE_CAMERA
     if (InitCamera() < 0) return -1;
@@ -447,8 +471,33 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         long cur_time = timeGetTime() - start_time;
         float time_seconds = 0.001f * static_cast<float>(cur_time);
 
+        // Check whether background shall be 
+        //const int kCalibrationDelay = 0;
+        const int kCalibrationDelay = 2 * 1000;  // 2 seconds delay
+        //const int kCalibrationDelay = 10 * 60 * 1000;  // 10 minutes delay
+        bool update_background = true;  // Flag whether camera brightness is re-calibrated
+        bool show_image = false;  // Flag whether the calibration image is shown
+        bool check_calibration = false;  // Use accumulate buffer to check
+        bool refresh_accumulate = true;  // Flag that deletes accumulate buffer in camera
+
+        if (cur_time - last_flash > USE_BACKGROUND_UPDATE &&
+            (index > 0 || cur_time > kCalibrationDelay)) {
+            update_background = false;
+            show_image = true;
+        }
+
+        if (cur_time - last_flash > USE_LATENCY + USE_BACKGROUND_UPDATE &&
+            (index > 0 || cur_time > kCalibrationDelay)) {
+            refresh_accumulate = false;
+            num_accumulated++;
+            if (num_accumulated > NUM_ACCUMULATE) {
+                num_accumulated = 0;
+                check_calibration = true;
+            }
+        }
+
 #ifdef USE_CAMERA
-        GetFrame();  // Check return value?
+        GetFrame(update_background, refresh_accumulate);  // Check return value?
 #endif
 
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE) ) {
@@ -486,16 +535,27 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
         glLoadIdentity();  // Reset The View
 
+#ifdef MATRIX_CALIBRATION
+        // Get 2D image for each row
+        static int calibration_row = 0;
+        // Time that current calibration row started
+        static int calibration_start = cur_time;
+        static int num_calibration_gathered = 0;
+
+        // Light up the row
+        float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
+        float z_pos = (calibration_row / CALIBRATION_Z_RESOLUTION) * depth - 1.0f;
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glRectf(-1.0f, z_pos, 1.0f, z_pos + depth);
+#endif
+
 #ifdef POINT_CALIBRATION
         static float brightness[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static float calibration_x[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static float calibration_y[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static int last_index = -1;
-        //const int kCalibrationDelay = 15 * 1000;  // 15 seconds delay
-        const int kCalibrationDelay = 10 * 60 * 1000;  // 10 minutes delay
-        int index = (cur_time - kCalibrationDelay) / USE_LATENCY;
         
-        if (index > last_index) {
+        if (check_calibration) {
             // This is the last time that the last spot is shown, check it
             if (last_index >= 0 && last_index < CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
                 int x_index = (last_index % CALIBRATION_X_RESOLUTION);
@@ -504,14 +564,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                     &(calibration_x[z_index][x_index]), &(calibration_y[z_index][x_index]));
             }
             last_index = index;
+            last_flash = cur_time;
+            index++;
         }
-
-        if (index >= 0 && index < CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
-            float width = 2.0f / CALIBRATION_X_RESOLUTION;
-            float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
-            float x_pos = (index % CALIBRATION_X_RESOLUTION) * width - 1.0f;
-            float z_pos = (index / CALIBRATION_Z_RESOLUTION) * depth - 1.0f;
-            glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+        
+        if (show_image) {
+            if (index >= 0 && index < CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
+                float width = 2.0f / CALIBRATION_X_RESOLUTION;
+                float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
+                float x_pos = (index % CALIBRATION_X_RESOLUTION) * width - 1.0f;
+                float z_pos = (index / CALIBRATION_Z_RESOLUTION) * depth - 1.0f;
+                glColor3f(0.2f, 0.2f, 0.2f);
+                glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+            }
         }
 
         // Save data
@@ -545,14 +610,30 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 }
                 fprintf(fid, "\n};\n\n");
                 fclose(fid);
-                break;  // Processing is done
+                done = true;  // Processing is done
+            }
+        }
+#endif
+
+#ifdef SHOW_HEIGHT
+        for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
+            for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
+                float width = 2.0f / CALIBRATION_X_RESOLUTION;
+                float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
+                float col_range = calibration_y_[z][x] * 0.5f + 0.5f;
+                float red = col_range;
+                float green = 1.0f - col_range;
+                float blue = 0.0f;
+                glColor3f(red, green, blue);
+                float x_pos = x * width - 1.0f;
+                float z_pos = z * depth - 1.0f;
+                glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
             }
         }
 #endif
 
         SwapBuffers(main_window_.device_context_handle_);
 
-        
         // Render camera window
         if (!wglMakeCurrent(camera_window_.device_context_handle_, camera_window_.resource_context_handle_)) return false;
 
@@ -582,6 +663,19 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glTexCoord2f(0.0f, 0.0f);
         glVertex2f(-1.0f, +1.0f);
         glEnd();
+
+        // Show the last calibration point
+#ifdef POINT_CALIBRATION
+        if (last_index - 1 >= 0 && last_index - 1< CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
+            glColor3f(1.0f, 0.0f, 0.0f);
+            int x_index = ((last_index - 1) % CALIBRATION_X_RESOLUTION);
+            int z_index = ((last_index - 1) / CALIBRATION_Z_RESOLUTION);
+            float x = calibration_x[z_index][x_index];
+            float y = -calibration_y[z_index][x_index];
+            glDisable(GL_TEXTURE_2D);
+            glRectf(x - 0.002f, y - 0.002f, x + 0.002f, y + 0.002f);
+        }
+#endif
 
         SwapBuffers(camera_window_.device_context_handle_);
     }
