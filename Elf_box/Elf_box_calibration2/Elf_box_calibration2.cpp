@@ -113,8 +113,8 @@ struct Camera {
             if (refresh_accumulate) {
                 accumulate_buffer_[i] = 0;
             }
-            float input = static_cast<float>(buffer_[i]);
-            float output = input - background_average_[i];
+            double input = static_cast<double>(buffer_[i]);
+            double output = input - background_average_[i];
             if (output < 0) output = 0;
             if (output > 255) output = 255;
             const double kAlpha = 0.9f;
@@ -125,9 +125,9 @@ struct Camera {
             accumulate_buffer_[i] += static_cast<int>(buffer_[i]);
 
             // Use accumulate buffer instead of buffer
-            output = accumulate_buffer_[i] / 4;
-            if (output > 255) output = 255;
-            buffer_[i] = output;
+            int out = accumulate_buffer_[i] / 4;
+            if (out > 255) out = 255;
+            buffer_[i] = static_cast<unsigned char>(out);
         }
     }
 
@@ -144,6 +144,10 @@ struct Camera {
 
     // Find the brightest spot (single pixel?) in delta image and return its brightness
     float FindBrightestPixel(float *x_pos, float *y_pos) {
+        FindBrightestPixel(x_pos, y_pos, accumulate_buffer_, NULL);
+    }
+
+    float FindBrightestPixel(float *x_pos, float *y_pos, int *buffer, int *multiply_buffer) {
         *x_pos = 0.0f;
         *y_pos = 0.0f;
         int brightest = -1;
@@ -154,7 +158,11 @@ struct Camera {
                 int brightness = 0;
                 for (int colors = 0; colors < 3; colors++) {
                     int index = (y * width_ + x) * 4 + colors;
-                    brightness += accumulate_buffer_[index];
+                    int factor = 1;
+                    if (multiply_buffer) {
+                        factor = multiply_buffer[index];
+                    }
+                    brightness += buffer[index] * factor;
                 }
                 if (brightness > brightest) {
                     brightest_x = x;
@@ -473,8 +481,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
         // Check whether background shall be 
         //const int kCalibrationDelay = 0;
-        const int kCalibrationDelay = 2 * 1000;  // 2 seconds delay
-        //const int kCalibrationDelay = 10 * 60 * 1000;  // 10 minutes delay
+        const int kCalibrationDelay = CALIBRATION_DELAY;
         bool update_background = true;  // Flag whether camera brightness is re-calibrated
         bool show_image = false;  // Flag whether the calibration image is shown
         bool check_calibration = false;  // Use accumulate buffer to check
@@ -493,6 +500,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             if (num_accumulated > NUM_ACCUMULATE) {
                 num_accumulated = 0;
                 check_calibration = true;
+                show_image = false;
             }
         }
 
@@ -535,25 +543,80 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
         glLoadIdentity();  // Reset The View
 
-#ifdef MATRIX_CALIBRATION
-        // Get 2D image for each row
-        static int calibration_row = 0;
-        // Time that current calibration row started
-        static int calibration_start = cur_time;
-        static int num_calibration_gathered = 0;
+#if defined(MATRIX_CALIBRATION) || defined(POINT_CALIBRATION)
+        static float brightness[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
+        static float calibration_x[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
+        static float calibration_y[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
+#endif
 
-        // Light up the row
-        float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
-        float z_pos = (calibration_row / CALIBRATION_Z_RESOLUTION) * depth - 1.0f;
-        glColor3f(1.0f, 1.0f, 1.0f);
-        glRectf(-1.0f, z_pos, 1.0f, z_pos + depth);
+#ifdef MATRIX_CALIBRATION
+        static int *row_accumulate_buffer[CALIBRATION_X_RESOLUTION];
+        static bool do_row_calibration = false;
+
+        if (do_row_calibration) {  // Check for second pass (row calibration)
+            if (check_calibration) {
+                // This is the last time that the row is shown - check it
+                if (index >= 0 && index < CALIBRATION_Z_RESOLUTION) {
+                    for (int column = 0; column < CALIBRATION_X_RESOLUTION; column++) {
+                        int x_index = column;
+                        int z_index = index;
+                        brightness[z_index][x_index] = camera_.FindBrightestPixel(
+                            &(calibration_x[z_index][x_index]), &(calibration_y[z_index][x_index]),
+                            camera_.accumulate_buffer_, row_accumulate_buffer[column]);
+                    }
+                }
+                last_flash = cur_time;
+                index++;
+                if (index >= CALIBRATION_Z_RESOLUTION) {
+                    done = true;
+                }
+            }
+
+            if (show_image) {
+                if (index >= 0 && index < CALIBRATION_Z_RESOLUTION) {
+                    float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
+                    float z_pos = index * depth - 1.0f;
+                    glColor3f(1.0f, 1.0f, 1.0f);
+                    glRectf(-1.0f, z_pos, 1.0f, z_pos + depth);
+                }
+            }
+
+        } else {  // Do first pass (columns)
+            
+            if (check_calibration) {
+                // This is the last time that the column is shown - check it
+                if (index >= 0 && index < CALIBRATION_X_RESOLUTION) {
+                    // Save image...
+                    row_accumulate_buffer[index] = new int[camera_.width_ * camera_.height_ * 4];
+                    for (int i = 0; i < camera_.width_ * camera_.height_ * 4; i++) {
+                        row_accumulate_buffer[index][i] = camera_.accumulate_buffer_[i];
+                    }
+                }
+                last_flash = cur_time;
+                index++;
+                // All columns processed, go to row mode
+                if (index >= CALIBRATION_X_RESOLUTION) {
+                    do_row_calibration = true;
+                    index = 0;
+                }
+            }
+
+            if (show_image) {
+                if (index >= 0 && index < CALIBRATION_X_RESOLUTION) {
+                    float width = 2.0f / CALIBRATION_X_RESOLUTION;
+                    float x_pos = index * width - 1.0f;
+                    glColor3f(1.0f, 1.0f, 1.0f);
+                    glRectf(x_pos, -1.0f, x_pos + width, 1.0f);
+                }
+            }
+        }
 #endif
 
 #ifdef POINT_CALIBRATION
         static float brightness[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static float calibration_x[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static float calibration_y[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
-        static int last_index = -1;
+        static int last_index = -1;  // I don't think this works with the new timing...
         
         if (check_calibration) {
             // This is the last time that the last spot is shown, check it
@@ -566,6 +629,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             last_index = index;
             last_flash = cur_time;
             index++;
+            if (last_index >= CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
+                done = true;
+            }
         }
         
         if (show_image) {
@@ -578,15 +644,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
             }
         }
+#endif
 
+#if defined(MATRIX_CALIBRATION) || defined(POINT_CALIBRATION)
         // Save data
-        if (last_index >= CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION) {
+        if (done) {
             if (!fopen_s(&fid, "calibration.h", "wb")) {
                 fprintf(fid, "float calibration_brightness_[%d][%d] = {", CALIBRATION_Z_RESOLUTION, CALIBRATION_X_RESOLUTION);
                 for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
                     fprintf(fid, "\n  {");
                     for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
-                        fprintf(fid, "%f, ", brightness[z][x]);
+                        fprintf(fid, "%ff, ", brightness[z][x]);
                     }
                     fprintf(fid, "},");
                 }
@@ -595,7 +663,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
                     fprintf(fid, "\n  {");
                     for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
-                        fprintf(fid, "%f, ", calibration_x[z][x]);
+                        fprintf(fid, "%ff, ", calibration_x[z][x]);
                     }
                     fprintf(fid, "},");
                 }
@@ -604,27 +672,40 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
                     fprintf(fid, "\n  {");
                     for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
-                        fprintf(fid, "%f, ", calibration_y[z][x]);
+                        fprintf(fid, "%ff, ", calibration_y[z][x]);
                     }
                     fprintf(fid, "},");
                 }
                 fprintf(fid, "\n};\n\n");
                 fclose(fid);
-                done = true;  // Processing is done
             }
         }
 #endif
 
 #ifdef SHOW_HEIGHT
+        float maximum_brightness = 0.0;
+        for (int i = 0; i < CALIBRATION_X_RESOLUTION * CALIBRATION_Z_RESOLUTION; i++) {
+            if (calibration_brightness_[0][i] > maximum_brightness) {
+                maximum_brightness = calibration_brightness_[0][i];
+            }
+        }
+
         for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
             for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
                 float width = 2.0f / CALIBRATION_X_RESOLUTION;
                 float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
-                float col_range = calibration_y_[z][x] * 0.5f + 0.5f;
-                float red = col_range;
-                float green = 1.0f - col_range;
-                float blue = 0.0f;
-                glColor3f(red, green, blue);
+                //float col_range = calibration_y_[z][x] * 0.5f + 0.5f;
+                float show_height = sinf(static_cast<float>(cur_time) * 0.0003f);
+                float distance = fabsf(show_height - calibration_y_[z][x]);
+                float brightness = calibration_brightness_[z][x] / maximum_brightness * 16.0f;
+                if (brightness > 1.0f) brightness = 1.0f;
+                brightness *= 1.0f - (distance * 10.0f);
+                if (brightness < 0.0f) brightness = 0.0f;
+                //float red = col_range * brightness;
+                //float green = (1.0f - col_range) * brightness;
+                //float blue = 0.0f * brightness;
+                //glColor3f(red, green, blue);
+                glColor3f(brightness, brightness, brightness);
                 float x_pos = x * width - 1.0f;
                 float z_pos = z * depth - 1.0f;
                 glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);

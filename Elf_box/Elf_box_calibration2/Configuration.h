@@ -10,10 +10,12 @@
 #define MEDIA_TYPE_INDEX 0  /* 640x480, YUY2, 30 FPS, ~147MBPS */
 //#define MEDIA_TYPE_INDEX 53  /* 1280x720, YUY2, 30 FPS, ~442MBPS */
 
-// In ms, must be more than in latency measurement
-#define USE_BACKGROUND_UPDATE 1000
-#define USE_LATENCY 300
-#define NUM_ACCUMULATE 90
+// In ms
+#define CALIBRATION_DELAY (20 * 1000)
+// Must be more than in latency measurement
+#define USE_BACKGROUND_UPDATE (2 * 1000)
+#define USE_LATENCY 500
+#define NUM_ACCUMULATE 50
 
 #define CALIBRATION_X_RESOLUTION 200
 #define CALIBRATION_Z_RESOLUTION 200
@@ -21,6 +23,6 @@
 #define USE_CAMERA
 //#define LIST_DEVICES
 //#define LATENCY_MEASUREMENT
-#define POINT_CALIBRATION
-//#define SHOW_HEIGHT
+//#define POINT_CALIBRATION  DEFUNCT!
+#define SHOW_HEIGHT
 //#define MATRIX_CALIBRATION
