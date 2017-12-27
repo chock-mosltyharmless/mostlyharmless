@@ -150,6 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\Fractal.h" />
     <ClInclude Include="src\intro.h" />
     <ClInclude Include="src\music.h" />
     <ClInclude Include="src\mzk.h" />
@@ -158,6 +159,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Fractal.cpp" />
     <ClCompile Include="src\intro.cpp" />
     <ClCompile Include="src\mzk.cpp" />
     <ClCompile Include="src\Parameter.cpp">

@@ -16,6 +16,7 @@
 #include "intro.h"
 #include "mzk.h"
 #include "Parameter.h"
+#include "Fractal.h"
 
 // -------------------------------------------------------------------
 //                          INTRO SCRIPT:
@@ -44,25 +45,11 @@ unsigned int vboID[2];
 GLfloat vertices_[TOTAL_NUM_PARTICLES * 3];
 GLfloat colors_[TOTAL_NUM_PARTICLES * 4];
 
+Fractal fractal_;
+
 // -------------------------------------------------------------------
 //                          Code:
 // -------------------------------------------------------------------
-
-// Multiplices two 4x4 matrices
-void matrixMult(float src1[4][4], float src2[4][4], float dest[4][4])
-{
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			dest[i][j] = 0.0f;
-			for (int k = 0; k < 4; k++)
-			{
-				dest[i][j] += src1[i][k] * src2[k][j];
-			}
-		}
-	}
-}
 
 // Note that the character data must be allocated.
 void LoadTextFile(const char *filename, char *data, int data_size) {
@@ -153,6 +140,7 @@ void intro_init( void ) {
 	}
 #endif
 
+#if 0
     // Fill the vertices_ and colors_ array with reasonable values
     GenerateParticles();
 
@@ -190,6 +178,9 @@ void intro_init( void ) {
 						  GL_FALSE, // normalized?
 						  0, // stride
 						  (void*)0); // array buffer offset
+#else
+    fractal_.CreateObjects(0.3f);
+#endif
 
 #ifdef SHADER_DEBUG
 	// Get all the errors:
@@ -234,5 +225,9 @@ void intro_do( long itime )
 	
 	glUseProgram(shaderPrograms[0]);
 
+#if 0
     glDrawArrays(GL_TRIANGLES, 0, TOTAL_NUM_PARTICLES);
+#else
+    fractal_.Draw();
+#endif
 }

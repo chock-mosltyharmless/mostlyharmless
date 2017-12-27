@@ -28,6 +28,9 @@
     <ClInclude Include="src\Parameter.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Fractal.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\intro.cpp">
@@ -43,6 +46,9 @@
       <Filter>Source Files\_windows</Filter>
     </ClCompile>
     <ClCompile Include="src\Parameter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Fractal.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
