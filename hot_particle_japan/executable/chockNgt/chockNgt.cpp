@@ -13,6 +13,7 @@
 #include "Cafe.h"
 #include "Smartphones.h"
 #include "Car.h"
+#include "TextRenderer.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -51,6 +52,7 @@ bool mod_key_ = false;
 // Used to avoid double-pressing the same key
 float last_key_press_time_[65536] = { 0.0f };
 
+TextRenderer text_renderer_;
 TextureManager textureManager;
 Audio audio_;
 Zimmer zimmer_;
@@ -554,12 +556,15 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		// Draw the black borders around the Schraenke
 		//screenBorders.drawBorders(&textureManager, mainWnd, showBlue, fadeInTime * fadeOut, redenner);
 
+        // Example rendering of text
+        text_renderer_.RenderText(-0.7f, 0.8f, 0.1f, "example_script.txt", fCurTime, &textureManager);
+
 		// swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
 
 		//Sleep(5);
-    //} while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE));
-    } while (msg.message != WM_QUIT);
+    } while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE));
+    //} while (msg.message != WM_QUIT);
 
 	// music uninit
 #if 0
@@ -891,6 +896,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
         break;
  
     case WM_DESTROY:
+    case WM_CLOSE:
         PostQuitMessage(0);   /* send a WM_QUIT to the message queue */
         break;
  
