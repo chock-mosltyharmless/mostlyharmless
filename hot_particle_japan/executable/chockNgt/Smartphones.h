@@ -39,9 +39,13 @@ public:
             }
             TakeNextPicture();
             audio_.PlaySound("Kuhe_N4Y3R4.wav", 0, false, -1, error_string);
+            subtitle_start_time_ = last_call_time_;
+            subtitle_script_ = "Kuhe_N4Y3R4.txt";
             break;
         case SM_MINAMISOMA:
             audio_.PlaySound("Minamisoma.wav", 0, false, -1, error_string);
+            subtitle_start_time_ = last_call_time_;
+            subtitle_script_ = "Minamisoma.txt";
             break;
         default:  // This is a bug
             audio_.StopSound(0, 36.0f, error_string);
@@ -72,7 +76,6 @@ private:
     float last_call_time_ = 0.0f;
     SMARTPHONE_SCENE scene_ = SM_KUHE;
     bool has_white_fade_ = false;
-    float video_start_time_;
     float to_white_ = 0.0f;
     int next_picture_id_ = 10;
     int current_picture_id_[4] = { 10, 10, 10, 10 };
@@ -80,7 +83,7 @@ private:
     const static int kNumCowPictures = 8;
     bool show_pictures_[4] = { true, true, true, true };
     bool has_flashed_[4] = { true, true, true, true };
-
+    float video_start_time_ = 0.0f;
     int current_panya_id_ = -1;
     float panya_start_time_ = 0.0f;
 };

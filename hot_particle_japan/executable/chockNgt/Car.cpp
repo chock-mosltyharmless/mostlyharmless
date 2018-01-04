@@ -140,6 +140,20 @@ int Car::Draw(float time) {
         0.2f  // WOHIN
     };
 
+    const char *kSubitle[] = {
+        "Begrussung_R3.txt",  //BEGRUSSUNG = 0
+        "Tomobe_R2.txt",  // TOMOBE,
+        "Sievert_R1.txt",  // SIEVERT
+        "Tamura_N3.txt",  // TAMURA,
+        "13Katsurao_N1.txt",  // KATSURAO13
+        "14Katsurao_N1.txt",  // KATSURAO14
+        "Abschied_R2.txt",  // ABSCHIED,
+        "Zahnarzt_R2.txt",  // ZAHNARZT,
+        "Polizei_R5.txt",  // POLIZEI,
+        NULL,  // KUHE,
+        "Wohin_N6.txt"  // WOHIN
+    };
+
     // The video in the center
     const char *kDriverVideo[] = {
         "Begrussung_R3.wmv",  //BEGRUSSUNG = 0
@@ -193,6 +207,8 @@ int Car::Draw(float time) {
                 video_start_time_ = time;
                 has_white_fade_ = false;
                 audio_.PlaySound("Wohin_N6Y6R5.wav", 0, false, -1, error_string);
+                subtitle_start_time_ = time;
+                subtitle_script_ = "Wohin_N6Y6R5.txt";
                 break;
             case KUHE:
                 scene_ = KUHE;
@@ -204,12 +220,16 @@ int Car::Draw(float time) {
                 video_start_time_ = time;
                 has_white_fade_ = false;
                 audio_.PlaySound("Zahnarzt_N1Y1R2.wav", 0, false, -1, error_string);
+                subtitle_start_time_ = time;
+                subtitle_script_ = "Zahnarzt_N1Y1R2.txt";
                 break;
             case POLIZEI:  // Probably not used due to GPS
                 scene_ = POLIZEI;
                 video_start_time_ = time;
                 has_white_fade_ = false;
                 audio_.PlaySound("Polizei_Y5R5.wav", 0, false, -1, error_string);
+                subtitle_start_time_ = time;
+                subtitle_script_ = "Polizei_Y5R5.txt";
                 break;
             case END_IT:
             default:
@@ -585,6 +605,8 @@ int Car::Draw(float time) {
                     current_panya_id_ = -1;
                     audio_.PlaySound("Zahnarzt_N1Y1R2.wav", 0, false, -1, error_string);
                     audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
+                    subtitle_start_time_ = time;
+                    subtitle_script_ = "Zahnarzt_N1Y1R2.txt";
                     break;
                 }
             }
@@ -604,6 +626,8 @@ int Car::Draw(float time) {
                     has_white_fade_ = false;
                     current_panya_id_ = -1;
                     audio_.PlaySound("Polizei_Y5R5.wav", 0, false, -1, error_string);
+                    subtitle_start_time_ = time;
+                    subtitle_script_ = "Polizei_Y5R5.txt";
                     // Audio was already there, no fade-in necesary.
                     //audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
                     break;

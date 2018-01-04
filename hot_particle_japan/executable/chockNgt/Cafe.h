@@ -29,6 +29,8 @@ public:
         video_start_time_ = last_call_time_;
         char error_string[MAX_ERROR_LENGTH+1];
         audio_.PlaySound("Sawa_5.wav", 0, false, -1, error_string);
+        subtitle_start_time_ = last_call_time_;
+        subtitle_script_ = "Sawa_5.txt";
     }
     void EndVideo(void) {
         draw_video_ = false;

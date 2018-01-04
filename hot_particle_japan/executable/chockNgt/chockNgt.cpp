@@ -14,6 +14,7 @@
 #include "Smartphones.h"
 #include "Car.h"
 #include "TextRenderer.h"
+#include "Sign.h"
 
 int X_OFFSCREEN = 512;
 int Y_OFFSCREEN = 256;
@@ -47,6 +48,9 @@ static int *creditsTexData[1024*1024];
 float fCurTime = 0.0f;
 
 float last_red_flash = -10.0f;
+
+float subtitle_start_time_ = 0.0f;
+const char *subtitle_script_ = "example_script.txt";
 
 bool mod_key_ = false;
 // Used to avoid double-pressing the same key
@@ -556,10 +560,12 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		// Draw the black borders around the Schraenke
 		//screenBorders.drawBorders(&textureManager, mainWnd, showBlue, fadeInTime * fadeOut, redenner);
 
-        // Example rendering of text
-        text_renderer_.RenderText(-0.7f, 0.8f, 0.1f, "example_script.txt", fCurTime, &textureManager);
+        Sign::Draw(1.0f, &textureManager);
 
-		// swap buffers
+        // Example rendering of text
+        text_renderer_.RenderText(SUBTITLE_X, SUBTITLE_Y, SUBTITLE_WIDTH, subtitle_script_, fCurTime - subtitle_start_time_, &textureManager);
+
+        // swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
 
 		//Sleep(5);

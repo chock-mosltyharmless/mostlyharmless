@@ -11,6 +11,10 @@
 
 #define ASPECT_RATIO (((float)XRES) / ((float)YRES))
 
+#define SUBTITLE_X (-0.52f)
+#define SUBTITLE_Y (0.89f)
+#define SUBTITLE_WIDTH (0.05f)
+
 // The resolution of the background stuff
 //#define X_OFFSCREEN 512
 //#define Y_OFFSCREEN 256

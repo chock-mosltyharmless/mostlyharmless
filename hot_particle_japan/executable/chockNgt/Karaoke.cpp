@@ -166,6 +166,8 @@ int Karaoke::Draw(float time) {
             }
             if (scene_ == MITARBEITER) {
                 audio_.PlaySound("07jun_ausgerissen.wav", 0, false, -1, error_string);
+                subtitle_start_time_ = time;
+                subtitle_script_ = "07jun_ausgerissen.txt";
             }
         }
         open_rad *= 0.75f * PIF;
@@ -209,15 +211,21 @@ void Karaoke::StartKenchiro(void) {
     case TRENNUNG:
         kenchiro_id_ = 0;
         audio_.PlaySound("Naka_Kneipe_02.wav", 0, false, -1, error_string);
+        subtitle_start_time_ = last_call_time_;
+        subtitle_script_ = "Naka_Kneipe_02.txt";
         break;
     case BAHNHOF_BAR:
         kenchiro_id_ = 1;
         audio_.PlaySound("Naka_Udagawa_01.wav", 0, false, -1, error_string);
+        subtitle_start_time_ = last_call_time_;
+        subtitle_script_ = "Naka_Udagawa_01.txt";
         break;
     case MITARBEITER:
     case SEKUHARA:
         kenchiro_id_ = 2;
         audio_.PlaySound("S22_fight02_nr_nomisa_skip0.wav", 0, false, -1, error_string);
+        subtitle_start_time_ = last_call_time_;
+        subtitle_script_ = "S22_fight02_nr_nomisa_skip0.txt";
     }
 }
 

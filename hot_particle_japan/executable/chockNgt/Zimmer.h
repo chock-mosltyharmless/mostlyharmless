@@ -45,6 +45,8 @@ public:
             char error_string[MAX_ERROR_LENGTH+1];
             kenchiro_start_time_ = last_call_time_ - kErdbebenStart;
             audio_.PlaySound("Naka_Erdbeben_01.wav", 0, false, -1, error_string);
+            subtitle_start_time_ = last_call_time_;
+            subtitle_script_ = "Naka_Erdbeben_01.txt";
             erdbeben_started_ = true;
         }
     }

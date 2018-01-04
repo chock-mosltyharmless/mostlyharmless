@@ -84,6 +84,9 @@
     <ClInclude Include="font.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
+    <ClInclude Include="Sign.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -132,6 +135,9 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="TextRenderer.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Sign.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>

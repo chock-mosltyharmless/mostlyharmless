@@ -17,15 +17,37 @@ void Script::Load(std::string filename) {
 
     while (std::getline(infile, line)) {
         float a, b;
+        int c;
         std::string text;
-        std::istringstream iss(line);
-        if (!(iss >> a >> b >> text)) {
-            // WHAT?
-            a = 0; b = 0; text = "";
+
+        // remove BOM Japanese whitespace
+        const char bom[4] = {-17, -69, -65, 0};
+        std::string from = bom;
+        std::string to = "";
+        size_t start_pos = 0;
+        if ((start_pos = line.find(from, start_pos)) != std::string::npos) {
+            if (start_pos == 0) {
+                line.replace(start_pos, from.length(), to);
+                start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+            }
         }
-        start_time_.push_back(a);
-        end_time_.push_back(b);
-        text_.push_back(text);
+
+        // replace Japanese whitespace
+        from = "　";
+        to = " ";
+        start_pos = 0;
+        while ((start_pos = line.find(from, start_pos)) != std::string::npos) {
+            line.replace(start_pos, from.length(), to);
+            start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+        }
+
+        std::istringstream iss(line);
+        if (iss >> a >> b >> c >> text) {
+            start_time_.push_back(a);
+            end_time_.push_back(b);
+            color_index_.push_back(c);
+            text_.push_back(text);
+        }
     }
 };
 
@@ -65,7 +87,8 @@ TextRenderer::TextRenderer() {
     } while (FindNextFile(hFind, &ffd));
 
     // Check loading some text
-    std::string text = GetScriptText("example_script.txt", 7.5f);
+    int color_index;
+    std::string text = GetScriptText("example_script.txt", 7.5f, &color_index);
 }
 
 TextRenderer::~TextRenderer() {
@@ -84,7 +107,8 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
         glBindTexture(GL_TEXTURE_2D, tex_id);
     }
 
-    std::string text = GetScriptText(script_name, time);
+    int color_index = 0;
+    std::string text = GetScriptText(script_name, time, &color_index);
 
     // Iterate over the text
     const char *current_pos_signed = text.c_str();
@@ -140,8 +164,32 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
         float tyt = ty + texture_half_pixel;
         float tyb = ty + texture_step - texture_half_pixel;
 
+        float r = 0.0f;
+        float g = 0.0f;
+        float b = 0.0f;
+        switch (color_index) {
+        case 1:
+            r = 0.5f, g = 0.1f, b = 0.1f;
+            break;
+        case 2:
+            r = 0.1f, g = 0.5f, b = 0.1f;
+            break;
+        case 3:
+            r = 0.1f, g = 0.1f, b = 0.5f;
+            break;
+        case 4:
+            r = 0.4f, g = 0.4f, b = 0.1f;
+            break;
+        case 5:
+            r = 0.1f, g = 0.4f, b = 0.4f;
+            break;
+        case 6:
+            r = 0.4f, g = 0.1f, b = 0.4f;
+            break;
+        }
+
         // Render a quad..
-        DrawQuad(x, x + size, y, y - size * ASPECT_RATIO, txl, txr, tyt, tyb, 1.0f);
+        DrawQuadColor(x, x + size, y, y - size * ASPECT_RATIO, txl, txr, tyt, tyb, r, g, b, 1.0f);
         x += size;  // Go to next character
     }
     glEnd();

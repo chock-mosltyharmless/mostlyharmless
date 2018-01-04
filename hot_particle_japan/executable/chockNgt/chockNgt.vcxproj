@@ -107,6 +107,7 @@
     <ClInclude Include="Parameter.h" />
     <ClInclude Include="Prolog.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Sign.h" />
     <ClInclude Include="Smartphones.h" />
     <ClInclude Include="Snippets.h" />
     <ClInclude Include="stb_image.h" />
@@ -125,6 +126,7 @@
     <ClCompile Include="MovingPapers.cpp" />
     <ClCompile Include="Parameter.cpp" />
     <ClCompile Include="Prolog.cpp" />
+    <ClCompile Include="Sign.cpp" />
     <ClCompile Include="Smartphones.cpp" />
     <ClCompile Include="Snippets.cpp" />
     <ClCompile Include="stb_image.c">
