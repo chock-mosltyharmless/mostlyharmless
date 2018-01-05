@@ -261,7 +261,8 @@ int Zimmer::Draw(float time) {
     }
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
 
     // Adjust for overlapping nightmare...
     if (textureManager.getTextureID(kRoomDrawingsTextures[scene_], &tex_id, error_string)) {
@@ -367,7 +368,8 @@ int Zimmer::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Fade to white
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
@@ -407,7 +409,8 @@ int Zimmer::Draw(float time) {
             }
         }
         open_rad *= 0.75f * PIF;
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
         texture_name = kRoomClocks[scene_];
         if (open_rad > 0.5f * 3.1415f) texture_name = "zuhause_clock_blank.png";
         if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
@@ -427,7 +430,8 @@ int Zimmer::Draw(float time) {
         return -1;
     }
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     DrawQuadColor(-1.0f, 1.0f, 1.0f, -1.0f,
                     0.0f, 0.0f, 0.0f, 0.0f,
                     0.0f, 0.0f, 0.0f, 1.0f - brightness_);

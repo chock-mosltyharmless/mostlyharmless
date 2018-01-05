@@ -322,7 +322,8 @@ int Car::Draw(float time) {
     if (driving_speed > 1.0f) driving_speed = 1.0f;
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
 
     // Default background is white or gray
     float brightness = 1.0f;
@@ -457,7 +458,8 @@ int Car::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Panya backdrop
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     if (textureManager.getTextureID("panya_car_blank.png", &tex_id, error_string) < 0) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
@@ -465,7 +467,8 @@ int Car::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-0.686f, -0.475f, -0.142f, -0.5118f, 1.0f);
     if (night_scene) {
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // glow
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE);  // glow
+        glBlendFunc(GL_ONE, GL_ONE);  // Use pre-multiplied alpha
         texture_name = "kneipe_clock_glow.png";
         if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
@@ -473,7 +476,8 @@ int Car::Draw(float time) {
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
         DrawQuad(-0.686f - 0.45f, -0.475f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.4f);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     }
 
     // GPS
@@ -521,7 +525,8 @@ int Car::Draw(float time) {
     }
     // Glow for small
     if (night_scene) {
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glBlendFunc(GL_ONE, GL_ONE);  // Use pre-multiplied alpha
         texture_name = "kneipe_clock_glow.png";
         if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
@@ -529,7 +534,8 @@ int Car::Draw(float time) {
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
         DrawQuad(0.475f - 0.45f, 0.686f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.4f * (1.0f - large_alpha));
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     }
 
     // Drawing Panya
@@ -565,7 +571,8 @@ int Car::Draw(float time) {
     }
 
     // Fade to white
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
@@ -584,7 +591,8 @@ int Car::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
 
     last_call_time_ = time;
 

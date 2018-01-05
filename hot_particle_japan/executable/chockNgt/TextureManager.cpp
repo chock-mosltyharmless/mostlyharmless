@@ -215,6 +215,16 @@ int TextureManager::loadTGA(const char *filename, char *errorString)
 		delete [] textureData;
 		return -1;
 	}
+
+    // Pre-multiply alpha
+    for (int pos = 0; pos < tgaHeader.width * tgaHeader.height; pos++) {
+        int index = pos * 4;
+        int alpha = 3;
+        for (int color = 0; color < 3; color++) {
+            textureData[index + color] = (((int)textureData[index + color]) *
+                ((int)textureData[index + alpha])) / 255;
+        }
+    }
 		
 	// create openGL texture
 	glGenTextures(1, &textureID[numTextures]);
@@ -258,6 +268,16 @@ int TextureManager::loadPNG(const char *filename, char *errorString)
 
     int width, height, num_components;
     unsigned char *data = stbi_load(combinedName, &width, &height, &num_components, 4);
+
+    // Pre-multiply alpha
+    for (int pos = 0; pos < width * height; pos++) {
+        int index = pos * 4;
+        int alpha = 3;
+        for (int color = 0; color < 3; color++) {
+            data[index + color] = (((int)data[index + color]) *
+                ((int)data[index + alpha])) / 255;
+        }
+    }
 
     // create openGL texture
     glGenTextures(1, &textureID[numTextures]);

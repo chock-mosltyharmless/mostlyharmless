@@ -137,6 +137,11 @@ void DrawQuadColor(float startX, float endX, float startY, float endY,
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
 
+    // Pre-multiply alpha
+    red *= alpha;
+    green *= alpha;
+    blue *= alpha;
+
     glColor4f(red, green, blue, alpha);
     glBegin(GL_QUADS);
     glTexCoord2f(startU, endV);

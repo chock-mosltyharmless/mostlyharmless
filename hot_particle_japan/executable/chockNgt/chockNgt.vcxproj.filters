@@ -45,12 +45,6 @@
     <ClInclude Include="Configuration.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="Snippets.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
-    <ClInclude Include="MovingPapers.h">
-      <Filter>Headerdateien</Filter>
-    </ClInclude>
     <ClInclude Include="Parameter.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
@@ -99,12 +93,6 @@
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="TextureManager.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="Snippets.cpp">
-      <Filter>Quelldateien</Filter>
-    </ClCompile>
-    <ClCompile Include="MovingPapers.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
     <ClCompile Include="Parameter.cpp">

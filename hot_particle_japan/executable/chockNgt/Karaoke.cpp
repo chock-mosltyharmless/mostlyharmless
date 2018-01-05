@@ -70,7 +70,8 @@ int Karaoke::Draw(float time) {
     }
 
     glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
 
     // Adjust for overlapping nightmare...
     if (textureManager.getTextureID("kneipe_drawings.png", &tex_id, error_string)) {
@@ -123,7 +124,8 @@ int Karaoke::Draw(float time) {
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
     // Fade to white
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     if (textureManager.getTextureID("white.png", &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
         return -1;
@@ -171,7 +173,8 @@ int Karaoke::Draw(float time) {
             }
         }
         open_rad *= 0.75f * PIF;
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
         texture_name = "kneipe_clock.png";
         if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
             MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
@@ -184,7 +187,8 @@ int Karaoke::Draw(float time) {
         glow_x = -0.665f + cosf(open_rad)*0.1025f;
     }
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    glBlendFunc(GL_ONE, GL_ONE);  // Use pre-multiplied alpha
     texture_name = "kneipe_clock_glow.png";
     if (textureManager.getTextureID(texture_name, &tex_id, error_string)) {
         MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
@@ -194,7 +198,8 @@ int Karaoke::Draw(float time) {
     float brightness = 1.0f;
     DrawQuad(glow_x - 0.4f, glow_x + 0.4f, glow_y + 0.4f, glow_y - 0.4f, 0.2f - 0.2f * to_white_);
 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
 
     last_call_time_ = time;
 

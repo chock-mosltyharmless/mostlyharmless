@@ -307,7 +307,8 @@ void MovingPapers::draw(HWND mainWnd, TextureManager *texManag, bool useConstTex
 		if (redPass == 1)
 		{
 			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
 		}
 
 		for (int pass = 0; pass < 2; pass++)
