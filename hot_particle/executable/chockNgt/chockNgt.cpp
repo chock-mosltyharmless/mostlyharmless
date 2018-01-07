@@ -67,11 +67,13 @@ enum SETTING {
     BAHNHOF,
     PROBE,
     SMARTPHONES,
-    CAR
+    CAR,
+    ENDING
 };
 int next_scene_id_ = 0;  // Go to this after the current scene is finished
 bool end_current_scene_ = false;  // Wait for current scene to end...
-SETTING scene_to_show_ = PROLOG;  // What is rendered
+//SETTING scene_to_show_ = PROLOG;  // What is rendered
+SETTING scene_to_show_ = ENDING;
 
 bool music_is_playing = false;
 bool noise_is_playing = false;
@@ -458,15 +460,25 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
         glBindTexture(GL_TEXTURE_2D, texID);
         DrawQuad(-0.5f, 0.5f, 0.7f, -0.7f, 0.0f, 1.0f, 1.0f);
+#endif
 
-		//if (whatIsShown == SHOW_ENDING)
+		if (scene_to_show_ == ENDING)
 		{
+            glMatrixMode(GL_MODELVIEW);
+            glLoadMatrixf(kTransformationMatrix[0]);
+            glLoadIdentity();
+            glMatrixMode(GL_PROJECTION);
+            glLoadIdentity();
+
+
             float end_start_time = 1.0f;
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            GLuint texID;
+            char errorString[MAX_ERROR_LENGTH + 1];
 
 			// Draw icon
-			if (textureManager.getTextureID("icon.tga", &texID, errorString))
+			if (textureManager.getTextureID("icon.png", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 				return -1;
@@ -478,7 +490,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
 
 			// Draw first highlight
-			if (textureManager.getTextureID("icon_highlight1.tga", &texID, errorString))
+			if (textureManager.getTextureID("icon_highlight1.png", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 				return -1;
@@ -492,7 +504,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
 
 			// Draw second highlight
-			if (textureManager.getTextureID("icon_highlight2.tga", &texID, errorString))
+			if (textureManager.getTextureID("icon_highlight2.png", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 				return -1;
@@ -507,7 +519,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
 
 			// draw some sparkles
-			if (textureManager.getTextureID("sparkle.tga", &texID, errorString))
+			if (textureManager.getTextureID("sparkle.png", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 				return -1;
@@ -536,9 +548,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			}
 
 
-			glDisable(GL_BLEND);
+			//glDisable(GL_BLEND);
 		}
-#endif
 
         float alpha = 1.0f - fCurTime + last_red_flash;
         GLuint tex_id;
@@ -559,7 +570,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 		//Sleep(5);
     //} while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE));
-    } while (msg.message != WM_QUIT);
+    } while (msg.message != WM_QUIT && fCurTime < 15.0f);
 
 	// music uninit
 #if 0
@@ -839,6 +850,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 //case 'C':
                     //EndCurrentScene(false);
                     //break;
+
+            case 'X':
+                scene_to_show_ = ENDING;
+                break;
 
             case VK_UP:
                 audio_.PlaySound("punch.wav", 4, false, -1, error_string);
