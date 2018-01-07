@@ -513,13 +513,16 @@ void Zimmer::StartKenchiro(void) {
         }
         break;
     case JULI_29:
+#if 0
         if (kenchiro_id_ != 2) {
             audio_.PlaySound("08jun_obdachlosermail.wav", 0, false, -1, error_string);
             kenchiro_id_ = 2;
             subtitle_start_time_ = last_call_time_;
             subtitle_script_ = "08jun_obdachlosermail.txt";
             break;
-        } else {
+        } else
+#endif
+        {
             audio_.PlaySound("S23_Picasso03_nr_nomisa_skip5.5.wav", 0, false, -1, error_string);
             kenchiro_id_ = 2;  // JULI_29,
             kenchiro_start_time_ = last_call_time_;

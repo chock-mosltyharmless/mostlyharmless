@@ -80,12 +80,15 @@ int Car::Draw(float time) {
 
     // left, center, right
     const float kVideoStartDelay[][3] = {
-        {22.8f, 0.0f, 11.0f},
+        {23.2f, 0.0f, 11.0f},
         {0.0f, 0.0f, 0.0f},  // No more delays happen after this
     };
 
     // left, center, right
     const float kVideoSkip[][3] = {
+#if 0
+        {0.0f, 0.0f, 0.0f}, //
+#else 
         {0.0f, 0.0f, 0.0f},  // Begruessung needs start delay...
         {0.0f, 0.0f, 0.0f},  // Tomobe has no sound... need to find proper delays
         {9.35f, 8.09f, 7.80f},  // SIEVERT
@@ -97,6 +100,7 @@ int Car::Draw(float time) {
         {4.0f, 5.63f, 6.90f},  // Polizei
         {0.0f, 0.0f, 0.0f},  // Kühe
         {0.16f, 4.825f, 3.42f}
+#endif
     };
 
     const float kVideoDuration[] = {

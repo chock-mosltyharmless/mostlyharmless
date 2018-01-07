@@ -138,6 +138,7 @@ void DrawQuadColor(float startX, float endX, float startY, float endY,
     glDisable(GL_DEPTH_TEST);
 
     // Pre-multiply alpha
+    if (alpha > 1.0f) alpha = 1.0f;
     red *= alpha;
     green *= alpha;
     blue *= alpha;
@@ -708,7 +709,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 else {
                     EndCurrentScene(true);
                     next_scene_id_--;
+                    if (next_scene_id_ == 4) next_scene_id_--;  // Townswork no longer exists
                     if (next_scene_id_ == 11) next_scene_id_--;  // Kawauchi no longer exists
+                    if (next_scene_id_ == 19) next_scene_id_ -= 2;  // No 2 Juns after ride
                     if (next_scene_id_ == 23) next_scene_id_--;
                     if (next_scene_id_ < 0) next_scene_id_ = 0;
                 }
@@ -828,7 +831,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             case VK_RETURN:
                 EndCurrentScene(true);
                 next_scene_id_++;
+                if (next_scene_id_ == 4) next_scene_id_++;  // Townswork no longer exists
                 if (next_scene_id_ == 11) next_scene_id_++;  // Kawauchi no longer exists
+                if (next_scene_id_ == 18) next_scene_id_ += 2;  // No 2 Juns after ride
                 if (next_scene_id_ == 23) next_scene_id_++;  // Second kneipe deleted
                 if (next_scene_id_ > 30) next_scene_id_ = 30;
                 break;

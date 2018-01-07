@@ -390,19 +390,20 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
                 // TODO (jhofer): Or should I just use break to use the last frame.
             } 
 
-            const float kMaxFrameTimeError = 1.0f / 2.0f;
+            const float kMaxFrameTimeError = 1.0f / 8.0f;
+            const float kPreTime = 1.0f / 20.0f;
             if (current_frame_pts >= 0 &&
                 current_frame_time > frame_time + kMaxFrameTimeError) {
                 // the displayed frame is ahead of what we want to show
                 av_seek_frame(video_format_context_[i], video_stream_[i],
-                              desired_time_stamp, AVSEEK_FLAG_BACKWARD);
+                    desired_time_stamp - (int64_t)(kPreTime * time_base.den / time_base.num), AVSEEK_FLAG_BACKWARD);
                 current_frame_pts = -1;  // Mark that we are way off
             }
             if (current_frame_pts >= 0 &&
                 current_frame_time < frame_time - kMaxFrameTimeError) {
                 // the displayed frame is way behind of what we want to show
                 av_seek_frame(video_format_context_[i], video_stream_[i],
-                    desired_time_stamp, 0);
+                    desired_time_stamp - (int64_t)(kPreTime * time_base.den / time_base.num), AVSEEK_FLAG_BACKWARD);
                 current_frame_pts = -1;  // Mark that we are way off
             }
 
