@@ -218,10 +218,10 @@ int Audio::LoadWave(const char * filename, char * error_string) {
         return -1;
     }
 
-    wave_data_[num_waves_] = new float[wave_length_[num_waves_]];
+    wave_data_[num_waves_] = new short int[wave_length_[num_waves_]];
     for (int i = 0; i < wave_length_[num_waves_]; i++) {
-        if (stereo) wave_data_[num_waves_][i] = (float)(short_buffer[i * 2]) / 32768.0f;
-        else wave_data_[num_waves_][i] = (float)(short_buffer[i]) / 32768.0f;
+        if (stereo) wave_data_[num_waves_][i] = short_buffer[i * 2];
+        else wave_data_[num_waves_][i] = short_buffer[i];
     }
 
     strcpy_s(wave_name_[num_waves_], AU_MAX_FILENAME_LENGTH, filename);
@@ -251,7 +251,7 @@ void Audio::RenderSamples(float *mix, int num_samples) {
             float fade_out = channel_fade_out_[channel];
             float fade_multiply = 1.0f;
             float max_volume = channel_max_volume_[channel];
-            const float *wave = wave_data_[wave_id];
+            const short int *wave = wave_data_[wave_id];
             if (fade_in >= 0.0f) {
                 // fade_in of 6 equals fade_multiply of 2.0f
                 fade_multiply = expf(fade_in / 6.0f / AU_SAMPLING_RATE * logf(2.0f));
@@ -276,7 +276,7 @@ void Audio::RenderSamples(float *mix, int num_samples) {
                 if (volume > max_volume) volume = max_volume;
                 if (volume < 1e-10f) volume = 0.0f;  // Avoid denormal floats
 
-                mix[sample] += volume * wave[position];
+                mix[sample] += volume * (float)(wave[position]) * (1.0f / 32768.0f);
             }
 
             // Write back modified channel data

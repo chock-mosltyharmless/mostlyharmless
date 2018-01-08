@@ -216,6 +216,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	// start music playback
 	GetAsyncKeyState(VK_ESCAPE);
+    GetAsyncKeyState(VK_F4);
 
     char error_string[MAX_ERROR_LENGTH+1];
 
@@ -324,11 +325,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(APRIL_09);
                     break;
-                case 4:
-                    zimmer_.ToBeginning();
-                    scene_to_show_ = ZIMMER;
-                    zimmer_.StartScene(APRIL_16);
-                    break;
+                case 4: // deleted scene
                 case 5:  // Bahnhof
                     karaoke_.ToBeginning();
                     scene_to_show_ = KARAOKE;
@@ -390,16 +387,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(MAI_10);
                     break;
-                case 18:
-                    zimmer_.ToBeginning();
-                    scene_to_show_ = ZIMMER;
-                    zimmer_.StartScene(JUNI_01);
-                    break;
-                case 19:
-                    zimmer_.ToBeginning();
-                    scene_to_show_ = ZIMMER;
-                    zimmer_.StartScene(JUNI_04);
-                    break;
+                case 18: // deleted scene
+                case 19: // deleted scene
                 case 20:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
@@ -415,10 +404,10 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     scene_to_show_ = KARAOKE;
                     karaoke_.StartScene(MITARBEITER);
                     break;
-                case 23:
-                    karaoke_.ToBeginning();
-                    scene_to_show_ = KARAOKE;
-                    karaoke_.StartScene(SEKUHARA);
+                case 23: // deleted scene
+                    //karaoke_.ToBeginning();
+                    //scene_to_show_ = KARAOKE;
+                    //karaoke_.StartScene(SEKUHARA);
                     break;
                 case 24:
                     zimmer_.ToBeginning();
@@ -575,7 +564,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
 
 		//Sleep(5);
-    } while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE));
+    } while (msg.message != WM_QUIT && !GetAsyncKeyState(VK_ESCAPE) &&
+             !GetAsyncKeyState(VK_F4));
     //} while (msg.message != WM_QUIT);
 
 	// music uninit
@@ -641,6 +631,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             switch (wParam)
             {
             case VK_F1:
+            case VK_F2:
                 mod_key_ = true;
                 break;
 
@@ -711,7 +702,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     next_scene_id_--;
                     if (next_scene_id_ == 4) next_scene_id_--;  // Townswork no longer exists
                     if (next_scene_id_ == 11) next_scene_id_--;  // Kawauchi no longer exists
-                    if (next_scene_id_ == 19) next_scene_id_ -= 2;  // No 2 Juns after ride
+                    if (next_scene_id_ == 19) next_scene_id_--;  // No 2 Juns after ride
+                    if (next_scene_id_ == 18) next_scene_id_--;  // No 2 Juns after ride
                     if (next_scene_id_ == 23) next_scene_id_--;
                     if (next_scene_id_ < 0) next_scene_id_ = 0;
                 }
@@ -768,6 +760,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 if (cur_mod_key) {
                     EndCurrentScene(true);
                     next_scene_id_ = 19;
+                } else {  // see also VK_UP
+                    audio_.PlaySound("punch.wav", 4, false, -1, error_string);
+                    last_red_flash = fCurTime;
+                    break;
                 }
                 break;
             case 'A':
@@ -786,6 +782,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 if (cur_mod_key) {
                     EndCurrentScene(true);
                     next_scene_id_ = 22;
+                } else {  // See also VK_DOWN
+                    audio_.PlaySound("01_Donner.wav", 0, false, -1, error_string);
+                    break;
                 }
                 break;
             case 'F':
@@ -804,6 +803,27 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 if (cur_mod_key) {
                     EndCurrentScene(true);
                     next_scene_id_ = 25;
+                } else {  // see also VK_RIGHT
+                    if (!noise_is_playing) {
+                        audio_.StopSound(5, 18.0f, error_string);
+                        music_is_playing = false;
+                        noise_is_playing = true;
+                        switch (scene_to_show_) {
+                        case CAFE:
+                            audio_.PlaySound("cafe.wav", 3, true, 24.0f, error_string, 0.2f);
+                            break;
+                        case KARAOKE:
+                            audio_.PlaySound("kneipe.wav", 3, true, 24.0f, error_string, 0.16f);
+                            break;
+                        case CAR:
+                            audio_.PlaySound("fahrt.wav", 3, true, 24.0f, error_string, 0.04f);
+                            break;
+                        }
+                    }
+                    else {
+                        audio_.StopSound(3, 36.0f, error_string);
+                        noise_is_playing = false;
+                    }
                 }
                 break;
             case 'J':
@@ -833,7 +853,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 next_scene_id_++;
                 if (next_scene_id_ == 4) next_scene_id_++;  // Townswork no longer exists
                 if (next_scene_id_ == 11) next_scene_id_++;  // Kawauchi no longer exists
-                if (next_scene_id_ == 18) next_scene_id_ += 2;  // No 2 Juns after ride
+                if (next_scene_id_ == 18) next_scene_id_++;  // No 2 Juns after ride
+                if (next_scene_id_ == 19) next_scene_id_++;  // No 2 Juns after ride
                 if (next_scene_id_ == 23) next_scene_id_++;  // Second kneipe deleted
                 if (next_scene_id_ > 30) next_scene_id_ = 30;
                 break;
@@ -861,14 +882,15 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     //EndCurrentScene(false);
                     //break;
 
-            case VK_UP:
+            case VK_UP:  // See also P
                 audio_.PlaySound("punch.wav", 4, false, -1, error_string);
                 last_red_flash = fCurTime;
                 break;
-            case VK_DOWN:
+            case VK_DOWN:  // See also D
                 audio_.PlaySound("01_Donner.wav", 0, false, -1, error_string);
                 break;
             case VK_LEFT:
+            case 'X':
                 if (!music_is_playing) {
                     audio_.PlaySound("musik_bearb.wav", 5, false, -1, error_string,0.4F);
                     audio_.StopSound(3, 18.0f, error_string);
@@ -880,7 +902,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     music_is_playing = false;
                 }
                 break;
-            case VK_RIGHT:
+            case VK_RIGHT: // see also "H"
                 if (!noise_is_playing) {
                     audio_.StopSound(5, 18.0f, error_string);
                     music_is_playing = false;

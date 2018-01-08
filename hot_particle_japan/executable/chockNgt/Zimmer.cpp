@@ -114,6 +114,16 @@ int Zimmer::Draw(float time) {
         "Naka_Erdbeben_01.wmv",
         "Naka_Zuhause_02.wmv"
     };
+    const float kKenchiroVideoSpeeds[8] = {
+        1.20f,
+        1.15f,
+        1.25f,
+        1.25f,
+        1.0f,
+        1.15f,
+        1.0f,
+        1.0f,
+    };
     const char *kRoomTextures[] = {
         "zuhause_room_maerz_11.png",  // MAERZ_11 = 0,
         "zuhause_room_april_09.png",  // ARPIL_09,
@@ -236,6 +246,7 @@ int Zimmer::Draw(float time) {
 
     float video_time = time - kenchiro_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
+    video_time *= kKenchiroVideoSpeeds[kenchiro_id_];
     video_time -= kVideoDelays[kenchiro_id_];
     float last_video_time = last_call_time_ - kenchiro_start_time_;
     if (last_video_time < 0.0f) last_video_time = 0.0f;
@@ -445,21 +456,21 @@ void Zimmer::StartKenchiro(void) {
     switch (scene_) {
     case MAERZ_11:
         kenchiro_id_ = 0;  // APRIL_21,
-        audio_.PlaySound("S1_wachauf02_nr_nomisa_skip6.wav", 0, false, -1, error_string);
+        audio_.PlaySound("S1_wachauf02_nr_nomisa_skip6_20.wav", 0, false, -1, error_string);
         kenchiro_start_time_ = last_call_time_;
         subtitle_start_time_ = last_call_time_;
         subtitle_script_ = "S1_wachauf02_nr_nomisa_skip6.txt";
         draw_kenchiro_ = true;
         break;
     case APRIL_09:
-        audio_.PlaySound("01jun_heirat.wav", 0, false, -1, error_string);
+        audio_.PlaySound("01jun_heirat_cut.wav", 0, false, -1, error_string);
         subtitle_start_time_ = last_call_time_;
         subtitle_script_ = "01jun_heirat.txt";
         break;
     case APRIL_16:
-        audio_.PlaySound("02jun_townwork.wav", 0, false, -1, error_string);
-        subtitle_start_time_ = last_call_time_;
-        subtitle_script_ = "02jun_townwork.txt";
+        //audio_.PlaySound("02jun_townwork.wav", 0, false, -1, error_string);
+        //subtitle_start_time_ = last_call_time_;
+        //subtitle_script_ = "02jun_townwork.txt";
         break;
     case APRIL_17:
         kenchiro_id_ = 6;  // Naka Erdbeben
@@ -478,21 +489,21 @@ void Zimmer::StartKenchiro(void) {
         break;
     case MAI_10:
         kenchiro_id_ = 1;
-        audio_.PlaySound("S20_Kitchomu_nr_nomisa_skip7.wav", 0, false, -1, error_string);
+        audio_.PlaySound("S20_Kitchomu_nr_nomisa_skip7_15.wav", 0, false, -1, error_string);
         kenchiro_start_time_ = last_call_time_;
         draw_kenchiro_ = true;
         subtitle_start_time_ = last_call_time_;
         subtitle_script_ = "S20_Kitchomu_nr_nomisa_skip7.txt";
         break;
     case JUNI_01:
-        audio_.PlaySound("03jun_mailtempelmadchen.wav", 0, false, -1, error_string);
-        subtitle_start_time_ = last_call_time_;
-        subtitle_script_ = "03jun_mailtempelmadchen.txt";
+        //audio_.PlaySound("03jun_mailtempelmadchen.wav", 0, false, -1, error_string);
+        //subtitle_start_time_ = last_call_time_;
+        //subtitle_script_ = "03jun_mailtempelmadchen.txt";
         break;
     case JUNI_04:
-        audio_.PlaySound("04jun_evakuierungmail.wav", 0, false, -1, error_string);
-        subtitle_start_time_ = last_call_time_;
-        subtitle_script_ = "04jun_evakuierungmail.txt";
+        //audio_.PlaySound("04jun_evakuierungmail.wav", 0, false, -1, error_string);
+        //subtitle_start_time_ = last_call_time_;
+        //subtitle_script_ = "04jun_evakuierungmail.txt";
         break;
     case JUNI_05:
         audio_.PlaySound("05jun_regenmail.wav", 0, false, -1, error_string);
@@ -523,7 +534,7 @@ void Zimmer::StartKenchiro(void) {
         } else
 #endif
         {
-            audio_.PlaySound("S23_Picasso03_nr_nomisa_skip5.5.wav", 0, false, -1, error_string);
+            audio_.PlaySound("S23_Picasso03_nr_nomisa_skip5.5_25.wav", 0, false, -1, error_string);
             kenchiro_id_ = 2;  // JULI_29,
             kenchiro_start_time_ = last_call_time_;
             draw_kenchiro_ = true;
@@ -533,7 +544,7 @@ void Zimmer::StartKenchiro(void) {
         break;
     case AUGUST_15:
     case MAERZ_11_END:
-        audio_.PlaySound("S27_schwimmen03_nr_nomisa_skip14.wav", 0, false, -1, error_string);
+        audio_.PlaySound("S27_schwimmen03_nr_nomisa_skip14_25.wav", 0, false, -1, error_string);
         music_stopper_ = 1.2f;
         kenchiro_id_ = 3;  // MAERZ_11_END,
         kenchiro_start_time_ = last_call_time_;
@@ -550,7 +561,7 @@ void Zimmer::StartKenchiro(void) {
             subtitle_script_ = "09jun_skateboard.txt";
             break;
         } else {
-            audio_.PlaySound("S29_Kobe02_nr_nomisa_skip6.5.wav", 0, false, -1, error_string);
+            audio_.PlaySound("S29_Kobe02_nr_nomisa_skip6.5_15.wav", 0, false, -1, error_string);
             kenchiro_id_ = 5;  // UNKNOWN
             kenchiro_start_time_ = last_call_time_;
             draw_kenchiro_ = true;

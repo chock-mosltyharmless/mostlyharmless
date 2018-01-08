@@ -29,7 +29,7 @@ int Karaoke::Draw(float time) {
     const char *texture_name;
     bool is_scene_finished = false;    
 
-    float kFrameSkipTimes[3] = {0.0f, 0.0f, 0.0f};
+    float kFrameSkipTimes[3] = {0.0f, 0.15f, 0.0f};
     float kFrameOpenTimes[3] = {0.0f, 0.0f, 0.0f};
     float kFrameCloseTimes[3] = {749.0f, 64.0f, 156.5f};
     // 0: Clock
@@ -40,9 +40,17 @@ int Karaoke::Draw(float time) {
         "Naka_Udagawa_01.wmv",
         "S22_fight02_hell.wmv",
     };
+    const float kKenchiroVideoSpeeds[3] = {
+        1.22f,
+        1.0f,
+        1.385f
+    };
 
     float video_time = time - kenchiro_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
+
+    video_time *= kKenchiroVideoSpeeds[kenchiro_id_];
+
     float last_video_time = last_call_time_ - kenchiro_start_time_;
     if (last_video_time < 0.0f) last_video_time = 0.0f;
 
@@ -215,7 +223,7 @@ void Karaoke::StartKenchiro(void) {
     switch (scene_) {
     case TRENNUNG:
         kenchiro_id_ = 0;
-        audio_.PlaySound("Naka_Kneipe_02.wav", 0, false, -1, error_string);
+        audio_.PlaySound("Naka_Kneipe_02_22.wav", 0, false, -1, error_string);
         subtitle_start_time_ = last_call_time_;
         subtitle_script_ = "Naka_Kneipe_02.txt";
         break;
@@ -228,9 +236,10 @@ void Karaoke::StartKenchiro(void) {
     case MITARBEITER:
     case SEKUHARA:
         kenchiro_id_ = 2;
-        audio_.PlaySound("S22_fight02_nr_nomisa_skip0.wav", 0, false, -1, error_string);
+        audio_.PlaySound("S22_fight02_nr_nomisa_skip0_35.wav", 0, false, -1, error_string);
         subtitle_start_time_ = last_call_time_;
         subtitle_script_ = "S22_fight02_nr_nomisa_skip0.txt";
+        break;
     }
 }
 

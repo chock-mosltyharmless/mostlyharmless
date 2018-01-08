@@ -70,7 +70,7 @@ private:
     int num_waves_;
     char wave_name_[AU_MAX_NUM_WAVES][AU_MAX_FILENAME_LENGTH + 1];
     // allocated for num_waves_, in range -1..1
-    float *wave_data_[AU_MAX_NUM_WAVES];
+    short int *wave_data_[AU_MAX_NUM_WAVES];
     int wave_length_[AU_MAX_NUM_WAVES];
 
     // Dynamic channel information
