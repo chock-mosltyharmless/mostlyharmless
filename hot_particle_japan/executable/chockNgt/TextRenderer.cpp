@@ -20,7 +20,7 @@ void Script::Load(std::string filename) {
         int c;
         std::string text;
 
-        // remove BOM Japanese whitespace
+        // remove BOM
         const char bom[4] = {-17, -69, -65, 0};
         std::string from = bom;
         std::string to = "";
@@ -30,6 +30,16 @@ void Script::Load(std::string filename) {
                 line.replace(start_pos, from.length(), to);
                 start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
             }
+        }
+
+        // Change , to . for German style decimals
+        // replace Japanese whitespace
+        from = ",";
+        to = ".";
+        start_pos = 0;
+        while ((start_pos = line.find(from, start_pos)) != std::string::npos) {
+            line.replace(start_pos, from.length(), to);
+            start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
         }
 
         // replace Japanese whitespace
@@ -47,6 +57,14 @@ void Script::Load(std::string filename) {
             end_time_.push_back(b);
             color_index_.push_back(c);
             text_.push_back(text);
+        } else {
+            std::istringstream iss2(line);
+            if (iss2 >> a >> b >> text) {
+                start_time_.push_back(a);
+                end_time_.push_back(b);
+                color_index_.push_back(0);
+                text_.push_back(text);
+            }
         }
     }
 };

@@ -378,7 +378,7 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
             int64_t current_frame_pts = av_frame_get_best_effort_timestamp(video_frame_[i]);
             float current_frame_time = (float)(time_base.num) * (float)current_frame_pts /
                 (float)(time_base.den);
-            int64_t desired_time_stamp = (int64_t)(frame_time * time_base.den / time_base.num);
+            int64_t desired_time_stamp = (int64_t)(frame_time * (float)time_base.den / (float)time_base.num);
 
             // Decode and re-format single frame
             if (!sws_ctx_[i] ||
@@ -396,14 +396,14 @@ int TextureManager::getVideoID(const char *name, GLuint *id, char *errorString, 
                 current_frame_time > frame_time + kMaxFrameTimeError) {
                 // the displayed frame is ahead of what we want to show
                 av_seek_frame(video_format_context_[i], video_stream_[i],
-                    desired_time_stamp - (int64_t)(kPreTime * time_base.den / time_base.num), AVSEEK_FLAG_BACKWARD);
+                    desired_time_stamp - (int64_t)((kPreTime * (float)time_base.den) / (float)time_base.num), AVSEEK_FLAG_BACKWARD);
                 current_frame_pts = -1;  // Mark that we are way off
             }
             if (current_frame_pts >= 0 &&
                 current_frame_time < frame_time - kMaxFrameTimeError) {
                 // the displayed frame is way behind of what we want to show
                 av_seek_frame(video_format_context_[i], video_stream_[i],
-                    desired_time_stamp - (int64_t)(kPreTime * time_base.den / time_base.num), AVSEEK_FLAG_BACKWARD);
+                    desired_time_stamp - (int64_t)((kPreTime * (float)time_base.den) / (float)time_base.num), AVSEEK_FLAG_BACKWARD);
                 current_frame_pts = -1;  // Mark that we are way off
             }
 
