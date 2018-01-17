@@ -49,7 +49,8 @@ float fCurTime = 0.0f;
 
 float last_red_flash = -10.0f;
 
-float subtitle_start_time_ = 0.0f;
+float subtitle_start_time_ = -100.0f;
+float subtitle_end_time_ = -90.0f;
 const char *subtitle_script_ = "example_script.txt";
 
 bool mod_key_ = false;
@@ -555,10 +556,12 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		// Draw the black borders around the Schraenke
 		//screenBorders.drawBorders(&textureManager, mainWnd, showBlue, fadeInTime * fadeOut, redenner);
 
-        Sign::Draw(1.0f, &textureManager);
-
-        // Example rendering of text
-        text_renderer_.RenderText(SUBTITLE_X, SUBTITLE_Y, SUBTITLE_WIDTH, subtitle_script_, fCurTime - subtitle_start_time_, &textureManager);
+        if (subtitle_start_time_ > subtitle_end_time_) {
+            float text_start_x, text_start_y, text_width;
+            Sign::Draw(1.0f, &textureManager, &text_start_x, &text_start_y, &text_width);
+            text_renderer_.RenderText(text_start_x, text_start_y, text_width, subtitle_script_,
+                                      fCurTime - subtitle_start_time_, &textureManager);
+        }
 
         // swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
@@ -599,6 +602,9 @@ void EndCurrentScene(bool switch_to_next_scene) {
     audio_.StopSound(3, 18.0f, error_string);
     music_is_playing = false;
     noise_is_playing = false;
+    if (subtitle_start_time_ > subtitle_end_time_) {
+        subtitle_end_time_ = fCurTime;
+    }
 }
 
 //Main Window Procedure WindowProc

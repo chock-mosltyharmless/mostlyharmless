@@ -11,7 +11,8 @@ public:
     Sign();
     virtual ~Sign();
 
-    // time is relative to when to start, negative time is no drawing
-    static void Draw(float time, TextureManager *texture_manager);
+    // time is relative to when to start, negative time is for zoom-out
+    static void Draw(float time, TextureManager *texture_manager,
+                     float *text_start_x, float *text_start_y, float *text_width);
 };
 

@@ -42,6 +42,15 @@ void Script::Load(std::string filename) {
             start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
         }
 
+        // Fake the Japanese lengthener
+        from = "ー";
+        to = "－";
+        start_pos = 0;
+        while ((start_pos = line.find(from, start_pos)) != std::string::npos) {
+            line.replace(start_pos, from.length(), to);
+            start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
+        }
+
         // replace Japanese whitespace
         from = "　";
         to = " ";
@@ -128,6 +137,13 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
     int color_index = 0;
     std::string text = GetScriptText(script_name, time, &color_index);
 
+    // Check whether there is a line separator in the script
+    size_t line_separator_pos = text.find_first_of("/");
+    if (line_separator_pos == std::string::npos) {
+        y -= size / 2.0f * ASPECT_RATIO;
+    }
+    float current_x = x;
+
     // Iterate over the text
     const char *current_pos_signed = text.c_str();
     const unsigned char *current_pos = reinterpret_cast<const unsigned char *>(current_pos_signed);
@@ -169,46 +185,52 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
         }
         if (0 == character[0]) break;  // It's all processed
 
-        int xi = GetCharacterX(character);
-        int yi = GetCharacterY(character);
+        if ('/' == character[0]) {
+            // Go to next line
+            current_x = x;
+            y -= size * ASPECT_RATIO;
+        } else {
+            int xi = GetCharacterX(character);
+            int yi = GetCharacterY(character);
 
-        // Calculate texture coordinates
-        float texture_step = 1.0f / SCRIPT_FONT_TEXTURE_RESOLUTION;
-        float texture_half_pixel = 0.5f / SCRIPT_FONT_TEXTURE_PIXELS;
-        float tx = xi * texture_step;
-        float ty = yi * texture_step;
-        float txl = tx + texture_half_pixel;
-        float txr = tx + texture_step - texture_half_pixel;
-        float tyt = ty + texture_half_pixel;
-        float tyb = ty + texture_step - texture_half_pixel;
+            // Calculate texture coordinates
+            float texture_step = 1.0f / SCRIPT_FONT_TEXTURE_RESOLUTION;
+            float texture_half_pixel = 0.5f / SCRIPT_FONT_TEXTURE_PIXELS;
+            float tx = xi * texture_step;
+            float ty = yi * texture_step;
+            float txl = tx + texture_half_pixel;
+            float txr = tx + texture_step - texture_half_pixel;
+            float tyt = ty + texture_half_pixel;
+            float tyb = ty + texture_step - texture_half_pixel;
 
-        float r = 0.0f;
-        float g = 0.0f;
-        float b = 0.0f;
-        switch (color_index) {
-        case 1:
-            r = 0.5f, g = 0.1f, b = 0.1f;
-            break;
-        case 2:
-            r = 0.1f, g = 0.5f, b = 0.1f;
-            break;
-        case 3:
-            r = 0.1f, g = 0.1f, b = 0.5f;
-            break;
-        case 4:
-            r = 0.4f, g = 0.4f, b = 0.1f;
-            break;
-        case 5:
-            r = 0.1f, g = 0.4f, b = 0.4f;
-            break;
-        case 6:
-            r = 0.4f, g = 0.1f, b = 0.4f;
-            break;
+            float r = 0.0f;
+            float g = 0.0f;
+            float b = 0.0f;
+            switch (color_index) {
+            case 1:
+                r = 0.5f, g = 0.1f, b = 0.1f;
+                break;
+            case 2:
+                r = 0.1f, g = 0.5f, b = 0.1f;
+                break;
+            case 3:
+                r = 0.1f, g = 0.1f, b = 0.5f;
+                break;
+            case 4:
+                r = 0.4f, g = 0.4f, b = 0.1f;
+                break;
+            case 5:
+                r = 0.1f, g = 0.4f, b = 0.4f;
+                break;
+            case 6:
+                r = 0.4f, g = 0.1f, b = 0.4f;
+                break;
+            }
+
+            // Render a quad..
+            DrawQuadColor(current_x, current_x + size, y, y - size * ASPECT_RATIO, txl, txr, tyt, tyb, r, g, b, 1.0f);
+            current_x += size;  // Go to next character
         }
-
-        // Render a quad..
-        DrawQuadColor(x, x + size, y, y - size * ASPECT_RATIO, txl, txr, tyt, tyb, r, g, b, 1.0f);
-        x += size;  // Go to next character
     }
     glEnd();
 }
