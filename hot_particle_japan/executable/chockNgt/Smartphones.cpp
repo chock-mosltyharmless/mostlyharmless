@@ -304,13 +304,6 @@ int Smartphones::Draw(float time) {
         break;
     }
     if (current_panya_id_ >= 0) {
-        const char *texture_name = "panya_ok.png";
-        if (scene_ == SM_KUHE) texture_name = "panya_begeistert.png";
-        if (textureManager.getTextureID(texture_name, &tex_id,
-            error_string) < 0) {
-            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
-            return -1;
-        }
         float panya_time = time - panya_start_time_;
         float size = panya_time * 4.0f - 1.5f;
         if (size < 0.0f) size = 0.0f;
@@ -321,10 +314,32 @@ int Smartphones::Draw(float time) {
         float r = (1.0f - size) * cx + size * -0.46f;
         float t = (1.0f - size) * cy + size * 0.874f;
         float b = (1.0f - size) * cy + size * 0.536f;
-        glBindTexture(GL_TEXTURE_2D, tex_id);
+
         float alpha = (6.0f - panya_time);
         if (alpha < 0) alpha = 0;
         if (alpha > 1) alpha = 1;
+
+        const char *texture_name = "white.png";
+        if (textureManager.getTextureID(texture_name, &tex_id,
+            error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
+        float l2 = (1.0f - size) * cx + size * -0.65f;
+        float r2 = (1.0f - size) * cx + size * -0.51f;
+        float t2 = (1.0f - size) * cy + size * 0.78f;
+        float b2 = (1.0f - size) * cy + size * 0.65f;
+        DrawQuad(l2, r2, t2, b2, alpha);
+
+        texture_name = "panya_ok.png";
+        if (scene_ == SM_KUHE) texture_name = "panya_begeistert.png";
+        if (textureManager.getTextureID(texture_name, &tex_id,
+            error_string) < 0) {
+            MessageBox(mainWnd, error_string, "Could not get texture ID", MB_OK);
+            return -1;
+        }
+        glBindTexture(GL_TEXTURE_2D, tex_id);
         DrawQuad(l, r, t, b, alpha);
     }
 
