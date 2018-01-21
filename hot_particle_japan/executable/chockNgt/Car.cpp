@@ -55,15 +55,15 @@ int Car::Draw(float time) {
         /*WOHIN     */ {"panya_wow.png", "panya_nachdenklich.png", "panya_wow.png", "panya_sauer.png", "panya_fragend.png"}
     };
     const float kPanyaStartTimes[11][kMaxNumPanyas] = {
-        /*BEGRUSSUNG*/ {3.0f, 41.0f},
-        /* TOMOBE   */ {38.0f, 60.0f},
+        /*BEGRUSSUNG*/{ 3.0f, 39.0f },//{3.0f, 41.0f},
+        /* TOMOBE   */{ 30.0f, 52.0f },//{38.0f, 60.0f},
         /* SIEVERT  */ {2.0f, 14.0f, 141.0f},
-        /* TAMURA   */ {8.0f, 47.0f, 53.0f, 56.0f},
+        /* TAMURA   */{ 8.0f, 42.0f, 48.0f, 156.0f },//{8.0f, 47.0f, 53.0f, 56.0f},
         /* KATSU 13 */ {173.5f},
         /* KATSU 14 */ {7.0f, 62.0f, 157.0f},
         /* ABSCHIED */ {6.5f},
         /* ZAHARZT  */ {155.0f},
-        /* POLIZEI  */ {72.0f, 83.0f, 87.0f, 93.0f, 116.0f, 155.0f, 165.0f, 227.0f, 239.0f, 255.0f, 274.0f, 310.0f},
+        /* POLIZEI  */{ 72.0f, 79.0f, 87.0f, 91.0f, 116.0f, 155.0f, 161.0f, 224.0f, 233.0f, 255.0f, 274.0f, 306.0f },//{72.0f, 83.0f, 87.0f, 93.0f, 116.0f, 155.0f, 165.0f, 227.0f, 239.0f, 255.0f, 274.0f, 310.0f},
         /* KUHE     */ {},
         /* WOHIN    */ {2.0f, 10.0f, 30.0f, 46.0f, 76.0f}
     };
@@ -250,6 +250,11 @@ int Car::Draw(float time) {
     float video_time = time - video_start_time_;
     float last_video_time = last_call_time_ - video_start_time_;
     if (video_time < 0.0f) video_time = 0.0f;
+
+    // 10% schneller on wohin
+    if (scene_ == WOHIN) {
+        video_time *= 1.11104f;
+    }
 
     float gps_l, gps_r, gps_t, gps_b;
     float gps_size = 0.0f;
