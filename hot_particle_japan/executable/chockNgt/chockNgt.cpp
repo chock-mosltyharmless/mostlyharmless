@@ -559,8 +559,10 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         if (subtitle_start_time_ > subtitle_end_time_) {
             float text_start_x, text_start_y, text_width;
             Sign::Draw(1.0f, &textureManager, &text_start_x, &text_start_y, &text_width);
+            const float kMaxCharactersPerLine = 20;
             text_renderer_.RenderText(text_start_x, text_start_y, text_width, subtitle_script_,
-                                      fCurTime - subtitle_start_time_, &textureManager);
+                                      fCurTime - subtitle_start_time_, &textureManager,
+                                      kMaxCharactersPerLine);
         }
 
         // swap buffers

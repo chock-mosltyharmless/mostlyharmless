@@ -46,9 +46,13 @@ public:
 
     // use OpenGL coordinates and sizes
     void RenderText(float x, float y, float size, const char *script_name, float time,
-                    TextureManager *texture_manager);
+                    TextureManager *texture_manager, float max_characters_per_line);
 
 private:
+	// Returns the number of characters until end of string or 0
+	int GetNumCharacters(const unsigned char *text);
+	float GetXFeed(const unsigned char *text, float max_characters_per_line, float size);
+
     // Returns 0 on failure
     int GetCharacterX(std::string character) {
         std::map<std::string, int>::iterator it = font_x_map_.find(character);

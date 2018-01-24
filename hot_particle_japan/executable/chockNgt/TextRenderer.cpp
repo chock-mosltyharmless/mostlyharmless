@@ -125,8 +125,42 @@ void TextRenderer::LoadScript(std::string filename, Script *result) {
     result->Load(SCRIPT_DIRECTORY + filename);
 }
 
+int TextRenderer::GetNumCharacters(const unsigned char *text) {
+	int num_chars = 0;
+
+	while (*text != 0 && *text != '/') {
+		if (text[0] < 128) {
+			text++;
+		} else {
+			if ((text[0] & 0b11110000) == 0b11110000) {
+				text += 4;
+			} else {
+				if ((text[0] & 0b11100000) == 0b11100000) {
+					text += 3;
+				} else {
+					if ((text[0] & 0b11000000) == 0b11000000) {
+						text += 2;
+					} else {
+						// Some error?
+						text++;
+					}
+				}
+			}
+		}
+		num_chars++;
+	}
+	return num_chars;
+}
+
+float TextRenderer::GetXFeed(const unsigned char *text, float max_characters_per_line, float size) {
+	int num_chars = GetNumCharacters(text);
+	float empty_boxes = max_characters_per_line - static_cast<float>(num_chars);
+	float left_boxes = empty_boxes * 0.5f;
+	return left_boxes * size;
+}
+
 void TextRenderer::RenderText(float x, float y, float size, const char *script_name, float time,
-                              TextureManager *texture_manager) {
+                              TextureManager *texture_manager, float max_characters_per_line) {
     GLuint tex_id;
     char error_string[MAX_ERROR_LENGTH + 1];
     if (texture_manager) {
@@ -142,11 +176,12 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
     if (line_separator_pos == std::string::npos) {
         y -= size / 2.0f * ASPECT_RATIO;
     }
-    float current_x = x;
 
     // Iterate over the text
     const char *current_pos_signed = text.c_str();
     const unsigned char *current_pos = reinterpret_cast<const unsigned char *>(current_pos_signed);
+	float current_x = x + GetXFeed(current_pos, max_characters_per_line, size);
+
     while (true) {
         char character[5];  // Maximum UTF-8 size is 4 Bytes
 
@@ -187,7 +222,7 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
 
         if ('/' == character[0]) {
             // Go to next line
-            current_x = x;
+			current_x = x + GetXFeed(current_pos, max_characters_per_line, size);
             y -= size * ASPECT_RATIO;
         } else {
             int xi = GetCharacterX(character);
