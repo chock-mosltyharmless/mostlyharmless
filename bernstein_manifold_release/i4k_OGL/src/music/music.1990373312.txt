@@ -19,7 +19,7 @@
 //};
 
 #define NUM_NOTES_1990373312 6
-
+#if 0
 #pragma data_seg(".savedNoteTime")
 unsigned short savedNoteTime_1990373312[] = {
   1321, 2, 14, 752, 1, 563, 255};
@@ -28,7 +28,8 @@ unsigned short savedNoteTime_1990373312[] = {
 signed char savedNote_1990373312[] = {
   45, -128, -14, 26, -128, -128,};
 
+
 #pragma data_seg(".savedVelocity")
 signed char savedVelocity_1990373312[] = {
  127, 0, -127, 96, 0, 0,};
-
+ #endif

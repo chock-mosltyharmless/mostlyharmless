@@ -169,6 +169,7 @@ void mzk_prepare_block(short *blockBuffer)
 
     for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     {
+        int note_pos = savedNotePos[instrument];
         //if (!on[instrument])continue;
         // Everything * 16 as only every 16th sample it's done.
         //const int kADSRSuperSample = 1;
@@ -193,9 +194,9 @@ void mzk_prepare_block(short *blockBuffer)
 #endif
 
         // Check if we go to next note
-        if (savedNoteTime[instrument][currentNoteIndex[instrument]] == 0)
+        if (savedNoteTime__[note_pos + currentNoteIndex[instrument]] == 0)
         {
-            if (savedNote[instrument][currentNoteIndex[instrument]] != -128)
+            if (savedNote__[note_pos + currentNoteIndex[instrument]] != -128)
             {
                 // Key on
                 iADSR[instrument] = 0; // attack
@@ -209,8 +210,9 @@ void mzk_prepare_block(short *blockBuffer)
                 //}
 
                 // Apply delta-note
-                currentNote[instrument] += savedNote[instrument][currentNoteIndex[instrument]];
-                i_midi_volume_[instrument] += savedVelocity[instrument][currentNoteIndex[instrument]];
+                currentNote[instrument] += savedNote__[note_pos + currentNoteIndex[instrument]];
+                //i_midi_volume_[instrument] += savedVelocity[instrument][currentNoteIndex[instrument]];
+                i_midi_volume_[instrument] += savedVelocity__[currentNoteIndex[instrument] + velocityPos[instrument]];
                 //midi_volume_[instrument] = i_midi_volume_[instrument] / 128.0f;
                 //midi_volume_[instrument] = 1.0f;
 
@@ -229,7 +231,7 @@ void mzk_prepare_block(short *blockBuffer)
             // Go to next note location
             currentNoteIndex[instrument]++;
         }
-        savedNoteTime[instrument][currentNoteIndex[instrument]]--;
+        savedNoteTime__[note_pos + currentNoteIndex[instrument]]--;
 
         // ignore everything before the first note
         if (currentNoteIndex[instrument] == 0) {
@@ -272,9 +274,9 @@ void mzk_prepare_block(short *blockBuffer)
 
             // fade out on new instrument (but not on noteoff...)
             // (deathcounter)
-            if (savedNoteTime[instrument][currentNoteIndex[instrument]] == 0 &&
+            if (savedNoteTime__[note_pos + currentNoteIndex[instrument]] == 0 &&
                 super_sample >= MZK_BLOCK_SIZE - 512 &&
-                savedNote[instrument][currentNoteIndex[instrument]] != -128)
+                savedNote__[note_pos + currentNoteIndex[instrument]] != -128)
             {
                 deathVolume = (MZK_BLOCK_SIZE - super_sample) / 512.0f;
             }
@@ -404,7 +406,7 @@ void mzk_prepare_block(short *blockBuffer)
         if (val < -32767) val = -32767;
         blockBuffer[sample] = val;
 #else
-        float val = floatOutput[0][sample] * 8.0f;
+        float val = floatOutput[0][sample] * 2.0f;
 #if 0
         if (val > 1.5f) val = 1.5f;
         if (val < -1.5f) val = -1.5f;
@@ -507,6 +509,9 @@ void mzk_init()
         for (int param = 0; param < NUM_INSTRUMENT_PARAMETERS; param++) {
             float_instrument_parameters_[inst][param] = (float)instrumentParams[inst][param] / 128.0f;
         }
+        
+        // Delta-uncompress note locations
+        savedNotePos[inst + 1] += savedNotePos[inst];
     }
 
 #if 0

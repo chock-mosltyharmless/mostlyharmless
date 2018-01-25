@@ -154,7 +154,8 @@ void GenerateParticles(void) {
                 color_id += 3;  // ignore RGB
                 // fran
                 //colors_[color_id] = jo_frand(&seed);
-                colors_[color_id] = 0.5f + 0.5f * sinf(pp[0] * pp[1] * pp[2] * (1<<24));
+                //colors_[color_id] = 0.5f + 0.5f * sinf(pp[0] * pp[1] * pp[2] * (1<<24));
+                colors_[color_id] = 0.5f + 0.5f * sinf((pp[0] * pp[1] * pp[2] + pp[2]) * (1 << 24));
                 colors_[color_id] = 1.0f - colors_[color_id] * colors_[color_id];
                 color_id++;
                 pp[0] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
