@@ -81,26 +81,22 @@ GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 
 #ifdef SHADER_DEBUG
 const static char* glnames[NUM_GL_NAMES]={
-    "wglCreateContextAttribsARB",
     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
     "glAttachShader", "glLinkProgram", "glUseProgram",
     "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
     "glEnableVertexAttribArray",
-    "glBufferSubData",
     "glUniformMatrix4fv",
     "glGetUniformLocation",
     "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
 };
 #else
 const static char* glnames[NUM_GL_NAMES]={
-    "wglCreateContextAttribsARB",
     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
     "glAttachShader", "glLinkProgram", "glUseProgram",
     "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
     "glEnableVertexAttribArray",
-    "glBufferSubData",
     "glUniformMatrix4fv",
     "glGetUniformLocation",
 };
@@ -216,8 +212,12 @@ static int window_init( WININFO *info )
 
 	// create openGL functions
 	for (i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
+#ifdef USE_GL_ATTRIBS
 	if (!(info->hRC = wglCreateContextAttribsARB(info->hDC, NULL, glAttribs))) return 0;
-	
+#else
+    if (!(info->hRC = wglCreateContext(info->hDC))) return 0;
+#endif
+
 	// Remove temporary context and set new one
 	wglMakeCurrent(NULL, NULL);
 	wglDeleteContext(tempOpenGLContext);

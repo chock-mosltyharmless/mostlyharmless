@@ -66,34 +66,32 @@ static DEVMODE screenSettings = { {0},
 // OpenGL function stuff
 GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 
+#if USE_GL_ATTRIBS
 static int glAttribs[7] = {WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
 						   WGL_CONTEXT_MINOR_VERSION_ARB, 3,
 						   WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-			               0}; 
+			               0};
+#endif
 
 #ifdef SHADER_DEBUG
 const static char* glnames[NUM_GL_NAMES]={
-    "wglCreateContextAttribsARB",
     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
     "glAttachShader", "glLinkProgram", "glUseProgram",
     "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
     "glEnableVertexAttribArray",
-    "glBufferSubData",
     "glUniformMatrix4fv",
     "glGetUniformLocation",
     "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
 };
 #else
-#define MAX_GLNAME_LEN 32
+#define MAX_GLNAME_LEN 27
 const static char glnames[NUM_GL_NAMES][MAX_GLNAME_LEN]={
-    "wglCreateContextAttribsARB",
     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
     "glAttachShader", "glLinkProgram", "glUseProgram",
     "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
     "glEnableVertexAttribArray",
-    "glBufferSubData",
     "glUniformMatrix4fv",
     "glGetUniformLocation",
 };
@@ -118,7 +116,7 @@ DWORD WINAPI thread_func(LPVOID lpParameter)
         }
         else
         {
-            Sleep(1);
+            //Sleep(1);
         }
     }
 
@@ -148,7 +146,11 @@ void entrypoint( void )
 	wglMakeCurrent(hDC, tempOpenGLContext);
 	// create openGL functions
 	for (i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
+#if USE_GL_ATTRIBS
 	hRC = wglCreateContextAttribsARB(hDC, NULL, glAttribs);
+#else
+    hRC = wglCreateContext(hDC);
+#endif
 	// Remove temporary context and set new one
 	wglMakeCurrent(NULL, NULL);
 	wglDeleteContext(tempOpenGLContext);

@@ -37,7 +37,7 @@ c=smoothstep(.0,.1,min(.9-abs(u).x,.9-.9*abs(u).y-.5*abs(u).x))*o;\
 const GLchar geometryMainParticle[]="\
 #version 330 core\n\
 layout(points) in;\
-layout(triangle_strip, max_vertices=4) out;\
+layout(triangle_strip,max_vertices=4) out;\
 in vec4 p[];\
 in float m[];\
 out vec4 o;\
@@ -48,7 +48,7 @@ vec4 e=gl_in[0].gl_Position;\
 float q=.001+abs(e.z-.5)*.025;\
 mat2 w=min(q,.2*e.w)*mat2(.55,.2,-.1,.98);\
 q=.001/q;\
-q=1.*pow(q,2.)*smoothstep(q,.0,m[0])/q;\
+q=pow(q,2.)*smoothstep(q,.0,m[0])/q;\
 if (q>.01){\
 o=q*p[0];\
 u=vec2(-1.,1.);\
@@ -67,6 +67,7 @@ EmitVertex();\
 EndPrimitive();\
 }";
 
+// TODO: Use mat4 for o, c --> only one buffer!
 #pragma data_seg(".vertexMainParticle")
 const GLchar vertexMainParticle[]="\
 #version 330 core\n\
@@ -143,19 +144,22 @@ void GenerateParticles(void) {
     float pp[3];
     pp[2] = 1.0f;
     for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
-        pp[1] = -1.0f;
+        pp[1] = 1.0f;
         for (int y = 0; y < NUM_PARTICLES_PER_DIM; y++) {
-            pp[0] = -1.0f;
+            pp[0] = 1.0f;
             for (int x = 0; x < NUM_PARTICLES_PER_DIM; x++) {
                 for (int dim = 0; dim < 3; dim++) {
-                    vertices_[vertex_id++] = pp[dim] + 2.0f / (float)NUM_PARTICLES_PER_DIM * jo_frand(&seed);
+                    vertices_[vertex_id++] = pp[dim];// + 2.0f / (float)NUM_PARTICLES_PER_DIM * jo_frand(&seed);
                 }
                 color_id += 3;  // ignore RGB
                 // fran
-                colors_[color_id++] = jo_frand(&seed);
-                pp[0] += 2.0f / (float)NUM_PARTICLES_PER_DIM;
+                //colors_[color_id] = jo_frand(&seed);
+                colors_[color_id] = 0.5f + 0.5f * sinf(pp[0] * pp[1] * pp[2] * (1<<24));
+                colors_[color_id] = 1.0f - colors_[color_id] * colors_[color_id];
+                color_id++;
+                pp[0] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
             }
-            pp[1] += 2.0f / (float)NUM_PARTICLES_PER_DIM;
+            pp[1] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
         }
         pp[2] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
     }
@@ -272,6 +276,7 @@ void intro_init( void ) {
 
                             // Vertex array position data
     glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vboID[0]); // Bind our Vertex Buffer Object  
     glBufferData(GL_ARRAY_BUFFER, TOTAL_NUM_PARTICLES * 3 * sizeof(GLfloat),
         vertices_, GL_STATIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
@@ -285,7 +290,6 @@ void intro_init( void ) {
                    // Vertex array color data
                    // change to GL_STATIC_DRAW and single update for speed.
                    // Move the GenerateParticles copy operation to here.
-    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); // Bind our Vertex Buffer Object  
     glBufferData(GL_ARRAY_BUFFER, TOTAL_NUM_PARTICLES * 4 * sizeof(GLfloat),
         colors_, GL_STATIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
@@ -311,8 +315,8 @@ void intro_init( void ) {
 #pragma code_seg(".intro_do")
 void intro_do( long itime )
 {
-    static int lastTime = 0;
-    static int timeDiff = 0;
+    //static int lastTime = 0;
+    //static int timeDiff = 0;
 
     // Find the scene in the script
     int scene_id = 0;
@@ -331,12 +335,11 @@ void intro_do( long itime )
     itime -= start_time;
 #endif
 
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+    //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Set the render matrix
     float parameterMatrix[4][4];
-    parameterMatrix[0][0] = itime / 44100.0f;
 
     // Set parameters to other locations, using seed stuff
     unsigned int start_seed = script_seed_[scene_id]; 
@@ -345,12 +348,13 @@ void intro_do( long itime )
         parameterMatrix[0][i] = jo_frand(&seed);
     }
 
+    parameterMatrix[0][0] = itime / 44100.0f;
     parameterMatrix[2][2] += (itime) * 0.000001f * script_move_[scene_id];
 
     int location = glGetUniformLocation(shaderProgram, "r");
     glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
     // render
-    glDisable( GL_CULL_FACE );
+    //glDisable( GL_CULL_FACE );
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
