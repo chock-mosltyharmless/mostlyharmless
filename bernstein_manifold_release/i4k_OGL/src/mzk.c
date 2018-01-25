@@ -19,7 +19,7 @@ _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
 #define LOG_2_E 1.44269f
 #define fScaler ((float)((double)2*PI / (double)MZK_RATE))
 
-#define NUM_INSTRUMENTS 18
+#define NUM_INSTRUMENTS 17
 #define NUM_INSTRUMENT_PARAMETERS 35
 // Number of additive overtones
 #define NUM_OVERTONES 4
@@ -54,7 +54,6 @@ static int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pul
 #endif
 static int currentNoteIndex[NUM_INSTRUMENTS];
 static int currentNote[NUM_INSTRUMENTS];
-// TODO: One phase is enough
 static float fPhase[NUM_INSTRUMENTS]; // Phase of the instrument
                                                      //static float fTimePoint[NUM_INSTRUMENTS];
                                                      //static float fModulationPhase[NUM_INSTRUMENTS];
@@ -64,7 +63,6 @@ static float fPhase[NUM_INSTRUMENTS]; // Phase of the instrument
 //static float detuneFactor[NUM_OVERTONES];  // Independent of instrument
 
                                     // Interpolated parameters
-                                    // TODO: Make it one array
 #if 0
 float adsrVolume[NUM_INSTRUMENTS];
 float adsrQuak[NUM_INSTRUMENTS];
@@ -406,7 +404,7 @@ void mzk_prepare_block(short *blockBuffer)
         if (val < -32767) val = -32767;
         blockBuffer[sample] = val;
 #else
-        float val = floatOutput[0][sample] * 2.0f;
+        float val = floatOutput[0][sample] * 4.0f;
 #if 0
         if (val > 1.5f) val = 1.5f;
         if (val < -1.5f) val = -1.5f;

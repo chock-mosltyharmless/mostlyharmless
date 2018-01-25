@@ -54,8 +54,6 @@ static WININFO wininfo = {  0,0,0,0,0,
 
 // Audio playback stuff
 static HWAVEOUT hWaveOut; // audio device handle
-                          // TODO: Use more than 2 buffers with very small sizes so that I have
-                          //       no influence on frame rate!
 static MMTIME timer; // Using getPosition of wave audio playback
 #define NUM_PLAY_BLOCKS 8
 static int nextPlayBlock = 0; // The block that must be filled and played next

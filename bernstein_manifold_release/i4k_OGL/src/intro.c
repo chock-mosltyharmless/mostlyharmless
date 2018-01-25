@@ -72,7 +72,6 @@ EndPrimitive();\
 const GLchar vertexMainParticle[]="\
 #version 330 core\n\
 layout (location=0) in vec4 o;\n\
-layout (location=1) in vec4 c;\n\
 out vec4 p;\
 out float m;\
 uniform mat4 r;\
@@ -88,7 +87,7 @@ return length(e)-sin(r[3][1]*25.*length(e))*r[3][2]*5.-r[3][3]-.2*sin(r[0][0]*.0
 void main(void) {\
 vec3 e=o.xyz;\
 float t=G(e),q=abs(sin(e.x*r[1][2]*8.)+cos(e.z*r[1][3]*8.)-sin(e.y*r[2][0]*8.));\
-m=c.a;\
+m=o.a;\
 p.rgb=(vec3(.6,1.1,1.2)+vec3(.3,-.4,-.8)*length(e))*(pow(1.-m,30.)*3.+1.)+pow(abs(sin(m*100.+r[0][0])),10.)-q*r[2][1]*3.;\
 p.a=1.+q*r[2][1];\
 q=1.+r[1][1]*0.4-smoothstep(.0,.4,abs(t));\
@@ -125,8 +124,8 @@ unsigned int vaoID;
 // 0 is for particle positions, 1 is for particle colors
 unsigned int vboID[2];
 // And the actual vertices
-GLfloat vertices_[TOTAL_NUM_PARTICLES * 3];
-GLfloat colors_[TOTAL_NUM_PARTICLES * 4];
+GLfloat vertices_[TOTAL_NUM_PARTICLES * 4];
+//GLfloat colors_[TOTAL_NUM_PARTICLES * 4];
 
 // -------------------------------------------------------------------
 //                          Code:
@@ -140,7 +139,7 @@ void GenerateParticles(void) {
 
     // Set vertex location
     int vertex_id = 0;
-    int color_id = 0;
+    //int color_id = 0;
     float pp[3];
     pp[2] = 1.0f;
     for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
@@ -151,13 +150,13 @@ void GenerateParticles(void) {
                 for (int dim = 0; dim < 3; dim++) {
                     vertices_[vertex_id++] = pp[dim];// + 2.0f / (float)NUM_PARTICLES_PER_DIM * jo_frand(&seed);
                 }
-                color_id += 3;  // ignore RGB
+                //color_id += 3;  // ignore RGB
                 // fran
                 //colors_[color_id] = jo_frand(&seed);
                 //colors_[color_id] = 0.5f + 0.5f * sinf(pp[0] * pp[1] * pp[2] * (1<<24));
-                colors_[color_id] = 0.5f + 0.5f * sinf((pp[0] * pp[1] * pp[2] + pp[2]) * (1 << 24));
-                colors_[color_id] = 1.0f - colors_[color_id] * colors_[color_id];
-                color_id++;
+                vertices_[vertex_id] = 0.5f + 0.5f * sinf((pp[0] * pp[1] * pp[2] + pp[2]) * (1 << 24));
+                vertices_[vertex_id] = 1.0f - vertices_[vertex_id] * vertices_[vertex_id];
+                vertex_id++;
                 pp[0] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
             }
             pp[1] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
@@ -277,20 +276,21 @@ void intro_init( void ) {
 
                             // Vertex array position data
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vboID[0]); // Bind our Vertex Buffer Object  
-    glBufferData(GL_ARRAY_BUFFER, TOTAL_NUM_PARTICLES * 3 * sizeof(GLfloat),
+    glBufferData(GL_ARRAY_BUFFER, TOTAL_NUM_PARTICLES * 4 * sizeof(GLfloat),
         vertices_, GL_STATIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
     glVertexAttribPointer(0, // attribute
-        3, // size
+        4, // size
         GL_FLOAT, // type
         GL_FALSE, // normalized?
         0, // stride
         (void*)0); // array buffer offset
 
+#if 0
                    // Vertex array color data
                    // change to GL_STATIC_DRAW and single update for speed.
                    // Move the GenerateParticles copy operation to here.
+    glEnableVertexAttribArray(1);
     glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); // Bind our Vertex Buffer Object  
     glBufferData(GL_ARRAY_BUFFER, TOTAL_NUM_PARTICLES * 4 * sizeof(GLfloat),
         colors_, GL_STATIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
@@ -300,6 +300,7 @@ void intro_init( void ) {
         GL_FALSE, // normalized?
         0, // stride
         (void*)0); // array buffer offset
+#endif
 
 #ifdef SHADER_DEBUG
                    // Get all the errors:
