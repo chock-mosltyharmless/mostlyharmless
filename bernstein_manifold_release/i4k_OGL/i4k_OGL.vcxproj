@@ -107,7 +107,7 @@
     </Midl>
     <ClCompile>
       <AdditionalOptions>/Gs  /arch:IA32 /QIfist %(AdditionalOptions)</AdditionalOptions>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Size</FavorSizeOrSpeed>

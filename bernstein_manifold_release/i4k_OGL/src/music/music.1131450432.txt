@@ -28,7 +28,9 @@ unsigned short savedNoteTime_1131450432[] = {
 signed char savedNote_1131450432[] = {
   64, 0, -2, -3, 5, 0, -2, -3, -128, 5, 0, -2, -3, 5, 0, -2, -3, -128, -128,};
 
+  #if 0
 #pragma data_seg(".savedVelocity")
 signed char savedVelocity_1131450432[] = {
  127, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,};
 
+ #endif

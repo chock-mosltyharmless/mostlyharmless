@@ -46,7 +46,7 @@ static float float_instrument_parameters_[NUM_INSTRUMENTS][NUM_INSTRUMENT_PARAME
 static float randomBuffer[RANDOM_BUFFER_SIZE];
 static float lowNoise[RANDOM_BUFFER_SIZE];
 // The same as random Buffer, but contains exp(4*(randomBuffer-1))
-static float expRandomBuffer[RANDOM_BUFFER_SIZE];
+//static float expRandomBuffer[RANDOM_BUFFER_SIZE];
 #if 0
 static float reverbBuffer[NUM_INSTRUMENTS][MAX_DELAY_LENGTH][NUM_Stereo_VOICES];
 static int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pull-out
@@ -54,12 +54,13 @@ static int reverbBufferLength[NUM_Stereo_VOICES]; // Actual length taken for pul
 #endif
 static int currentNoteIndex[NUM_INSTRUMENTS];
 static int currentNote[NUM_INSTRUMENTS];
-static float fPhase[NUM_INSTRUMENTS][NUM_OVERTONES]; // Phase of the instrument
+// TODO: One phase is enough
+static float fPhase[NUM_INSTRUMENTS]; // Phase of the instrument
                                                      //static float fTimePoint[NUM_INSTRUMENTS];
                                                      //static float fModulationPhase[NUM_INSTRUMENTS];
 
                                                      // From vstxsynthproc.cpp
-static float fShape[NUM_INSTRUMENTS][4][NUM_OVERTONES];  // Overtone shape for each ADSR thingies
+//static float fShape[NUM_INSTRUMENTS][4][NUM_OVERTONES];  // Overtone shape for each ADSR thingies
 //static float detuneFactor[NUM_OVERTONES];  // Independent of instrument
 
                                     // Interpolated parameters
@@ -88,7 +89,7 @@ static float adsrData[NUM_INSTRUMENTS][NUM_ADSR_DATA];
 
 // MIDI volume
 static int i_midi_volume_[NUM_INSTRUMENTS];
-static float midi_volume_[NUM_INSTRUMENTS];
+//static float midi_volume_[NUM_INSTRUMENTS];
 
 // attack values and stuff
 static int iADSR[NUM_INSTRUMENTS];
@@ -164,11 +165,14 @@ void mzk_prepare_block(short *blockBuffer)
         floatOutput[0][sample] = 0;
     }
 
+    //int on[18] = {0,0,1,0,1,1,0,0,1,1,1,1,1,1,1,1,1,1};
+
     for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     {
+        //if (!on[instrument])continue;
         // Everything * 16 as only every 16th sample it's done.
-        const int kADSRSuperSample = 64;
-        const float kSuperSample = (float)kADSRSuperSample;
+        //const int kADSRSuperSample = 1;
+        //const float kSuperSample = (float)kADSRSuperSample;
 
         // Go over all samples
         sampleID = startSampleID;
@@ -177,7 +181,8 @@ void mzk_prepare_block(short *blockBuffer)
         // Get parameters locally
         float vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
         float panning = float_instrument_parameters_[instrument][K_MASTER_PANNING];
-        float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
+        //float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
+        float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
 
 #if 0
         // Set the reverberation buffer length at key start (no interpolation)
@@ -206,14 +211,11 @@ void mzk_prepare_block(short *blockBuffer)
                 // Apply delta-note
                 currentNote[instrument] += savedNote[instrument][currentNoteIndex[instrument]];
                 i_midi_volume_[instrument] += savedVelocity[instrument][currentNoteIndex[instrument]];
-                midi_volume_[instrument] = i_midi_volume_[instrument] / 128.0f;
+                //midi_volume_[instrument] = i_midi_volume_[instrument] / 128.0f;
                 //midi_volume_[instrument] = 1.0f;
 
                 // Set the oscillator phases to zero
-                for (int i = 0; i < NUM_OVERTONES; i++)
-                {
-                    fPhase[instrument][i] = 0.f;
-                }
+                fPhase[instrument] = 0.f;
             }
             else
             {
@@ -221,7 +223,8 @@ void mzk_prepare_block(short *blockBuffer)
                 iADSR[instrument] = 2; // Release
             }
 
-            invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
+            //invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
+            invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
 
             // Go to next note location
             currentNoteIndex[instrument]++;
@@ -239,19 +242,23 @@ void mzk_prepare_block(short *blockBuffer)
         //float baseFreq = freqtab[currentNote[instrument] & 0x7f] * fScaler;
         float baseFreq = 8.175f * (float)exp2jo((float)currentNote[instrument] * (1.0f/12.0f)) * fScaler;
 
-        for (int super_sample = 0; super_sample < MZK_BLOCK_SIZE; super_sample += kADSRSuperSample)
+        //for (int super_sample = 0; super_sample < MZK_BLOCK_SIZE; super_sample += kADSRSuperSample)
+#define super_sample sample
+        for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++)
         {
             float deathVolume = 1.0f;
 
             // Process ADSR envelope
             if (iADSR[instrument] == 0) {
                 fADSRVal[instrument] += (1.0f - fADSRVal[instrument]) *
-                    (float_instrument_parameters_[instrument][K_ADSR_SPEED + 0] / 1024.0f) * kSuperSample;
+                    //(float_instrument_parameters_[instrument][K_ADSR_SPEED + 0] / 1024.0f) * kSuperSample;
+                    (float_instrument_parameters_[instrument][K_ADSR_SPEED + 0] / 1024.0f);
             }
             // Go from attack to decay
             if (iADSR[instrument] == 0 && fADSRVal[instrument] > 0.75) {
                 iADSR[instrument] = 1;
-                invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
+                //invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f * kSuperSample;
+                invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] / 1024.0f;
             }
 
             // interpolate volume according to ADSR envelope
@@ -272,7 +279,9 @@ void mzk_prepare_block(short *blockBuffer)
                 deathVolume = (MZK_BLOCK_SIZE - super_sample) / 512.0f;
             }
 
-            for (int sample = super_sample; sample < super_sample + kADSRSuperSample; sample++) {            
+            float base_phase = fPhase[instrument];
+            //for (int sample = super_sample; sample < super_sample + kADSRSuperSample; sample++) {            
+            {
                 // Some optimziation?
                 //if (fADSRVal[instrument] < 1.0f / 65536.0f) fADSRVal[instrument] = 0.0f;
 
@@ -283,21 +292,29 @@ void mzk_prepare_block(short *blockBuffer)
                 float overtoneLoudness = 1.0f;
                 //float overallLoudness = 1.0f / 65536.0f;
                 //if (adsrData[instrument][adsrVolume] > 1e-4 || float_instrument_parameters_[instrument][K_VOLUME + iADSR[instrument] + 1] > 1e-4)
+                    float phase = base_phase;
                     for (int i = 0; i < NUM_OVERTONES; i++)
                     {
                         //if (i < maxOvertones)
                         {
-                            outAmplitude[0] += sinf(fPhase[instrument][i]) * overtoneLoudness
+                            outAmplitude[0] += sinf(phase) * overtoneLoudness
                                 /** adsrData[instrument][adsrShape+i]*/ * (1.0f - panning);
-                            outAmplitude[1] += sinf(fPhase[instrument][i]) * overtoneLoudness
+                            outAmplitude[1] += sinf(phase) * overtoneLoudness
                                 /** adsrData[instrument][adsrShape+i]*/ * panning;
+#if 0
                             fPhase[instrument][i] += baseFreq * (i+1) * (adsrData[instrument][adsrFreq]*4.0f);
                                 //* (1.0f + adsrData[instrument][adsrDetune] * detuneFactor[i] * 0.5f);
                             while (fPhase[instrument][i] > 2.0f * PI) fPhase[instrument][i] -= 2.0f * (float)PI;
+#else
+                                phase += base_phase;
+#endif
                         }
                         //overallLoudness += overtoneLoudness /** adsrData[instrument][adsrShape+i]*/;
                         overtoneLoudness *= adsrData[instrument][adsrQuak] * 2.0f;
                     }
+
+                    base_phase += baseFreq * (adsrData[instrument][adsrFreq] * 4.0f);
+                    while (base_phase > 2.0f * PI) base_phase -= 2.0f * (float)PI;
 #else
                 float overallLoudness = 1.0f;
                 outAmplitude[0] += (float)sin(fPhase[instrument][0]);
@@ -307,7 +324,7 @@ void mzk_prepare_block(short *blockBuffer)
 
 #if 1
                 // Ring modulation with noise
-                float cur_vol = vol * adsrData[instrument][adsrVolume] * deathVolume * midi_volume_[instrument];
+                float cur_vol = vol * adsrData[instrument][adsrVolume] * deathVolume * i_midi_volume_[instrument] / 128.0f;//(midi_volume_[instrument];
                 float distortMult = (float)exp2jo(LOG_2_E * 6.0f*adsrData[instrument][adsrDistort]);
                 for (int i = 0; i < 2; i++)
                 {
@@ -317,7 +334,14 @@ void mzk_prepare_block(short *blockBuffer)
 
                     // Distort
                     output *= distortMult;
+#if 1
                     output = 2.0f * (1.0f / (1.0f + (float)exp2jo(LOG_2_E * -output)) - 0.5f);
+#else
+
+                    if (output > 1.5f) output = 1.5f;
+                    if (output < -1.5f) output = -1.5f;
+                    output = (float)sinf(output);
+#endif
                     output /= distortMult;
                     floatOutput[sample][i] += output * cur_vol;
                 }
@@ -367,6 +391,7 @@ void mzk_prepare_block(short *blockBuffer)
 #endif
                 sampleID++;
             }
+            fPhase[instrument] = base_phase;
         }
     }
 
@@ -380,9 +405,13 @@ void mzk_prepare_block(short *blockBuffer)
         blockBuffer[sample] = val;
 #else
         float val = floatOutput[0][sample] * 8.0f;
+#if 0
         if (val > 1.5f) val = 1.5f;
         if (val < -1.5f) val = -1.5f;
         val = (float)sinf(val) * 32768.0f;
+#else
+        val = 2.0f * 32768.0f * (1.0f / (1.0f + (float)exp2jo(LOG_2_E * -val)) - 0.5f);
+#endif
         blockBuffer[sample] = _mm_cvtt_ss2si(_mm_load_ss(&val));
 #endif
     }
@@ -414,7 +443,7 @@ void mzk_init()
     for (int i = 0; i < RANDOM_BUFFER_SIZE; i++)
     {
         randomBuffer[i] = jo_frand(&seed);
-        expRandomBuffer[i] = (float)exp2jo(LOG_2_E * 4.0f * (randomBuffer[i] - 1));
+        //expRandomBuffer[i] = (float)exp2jo(LOG_2_E * 4.0f * (randomBuffer[i] - 1));
         lowNoise[i] = 16.0f * (randomBuffer[i] - 0.5f);
     }
 
