@@ -85,7 +85,6 @@ const static char* glnames[NUM_GL_NAMES]={
     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
     "glEnableVertexAttribArray",
     "glUniformMatrix4fv",
-    "glGetUniformLocation",
     "glGetShaderiv","glGetShaderInfoLog", "glGetProgramiv"
 };
 #else
@@ -96,7 +95,6 @@ const static char* glnames[NUM_GL_NAMES]={
     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
     "glEnableVertexAttribArray",
     "glUniformMatrix4fv",
-    "glGetUniformLocation",
 };
 #endif
 

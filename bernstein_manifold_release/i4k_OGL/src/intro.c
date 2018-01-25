@@ -25,7 +25,7 @@
 // -------------------------------------------------------------------
 #pragma data_seg(".fragmentMainParticle")
 const GLchar fragmentMainParticle[]="\
-#version 330 core\n\
+#version 430 core\n\
 in vec2 u;\
 in vec4 o;\
 out vec4 c;\
@@ -35,14 +35,13 @@ c=smoothstep(.0,.1,min(.9-abs(u).x,.9-.9*abs(u).y-.5*abs(u).x))*o;\
 
 #pragma data_seg(".geometryMainParticle")
 const GLchar geometryMainParticle[]="\
-#version 330 core\n\
+#version 430 core\n\
 layout(points) in;\
 layout(triangle_strip,max_vertices=4) out;\
 in vec4 p[];\
 in float m[];\
 out vec4 o;\
 out vec2 u;\
-uniform mat4 r;\
 void main(){\
 vec4 e=gl_in[0].gl_Position;\
 float q=.001+abs(e.z-.5)*.025;\
@@ -70,11 +69,11 @@ EndPrimitive();\
 // TODO: Use mat4 for o, c --> only one buffer!
 #pragma data_seg(".vertexMainParticle")
 const GLchar vertexMainParticle[]="\
-#version 330 core\n\
+#version 430 core\n\
+layout (location=0) uniform mat4 r;\
 layout (location=0) in vec4 o;\n\
 out vec4 p;\
 out float m;\
-uniform mat4 r;\
 float G(vec3 e){\
 e.z-=sin(e.y*cos(e.x*.4)*.3)*r[0][2]*5.5;\
 e.x-=sin(e.z*.5)*r[0][2]*5.5;\
@@ -353,8 +352,8 @@ void intro_do( long itime )
     parameterMatrix[0][0] = itime / 44100.0f;
     parameterMatrix[2][2] += (itime) * 0.000001f * script_move_[scene_id];
 
-    int location = glGetUniformLocation(shaderProgram, "r");
-    glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
+    //int location = glGetUniformLocation(shaderProgram, "r");
+    glUniformMatrix4fv(0/*location*/, 1, GL_FALSE, &(parameterMatrix[0][0]));
     // render
     //glDisable( GL_CULL_FACE );
     glEnable(GL_BLEND);
