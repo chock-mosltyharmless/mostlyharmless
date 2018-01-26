@@ -121,7 +121,7 @@ static GLuint shaderProgram;
 // The vertex array and vertex buffer
 unsigned int vaoID;
 // 0 is for particle positions, 1 is for particle colors
-unsigned int vboID[2];
+//unsigned int vboID;
 // And the actual vertices
 GLfloat vertices_[TOTAL_NUM_PARTICLES * 4];
 //GLfloat colors_[TOTAL_NUM_PARTICLES * 4];
@@ -129,40 +129,6 @@ GLfloat vertices_[TOTAL_NUM_PARTICLES * 4];
 // -------------------------------------------------------------------
 //                          Code:
 // -------------------------------------------------------------------
-
-// Create the particle locations and move them to the GPU
-#pragma code_seg(".GenerateParticles")
-void GenerateParticles(void) {
-    //unsigned int seed = 23690984;
-    unsigned int seed = 0;
-
-    // Set vertex location
-    int vertex_id = 0;
-    //int color_id = 0;
-    float pp[3];
-    pp[2] = 1.0f;
-    for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
-        pp[1] = 1.0f;
-        for (int y = 0; y < NUM_PARTICLES_PER_DIM; y++) {
-            pp[0] = 1.0f;
-            for (int x = 0; x < NUM_PARTICLES_PER_DIM; x++) {
-                for (int dim = 0; dim < 3; dim++) {
-                    vertices_[vertex_id++] = pp[dim];// + 2.0f / (float)NUM_PARTICLES_PER_DIM * jo_frand(&seed);
-                }
-                //color_id += 3;  // ignore RGB
-                // fran
-                //colors_[color_id] = jo_frand(&seed);
-                //colors_[color_id] = 0.5f + 0.5f * sinf(pp[0] * pp[1] * pp[2] * (1<<24));
-                vertices_[vertex_id] = 0.5f + 0.5f * sinf((pp[0] * pp[1] * pp[2] + pp[2]) * (1 << 24));
-                vertices_[vertex_id] = 1.0f - vertices_[vertex_id] * vertices_[vertex_id];
-                vertex_id++;
-                pp[0] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
-            }
-            pp[1] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
-        }
-        pp[2] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
-    }
-}
 
 #pragma code_seg(".intro_init")
 void intro_init( void ) {
@@ -261,8 +227,36 @@ void intro_init( void ) {
     }
 #endif
 
-    // Fill the vertices_ and colors_ array with reasonable values
-    GenerateParticles();
+    //unsigned int seed = 23690984;
+    unsigned int seed = 0;
+
+    // Set vertex location
+    int vertex_id = 0;
+    //int color_id = 0;
+    float pp[3];
+    pp[2] = 1.0f;
+    for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
+        pp[1] = 1.0f;
+        for (int y = 0; y < NUM_PARTICLES_PER_DIM; y++) {
+            pp[0] = 1.0f;
+            for (int x = 0; x < NUM_PARTICLES_PER_DIM; x++) {
+                for (int dim = 0; dim < 3; dim++) {
+                    vertices_[vertex_id++] = pp[dim];// + 2.0f / (float)NUM_PARTICLES_PER_DIM * jo_frand(&seed);
+                }
+                //color_id += 3;  // ignore RGB
+                // fran
+                //colors_[color_id] = jo_frand(&seed);
+                //colors_[color_id] = 0.5f + 0.5f * sinf(pp[0] * pp[1] * pp[2] * (1<<24));
+                vertices_[vertex_id] = 0.5f + 0.5f * sinf((pp[0] * pp[1] * pp[2] + pp[2]) * (1 << 24));
+                vertices_[vertex_id] = 1.0f - vertices_[vertex_id] * vertices_[vertex_id];
+                vertex_id++;
+                pp[0] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
+            }
+            pp[1] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
+        }
+        pp[2] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
+    }
+
 
     // Set up vertex buffer and stuff
     glGenVertexArrays(1, &vaoID); // Create our Vertex Array Object  
@@ -271,11 +265,12 @@ void intro_init( void ) {
     int maxAttrt;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttrt);
 
-    glGenBuffers(2, vboID); // Generate our Vertex Buffer Object  
+    int vboID;
+    glGenBuffers(1, &vboID); // Generate our Vertex Buffer Object  
 
                             // Vertex array position data
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vboID[0]); // Bind our Vertex Buffer Object  
+    glBindBuffer(GL_ARRAY_BUFFER, vboID); // Bind our Vertex Buffer Object  
     glBufferData(GL_ARRAY_BUFFER, TOTAL_NUM_PARTICLES * 4 * sizeof(GLfloat),
         vertices_, GL_STATIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
     glVertexAttribPointer(0, // attribute
@@ -349,8 +344,8 @@ void intro_do( long itime )
         parameterMatrix[0][i] = jo_frand(&seed);
     }
 
-    parameterMatrix[0][0] = itime / 44100.0f;
-    parameterMatrix[2][2] += (itime) * 0.000001f * script_move_[scene_id];
+    parameterMatrix[0][0] = itime / 32768.0f;
+    parameterMatrix[2][2] += (itime) / 1048576.0f * script_move_[scene_id];
 
     //int location = glGetUniformLocation(shaderProgram, "r");
     glUniformMatrix4fv(0/*location*/, 1, GL_FALSE, &(parameterMatrix[0][0]));
