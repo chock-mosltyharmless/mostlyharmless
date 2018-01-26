@@ -13,6 +13,7 @@ public:
 
     // time is relative to when to start, negative time is for zoom-out
     static void Draw(float time, TextureManager *texture_manager,
-                     float *text_start_x, float *text_start_y, float *text_width);
+                     float *text_start_x, float *text_start_y,
+                     float *text_width, float *text_height);
 };
 

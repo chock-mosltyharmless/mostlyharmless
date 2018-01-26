@@ -159,7 +159,8 @@ float TextRenderer::GetXFeed(const unsigned char *text, float max_characters_per
 	return left_boxes * size;
 }
 
-void TextRenderer::RenderText(float x, float y, float size, const char *script_name, float time,
+void TextRenderer::RenderText(float x, float y, float width, float height,
+                              const char *script_name, float time,
                               TextureManager *texture_manager, float max_characters_per_line) {
     GLuint tex_id;
     char error_string[MAX_ERROR_LENGTH + 1];
@@ -174,13 +175,13 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
     // Check whether there is a line separator in the script
     size_t line_separator_pos = text.find_first_of("/");
     if (line_separator_pos == std::string::npos) {
-        y -= size / 2.0f * ASPECT_RATIO;
+        y -= height / 2.0f * ASPECT_RATIO;
     }
 
     // Iterate over the text
     const char *current_pos_signed = text.c_str();
     const unsigned char *current_pos = reinterpret_cast<const unsigned char *>(current_pos_signed);
-	float current_x = x + GetXFeed(current_pos, max_characters_per_line, size);
+	float current_x = x + GetXFeed(current_pos, max_characters_per_line, width);
 
     while (true) {
         char character[5];  // Maximum UTF-8 size is 4 Bytes
@@ -222,8 +223,8 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
 
         if ('/' == character[0]) {
             // Go to next line
-			current_x = x + GetXFeed(current_pos, max_characters_per_line, size);
-            y -= size * ASPECT_RATIO;
+			current_x = x + GetXFeed(current_pos, max_characters_per_line, width);
+            y -= height * ASPECT_RATIO;
         } else {
             int xi = GetCharacterX(character);
             int yi = GetCharacterY(character);
@@ -263,8 +264,9 @@ void TextRenderer::RenderText(float x, float y, float size, const char *script_n
             }
 
             // Render a quad..
-            DrawQuadColor(current_x, current_x + size, y, y - size * ASPECT_RATIO, txl, txr, tyt, tyb, r, g, b, 1.0f);
-            current_x += size;  // Go to next character
+            DrawQuadColor(current_x, current_x + width, y, y - height * ASPECT_RATIO,
+                          txl, txr, tyt, tyb, r, g, b, 1.0f);
+            current_x += width;  // Go to next character
         }
     }
     glEnd();

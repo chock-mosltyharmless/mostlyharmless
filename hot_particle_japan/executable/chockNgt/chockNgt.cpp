@@ -556,14 +556,20 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		// Draw the black borders around the Schraenke
 		//screenBorders.drawBorders(&textureManager, mainWnd, showBlue, fadeInTime * fadeOut, redenner);
 
+        float subtitle_time = 0.0f;
         if (subtitle_start_time_ > subtitle_end_time_) {
-            float text_start_x, text_start_y, text_width;
-            Sign::Draw(1.0f, &textureManager, &text_start_x, &text_start_y, &text_width);
-            const float kMaxCharactersPerLine = 20;
-            text_renderer_.RenderText(text_start_x, text_start_y, text_width, subtitle_script_,
-                                      fCurTime - subtitle_start_time_, &textureManager,
-                                      kMaxCharactersPerLine);
+            subtitle_time = fCurTime - subtitle_start_time_;
+        } else {
+            subtitle_time = subtitle_end_time_ - fCurTime;
         }
+        float text_start_x, text_start_y, text_width, text_height;
+        Sign::Draw(subtitle_time, &textureManager, &text_start_x, &text_start_y,
+                   &text_width, &text_height);
+        const float kMaxCharactersPerLine = 20;
+        text_renderer_.RenderText(text_start_x, text_start_y, text_width, text_height,
+                                    subtitle_script_,
+                                    fCurTime - subtitle_start_time_, &textureManager,
+                                    kMaxCharactersPerLine);
 
         // swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);

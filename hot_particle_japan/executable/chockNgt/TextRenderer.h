@@ -45,7 +45,8 @@ public:
     virtual ~TextRenderer();
 
     // use OpenGL coordinates and sizes
-    void RenderText(float x, float y, float size, const char *script_name, float time,
+    void RenderText(float x, float y, float width, float height,
+                    const char *script_name, float time,
                     TextureManager *texture_manager, float max_characters_per_line);
 
 private:
