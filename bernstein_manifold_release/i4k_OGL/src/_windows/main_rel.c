@@ -10,12 +10,15 @@
 #include "../mzk.h"
 #include "../config.h"
 
+#include "../intro.c"
+#include "../mzk.c"
+
 //extern "C" int _fltused = 0;
 int _fltused = 0;
 
 // Audio playback stuff
 static HWAVEOUT hWaveOut; // audio device handle
-static MMTIME timer; // Using getPosition of wave audio playback
+//static MMTIME timer; // Using getPosition of wave audio playback
 #define NUM_PLAY_BLOCKS 8
 static int nextPlayBlock = 0; // The block that must be filled and played next
 short myMuzikBlock[NUM_PLAY_BLOCKS][AUDIO_BUFFER_SIZE*MZK_NUMCHANNELS]; // The audio blocks
@@ -122,7 +125,6 @@ DWORD WINAPI thread_func(LPVOID lpParameter)
 #pragma code_seg(".entrypoint")
 void entrypoint( void )
 {              
-	HGLRC tempOpenGLContext;
 	int i;
 	HGLRC hRC;
 	long t, to, itime;
@@ -137,20 +139,12 @@ void entrypoint( void )
     
 	// initalize opengl
     if( !SetPixelFormat(hDC,ChoosePixelFormat(hDC,&pfd),&pfd) ) return;
-	
-    tempOpenGLContext = wglCreateContext(hDC);
-	wglMakeCurrent(hDC, tempOpenGLContext);
-	// create openGL functions
-	for (i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
-#if USE_GL_ATTRIBS
-	hRC = wglCreateContextAttribsARB(hDC, NULL, glAttribs);
-#else
+
     hRC = wglCreateContext(hDC);
-#endif
-	// Remove temporary context and set new one
-	wglMakeCurrent(NULL, NULL);
-	wglDeleteContext(tempOpenGLContext);
-	wglMakeCurrent(hDC, hRC);
+    wglMakeCurrent(hDC, hRC);
+    for (i = 0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
+    // create music block
+    mzk_init();
 
 	// init intro
 	intro_init();
@@ -159,8 +153,6 @@ void entrypoint( void )
     // open audio device
     waveOutOpen(&hWaveOut, WAVE_MAPPER, &wfx, 0, 0, CALLBACK_NULL);
 
-    // create music block
-    mzk_init();
     // prepare and play music block
     for (int i = 0; i < NUM_PLAY_BLOCKS; i++)
     {
