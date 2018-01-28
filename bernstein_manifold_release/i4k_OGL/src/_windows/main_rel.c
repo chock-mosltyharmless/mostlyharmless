@@ -134,7 +134,7 @@ void entrypoint( void )
     if( ChangeDisplaySettings(&screenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL) return;
     #endif	
     // create window
-    HWND hWnd = CreateWindow( "static",0,WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,0,0);
+    HWND hWnd = CreateWindow("static",0,WS_POPUP|WS_VISIBLE|WS_MAXIMIZE,0,0,0,0,0,0,0,0);
     HDC hDC = GetDC(hWnd);
     
 	// initalize opengl

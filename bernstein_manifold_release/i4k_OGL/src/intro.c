@@ -30,7 +30,7 @@ in vec2 u;\
 in vec4 o;\
 out vec4 c;\
 void main(void){\
-c=smoothstep(.0,.1,min(.9-abs(u).x,.9-.9*abs(u).y-.5*abs(u).x))*o;\
+c=smoothstep(.0,.1,min(.9-abs(u).r,.9-.9*abs(u).g-.5*abs(u).r))*o;\
 }";
 
 #pragma data_seg(".geometryMainParticle")
@@ -39,17 +39,17 @@ const GLchar geometryMainParticle[]="\
 layout(points) in;\
 layout(triangle_strip,max_vertices=4) out;\
 in vec4 p[];\
-in float m[];\
 out vec4 o;\
 out vec2 u;\
 void main(){\
 vec4 e=gl_in[0].gl_Position;\
-float q=.001+abs(e.z-.5)*.025;\
+float q=.001+abs(e.b-.5)*.025;\
 mat2 w=min(q,.2*e.w)*mat2(.55,.2,-.1,.98);\
 q=.001/q;\
-q=pow(q,2.)*smoothstep(q,.0,m[0])/q;\
+q=pow(q,2.)*smoothstep(q,.0,p[0].a)/q;\
 if (q>.01){\
 o=q*p[0];\
+o.a=0.12*q;\
 u=vec2(-1.,1.);\
 gl_Position=e+vec4(w*u,.0,.0);\
 EmitVertex();\
@@ -73,32 +73,29 @@ const GLchar vertexMainParticle[]="\
 layout (location=0) uniform mat4 r;\
 layout (location=0) in vec4 o;\n\
 out vec4 p;\
-out float m;\
-float G(vec3 e){\
-e.z-=sin(e.y*cos(e.x*.4)*.3)*r[0][2]*5.5;\
-e.x-=sin(e.z*.5)*r[0][2]*5.5;\
-e.y-=sin(e.x*.25)*r[0][2]*5.5;\
-e.x-=sin(r[0][0]*cos(e.x*2.1)*.3)*r[0][1]*.1;\
-e.y-=cos(r[0][0]*cos(e.x*.5)*.4)*r[0][1]*.1;\
-e.z-=sin(r[0][0]*sin(e.y*.2)*.5)*r[0][1]*.1;\
+float y(vec3 e){\
+e.b-=sin(e.g*cos(e.r*.4)*.3)*r[0][2]*5.5;\
+e.r-=sin(e.b*.5)*r[0][2]*5.5;\
+e.g-=sin(e.r*.25)*r[0][2]*5.5;\
+e.r-=sin(r[0][0]*cos(e.r*2.1)*.3)*r[0][1]*.1;\
+e.g-=cos(r[0][0]*cos(e.r*.5)*.4)*r[0][1]*.1;\
+e.b-=sin(r[0][0]*sin(e.g*.2)*.5)*r[0][1]*.1;\
 return length(e)-sin(r[3][1]*25.*length(e))*r[3][2]*5.-r[3][3]-.2*sin(r[0][0]*.0);\
 }\
 void main(void) {\
-vec3 e=o.xyz;\
-float t=G(e),q=abs(sin(e.x*r[1][2]*8.)+cos(e.z*r[1][3]*8.)-sin(e.y*r[2][0]*8.));\
-m=o.a;\
-p.rgb=(vec3(.6,1.1,1.2)+vec3(.3,-.4,-.8)*length(e))*(pow(1.-m,30.)*3.+1.)+pow(abs(sin(m*100.+r[0][0])),10.)-q*r[2][1]*3.;\
-p.a=1.+q*r[2][1];\
+vec3 e=o.rgb;\
+float t=y(e),q=abs(sin(e.r*r[1][2]*8.)+cos(e.b*r[1][3]*8.)-sin(e.g*r[2][0]*8.));\
+p.rgb=(vec3(.6,1.1,1.2)-vec3(-.3,.4,.8)*length(e))*(pow(1.-o.a,30.)*3.+1.)+pow(abs(sin(o.a*100.+r[0][0])),10.)-q*r[2][1]*3.;\
 q=1.+r[1][1]*0.4-smoothstep(.0,.4,abs(t));\
-p*=q*(1.-abs(m-.5));\
-vec3 f=e*.45+12.*(r[1][0]*sin(r[0][0]*vec3(.49,.31,.37))*sin(e.zxy*vec3(7.,5.,6.))+1.-r[1][0])*(vec3(G(e+vec3(.01,.0,.0)),G(e+vec3(.0,.01,.0)),G(e+vec3(.0,.0,.01)))-t)*q*r[0][3];\
+p*=q*(1.-abs(o.a-.5));\
+p.a=o.a;\
+vec3 f=e*.45+12.*(r[1][0]*sin(r[0][0]*vec3(.49,.31,.37))*sin(e.brg*vec3(7.,5.,6.))+1.-r[1][0])*(vec3(y(e+vec3(.01,.0,.0)),y(e+vec3(.0,.01,.0)),y(e+vec3(.0,.0,.01)))-t)*q*r[0][3];\
 t=sin(r[0][0]*.15)*.5;\
-f.xz*=mat2(cos(t),sin(t),-sin(t),cos(t));\
-f.x*=.56;\
-f.x+=.25-.5*r[2][3];\
-f.y+=.25-.5*r[3][0];\
-f.z+=1.5-2.*r[2][2];\
-gl_Position=vec4(f,f.z);\
+f.rb*=mat2(cos(t),sin(t),-sin(t),cos(t));\
+f.r=f.r*.56+.25-.5*r[2][3];\
+f.g+=.25-.5*r[3][0];\
+f.b+=1.5-2.*r[2][2];\
+gl_Position=vec4(f,f.b);\
 }";
 
 // -------------------------------------------------------------------
@@ -228,35 +225,29 @@ void intro_init( void ) {
 #endif
 
     //unsigned int seed = 23690984;
-    unsigned int seed = 0;
+    //unsigned int seed = 0;
 
     // Set vertex location
     int vertex_id = 0;
-    //int color_id = 0;
-    float pp[3];
-    pp[2] = 1.0f;
+    float pz = 1.0f;
     for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
-        pp[1] = 1.0f;
+        float py = 1.0f;
         for (int y = 0; y < NUM_PARTICLES_PER_DIM; y++) {
-            pp[0] = 1.0f;
+            float px = 1.0f;
             for (int x = 0; x < NUM_PARTICLES_PER_DIM; x++) {
-                for (int dim = 0; dim < 3; dim++) {
-                    vertices_[vertex_id++] = pp[dim];// + 2.0f / (float)NUM_PARTICLES_PER_DIM * jo_frand(&seed);
-                }
-                //color_id += 3;  // ignore RGB
-                // fran
+                vertices_[vertex_id++] = px;
+                vertices_[vertex_id++] = py;
+                vertices_[vertex_id++] = pz;
                 //colors_[color_id] = jo_frand(&seed);
-                //colors_[color_id] = 0.5f + 0.5f * sinf(pp[0] * pp[1] * pp[2] * (1<<24));
-                vertices_[vertex_id] = 0.5f + 0.5f * sinf((pp[0] * pp[1] * pp[2] + pp[2]) * (1 << 24));
+                vertices_[vertex_id] = 0.5f + 0.5f * sinf((px * py * pz + pz) * (1 << 24));
                 vertices_[vertex_id] = 1.0f - vertices_[vertex_id] * vertices_[vertex_id];
                 vertex_id++;
-                pp[0] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
+                px -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
             }
-            pp[1] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
+            py -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
         }
-        pp[2] -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
+        pz -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
     }
-
 
     // Set up vertex buffer and stuff
     glGenVertexArrays(1, &vaoID); // Create our Vertex Array Object  
