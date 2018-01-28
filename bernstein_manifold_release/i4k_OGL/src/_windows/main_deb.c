@@ -16,6 +16,8 @@
 
 //----------------------------------------------------------------------------
 
+HWND hWnd;
+
 typedef struct
 {
     //---------------
@@ -91,7 +93,7 @@ const static char* glnames[NUM_GL_NAMES]={
 const static char* glnames[NUM_GL_NAMES]={
     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
     "glAttachShader", "glLinkProgram", "glUseProgram",
-    "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
+    "glGenBuffers",
     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
     "glEnableVertexAttribArray",
     "glUniformMatrix4fv",

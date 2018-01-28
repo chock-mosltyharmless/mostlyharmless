@@ -35,7 +35,7 @@ typedef HGLRC (APIENTRY *PFNWGLCREATECONTEXTATTRIBSARB)(HDC hdc,
 #ifdef SHADER_DEBUG
 #define NUM_GL_NAMES 18
 #else
-#define NUM_GL_NAMES 15
+#define NUM_GL_NAMES 13
 #endif
 
 typedef void (*GenFP)(void); // pointer to openGL functions
@@ -49,14 +49,12 @@ extern GenFP glFP[NUM_GL_NAMES]; // pointer to openGL functions
 #define glAttachShader ((PFNGLATTACHSHADERPROC)glFP[4])
 #define glLinkProgram ((PFNGLLINKPROGRAMPROC)glFP[5])
 #define glUseProgram ((PFNGLUSEPROGRAMPROC)glFP[6])
-#define glGenVertexArrays ((PFNGLGENVERTEXARRAYSPROC)glFP[7])
-#define glBindVertexArray ((PFNGLBINDVERTEXARRAYPROC)glFP[8])
-#define glGenBuffers ((PFNGLGENBUFFERSPROC)glFP[9])
-#define glBindBuffer ((PFNGLBINDBUFFERPROC)glFP[10])
-#define glBufferData ((PFNGLBUFFERDATAPROC)glFP[11])
-#define glVertexAttribPointer ((PFNGLVERTEXATTRIBPOINTERPROC)glFP[12])
-#define glEnableVertexAttribArray ((PFNGLENABLEVERTEXATTRIBARRAYPROC)glFP[13])
-#define glUniformMatrix4fv ((PFNGLUNIFORMMATRIX4FVPROC)glFP[14])
+#define glGenBuffers ((PFNGLGENBUFFERSPROC)glFP[7])
+#define glBindBuffer ((PFNGLBINDBUFFERPROC)glFP[8])
+#define glBufferData ((PFNGLBUFFERDATAPROC)glFP[9])
+#define glVertexAttribPointer ((PFNGLVERTEXATTRIBPOINTERPROC)glFP[10])
+#define glEnableVertexAttribArray ((PFNGLENABLEVERTEXATTRIBARRAYPROC)glFP[11])
+#define glUniformMatrix4fv ((PFNGLUNIFORMMATRIX4FVPROC)glFP[12])
 #ifdef SHADER_DEBUG
 #define glGetShaderiv ((PFNGLGETSHADERIVPROC)glFP[15])
 #define glGetShaderInfoLog ((PFNGLGETSHADERINFOLOGPROC)glFP[16])

@@ -105,252 +105,30 @@ gl_Position=vec4(f,f.b);\
 #define NUM_PARTICLES_PER_DIM 128
 #define TOTAL_NUM_PARTICLES (NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM)
 
-//const int kSceneTic = 4410; // Number of 1/44100 seconds per scene-time-unit?
 #define kSceneTic (2 * AUDIO_BUFFER_SIZE)
 
 // This is only used if SHADER_DEBUG is on, but I will leave it for now.
-HWND hWnd;
 #ifdef SHADER_DEBUG
+extern HWND hWnd;
 char err[4097];
 #endif
 
-static GLuint shaderProgram;
 // The vertex array and vertex buffer
-unsigned int vaoID;
-// 0 is for particle positions, 1 is for particle colors
-//unsigned int vboID;
 // And the actual vertices
-GLfloat vertices_[TOTAL_NUM_PARTICLES * 4];
-//GLfloat colors_[TOTAL_NUM_PARTICLES * 4];
+static GLfloat vertices_[TOTAL_NUM_PARTICLES * 4];
 
 // -------------------------------------------------------------------
 //                          Code:
 // -------------------------------------------------------------------
 
+#ifndef NO_INTRO_CODE
 #pragma code_seg(".intro_init")
 void intro_init( void ) {
-    // Load the script
-    // Create and link shader and stuff:
-
-    // init objects:
-    shaderProgram = glCreateProgram();
-#if 1
-    GLuint gMainParticle = glCreateShader(GL_GEOMETRY_SHADER_EXT);
-    GLuint fMainParticle = glCreateShader(GL_FRAGMENT_SHADER);
-    GLuint vMainParticle = glCreateShader(GL_VERTEX_SHADER);
-    // compile sources:
-    const char *pt = vertexMainParticle;
-    glShaderSource(vMainParticle, 1, &pt, NULL);
-    glCompileShader(vMainParticle);
-    pt = geometryMainParticle;
-    glShaderSource(gMainParticle, 1, &pt, NULL);
-    glCompileShader(gMainParticle);
-    pt = fragmentMainParticle;
-    glShaderSource(fMainParticle, 1, &pt, NULL);
-    glCompileShader(fMainParticle);
-#else
-    GLuint shaders[4];
-#define gMainParticle (shaders[0])
-#define fMainParticle (shaders[1])
-#define vMainParticle (shaders[2])
-#define vHandParticle (shaders[3])
-
-    shaders[0] = glCreateShader(GL_GEOMETRY_SHADER_EXT);
-    shaders[1] = glCreateShader(GL_FRAGMENT_SHADER);
-    shaders[2] = glCreateShader(GL_VERTEX_SHADER);
-    shaders[3] = glCreateShader(GL_VERTEX_SHADER);
-    for (int i = 0; i < 4; i++) {
-        glShaderSource(shaders[i], 1, &shader_codes[i], NULL);
-        glCompileShader(shaders[i]);
-    }
-#endif
-
-#ifdef SHADER_DEBUG
-    // Check programs
-    int tmp, tmp2;
-    glGetShaderiv(vMainParticle, GL_COMPILE_STATUS, &tmp);
-    if (!tmp)
-    {
-        glGetShaderInfoLog(vMainParticle, 4096, &tmp2, err);
-        err[tmp2]=0;
-        MessageBox(hWnd, err, "vMainParticle shader error", MB_OK);
-        return;
-    }
-    glGetShaderiv(vHandParticle, GL_COMPILE_STATUS, &tmp);
-    if (!tmp)
-    {
-        glGetShaderInfoLog(vHandParticle, 4096, &tmp2, err);
-        err[tmp2]=0;
-        MessageBox(hWnd, err, "vHandParticle shader error", MB_OK);
-        return;
-    }
-    glGetShaderiv(gMainParticle, GL_COMPILE_STATUS, &tmp);
-    if (!tmp)
-    {
-        glGetShaderInfoLog(gMainParticle, 4096, &tmp2, err);
-        err[tmp2]=0;
-        MessageBox(hWnd, err, "gMainParticle shader error", MB_OK);
-        return;
-    }
-    glGetShaderiv(fMainParticle, GL_COMPILE_STATUS, &tmp);
-    if (!tmp)
-    {
-        glGetShaderInfoLog(fMainParticle, 4096, &tmp2, err);
-        err[tmp2]=0;
-        MessageBox(hWnd, err, "fMainParticle shader error", MB_OK);
-        return;
-    }
-#endif
-
-    // link shaders:
-    glAttachShader(shaderProgram, vMainParticle);
-    glAttachShader(shaderProgram, gMainParticle);
-    glAttachShader(shaderProgram, fMainParticle);
-    glLinkProgram(shaderProgram);
-
-#ifdef SHADER_DEBUG
-    int programStatus;
-    glGetProgramiv(shaderPrograms[0], GL_LINK_STATUS, &programStatus);
-    if (programStatus == GL_FALSE)
-    {
-        MessageBox(hWnd, "Could not link program", "Shader 0 error", MB_OK);
-        return;
-    }
-    glGetProgramiv(shaderPrograms[1], GL_LINK_STATUS, &programStatus);
-    if (programStatus == GL_FALSE)
-    {
-        MessageBox(hWnd, "Could not link program", "Shader 1 error", MB_OK);
-        return;
-    }
-#endif
-
-    //unsigned int seed = 23690984;
-    //unsigned int seed = 0;
-
-    // Set vertex location
-    int vertex_id = 0;
-    float pz = 1.0f;
-    for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
-        float py = 1.0f;
-        for (int y = 0; y < NUM_PARTICLES_PER_DIM; y++) {
-            float px = 1.0f;
-            for (int x = 0; x < NUM_PARTICLES_PER_DIM; x++) {
-                vertices_[vertex_id++] = px;
-                vertices_[vertex_id++] = py;
-                vertices_[vertex_id++] = pz;
-                //colors_[color_id] = jo_frand(&seed);
-                vertices_[vertex_id] = 0.5f + 0.5f * sinf((px * py * pz + pz) * (1 << 24));
-                vertices_[vertex_id] = 1.0f - vertices_[vertex_id] * vertices_[vertex_id];
-                vertex_id++;
-                px -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
-            }
-            py -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
-        }
-        pz -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
-    }
-
-    // Set up vertex buffer and stuff
-    glGenVertexArrays(1, &vaoID); // Create our Vertex Array Object  
-    glBindVertexArray(vaoID); // Bind our Vertex Array Object so we can use it  
-
-    int maxAttrt;
-    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxAttrt);
-
-    int vboID;
-    glGenBuffers(1, &vboID); // Generate our Vertex Buffer Object  
-
-                            // Vertex array position data
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vboID); // Bind our Vertex Buffer Object  
-    glBufferData(GL_ARRAY_BUFFER, TOTAL_NUM_PARTICLES * 4 * sizeof(GLfloat),
-        vertices_, GL_STATIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
-    glVertexAttribPointer(0, // attribute
-        4, // size
-        GL_FLOAT, // type
-        GL_FALSE, // normalized?
-        0, // stride
-        (void*)0); // array buffer offset
-
-#if 0
-                   // Vertex array color data
-                   // change to GL_STATIC_DRAW and single update for speed.
-                   // Move the GenerateParticles copy operation to here.
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, vboID[1]); // Bind our Vertex Buffer Object  
-    glBufferData(GL_ARRAY_BUFFER, TOTAL_NUM_PARTICLES * 4 * sizeof(GLfloat),
-        colors_, GL_STATIC_DRAW); // Set the size and data of our VBO and set it to STATIC_DRAW  
-    glVertexAttribPointer(1, // attribute
-        4, // size
-        GL_FLOAT, // type
-        GL_FALSE, // normalized?
-        0, // stride
-        (void*)0); // array buffer offset
-#endif
-
-#ifdef SHADER_DEBUG
-                   // Get all the errors:
-    GLenum errorValue = glGetError();
-    if (errorValue != GL_NO_ERROR)
-    {
-        char *errorString = (char *)gluErrorString(errorValue);
-        MessageBox(hWnd, errorString, "Init error", MB_OK);
-        return;
-    }
-#endif
+#include "intro_init.c"
 }
 
 #pragma code_seg(".intro_do")
-void intro_do( long itime )
-{
-    //static int lastTime = 0;
-    //static int timeDiff = 0;
-
-    // Find the scene in the script
-    int scene_id = 0;
-    int start_time = 0;
-    while (start_time + (int)(script_duration_[scene_id]) * kSceneTic < itime) {
-        start_time += (int)(script_duration_[scene_id]) * kSceneTic;
-        scene_id++;
-    }
-
-#if 0
-    // smooth the time
-    timeDiff = (100 * timeDiff + (itime - lastTime) * 28) / 128;
-    itime = lastTime + timeDiff;
-    lastTime = itime;
-#else
-    itime -= start_time;
-#endif
-
-    //glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Set the render matrix
-    float parameterMatrix[4][4];
-
-    // Set parameters to other locations, using seed stuff
-    unsigned int start_seed = script_seed_[scene_id]; 
-    unsigned int seed = start_seed;
-    for (int i = 1; i < 16; i++) {
-        parameterMatrix[0][i] = jo_frand(&seed);
-    }
-
-    parameterMatrix[0][0] = itime / 32768.0f;
-    parameterMatrix[2][2] += (itime) / 1048576.0f * script_move_[scene_id];
-
-    //int location = glGetUniformLocation(shaderProgram, "r");
-    glUniformMatrix4fv(0/*location*/, 1, GL_FALSE, &(parameterMatrix[0][0]));
-    // render
-    //glDisable( GL_CULL_FACE );
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
-    // set the viewport (not neccessary?)
-    //glGetIntegerv(GL_VIEWPORT, viewport);
-    //glViewport(0, 0, XRES, YRES);
-
-    // Set program 1 on seed == 0
-    glUseProgram(shaderProgram);
-
-    glDrawArrays(GL_POINTS, 0, TOTAL_NUM_PARTICLES);
+void intro_do( long itime ) {
+#include "intro_do.c"
 }
+#endif

@@ -10,6 +10,7 @@
 #include "../mzk.h"
 #include "../config.h"
 
+#define NO_INTRO_CODE
 #include "../intro.c"
 #include "../mzk.c"
 
@@ -89,7 +90,7 @@ const static char* glnames[NUM_GL_NAMES]={
 const static char glnames[NUM_GL_NAMES][MAX_GLNAME_LEN]={
     "glCreateShader", "glCreateProgram", "glShaderSource", "glCompileShader", 
     "glAttachShader", "glLinkProgram", "glUseProgram",
-    "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
+    "glGenBuffers",
     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
     "glEnableVertexAttribArray",
     "glUniformMatrix4fv",
@@ -106,7 +107,9 @@ DWORD WINAPI thread_func(LPVOID lpParameter)
             != WAVERR_STILLPLAYING)
         {
 #ifdef USEDSOUND
-            mzk_prepare_block(myMuzikBlock[nextPlayBlock]);
+            //mzk_prepare_block(myMuzikBlock[nextPlayBlock]);
+            short *blockBuffer = myMuzikBlock[nextPlayBlock];
+#include "../mzk_do.c"
 #endif
             waveOutPrepareHeader(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
             waveOutWrite(hWaveOut, &(header[nextPlayBlock]), sizeof(WAVEHDR));
@@ -144,10 +147,12 @@ void entrypoint( void )
     wglMakeCurrent(hDC, hRC);
     for (i = 0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
     // create music block
-    mzk_init();
+    //mzk_init();
+#include "../mzk_init.c"
 
 	// init intro
-	intro_init();
+    // intro_init();
+#include "../intro_init.c"
 
 #ifdef USEDSOUND
     // open audio device
@@ -177,7 +182,8 @@ void entrypoint( void )
         t = t - to;//-150;
         itime = t * 441 / 10;
 
-        intro_do(itime);
+        //intro_do(itime);
+#include "../intro_do.c"
         //SwapBuffers ( hDC );   
         wglSwapLayerBuffers( hDC, WGL_SWAP_MAIN_PLANE );
 	} while ( !(GetAsyncKeyState(VK_ESCAPE) || GetAsyncKeyState(VK_F4)) && itime<(MZK_DURATION*AUDIO_BUFFER_SIZE) );
