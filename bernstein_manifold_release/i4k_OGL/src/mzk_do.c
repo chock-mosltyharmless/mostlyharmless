@@ -1,6 +1,5 @@
 // clear audio block
-for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
-{
+for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++) {
     // Stereo! --> 2 values
     floatOutput[0][sample] = 0;
 }
@@ -15,7 +14,8 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     // Volume?
     // Get parameters locally
     float vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
-    float panning = float_instrument_parameters_[instrument][K_MASTER_PANNING];
+    //float panning = float_instrument_parameters_[instrument][K_MASTER_PANNING];
+    float panning = 0.125f + instrument * (1.0f / 24.0f);
     float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] * (1.0f / 1024.0f);
 
     // Check if we go to next note

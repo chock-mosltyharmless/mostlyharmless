@@ -5,7 +5,7 @@ while (start_time + (int)(script_duration_[scene_id]) * kSceneTic < itime) {
     start_time += (int)(script_duration_[scene_id]) * kSceneTic;
     scene_id++;
 }
-itime -= start_time;
+int sitime = itime - start_time;
 
 glClear(GL_COLOR_BUFFER_BIT);
 
@@ -19,8 +19,8 @@ for (int i = 1; i < 16; i++) {
     parameterMatrix[0][i] = jo_frand(&seed);
 }
 
-parameterMatrix[0][0] = itime * (1.0f / 32768.0f);
-parameterMatrix[2][2] += (itime) * (1.0f / 1048576.0f) * script_move_[scene_id];
+parameterMatrix[0][0] = sitime * (1.0f / 32768.0f);
+parameterMatrix[2][2] += (sitime) * (1.0f / 1048576.0f) * script_move_[scene_id];
 
 glUniformMatrix4fv(0, 1, GL_FALSE, &(parameterMatrix[0][0]));
 // render
