@@ -4,7 +4,7 @@ for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++) {
     floatOutput[0][sample] = 0;
 }
 
-//int on[18] = {0,0,1,0,1,1,0,0,1,1,1,1,1,1,1,1,1,1};
+//int on[18] = {1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
 for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 {
@@ -103,7 +103,7 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 
         // Ring modulation with noise
         float cur_vol = vol * adsrData[instrument][adsrVolume] * deathVolume * i_midi_volume_[instrument] * (1.0f / 128.0f);
-        float distortMult = (float)exp2jo(8.0f*adsrData[instrument][adsrDistort]);
+        float distortMult = (float)exp2jo(8.0f*adsrData[instrument][adsrDistort]) + 8.0f;
         float current_pan = panning;
         for (int i = 0; i < 2; i++) {
             float output = outAmplitude * current_pan;
