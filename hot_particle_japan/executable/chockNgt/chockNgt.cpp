@@ -51,6 +51,7 @@ float last_red_flash = -10.0f;
 
 float subtitle_start_time_ = -100.0f;
 float subtitle_end_time_ = -90.0f;
+float sign_brightness_ = 0.75f;
 const char *subtitle_script_ = "example_script.txt";
 
 bool mod_key_ = false;
@@ -306,87 +307,106 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 // It has ended, start a new one
                 audio_.StopSound(0, 36.0f, error_string);
                 end_current_scene_ = false;
+                const float dark = 0.8f;
+                const float very_dark = 0.75f;
+                const float bright = 1.0f;
                 switch(next_scene_id_) {
                 case 0:
                     prolog_.ToBeginning();
                     scene_to_show_ = PROLOG;
+                    sign_brightness_ = dark;
                     break;
                 case 1:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(MAERZ_11);
+                    sign_brightness_ = dark;
                     break;
                 case 2:
                     karaoke_.ToBeginning();
                     scene_to_show_ = KARAOKE;
                     karaoke_.StartScene(TRENNUNG);
+                    sign_brightness_ = dark;
                     break;
                 case 3:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(APRIL_09);
+                    sign_brightness_ = dark;
                     break;
                 case 4: // deleted scene
                 case 5:  // Bahnhof
                     karaoke_.ToBeginning();
                     scene_to_show_ = KARAOKE;
                     karaoke_.StartScene(BAHNHOF_BAR);
+                    sign_brightness_ = dark;
                     break;
                 case 6:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(APRIL_17);
+                    sign_brightness_ = dark;
                     break;
                 case 7:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(APRIL_21);
+                    sign_brightness_ = bright;
                     break;
                 case 8:
                     car_.ToBeginning();
                     scene_to_show_ = CAR;
                     car_.StartScene(BEGRUSSUNG);
+                    sign_brightness_ = very_dark;
                     break;
                 case 9:
                     car_.ToBeginning();
                     scene_to_show_ = CAR;
                     car_.StartScene(TOMOBE);
+                    sign_brightness_ = very_dark;
                     break;
                 case 10:
                     car_.ToBeginning();
                     scene_to_show_ = CAR;
                     car_.StartScene(SIEVERT);
+                    sign_brightness_ = very_dark;
                     break;
                 case 11:  // deleted scene
                 case 12:
                     car_.ToBeginning();
                     scene_to_show_ = CAR;
                     car_.StartScene(TAMURA);
+                    sign_brightness_ = bright;
                     break;
                 case 13:
                     car_.ToBeginning();
                     scene_to_show_ = CAR;
                     car_.StartScene(KATSURAO13);
+                    sign_brightness_ = bright;
                     break;
                 case 14:
                     car_.ToBeginning();
                     scene_to_show_ = CAR;
                     car_.StartScene(KATSURAO14);
+                    sign_brightness_ = bright;
                     break;
                 case 15:  // Minamisoma is smartphones only
                     smartphones_.ToBeginning();
                     smartphones_.StartScene(SM_MINAMISOMA);
                     scene_to_show_ = SMARTPHONES;
+                    sign_brightness_ = bright;
                     break;
                 case 16:
                     car_.ToBeginning();
                     scene_to_show_ = CAR;
                     car_.StartScene(ABSCHIED);
+                    sign_brightness_ = very_dark;
                     break;
                 case 17:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(MAI_10);
+                    sign_brightness_ = dark;
                     break;
                 case 18: // deleted scene
                 case 19: // deleted scene
@@ -394,56 +414,67 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(JUNI_05);
+                    sign_brightness_ = bright;
                     break;
                 case 21:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(JUNI_12);
+                    sign_brightness_ = dark;
                     break;
                 case 22:
                     karaoke_.ToBeginning();
                     scene_to_show_ = KARAOKE;
                     karaoke_.StartScene(MITARBEITER);
+                    sign_brightness_ = dark;
                     break;
                 case 23: // deleted scene
                     //karaoke_.ToBeginning();
                     //scene_to_show_ = KARAOKE;
                     //karaoke_.StartScene(SEKUHARA);
+                    sign_brightness_ = dark;
                     break;
                 case 24:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(JULI_29);
+                    sign_brightness_ = dark;
                     break;
                 case 25:  // CAFE
                     cafe_.ToBeginning();
                     scene_to_show_ = CAFE;
                     cafe_.StartScene(0);
+                    sign_brightness_ = bright;
                     break;
                 case 26:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(AUGUST_15);
+                    sign_brightness_ = dark;
                     break;
                 case 27:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(PROBERAUM);
+                    sign_brightness_ = dark;
                     break;
                 case 28:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(MAERZ_11_END);
+                    sign_brightness_ = dark;
                     break;
                 case 29:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(UNKNOWN);
+                    sign_brightness_ = dark;
                     break;
                 case 30:
                     zimmer_.ToBeginning();
                     scene_to_show_ = ZIMMER;
                     zimmer_.StartScene(FINAL_ROOM);
+                    sign_brightness_ = dark;
                     break;
                 default:
                     break;  // Ignore that scene, it's not implemented
@@ -564,7 +595,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
         float text_start_x, text_start_y, text_width, text_height;
         Sign::Draw(subtitle_time, &textureManager, &text_start_x, &text_start_y,
-                   &text_width, &text_height);
+                   &text_width, &text_height, sign_brightness_);
         const float kMaxCharactersPerLine = 20;
         text_renderer_.RenderText(text_start_x, text_start_y, text_width, text_height,
                                     subtitle_script_,

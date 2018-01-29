@@ -13,7 +13,7 @@ Sign::~Sign() {
 
 void Sign::Draw(float time, TextureManager * texture_manager,
                 float *text_start_x, float *text_start_y,
-                float *text_width, float *text_height) {
+                float *text_width, float *text_height, float brightness) {
     GLuint tex_id;
     char error_string[MAX_ERROR_LENGTH + 1];
     
@@ -47,11 +47,12 @@ void Sign::Draw(float time, TextureManager * texture_manager,
 
     texture_manager->getTextureID(SIGN_TEXTURE, &tex_id, error_string);
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(xpos, xpos + width, ypos, ypos - height, 1.0f);
-    
+    DrawQuadColor(xpos, xpos + width, ypos, ypos - height,
+            brightness, brightness, brightness, 1.0f);
+
     texture_manager->getTextureID(STRINGS_TEXTURE, &tex_id, error_string);
     glBindTexture(GL_TEXTURE_2D, tex_id);
-    DrawQuad(xpos-0.006f, xpos + width-0.007f, ypos - 0.055f * rotate_stretch, ypos + 0.2f, 1.0f);
+    DrawQuad(xpos-0.006f, xpos + width-0.007f, ypos - 0.055f * rotate_stretch, ypos + 0.2f, 1.0f);                  
 
     *text_start_y = ypos - 0.04f * rotate_stretch;
     *text_width = 0.045f;
