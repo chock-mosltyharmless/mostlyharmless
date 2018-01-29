@@ -55,6 +55,7 @@ public:
         case BEGRUSSUNG:
             audio_.PlaySound("Begrussung_N1Y1R3.wav", 0, false, -1, error_string);
             subtitle_start_time_ = last_call_time_;
+            subtitle_delay_ = 1.0f;
             subtitle_script_ = "Begrussung_N1Y1R3.txt";
             break;
         case TOMOBE:
@@ -64,29 +65,34 @@ public:
             audio_.PlaySound("Sievert_N1Y1R1.wav", 0, false, -1, error_string);
             audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
             subtitle_start_time_ = last_call_time_;
+            subtitle_delay_ = 3.5f;
             subtitle_script_ = "Sievert_N1Y1R1.txt";
             break;
         case TAMURA:
             audio_.PlaySound("Tamura_N3Y1R1.wav", 0, false, -1, error_string);
             subtitle_start_time_ = last_call_time_;
+            subtitle_delay_ = 27.0f;
             subtitle_script_ = "Tamura_N3Y1R1.txt";
             break;
         case KATSURAO13:
             audio_.PlaySound("13Katsurao_N1Y3R3.wav", 0, false, -1, error_string);
             audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
             subtitle_start_time_ = last_call_time_;
+            subtitle_delay_ = 9.0f;
             subtitle_script_ = "13Katsurao_N1Y3R3.txt";
             break;
         case KATSURAO14:
             audio_.PlaySound("14Katsurao_N1Y4R1.wav", 0, false, -1, error_string);
             audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
             subtitle_start_time_ = last_call_time_;
+            subtitle_delay_ = 2.0f;
             subtitle_script_ = "14Katsurao_N1Y4R1.txt";
             break;
         case ABSCHIED:
             audio_.PlaySound("Abschied_N1Y1R2.wav", 0, false, -1, error_string);
             subtitle_start_time_ = last_call_time_;
             subtitle_script_ = "Abschied_N1Y1R2.txt";
+            subtitle_delay_ = 1.0f;
             break;
         default:  // This is a bug
             audio_.StopSound(0, 36.0f, error_string);

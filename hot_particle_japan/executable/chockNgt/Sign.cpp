@@ -25,7 +25,7 @@ void Sign::Draw(float time, TextureManager * texture_manager,
     *text_start_x = xpos + 0.05f;
 
     float rotate_stretch = 1.0f;
-    if (time > 0.0f) {
+    if (time >= 0.0f) {
         ypos = 1.01f - time * 0.3f;
         if (ypos < 0.95f) ypos = 0.95f;
         float swing_amount = 0.0f;

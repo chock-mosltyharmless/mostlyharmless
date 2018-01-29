@@ -16,6 +16,7 @@ extern Smartphones smartphones_;
 
 extern float subtitle_start_time_;
 extern float subtitle_end_time_;
+extern float subtitle_delay_;
 extern const char *subtitle_script_;
 
 void DrawQuadColor(float startX, float endX, float startY, float endY,

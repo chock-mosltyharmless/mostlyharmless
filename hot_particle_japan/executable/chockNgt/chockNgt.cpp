@@ -51,6 +51,7 @@ float last_red_flash = -10.0f;
 
 float subtitle_start_time_ = -100.0f;
 float subtitle_end_time_ = -90.0f;
+float subtitle_delay_ = 0.0f;
 float sign_brightness_ = 0.75f;
 const char *subtitle_script_ = "example_script.txt";
 
@@ -589,7 +590,8 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
         float subtitle_time = 0.0f;
         if (subtitle_start_time_ > subtitle_end_time_) {
-            subtitle_time = fCurTime - subtitle_start_time_;
+            subtitle_time = fCurTime - subtitle_start_time_ - subtitle_delay_;
+            if (subtitle_time < 0.0f) subtitle_time = 0.0f;
         } else {
             subtitle_time = subtitle_end_time_ - fCurTime;
         }

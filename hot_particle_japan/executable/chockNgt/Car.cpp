@@ -212,6 +212,7 @@ int Car::Draw(float time) {
                 has_white_fade_ = false;
                 audio_.PlaySound("Wohin_N6Y6R5.wav", 0, false, -1, error_string);
                 subtitle_start_time_ = time;
+                subtitle_delay_ = 1.0f;
                 subtitle_script_ = "Wohin_N6Y6R5.txt";
                 break;
             case KUHE:
@@ -225,6 +226,7 @@ int Car::Draw(float time) {
                 has_white_fade_ = false;
                 audio_.PlaySound("Zahnarzt_N1Y1R2.wav", 0, false, -1, error_string);
                 subtitle_start_time_ = time;
+                subtitle_delay_ = 17.0f;
                 subtitle_script_ = "Zahnarzt_N1Y1R2.txt";
                 break;
             case POLIZEI:  // Probably not used due to GPS
@@ -233,6 +235,7 @@ int Car::Draw(float time) {
                 has_white_fade_ = false;
                 audio_.PlaySound("Polizei_Y5R5.wav", 0, false, -1, error_string);
                 subtitle_start_time_ = time;
+                subtitle_delay_ = 1.5f;
                 subtitle_script_ = "Polizei_Y5R5.txt";
                 break;
             case END_IT:
@@ -623,6 +626,7 @@ int Car::Draw(float time) {
                     audio_.PlaySound("Zahnarzt_N1Y1R2.wav", 0, false, -1, error_string);
                     audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);
                     subtitle_start_time_ = time;
+                    subtitle_delay_ = 17.0f;
                     subtitle_script_ = "Zahnarzt_N1Y1R2.txt";
                     break;
                 }
@@ -644,6 +648,7 @@ int Car::Draw(float time) {
                     current_panya_id_ = -1;
                     audio_.PlaySound("Polizei_Y5R5.wav", 0, false, -1, error_string);
                     subtitle_start_time_ = time;
+                    subtitle_delay_ = 1.5f;
                     subtitle_script_ = "Polizei_Y5R5.txt";
                     // Audio was already there, no fade-in necesary.
                     //audio_.PlaySound("fahrt.wav", 2, true, 24.0f, error_string, FAHRT_SOUND_VOLUME);

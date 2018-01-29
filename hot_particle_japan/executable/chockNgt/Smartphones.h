@@ -40,11 +40,13 @@ public:
             TakeNextPicture();
             audio_.PlaySound("Kuhe_N4Y3R4.wav", 0, false, -1, error_string);
             subtitle_start_time_ = last_call_time_;
+            subtitle_delay_ = 4.0f;
             subtitle_script_ = "Kuhe_N4Y3R4.txt";
             break;
         case SM_MINAMISOMA:
             audio_.PlaySound("Minamisoma.wav", 0, false, -1, error_string);
             subtitle_start_time_ = last_call_time_;
+            subtitle_delay_ = 7.0f;
             subtitle_script_ = "Minamisoma.txt";
             break;
         default:  // This is a bug
