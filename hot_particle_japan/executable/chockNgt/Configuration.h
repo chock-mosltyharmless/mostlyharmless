@@ -9,7 +9,8 @@
 #define XRES 1024
 #define YRES 768
 
-#define ASPECT_RATIO (((float)XRES) / ((float)YRES))
+//#define ASPECT_RATIO (((float)XRES) / ((float)YRES))
+#define ASPECT_RATIO (4.0f / 3.0f)
 
 // The resolution of the background stuff
 //#define X_OFFSCREEN 512

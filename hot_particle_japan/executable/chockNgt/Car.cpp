@@ -358,7 +358,8 @@ int Car::Draw(float time) {
         brightness = 1.0f;
         break;
     }
-    glClearColor(brightness, brightness, brightness, 1.0f);
+    //glClearColor(brightness, brightness, brightness, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     // Driver Video (always do it?)
@@ -469,6 +470,7 @@ int Car::Draw(float time) {
     glBindTexture(GL_TEXTURE_2D, tex_id);
     DrawQuad(-1.0f, 1.0f, 1.0f, -1.0f, 1.0f);
 
+
     // Panya backdrop
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
@@ -487,7 +489,8 @@ int Car::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(-0.686f - 0.45f, -0.475f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.4f);
+        //DrawQuad(-0.686f - 0.45f, -0.475f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.4f);
+        DrawQuad(-0.686f - 0.225f, -0.475f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.25f, 1.0f, 0.0f, 1.0f, 0.4f);
         //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     }
@@ -545,7 +548,8 @@ int Car::Draw(float time) {
             return -1;
         }
         glBindTexture(GL_TEXTURE_2D, tex_id);
-        DrawQuad(0.475f - 0.45f, 0.686f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.4f * (1.0f - large_alpha));
+        //DrawQuad(0.475f - 0.45f, 0.686f + 0.45f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.4f * (1.0f - large_alpha));
+        DrawQuad(0.475f - 0.45f, 0.686f + 0.225f, -0.142f + 0.6f, -0.5118f - 0.6f, 0.0f, 0.75f, 0.0f, 1.0f, 0.4f * (1.0f - large_alpha));
         //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);  // Use pre-multiplied alpha
     }
@@ -581,6 +585,7 @@ int Car::Draw(float time) {
         last_video_time < kPanyaStartTimes[scene_][current_panya_id_ + 1]) {
         NextPanya();
     }
+
 
     // Fade to white
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

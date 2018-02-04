@@ -223,12 +223,14 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
     char error_string[MAX_ERROR_LENGTH+1];
 
-    const float kTransformationMatrix[4][4] = {
+    float kTransformationMatrix[4][4] = {
         {1.2f, 0.0f, 0.0f, 0.0f},
         {0.0f, 1.0f, 0.0f, 0.0f},
         {0.0f, 0.0f, 1.0f, 0.0f},
         {0.0f, 0.0f, 0.0f, 1.0f},
     };
+    kTransformationMatrix[0][0] = (float)Y_OFFSCREEN / (float)X_OFFSCREEN * 16.0f / 9.0f;
+    if (kTransformationMatrix[0][0] > 1.2f) kTransformationMatrix[0][0] = 1.2f;
 
 	do
     {
@@ -309,7 +311,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                 audio_.StopSound(0, 36.0f, error_string);
                 end_current_scene_ = false;
                 const float dark = 0.8f;
-                const float very_dark = 0.75f;
+                const float very_dark = 0.65f;
                 const float bright = 1.0f;
                 switch(next_scene_id_) {
                 case 0:
@@ -598,8 +600,10 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         float text_start_x, text_start_y, text_width, text_height;
         Sign::Draw(subtitle_time, &textureManager, &text_start_x, &text_start_y,
                    &text_width, &text_height, sign_brightness_);
-        const float kMaxCharactersPerLine = 20;
-        text_renderer_.RenderText(text_start_x, text_start_y, text_width, text_height,
+        // Due to some aspect ratio confustions, I divide width by 1.2 and get 20% more letters.
+        // There is currently no clean solution.
+        const float kMaxCharactersPerLine = 24;
+        text_renderer_.RenderText(text_start_x, text_start_y, text_width / 1.2f, text_height,
                                     subtitle_script_,
                                     fCurTime - subtitle_start_time_, &textureManager,
                                     kMaxCharactersPerLine);
@@ -644,7 +648,13 @@ void EndCurrentScene(bool switch_to_next_scene) {
     music_is_playing = false;
     noise_is_playing = false;
     if (subtitle_start_time_ > subtitle_end_time_) {
-        subtitle_end_time_ = fCurTime;
+        if (fCurTime - subtitle_start_time_ < subtitle_delay_) {
+            // Sign hasn't come down yet -> put ending to the past
+            subtitle_start_time_ = fCurTime - 200.0f;
+            subtitle_end_time_ = fCurTime - 100.0f;
+        } else {
+            subtitle_end_time_ = fCurTime;
+        }
     }
 }
 
