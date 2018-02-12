@@ -15,7 +15,7 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     // Get parameters locally
     float vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
     //float panning = float_instrument_parameters_[instrument][K_MASTER_PANNING];
-    float panning = 0.125f + instrument * (1.0f / 24.0f);
+    float panning = 0.785f - instrument * (1.0f / 24.0f);
     float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] * (1.0f / 1024.0f);
 
     // Check if we go to next note
