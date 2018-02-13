@@ -55,6 +55,9 @@ float subtitle_delay_ = 0.0f;
 float sign_brightness_ = 0.75f;
 const char *subtitle_script_ = "example_script.txt";
 
+// Last time that "X" or LEFT was pressed
+float last_music_change_time = -1000.0f;
+
 bool mod_key_ = false;
 // Used to avoid double-pressing the same key
 float last_key_press_time_[65536] = { 0.0f };
@@ -948,15 +951,18 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 break;
             case VK_LEFT:
             case 'X':
-                if (!music_is_playing) {
-                    audio_.PlaySound("musik_bearb.wav", 5, false, -1, error_string,0.4F);
-                    audio_.StopSound(3, 18.0f, error_string);
-                    noise_is_playing = false;
-                    music_is_playing = true;
-                }
-                else {
-                    audio_.StopSound(5, 18.0f, error_string);
-                    music_is_playing = false;
+                if (fCurTime - last_music_change_time > 3.0f) {
+                    if (!music_is_playing) {
+                        audio_.PlaySound("musik_bearb.wav", 5, false, -1, error_string,0.4F);
+                        audio_.StopSound(3, 18.0f, error_string);
+                        noise_is_playing = false;
+                        music_is_playing = true;
+                    }
+                    else {
+                        audio_.StopSound(5, 18.0f, error_string);
+                        music_is_playing = false;
+                    }
+                    last_music_change_time = fCurTime;
                 }
                 break;
             case VK_RIGHT: // see also "H"

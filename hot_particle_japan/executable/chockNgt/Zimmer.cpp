@@ -553,15 +553,17 @@ void Zimmer::StartKenchiro(void) {
         }
         break;
     case AUGUST_15:
-    case MAERZ_11_END:
         audio_.PlaySound("S27_schwimmen03_nr_nomisa_skip14_25.wav", 0, false, -1, error_string);
         music_stopper_ = 1.2f;
-        kenchiro_id_ = 3;  // MAERZ_11_END,
+        kenchiro_id_ = 3;  // MAERZ_11_END ???
         kenchiro_start_time_ = last_call_time_;
         draw_kenchiro_ = true;
         subtitle_start_time_ = last_call_time_;
         subtitle_delay_ = 0.5f;
         subtitle_script_ = "S27_schwimmen03_nr_nomisa_skip14.txt";
+        break;
+    case MAERZ_11_END:
+        // No Kenchiro in this scene?
         break;
     case UNKNOWN:
     case FINAL_ROOM:

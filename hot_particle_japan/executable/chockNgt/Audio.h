@@ -10,7 +10,7 @@
 #define AU_DIRECTORY "waves/"
 // Note that practically no audio files are supported
 #define AU_WAVE_WILDCARD "*.wav"
-#define AU_SAMPLING_RATE 48000
+#define AU_SAMPLING_RATE 32000
 #define AU_NUM_CHANNELS 6
 #define AU_MAX_NUM_WAVES 128
 #define AU_MAX_FILENAME_LENGTH 1024
