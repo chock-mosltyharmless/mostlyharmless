@@ -44,7 +44,7 @@ static float freqtab[kNumFrequencies];
 static float float_instrument_parameters_[NUM_INSTRUMENTS][NUM_INSTRUMENT_PARAMETERS];
 
 static float lowNoise[RANDOM_BUFFER_SIZE];
-static int currentNoteIndex[NUM_INSTRUMENTS];
+//static int currentNoteIndex[NUM_INSTRUMENTS];
 static int currentNote[NUM_INSTRUMENTS];
 static float fPhase[NUM_INSTRUMENTS]; // Phase of the instrument
 

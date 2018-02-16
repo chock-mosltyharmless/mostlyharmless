@@ -25,3 +25,12 @@ for (int inst = 0; inst < NUM_INSTRUMENTS; inst++) {
     // Delta-uncompress note locations
     savedNotePos[inst + 1] += savedNotePos[inst];
 }
+
+// Convert byte note time to short note time
+unsigned char *read = savedNoteTime___;
+signed short *write = savedNoteTime__;
+while (*read != 254) {
+    *write += *read;
+    if (*read < 255) *write++;
+    read++;
+}

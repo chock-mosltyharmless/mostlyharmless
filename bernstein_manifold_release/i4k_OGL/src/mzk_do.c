@@ -19,8 +19,8 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] * (1.0f / 1024.0f);
 
     // Check if we go to next note
-    if (savedNoteTime__[note_pos + currentNoteIndex[instrument]] == 0) {
-        if (savedNote__[note_pos + currentNoteIndex[instrument]] != -128) {
+    if (savedNoteTime__[note_pos /*+ currentNoteIndex[instrument]*/] == 0) {
+        if (savedNote__[note_pos /*+ currentNoteIndex[instrument]*/] != -128) {
             // Key on
             iADSR[instrument] = 0; // attack
             fADSRVal[instrument] = 0.0f; // starting up
@@ -30,8 +30,8 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
             }
 
             // Apply delta-note
-            currentNote[instrument] += savedNote__[note_pos + currentNoteIndex[instrument]];
-            i_midi_volume_[instrument] += savedVelocity__[currentNoteIndex[instrument] + velocityPos[instrument]];
+            currentNote[instrument] += savedNote__[note_pos /*+ currentNoteIndex[instrument]*/];
+            i_midi_volume_[instrument] += savedVelocity__[/*currentNoteIndex[instrument] +*/ velocityPos[instrument]];
 
             // Set the oscillator phases to zero
             fPhase[instrument] = 0.f;
@@ -44,14 +44,16 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
         invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] * (1.0f / 1024.0f);
 
         // Go to next note location
-        currentNoteIndex[instrument]++;
+        //currentNoteIndex[instrument]++;
+        velocityPos[instrument]++;
+        note_pos++;
     }
-    savedNoteTime__[note_pos + currentNoteIndex[instrument]]--;
+    savedNoteTime__[note_pos /*+ currentNoteIndex[instrument]*/]--;
 
     // ignore everything before the first note
-    if (currentNoteIndex[instrument] == 0) {
-        continue;
-    }
+    //if (currentNoteIndex[instrument] == 0) {
+    //    continue;
+    //}
 
     if (float_instrument_parameters_[instrument][K_VOLUME + iADSR[instrument] + 1] < (1.0f / 1024.0f) &&
         adsrData[instrument][adsrVolume] < (1.0f / 1024.0f)) continue;
@@ -79,9 +81,9 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
             adsrData[instrument][i] += (float_instrument_parameters_[instrument][i * 4 + iADSR[instrument] + 1] - adsrData[instrument][i]) * invADSRSpeed;
         }
 
-        if (savedNoteTime__[note_pos + currentNoteIndex[instrument]] == 0 &&
+        if (savedNoteTime__[note_pos /*+ currentNoteIndex[instrument]*/] == 0 &&
             sample >= MZK_BLOCK_SIZE - 1024 &&
-            savedNote__[note_pos + currentNoteIndex[instrument]] != -128) {
+            savedNote__[note_pos /*+ currentNoteIndex[instrument]*/] != -128) {
             deathVolume = (MZK_BLOCK_SIZE - sample) * (1.0f / 1024.0f);
         }
 
@@ -119,6 +121,7 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
         }
     }
     fPhase[instrument] = base_phase;
+    savedNotePos[instrument] = note_pos;
 }
 
 // Copy to int output
