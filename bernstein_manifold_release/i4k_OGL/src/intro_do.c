@@ -13,10 +13,10 @@ glClear(GL_COLOR_BUFFER_BIT);
 float parameterMatrix[4][4];
 
 // Set parameters to other locations, using seed stuff
-unsigned int start_seed = script_seed_[scene_id];
-unsigned int seed = start_seed;
+//unsigned int start_seed = script_seed_[scene_id];
+jo_frand_seed_ = script_seed_[scene_id];
 for (int i = 1; i < 16; i++) {
-    parameterMatrix[0][i] = jo_frand(&seed);
+    parameterMatrix[0][i] = JoFrand();
 }
 
 parameterMatrix[0][0] = sitime * (1.0f / 32768.0f);

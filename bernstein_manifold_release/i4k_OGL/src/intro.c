@@ -49,7 +49,7 @@ q=.001/q;\
 q=pow(q,2.)*smoothstep(q,.0,p[0].a)/q;\
 if (q>.01){\
 o=q*p[0];\
-o.a=0.12*q;\
+o.a=.12*q;\
 u=vec2(-1.,1.);\
 gl_Position=e+vec4(w*u,.0,.0);\
 EmitVertex();\
@@ -60,7 +60,7 @@ u=vec2(-1.,-1.);\
 gl_Position=e+vec4(w*u,.0,.0);\
 EmitVertex();\
 u=vec2(1.,-1.);\
-gl_Position=e+vec4(w*u,0.,0.);\
+gl_Position=e+vec4(w*u,.0,.0);\
 EmitVertex();\
 }\
 EndPrimitive();\
@@ -86,7 +86,7 @@ void main(void) {\
 vec3 e=o.rgb;\
 float t=y(e),q=abs(sin(e.r*r[1][2]*8.)+cos(e.b*r[1][3]*8.)-sin(e.g*r[2][0]*8.));\
 p.rgb=(vec3(.6,1.1,1.2)-vec3(-.3,.4,.8)*length(e))*(pow(1.-o.a,30.)*3.+1.)+pow(abs(sin(o.a*100.+r[0][0])),10.)-q*r[2][1]*3.;\
-q=1.+r[1][1]*0.4-smoothstep(.0,.4,abs(t));\
+q=1.+r[1][1]*.4-smoothstep(.0,.4,abs(t));\
 p*=q*(1.-abs(o.a-.5));\
 p.a=o.a;\
 vec3 f=e*.45+12.*(r[1][0]*sin(r[0][0]*vec3(.49,.31,.37))*sin(e.brg*vec3(7.,5.,6.))+1.-r[1][0])*(vec3(y(e+vec3(.01,.0,.0)),y(e+vec3(.0,.01,.0)),y(e+vec3(.0,.0,.01)))-t)*q*r[0][3];\

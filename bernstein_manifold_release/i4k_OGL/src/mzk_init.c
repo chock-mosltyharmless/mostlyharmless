@@ -1,9 +1,9 @@
 // Create data tables
 
 // Make table with random number
-unsigned int seed = 1;
+//unsigned int seed = 1;
 for (int i = 0; i < RANDOM_BUFFER_SIZE; i++) {
-    lowNoise[i] = 16.0f * (jo_frand(&seed) - 0.5f);
+    lowNoise[i] = 16.0f * (JoFrand() - 0.5f);
 }
 
 // Ring-low-pass-filtering of lowPass

@@ -77,9 +77,6 @@ if (programStatus == GL_FALSE)
 }
 #endif
 
-//unsigned int seed = 23690984;
-unsigned int seedo = 0;
-
 // Set vertex location
 int vertex_id = 0;
 float pz = 1.0f;
@@ -102,8 +99,10 @@ for (int z = 0; z < NUM_PARTICLES_PER_DIM; z++) {
     pz -= 2.0f / (float)NUM_PARTICLES_PER_DIM;
 }
 
+//unsigned int seed = 23690984;
+//jo_frand_seed_ = 0;
 for (int z = 0; z < NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM * 4; z++) {
-    vertices_[z] += jo_frand(&seedo) * (1.0f / 32.0f);
+    vertices_[z] += JoFrand() * (1.0f / 32.0f);
 }
 
 // Set up vertex buffer and stuff

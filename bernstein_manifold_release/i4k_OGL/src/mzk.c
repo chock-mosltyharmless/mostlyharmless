@@ -67,14 +67,15 @@ static float floatOutput[MZK_BLOCK_SIZE][2];
 
 // TODO: Check implementation from somewhere else. Esp. %65535? Numeric recipies.
 #pragma code_seg(".jo_frand")
-float jo_frand(unsigned int *s)
+unsigned int jo_frand_seed_;
+float JoFrand()
 {
     unsigned long a = 214013;
     unsigned long c = 2531011;
     unsigned long m = 4294967296-1;
-    *s = (*s * a + c) % m;
+    jo_frand_seed_ = (jo_frand_seed_ * a + c) % m;
     //return (*s >> 8) % 65535;
-    return (float)((*s >> 8) % 65535) * (1.0f/65536.0f);
+    return (float)((jo_frand_seed_ >> 8) % 65535) * (1.0f/65536.0f);
 }
 
 #pragma code_seg(".exp2jo")
