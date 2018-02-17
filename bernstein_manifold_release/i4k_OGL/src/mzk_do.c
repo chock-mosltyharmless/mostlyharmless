@@ -62,6 +62,7 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     float baseFreq = 8.175f * (float)exp2jo((float)currentNote[instrument] * (1.0f / 12.0f)) * fScaler;
 
     float base_phase = fPhase[instrument];
+    float phase_update = baseFreq * (adsrData[instrument][adsrFreq] * 4.0f);
     for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++) {
         float deathVolume = 1.0f;
 
@@ -93,14 +94,15 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
         float phase = base_phase;
         float overtone_falloff = adsrData[instrument][adsrQuak] * 2.0f;
         for (int i = 0; i < NUM_OVERTONES; i++) {
-            outAmplitude += sinf(phase) * overtoneLoudness;
+            outAmplitude += sinf(phase) * overtoneLoudness *
+                (1.0f + (lowNoise[(sample + i * 4096) % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise]);
             phase += base_phase;
             // Ring modulation with noise
-            outAmplitude *= 1.0f + (lowNoise[sample % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise];
+            //outAmplitude *= 1.0f + (lowNoise[sample % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise];
             overtoneLoudness *= overtone_falloff;
         }
 
-        base_phase += baseFreq * (adsrData[instrument][adsrFreq] * 4.0f);
+        base_phase += phase_update;
         while (base_phase > 2.0f * PI) base_phase -= 2.0f * (float)PI;
 
         // Ring modulation with noise
