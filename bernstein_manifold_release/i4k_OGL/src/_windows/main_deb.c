@@ -301,6 +301,11 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
 
     CreateThread(NULL, 0, thread_func, NULL, 0, 0);
+
+#ifdef _DEBUG
+    FILE *fid = fopen("waveout.raw", "wb");
+    fclose(fid);
+#endif
 #endif
 
     to=timeGetTime();

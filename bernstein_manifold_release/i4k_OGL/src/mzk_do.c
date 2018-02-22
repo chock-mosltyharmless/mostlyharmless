@@ -10,6 +10,7 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 {
     int note_pos = savedNotePos[instrument];
     //if (!on[instrument])continue;
+    //if (instrument != 4) continue;
 
     // Volume?
     // Get parameters locally
@@ -93,7 +94,7 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
         float overtoneLoudness = 1.0f;
         float phase = base_phase;
         float overtone_falloff = adsrData[instrument][adsrQuak] * 2.0f;
-        for (int i = 0; i < NUM_OVERTONES; i++) {
+        for (int i = 0; i < NUM_OVERTONES && (i + 1) * phase_update < 2.0f; i++) {
             outAmplitude += sinf(phase) * overtoneLoudness *
                 (1.0f + (lowNoise[(sample + i * 4096) % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise]);
             phase += base_phase;
@@ -114,7 +115,13 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 
             // Distort
             output *= distortMult;
-            output = 2.0f * (1.0f / (1.0f + (float)exp2jo(-2.0f * output)) - 0.5f);
+#if 1
+            //output = 2.0f * (1.0f / (1.0f + (float)exp2jo(-2.0f * output)) - 0.5f);
+            output = output / (fabsf(output) + 1.0f);
+#else
+            //if (output > 1.0f) output = 1.0f;
+            //if (output < -1.0f) output = -1.0f;
+#endif
             output /= distortMult;
             floatOutput[sample][i] += output * cur_vol;
 
@@ -129,7 +136,22 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 // Copy to int output
 for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 {
-    float val = -8.0f * floatOutput[0][sample];
-    val = 2.0f * 32768.0f * (1.0f / (1.0f + (float)exp2jo(val)) - 0.5f);
+#if 1
+    //float val = -8.0f * floatOutput[0][sample];
+    //val = 2.0f * 32768.0f * (1.0f / (1.0f + (float)exp2jo(val)) - 0.5f);
+    float val = 7.0f * floatOutput[0][sample];
+    val = 2.0f * val / (fabsf(val) + 1.0f);
+    val *= 32767.0f;
+#else
+    float val = 4.0f * 32768.0f * floatOutput[0][sample];
+    if (val > 32767.0f) val = 32767.0f;
+    if (val < -32767.0f) val = -32767.0f;
+#endif
     blockBuffer[sample] = _mm_cvtt_ss2si(_mm_load_ss(&val));
 }
+
+#ifdef _DEBUG
+FILE *fid = fopen("waveout.raw", "ab");
+fwrite(blockBuffer, sizeof(short), MZK_BLOCK_SIZE * 2, fid);
+fclose(fid);
+#endif
