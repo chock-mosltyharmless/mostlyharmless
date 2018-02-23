@@ -63,7 +63,6 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     float baseFreq = 8.175f * (float)exp2jo((float)currentNote[instrument] * (1.0f / 12.0f)) * fScaler;
 
     float base_phase = fPhase[instrument];
-    float phase_update = baseFreq * (adsrData[instrument][adsrFreq] * 4.0f);
     for (int sample = 0; sample < MZK_BLOCK_SIZE; sample++) {
         float deathVolume = 1.0f;
 
@@ -95,27 +94,28 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
         float phase = base_phase;
         float overtone_falloff = adsrData[instrument][adsrQuak] * 2.0f;
         for (int i = 0; i < NUM_OVERTONES /*&& (i + 1) * phase_update < 1.0f*/; i++) {
-            outAmplitude += sinf(phase) * overtoneLoudness *
-                (1.0f + (lowNoise[(sample + i * 4096) % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise]);
+            outAmplitude += sinf(phase) * overtoneLoudness;
+            //outAmplitude += sinf(phase) * overtoneLoudness *
+            //    (1.0f + (lowNoise[(sample + i * 4096) % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise]);
             phase += base_phase;
             // Ring modulation with noise
-            //outAmplitude *= 1.0f + (lowNoise[sample % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise];
+            outAmplitude *= 1.0f + (lowNoise[sample % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise];
             overtoneLoudness *= overtone_falloff;
         }
 
-        base_phase += phase_update;
+        base_phase += baseFreq * (adsrData[instrument][adsrFreq] * 4.0f);
         while (base_phase > 2.0f * PI) base_phase -= 2.0f * (float)PI;
 
         // Ring modulation with noise
         float cur_vol = vol * adsrData[instrument][adsrVolume] * deathVolume * i_midi_volume_[instrument] * (1.0f / 128.0f);
-        float distortMult = (float)exp2jo(4.0f*adsrData[instrument][adsrDistort]) + 4.0f;
+        float distortMult = (float)exp2jo(8.0f*adsrData[instrument][adsrDistort]) + 8.0f;
         float current_pan = panning;
         for (int i = 0; i < 2; i++) {
             float output = outAmplitude * current_pan;
 
             // Distort
             output *= distortMult;
-#if 0
+#if 1
             output = 2.0f * (1.0f / (1.0f + (float)exp2jo(-2.0f * output)) - 0.5f);
             //output = output / (fabsf(output) + 1.0f);
 #else
@@ -138,14 +138,17 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 {
 #if 1
-    //float val = -8.0f * floatOutput[0][sample];
-    //val = 2.0f * 32768.0f * (1.0f / (1.0f + (float)exp2jo(val)) - 0.5f);
-    float val = 2.0f * floatOutput[0][sample];
+#if 0
+    float val = -8.0f * floatOutput[0][sample];
+    val = 2.0f * 32768.0f * (1.0f / (1.0f + (float)exp2jo(val)) - 0.5f);
+#else
+    float val = 8.0f * floatOutput[0][sample];
     //val = 2.0f * val / (fabsf(val) + 1.0f);
     if (val > 1.0f) val = 1.0f;
     if (val < -1.0f) val = -1.0f;
     val = 3.0f * val / 2.0f * (1.0f - val * val / 3.0f);
     val *= 32767.0f;
+#endif
 #else
     float val = 4.0f * 32768.0f * floatOutput[0][sample];
     if (val > 32767.0f) val = 32767.0f;
