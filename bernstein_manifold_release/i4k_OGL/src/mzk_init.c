@@ -9,7 +9,7 @@ for (int i = 0; i < RANDOM_BUFFER_SIZE; i++) {
 // Ring-low-pass-filtering of lowPass
 // Use a one-pole
 float oldVal = 0.0f;
-for (int j = 0; j < 8; j++) {
+for (int j = 0; j < 6; j++) {
     for (int i = 0; i < RANDOM_BUFFER_SIZE; i++) {
         lowNoise[i] = 1.0f / 8.0f * lowNoise[i] + (1.0f - (1.0f / 8.0f)) * oldVal;
         oldVal = lowNoise[i];

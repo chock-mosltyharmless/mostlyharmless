@@ -24,7 +24,7 @@ _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
 #define NUM_INSTRUMENTS 17
 #define NUM_INSTRUMENT_PARAMETERS 35
 // Number of additive overtones
-#define NUM_OVERTONES 5
+#define NUM_OVERTONES 4
 
 // Music time update parameter
 #define SAMPLE_TICK_DURATION (1.0f / 32768.0f)

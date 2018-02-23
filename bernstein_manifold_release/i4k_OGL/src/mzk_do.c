@@ -94,7 +94,7 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
         float overtoneLoudness = 1.0f;
         float phase = base_phase;
         float overtone_falloff = adsrData[instrument][adsrQuak] * 2.0f;
-        for (int i = 0; i < NUM_OVERTONES && (i + 1) * phase_update < 2.0f; i++) {
+        for (int i = 0; i < NUM_OVERTONES /*&& (i + 1) * phase_update < 1.0f*/; i++) {
             outAmplitude += sinf(phase) * overtoneLoudness *
                 (1.0f + (lowNoise[(sample + i * 4096) % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise]);
             phase += base_phase;
@@ -108,19 +108,20 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 
         // Ring modulation with noise
         float cur_vol = vol * adsrData[instrument][adsrVolume] * deathVolume * i_midi_volume_[instrument] * (1.0f / 128.0f);
-        float distortMult = (float)exp2jo(8.0f*adsrData[instrument][adsrDistort]) + 8.0f;
+        float distortMult = (float)exp2jo(4.0f*adsrData[instrument][adsrDistort]) + 4.0f;
         float current_pan = panning;
         for (int i = 0; i < 2; i++) {
             float output = outAmplitude * current_pan;
 
             // Distort
             output *= distortMult;
-#if 1
-            //output = 2.0f * (1.0f / (1.0f + (float)exp2jo(-2.0f * output)) - 0.5f);
-            output = output / (fabsf(output) + 1.0f);
+#if 0
+            output = 2.0f * (1.0f / (1.0f + (float)exp2jo(-2.0f * output)) - 0.5f);
+            //output = output / (fabsf(output) + 1.0f);
 #else
-            //if (output > 1.0f) output = 1.0f;
-            //if (output < -1.0f) output = -1.0f;
+            if (output > 1.0f) output = 1.0f;
+            if (output < -1.0f) output = -1.0f;
+            output = 3.0f * output / 2.0f * (1.0f - output * output / 3.0f);
 #endif
             output /= distortMult;
             floatOutput[sample][i] += output * cur_vol;
@@ -139,8 +140,11 @@ for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 #if 1
     //float val = -8.0f * floatOutput[0][sample];
     //val = 2.0f * 32768.0f * (1.0f / (1.0f + (float)exp2jo(val)) - 0.5f);
-    float val = 7.0f * floatOutput[0][sample];
-    val = 2.0f * val / (fabsf(val) + 1.0f);
+    float val = 2.0f * floatOutput[0][sample];
+    //val = 2.0f * val / (fabsf(val) + 1.0f);
+    if (val > 1.0f) val = 1.0f;
+    if (val < -1.0f) val = -1.0f;
+    val = 3.0f * val / 2.0f * (1.0f - val * val / 3.0f);
     val *= 32767.0f;
 #else
     float val = 4.0f * 32768.0f * floatOutput[0][sample];
