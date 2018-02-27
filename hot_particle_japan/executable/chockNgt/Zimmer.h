@@ -58,7 +58,7 @@ public:
             current_panya_id_++;
             panya_start_time_ = last_call_time_;
             // No change after third panya
-            if (current_panya_id_ > 2) current_panya_id_ = 2;
+            if (current_panya_id_ > 7) current_panya_id_ = 7;
         }
     }
 

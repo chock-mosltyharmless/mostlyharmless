@@ -82,10 +82,15 @@ int Zimmer::Draw(float time) {
     const char *texture_name;
     bool is_scene_finished = false;  // Set to true if it completely faded away
 
-    const char *panya_names[3] = {
+    const char *panya_names[8] = {
+        "panya_wow.png",
+        "panya_fragend.png",
         "panya_begrussung.png",
+        "panya_nachdenklich.png",
         "panya_begeistert.png",
-        "panya_begeistert.png"
+        "panya_no.png",
+        "panya_ok.png",
+        "panya_ok.png",
     };
 
     float kVideoDelays[8] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f,

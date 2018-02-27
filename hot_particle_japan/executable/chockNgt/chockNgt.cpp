@@ -648,7 +648,7 @@ void EndCurrentScene(bool switch_to_next_scene) {
     end_current_scene_ = switch_to_next_scene;
     //audio_.StopSound(5, 18.0f, error_string); // music does not stop
     audio_.StopSound(3, 18.0f, error_string);
-    music_is_playing = false;
+    //music_is_playing = false;
     noise_is_playing = false;
     if (subtitle_start_time_ > subtitle_end_time_) {
         if (fCurTime - subtitle_start_time_ < subtitle_delay_) {
@@ -760,7 +760,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 else {
                     EndCurrentScene(true);
                     next_scene_id_--;
-                    if (next_scene_id_ == 4) next_scene_id_--;  // Townswork no longer exists
+                    if (next_scene_id_ == 6) next_scene_id_ = 3;
+                    if (next_scene_id_ == 2) next_scene_id_ = 6;
+                    if (next_scene_id_ == 4) next_scene_id_ = 2;
                     if (next_scene_id_ == 11) next_scene_id_--;  // Kawauchi no longer exists
                     if (next_scene_id_ == 19) next_scene_id_--;  // No 2 Juns after ride
                     if (next_scene_id_ == 18) next_scene_id_--;  // No 2 Juns after ride
@@ -865,8 +867,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     next_scene_id_ = 25;
                 } else {  // see also VK_RIGHT
                     if (!noise_is_playing) {
-                        audio_.StopSound(5, 18.0f, error_string);
-                        music_is_playing = false;
+                        //audio_.StopSound(5, 18.0f, error_string);
+                        //music_is_playing = false;
                         noise_is_playing = true;
                         switch (scene_to_show_) {
                         case CAFE:
@@ -911,7 +913,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             case VK_RETURN:
                 EndCurrentScene(true);
                 next_scene_id_++;
-                if (next_scene_id_ == 4) next_scene_id_++;  // Townswork no longer exists
+
+                if (next_scene_id_ == 3) next_scene_id_ = 5;
+                if (next_scene_id_ == 7) next_scene_id_ = 3;
+                if (next_scene_id_ == 4) next_scene_id_ = 7;  // Townswork no longer exists
                 if (next_scene_id_ == 11) next_scene_id_++;  // Kawauchi no longer exists
                 if (next_scene_id_ == 18) next_scene_id_++;  // No 2 Juns after ride
                 if (next_scene_id_ == 19) next_scene_id_++;  // No 2 Juns after ride
@@ -967,8 +972,8 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 break;
             case VK_RIGHT: // see also "H"
                 if (!noise_is_playing) {
-                    audio_.StopSound(5, 18.0f, error_string);
-                    music_is_playing = false;
+                    //audio_.StopSound(5, 18.0f, error_string);
+                    //music_is_playing = false;
                     noise_is_playing = true;
                     switch (scene_to_show_) {
                     case CAFE:
