@@ -845,7 +845,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                     EndCurrentScene(true);
                     next_scene_id_ = 22;
                 } else {  // See also VK_DOWN
-                    audio_.PlaySound("01_Donner.wav", 0, false, -1, error_string);
+                    audio_.PlaySound("01_Donner.wav", 6, false, -1, error_string);
                     break;
                 }
                 break;
