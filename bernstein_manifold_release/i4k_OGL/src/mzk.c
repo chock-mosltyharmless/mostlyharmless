@@ -40,8 +40,7 @@ static float freqtab[kNumFrequencies];
 
 // Size of a buffer with random numbers
 #define RANDOM_BUFFER_SIZE 65536
-#define DELAY_MULTIPLICATOR 128
-#define MAX_DELAY_LENGTH (DELAY_MULTIPLICATOR * 130) // Some safety for miscalculation stuff...
+#define NUM_STEREO_VOICES 4
 
 static float float_instrument_parameters_[NUM_INSTRUMENTS][NUM_INSTRUMENT_PARAMETERS];
 
@@ -49,6 +48,15 @@ static float lowNoise[RANDOM_BUFFER_SIZE];
 //static int currentNoteIndex[NUM_INSTRUMENTS];
 static int currentNote[NUM_INSTRUMENTS];
 static float fPhase[NUM_INSTRUMENTS]; // Phase of the instrument
+
+// Reverberation
+#define REVERB_BUFFER_SIZE (AUDIO_BUFFER_SIZE * 1)
+//int reverb_pos_ = 0;
+static float reverb_buffer_[REVERB_BUFFER_SIZE][2];
+//static const int reverbBufferLength[NUM_STEREO_VOICES] = {
+    //1793, 2531, 6864, 11311
+//    1593, 1731, 2187, 2532
+//};
 
 #define NUM_ADSR_DATA 5
 static float adsrData[NUM_INSTRUMENTS][NUM_ADSR_DATA];
@@ -65,7 +73,7 @@ static int i_midi_volume_[NUM_INSTRUMENTS];
 // attack values and stuff
 static int iADSR[NUM_INSTRUMENTS];
 static float fADSRVal[NUM_INSTRUMENTS];
-static float floatOutput[MZK_BLOCK_SIZE][2];
+//static float floatOutput[MZK_BLOCK_SIZE][2];
 
 // TODO: Check implementation from somewhere else. Esp. %65535? Numeric recipies.
 #pragma code_seg(".jo_frand")

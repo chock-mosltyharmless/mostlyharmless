@@ -1,7 +1,9 @@
+//float (*reverb_buffer_)[2] = reverb_buffer_ + reverb_pos_;
+
 // clear audio block
 for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++) {
     // Stereo! --> 2 values
-    floatOutput[0][sample] = 0;
+    reverb_buffer_[0][sample] = 0;
 }
 
 //int on[18] = {1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
@@ -16,7 +18,9 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
     // Get parameters locally
     float vol = float_instrument_parameters_[instrument][F_MASTER_VOLUME];
     //float panning = float_instrument_parameters_[instrument][K_MASTER_PANNING];
-    float panning = 0.785f - instrument * (1.0f / 24.0f);
+    //float panning = 0.785f - instrument * (1.0f / 24.0f);
+    float panning = (float)((instrument & 7) + 12) * (1.0f / 32.0f);
+    //float panning = (float)((instrument & 7)) * (1.0f / 8.0f);
     float invADSRSpeed = float_instrument_parameters_[instrument][K_ADSR_SPEED + iADSR[instrument]] * (1.0f / 1024.0f);
 
     // Check if we go to next note
@@ -90,49 +94,74 @@ for (int instrument = 0; instrument < NUM_INSTRUMENTS; instrument++)
 
         float outAmplitude = 0;
 
-        float overtoneLoudness = 1.0f;
-        float phase = base_phase;
         float overtone_falloff = adsrData[instrument][adsrQuak] * 2.0f;
-        for (int i = 0; i < NUM_OVERTONES /*&& (i + 1) * phase_update < 1.0f*/; i++) {
+        float noise_modulator = 1.0f + (lowNoise[sample % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise];
+        float cur_vol = vol * adsrData[instrument][adsrVolume] * deathVolume * i_midi_volume_[instrument] * (1.0f / 128.0f);
+        float distortMult = (float)exp2jo(8.0f*adsrData[instrument][adsrDistort]) + 8.0f;
+
+#if 1
+        for (int supersample = 0; supersample < 2; supersample++) {
+            float phase = base_phase;
+            float overtoneLoudness = 1.0f;
+            float sub_amplitude = 0.0f;
+            for (int i = 0; i < NUM_OVERTONES; i++) {
+                sub_amplitude += sinf(phase) * overtoneLoudness;
+                phase += base_phase;
+                overtoneLoudness *= overtone_falloff;
+                // Ring modulation with noise
+                sub_amplitude *= noise_modulator;
+            }
+
+            base_phase += baseFreq * (adsrData[instrument][adsrFreq] * 2.0f);
+
+            // Distort
+            sub_amplitude *= distortMult;
+            sub_amplitude = 2.0f * (1.0f / (1.0f + (float)exp2jo(2.0f * sub_amplitude)) - 0.5f);
+            sub_amplitude /= distortMult;
+            outAmplitude += sub_amplitude;
+        }
+#else
+        float phase = base_phase;
+        float overtoneLoudness = 1.0f;
+        for (int i = 0; i < NUM_OVERTONES; i++) {
             outAmplitude += sinf(phase) * overtoneLoudness;
-            //outAmplitude += sinf(phase) * overtoneLoudness *
-            //    (1.0f + (lowNoise[(sample + i * 4096) % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise]);
             phase += base_phase;
-            // Ring modulation with noise
-            outAmplitude *= 1.0f + (lowNoise[sample % RANDOM_BUFFER_SIZE] - 1.0f) * adsrData[instrument][adsrNoise];
             overtoneLoudness *= overtone_falloff;
+            // Ring modulation with noise
+            outAmplitude *= noise_modulator;
         }
 
         base_phase += baseFreq * (adsrData[instrument][adsrFreq] * 4.0f);
-        while (base_phase > 2.0f * PI) base_phase -= 2.0f * (float)PI;
 
-        // Ring modulation with noise
-        float cur_vol = vol * adsrData[instrument][adsrVolume] * deathVolume * i_midi_volume_[instrument] * (1.0f / 128.0f);
-        float distortMult = (float)exp2jo(8.0f*adsrData[instrument][adsrDistort]) + 8.0f;
-        float current_pan = panning;
-        for (int i = 0; i < 2; i++) {
-            float output = outAmplitude * current_pan;
-
-            // Distort
-            output *= distortMult;
-#if 1
-            output = 2.0f * (1.0f / (1.0f + (float)exp2jo(-2.0f * output)) - 0.5f);
-            //output = output / (fabsf(output) + 1.0f);
-#else
-            if (output > 1.0f) output = 1.0f;
-            if (output < -1.0f) output = -1.0f;
-            output = 3.0f * output / 2.0f * (1.0f - output * output / 3.0f);
+        // Distort
+        outAmplitude *= distortMult;
+        outAmplitude = 2.0f * (1.0f / (1.0f + (float)exp2jo(2.0f * outAmplitude)) - 0.5f);
+        outAmplitude /= distortMult;
 #endif
-            output /= distortMult;
-            floatOutput[sample][i] += output * cur_vol;
 
-            // Apply stereo
-            current_pan = 1.0f - current_pan;
-        }
+        reverb_buffer_[sample][0] += outAmplitude * panning * cur_vol;
+        reverb_buffer_[sample][1] += outAmplitude * (1.0f - panning) * cur_vol;
+
+        while (base_phase > 2.0f * PI) base_phase -= 2.0f * (float)PI;
     }
     fPhase[instrument] = base_phase;
     savedNotePos[instrument] = note_pos;
 }
+
+#if 0
+// Put everything into the reverb buffers
+for (int sample_id = 0; sample_id < MZK_BLOCK_SIZE; sample_id++) {
+    for (int j = 0; j < NUM_STEREO_VOICES; j++) {
+        // Do the reverb feedback
+        const float kDelayFeed = 0.325f;
+        int toBuffer = j & 1;
+        int fromBuffer = 1 - toBuffer;
+        int fromLocation = (sample_id + MZK_BLOCK_SIZE - reverbBufferLength[j]);
+        reverb_buffer_[sample_id][toBuffer] +=
+            kDelayFeed * reverb_buffer_[fromLocation % MZK_BLOCK_SIZE][fromBuffer];
+    }
+}
+#endif
 
 // Copy to int output
 for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
@@ -142,7 +171,7 @@ for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
     float val = -8.0f * floatOutput[0][sample];
     val = 2.0f * 32768.0f * (1.0f / (1.0f + (float)exp2jo(val)) - 0.5f);
 #else
-    float val = 8.0f * floatOutput[0][sample];
+    float val = 5.0f * reverb_buffer_[0][sample];
     //val = 2.0f * val / (fabsf(val) + 1.0f);
     if (val > 1.0f) val = 1.0f;
     if (val < -1.0f) val = -1.0f;
@@ -156,6 +185,9 @@ for (int sample = 0; sample < MZK_BLOCK_SIZE * 2; sample++)
 #endif
     blockBuffer[sample] = _mm_cvtt_ss2si(_mm_load_ss(&val));
 }
+
+//reverb_pos_ += MZK_BLOCK_SIZE;
+//reverb_pos_ = reverb_pos_ % REVERB_BUFFER_SIZE;
 
 #ifdef _DEBUG
 FILE *fid = fopen("waveout.raw", "ab");

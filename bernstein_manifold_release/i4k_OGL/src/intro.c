@@ -20,6 +20,9 @@
 #include "script_move.h"
 #include "script_duration.h"
 
+#pragma data_seg(".shoutout")
+const char shoutouts[]="Greetings";
+
 // -------------------------------------------------------------------
 //                          SHADERS:
 // -------------------------------------------------------------------

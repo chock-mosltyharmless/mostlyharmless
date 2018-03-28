@@ -35,3 +35,4 @@ while (*read != 254) {
     if (*read < 255) *write++;
     read++;
 }
+
