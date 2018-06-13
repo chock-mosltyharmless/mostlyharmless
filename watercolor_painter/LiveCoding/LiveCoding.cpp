@@ -8,18 +8,12 @@
 #include "GLNames.h"
 #include "ShaderManager.h"
 #include "TextureManager.h"
-#include "Editor.h"
 #include "Parameter.h"
 
 #define MAX_LOADSTRING 100
-#define BLOB_FADE_SPEED 1.0f
 
-// The used effect (will be changeable later on)
-#define NUM_USED_PROGRAMS 9
-char *usedShader[NUM_USED_PROGRAMS] = {"empty.jlsl", "vp1.jlsl", "vp2.jlsl", "vp3.jlsl", "vp4.jlsl", "vp5.jlsl", "vp6.jlsl", "vp7.jlsl", "vp8.jlsl"};
-char *usedProgram[NUM_USED_PROGRAMS] = {"empty.gprg", "vp1.gprg", "vp2.gprg", "vp3.gprg", "vp4.gprg", "vp5.gprg", "vp6.gprg", "vp7.gprg", "vp8.gprg"};
-int usedIndex = 0;
-float aspectRatio = (float)XRES / (float)YRES;
+// Gloabal aspect ratio of everything
+float aspect_ratio_ = (float)XRES / (float)YRES;
 
 /*************************************************
  * GL Core variables
@@ -39,7 +33,6 @@ const static char* glnames[NUM_GL_NAMES]={
  *************************************************/
 ShaderManager shaderManager;
 TextureManager textureManager;
-Editor editor;
 
 /*************************************************
  * Window core variables
@@ -94,29 +87,11 @@ static WININFO wininfo = {  0,0,0,0,0,
 const int maxNumParameters = 25;
 const static float defaultParameters[maxNumParameters] = 
 {
-	-1.0f, -1.0f,
-	//0.0f, 0.0f,	0.0f, 0.0f, 0.0f,	// 2-6 ~= 1-5
-    0.19f, 0.48f, // x2:0.190(24) 3:0.480(61) 4:0.230(29) 5:0.490(63) 
-    0.23f, 0.49f, // y
-	-1.0f,
-	0.0f, 0.0f,						// 8,9 ~= 6,7
-	-1.0f, -1.0f,
-	0.0f, 0.0f,						// 12,13 ~= 8-9
-	0.0f, 0.0f, 0.0f, 0.0f, 0.0f,
-	0.0f, 0.0f, 0.0f, 0.0f,			// 14-22 ~= 1b-9b
+    0.0f
 };
 static float interpolatedParameters[maxNumParameters];
 const int NUM_KEYS = 127;
 static int keyPressed[NUM_KEYS] = {0};
-
-// BPM stuff
-const int NUM_BEAT_TIMES = 7;
-float BPM = 0.0f;
-int beatDurations[NUM_BEAT_TIMES] = {900, 1200, 1100, 1000, 1400, 1000, 1000};
-int lastBeatTime = 0;
-float blob = 0.;
-
-
 
 /*************************************************
  * OpenGL initialization
@@ -141,14 +116,6 @@ static int initGL(WININFO *winInfo)
 		MessageBox(winInfo->hWnd, errorString, "Texture Manager Load", MB_OK);
 		return -1;
 	}
-
-	// Create the text editor
-	if (editor.init(&shaderManager, &textureManager, errorString))
-	{
-		MessageBox(winInfo->hWnd, errorString, "Editor init", MB_OK);
-		return -1;
-	}
-	blob = 0.;
 
 	return 0;
 }
@@ -181,65 +148,6 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			return 0;
 #endif
 
-		case VK_LEFT:
-		case VK_RIGHT:
-		case VK_UP:
-		case VK_DOWN:
-		case VK_PRIOR:
-		case VK_NEXT:
-		case VK_END:
-		case VK_HOME:
-			editor.moveCursor(wParam);
-			break;
-
-		case VK_RETURN:
-		case VK_DELETE:
-		case VK_BACK:
-			editor.controlCharacter(wParam);
-			break;
-
-		case 'k':
-		case 'K':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				editor.deleteLine();
-			}
-			break;
-
-		case 'z':
-		case 'Z':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				editor.undo();
-				char errorText[MAX_ERROR_LENGTH];
-				char *shaderText;
-				shaderText = editor.getText();
-				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
-				{
-					editor.setErrorText(errorText);
-				}
-				else editor.unshowError();
-				editor.showText();
-			}
-			break;
-
-		case 'y':
-		case 'Y':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				editor.redo();
-				char errorText[MAX_ERROR_LENGTH];
-				char *shaderText;
-				shaderText = editor.getText();
-				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
-				{
-					editor.setErrorText(errorText);
-				}
-				else editor.unshowError();
-				editor.showText();
-			}
-			break;
-
 		case 'm':
 		case 'M':
 			if (GetAsyncKeyState(VK_CONTROL) < 0)
@@ -249,57 +157,8 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 				ShowWindow(hWnd, SW_MAXIMIZE);
 				GetClientRect(hWnd, &windowRect);
 				glViewport(0, 0, windowRect.right-windowRect.left, abs(windowRect.bottom - windowRect.top)); //NEW
-				aspectRatio = (float)(windowRect.right-windowRect.left) / (float)(abs(windowRect.bottom - windowRect.top));
+				aspect_ratio_ = (float)(windowRect.right-windowRect.left) / (float)(abs(windowRect.bottom - windowRect.top));
 				ShowCursor(false);
-			}
-			break;
-
-		case 's':
-		case 'S':
-			// We want a new shader
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				char errorText[MAX_ERROR_LENGTH];
-				char *shaderText;
-				shaderText = editor.getText();
-				if (shaderManager.updateShader(usedShader[usedIndex], shaderText, errorText))
-				{
-					//MessageBox(wininfo.hWnd, errorText, "Shader change", MB_OK);
-					editor.setErrorText(errorText);
-				}
-				else
-				{
-					// It worked, so save the shader
-					shaderManager.saveProgress(usedShader[usedIndex], errorText, &editor);
-					editor.unshowError();
-					editor.unshowText();
-				}
-			}
-			break;
-
-		case '1':
-		case '2':
-		case '3':
-		case '4':
-		case '5':
-		case '6':
-		case '7':
-		case '8':
-		case '9':
-			if (GetAsyncKeyState(VK_CONTROL) < 0)
-			{
-				// I use the ordering of keys to be able to get to the shader...
-				usedIndex = wParam - '1';
-				if (usedIndex >= NUM_USED_PROGRAMS) usedIndex = NUM_USED_PROGRAMS - 1;
-
-				char errorText[MAX_ERROR_LENGTH+1];
-				char filename[SM_MAX_FILENAME_LENGTH+1];
-				sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "shaders/%s", usedShader[usedIndex]);
-				if (editor.loadText(filename, errorText))
-				{
-					MessageBox(wininfo.hWnd, errorText, "Editor init", MB_OK);
-					return -1;
-				}
 			}
 			break;
 
@@ -307,12 +166,6 @@ static LRESULT CALLBACK WndProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
 			break;
 		}
     }
-
-	// Text entering
-	if (uMsg==WM_CHAR && GetAsyncKeyState(VK_CONTROL) >= 0)
-	{
-		editor.putCharacter(wParam);
-	}
 
     return( DefWindowProc(hWnd,uMsg,wParam,lParam) );
 }
@@ -434,42 +287,14 @@ void intro_do(long t, float music_loudness)
 		else keyPressed[i] = 0;
 	}
 
-	// BPM => spike calculation
-	float BPS = BPM / 60.0f;
-	float jumpsPerSecond = BPS / 1.0f; // Jump on every fourth beat.
-	static float phase = 0.0f;
-	float jumpTime = (ftime * jumpsPerSecond) + phase;
-	jumpTime -= (float)floor(jumpTime);
-	if (keyPressed[41] == 1)
-	{
-		phase -= jumpTime;
-		jumpTime = 0.0f;
-		if (phase < 0.0f) phase += 1.0;
-	}
-	jumpTime = jumpTime * jumpTime;
-	// spike is between 0.0 and 1.0 depending on the position within whatever.
-	float spike = 0.5f * cosf(jumpTime * 3.1415926f * 1.5f) + 0.5f;
-	// blob is growing down from 1. after keypress
-	static float lastFTime = 0.f;
-	blob *= (float)exp(-(float)(ftime - lastFTime) * BLOB_FADE_SPEED);
-	lastFTime = ftime;
-
-    // Set spike to music loudness
-    spike = music_loudness;
-
 	// Set the program uniforms
 	GLuint programID;
-	shaderManager.getProgramID(usedProgram[usedIndex], &programID, errorText);
+	shaderManager.getProgramID("empty.gprg", &programID, errorText);
 	glUseProgram(programID);
-	GLuint loc = glGetUniformLocation(programID, "aspectRatio");
-	glUniform1f(loc, aspectRatio);
+	GLuint loc = glGetUniformLocation(programID, "aspect_ratio");
+	glUniform1f(loc, aspect_ratio_);
 	loc = glGetUniformLocation(programID, "time");
 	glUniform1f(loc, (float)(t * 0.001f));
-	// For now I am just sending the spike to the shader. I might need something better...
-	loc = glGetUniformLocation(programID, "spike");
-	glUniform1f(loc, spike);
-	loc = glGetUniformLocation(programID, "blob");
-	glUniform1f(loc, blob);
 	loc = glGetUniformLocation(programID, "knob1");
 	glUniform1f(loc, interpolatedParameters[14]);
 	loc = glGetUniformLocation(programID, "knob2");
@@ -520,6 +345,7 @@ void intro_do(long t, float music_loudness)
 	glActiveTexture(GL_TEXTURE2);
 	textureManager.getTextureID("hermaniak.png", &textureID, errorText);
 	glBindTexture(GL_TEXTURE_2D, textureID);
+    // Only do if you want to use depth sensor texture
 //	glActiveTexture(GL_TEXTURE1);
 //	textureManager.getTextureID(TM_DEPTH_SENSOR_NAME, &textureID, errorText);
 //	glBindTexture(GL_TEXTURE_2D, textureID);
@@ -527,15 +353,16 @@ void intro_do(long t, float music_loudness)
 	textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_3D, textureID);
 
-	if (usedIndex > 4) {
+	if (false) {
 		glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
 	} else {
 		glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 	}
+    glColor4f(1.0f, 0.5f, 0.2f, 1.0f);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// Copy backbuffer to texture
-	if (usedIndex > 4) {
+	if (false) {
 		textureManager.getTextureID(TM_HIGHLIGHT_NAME, &textureID, errorText);
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
@@ -549,7 +376,7 @@ void intro_do(long t, float music_loudness)
 	int xres = windowRect.right - windowRect.left;
 	int yres = windowRect.bottom - windowRect.top;
 	glViewport(0, 0, xres, yres);
-	if (usedIndex > 4) {
+	if (false) {
 		shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
 	} else {
 		shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
@@ -571,7 +398,6 @@ void intro_do(long t, float music_loudness)
 	glVertex2f(-1.0f, 1.0f);
 	glEnd();
 }
-
 
 int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
@@ -643,16 +469,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)) exit(-1);
 
-	// Example editor usage
-	char errorText[MAX_ERROR_LENGTH+1];
-	char filename[SM_MAX_FILENAME_LENGTH+1];
-	sprintf_s(filename, SM_MAX_FILENAME_LENGTH, "shaders/%s", usedShader[usedIndex]);
-	if (editor.loadText(filename, errorText))
-	{
-		MessageBox(info->hWnd, errorText, "Editor init", MB_OK);
-		return -1;
-	}
-
     long to=timeGetTime();
     while( !done )
         {
@@ -683,7 +499,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         intro_do(t, music_loudness);
-		editor.render(t);
 
 		SwapBuffers( info->hDC );
 	}    
@@ -708,54 +523,4 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 // Note that a key was pressed
 void registerParameterChange(int keyID)
 {
-	const int beatKey = 41;
-	const int blobKey = 40;
-	const int minBeatTime = 100;
-	const int maxBeatTime = 5000;
-	int sortedBeatDurations[NUM_BEAT_TIMES];
-
-	// get the blobber
-	if (params.getParam(blobKey) > 0.5f) blob = 1.f;
-
-	// Do nothing on key release!
-	if (params.getParam(beatKey) < 0.5f) return;
-
-	if (keyID == beatKey)
-	{
-		int t = timeGetTime();
-		int timeDiff = t - lastBeatTime;
-		if (timeDiff > minBeatTime && timeDiff < maxBeatTime)
-		{
-			for (int i = 0; i < NUM_BEAT_TIMES-1; i++)
-			{
-				beatDurations[i] = beatDurations[i+1];
-			}
-			beatDurations[NUM_BEAT_TIMES-1] = timeDiff;
-		}
-		lastBeatTime = t;
-	}
-
-	// copy sorted beat durations
-	for (int i = 0; i < NUM_BEAT_TIMES; i++)
-	{
-		sortedBeatDurations[i] = beatDurations[i];
-	}
-
-	// Calculate median of beat durations by bubble sorting.
-	bool sorted = false;
-	while (!sorted)
-	{
-		sorted = true;
-		for (int i = 0; i < NUM_BEAT_TIMES-1; i++)
-		{
-			if (sortedBeatDurations[i] < sortedBeatDurations[i+1]) {
-				int tmp = sortedBeatDurations[i+1];
-				sortedBeatDurations[i+1] = sortedBeatDurations[i];
-				sortedBeatDurations[i] = tmp;
-				sorted = false;
-			}
-		}
-	}
-
-	BPM = 60.0f * 1000.0f / sortedBeatDurations[NUM_BEAT_TIMES/2];
 }

@@ -3,10 +3,10 @@
 #include "glext.h"
 #include "GLnames.h"
 #include "Configuration.h"
-#include "Editor.h"
 
 // I should make this local to the Shader class
 const char *Shader::jlslHeader =
+"#version 120\n"
 "varying vec4 color;                                                   "
 "varying vec2 ppos;                                                    "
 "uniform sampler3D Noise3DTexture;                                     "
@@ -28,9 +28,9 @@ const char *Shader::jlslHeader =
 "  return texture2D(DepthSensorTexture,"
 "                   vec2(-1.5*slider1*pos.x + slider2, slider4 - 1.5*slider3*pos.y)).r;"
 "}"
-"vec3 background(vec2 pos) {"
+"vec4 background(vec2 pos) {"
 "  return texture2D(BGTexture,"
-"                   vec2(0.5*pos.x + 0.5, 0.5 + 0.5*pos.y)).rgb;"
+"                   vec2(0.5*pos.x + 0.5, 0.5 + 0.5*pos.y));"
 "}"
 "vec4 vnoise3(vec3 pos, float reduction) {                              "
 "float intensity = 1.;                                                 "
@@ -540,12 +540,6 @@ int ShaderManager::saveProgress(const char *shaderName, char *errorText, Editor 
 	}
 	fwrite(shader->getShaderText(), sizeof(char), strlen(shader->getShaderText()), fid);
 	fclose(fid);
-
-	// If there is an editor attached, set a snapshot
-	if (editor)
-	{
-		editor->setSnapshot(filename);
-	}
 
 	return 0;
 }

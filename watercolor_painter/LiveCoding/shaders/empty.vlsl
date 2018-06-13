@@ -6,10 +6,10 @@
 
 varying vec4 color;
 varying vec2 ppos;
-uniform float aspectRatio;
+uniform float aspect_ratio;
 
 void main(void) {
 	color = gl_Color;
-	ppos = vec2(gl_Vertex.x*aspectRatio, gl_Vertex.y);
+	ppos = vec2(gl_Vertex.x*aspect_ratio, gl_Vertex.y);
 	gl_Position = vec4(gl_Vertex.x, gl_Vertex.y, 0.5, 1.0);
 }

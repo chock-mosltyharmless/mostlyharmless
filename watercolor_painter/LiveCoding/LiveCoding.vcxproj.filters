@@ -13,9 +13,6 @@
     <ClCompile Include="TextureManager.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="Editor.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -25,15 +22,15 @@
     <ClCompile Include="ImageManager.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="Polygon.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bass.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Configuration.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Editor.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="glext.h">
@@ -69,6 +66,9 @@
     <ClInclude Include="ImageManager.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Polygon.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LiveCoding.rc" />
@@ -90,54 +90,6 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\empty.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp1.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp1.jlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp2.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp3.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp2.jlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp3.jlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp4.jlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp4.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp5.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp5.jlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp6.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp6.jlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp7.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp7.jlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp8.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\vp8.jlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\SimpleTexture.vlsl">

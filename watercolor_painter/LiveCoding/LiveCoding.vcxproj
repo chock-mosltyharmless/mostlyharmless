@@ -92,33 +92,17 @@
     <None Include="shaders\SimpleTexture.flsl" />
     <None Include="shaders\SimpleTexture.gprg" />
     <None Include="shaders\SimpleTexture.vlsl" />
-    <None Include="shaders\vp1.gprg" />
-    <None Include="shaders\vp1.jlsl" />
-    <None Include="shaders\vp2.gprg" />
-    <None Include="shaders\vp2.jlsl" />
-    <None Include="shaders\vp3.gprg" />
-    <None Include="shaders\vp3.jlsl" />
-    <None Include="shaders\vp4.gprg" />
-    <None Include="shaders\vp4.jlsl" />
-    <None Include="shaders\vp5.gprg" />
-    <None Include="shaders\vp5.jlsl" />
-    <None Include="shaders\vp6.gprg" />
-    <None Include="shaders\vp6.jlsl" />
-    <None Include="shaders\vp7.gprg" />
-    <None Include="shaders\vp7.jlsl" />
-    <None Include="shaders\vp8.gprg" />
-    <None Include="shaders\vp8.jlsl" />
     <None Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bass.h" />
     <ClInclude Include="Configuration.h" />
-    <ClInclude Include="Editor.h" />
     <ClInclude Include="glext.h" />
     <ClInclude Include="GLNames.h" />
     <ClInclude Include="ImageManager.h" />
     <ClInclude Include="LiveCoding.h" />
     <ClInclude Include="Parameter.h" />
+    <ClInclude Include="Polygon.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="stb_image.h" />
@@ -127,10 +111,10 @@
     <ClInclude Include="TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Editor.cpp" />
     <ClCompile Include="ImageManager.cpp" />
     <ClCompile Include="LiveCoding.cpp" />
     <ClCompile Include="Parameter.cpp" />
+    <ClCompile Include="Polygon.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="stb_image.c" />
     <ClCompile Include="stdafx.cpp">
