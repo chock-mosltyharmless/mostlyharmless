@@ -125,7 +125,7 @@ struct Camera {
             accumulate_buffer_[i] += static_cast<int>(buffer_[i]);
 
             // Use accumulate buffer instead of buffer
-            int out = accumulate_buffer_[i] / 4;
+            int out = accumulate_buffer_[i] / 16;
             if (out > 255) out = 255;
             buffer_[i] = static_cast<unsigned char>(out);
         }
@@ -147,7 +147,9 @@ struct Camera {
         FindBrightestPixel(x_pos, y_pos, accumulate_buffer_, NULL);
     }
 
+    // Gets the brightest pixel versus the second brightest that is not nearby
     float FindBrightestPixel(float *x_pos, float *y_pos, int *buffer, int *multiply_buffer) {
+        const int kClosePixelDistance = CLOSE_PIXEL_DISTANCE;  // Maximum distance where a pixel is considered nearby
         *x_pos = 0.0f;
         *y_pos = 0.0f;
         int brightest = -1;
@@ -174,7 +176,33 @@ struct Camera {
 
         *x_pos = static_cast<float>(brightest_x) / width_ * 2.0f - 1.0f;
         *y_pos = static_cast<float>(brightest_y) / height_ * 2.0f - 1.0f;
-        return static_cast<float>(brightest) / (255 * 3);
+
+        // Get second brightest for brightness computation
+        int second_brightest = 0;
+        for (int y = 0; y < height_; y++) {
+            for (int x = 0; x < width_; x++) {
+                if (abs(x - brightest_x) > kClosePixelDistance &&
+                    abs(y - brightest_y) > kClosePixelDistance) {
+                    int brightness = 0;
+                    for (int colors = 0; colors < 3; colors++) {
+                        int index = (y * width_ + x) * 4 + colors;
+                        int factor = 1;
+                        if (multiply_buffer) {
+                            factor = multiply_buffer[index];
+                        }
+                        brightness += buffer[index] * factor;
+                    }
+                    if (brightness > second_brightest) {
+                        second_brightest = brightness;
+                    }
+                }
+            }
+        }
+
+        float relative_brightness = static_cast<float>(brightest - second_brightest) /
+            static_cast<float>(brightest);
+
+        return relative_brightness;
     }
 
     IMFSourceReader *video_reader_ = NULL;
@@ -194,7 +222,8 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
                   bool use_custom_pixel_format,
                   int custom_pixel_format,
                   LPCSTR window_class_name,
-                  WindowHandles *handles);
+                  WindowHandles *handles,
+                  const char *window_title);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 // Some camera testing
@@ -390,7 +419,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     // TODO: Place code here.
 
     // Perform application initialization:
-    if (!InitInstance(instance, nCmdShow, false, 0, kMainWindowClassName, &main_window_)) {
+    if (!InitInstance(instance, nCmdShow, false, 0, kMainWindowClassName, &main_window_, "On Projector")) {
         return FALSE;
     }
 
@@ -440,18 +469,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         // Remove all messages...
         MSG msg;
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE));
-        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat, kMainWindowClassName, &main_window_)) {
+        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat, kMainWindowClassName, &main_window_, "On Projector")) {
             return FALSE;
         }
     }
     glEnable(GL_MULTISAMPLE_ARB);
 
     if (arbMultisampleSupported) {
-        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat, kCameraWindowClassName, &camera_window_)) {
+        if (!InitInstance(instance, nCmdShow, true, arbMultisampleFormat, kCameraWindowClassName, &camera_window_, "For debugging")) {
             return FALSE;
         }
     } else {
-        if (!InitInstance(instance, nCmdShow, false, 0, kCameraWindowClassName, &camera_window_)) {
+        if (!InitInstance(instance, nCmdShow, false, 0, kCameraWindowClassName, &camera_window_, "For debugging")) {
             return FALSE;
         }
     }
@@ -565,7 +594,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                             camera_.accumulate_buffer_, row_accumulate_buffer[column]);
                     }
                 }
-                last_flash = cur_time;
+                //last_flash = cur_time;
+                // This may have taken a long time, so really read the current time
+                last_flash = timeGetTime() - start_time;
                 index++;
                 if (index >= CALIBRATION_Z_RESOLUTION) {
                     done = true;
@@ -697,7 +728,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 //float col_range = calibration_y_[z][x] * 0.5f + 0.5f;
                 float show_height = sinf(static_cast<float>(cur_time) * 0.0003f);
                 float distance = fabsf(show_height - calibration_y_[z][x]);
-                float brightness = calibration_brightness_[z][x] / maximum_brightness * 16.0f;
+                //float brightness = calibration_brightness_[z][x] / maximum_brightness * 2.0f;
+                float brightness = 1.0f;
+                if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
                 if (brightness > 1.0f) brightness = 1.0f;
                 brightness *= 1.0f - (distance * 10.0f);
                 if (brightness < 0.0f) brightness = 0.0f;
@@ -783,7 +816,8 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
                   bool use_custom_pixel_format,
                   int custom_pixel_format,
                   LPCSTR window_class_name,
-                  WindowHandles *handles) {
+                  WindowHandles *handles,
+                  const char *window_title) {
     instance_handle_ = instance; // Store instance handle in our global variable
     DWORD window_style;
     RECT window_rectangle;
@@ -809,7 +843,7 @@ bool InitInstance(HINSTANCE instance, int nCmdShow,
     window_style   = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU;
     AdjustWindowRect(&window_rectangle, window_style, 0);
 
-    handles->window_handle_ = CreateWindowA(window_class_name, "OpenGL 1 sample", window_style,
+    handles->window_handle_ = CreateWindowA(window_class_name, window_title, window_style,
         CW_USEDEFAULT,
         CW_USEDEFAULT,
         window_rectangle.right - window_rectangle.left,
