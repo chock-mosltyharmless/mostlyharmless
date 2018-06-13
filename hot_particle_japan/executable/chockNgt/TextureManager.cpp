@@ -224,6 +224,17 @@ int TextureManager::loadTGA(const char *filename, char *errorString)
             textureData[index + color] = (((int)textureData[index + color]) *
                 ((int)textureData[index + alpha])) / 255;
         }
+
+        // Red adjustment
+        int r = textureData[index + 2];
+        int g = textureData[index + 1];
+        int b = textureData[index + 0];
+        g += r / 2;
+        b += r / 2;
+        if (g > 255) g = 255;
+        if (b > 255) b = 255;
+        textureData[index + 0] = b;
+        textureData[index + 1] = g;
     }
 		
 	// create openGL texture
@@ -277,6 +288,18 @@ int TextureManager::loadPNG(const char *filename, char *errorString)
             data[index + color] = (((int)data[index + color]) *
                 ((int)data[index + alpha])) / 255;
         }
+
+        // Red adjustment
+        int r = data[index + 0];
+        int g = data[index + 1];
+        int b = data[index + 2];
+        //g += r / 12;
+        //b += r / 10;
+        if (g > 255) g = 255;
+        if (b > 255) b = 255;
+        data[index + 2] = b;
+        data[index + 1] = g;
+        data[index + 0] = r;
     }
 
     // create openGL texture

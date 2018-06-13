@@ -26,6 +26,6 @@ extern int Y_OFFSCREEN;
 
 #define NO_SCENE_BRIGHTNESS 0.3f
 
-//#define FULLSCREEN
+#define FULLSCREEN
 
 #endif

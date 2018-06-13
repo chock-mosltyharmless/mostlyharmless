@@ -45,7 +45,7 @@ int Car::Draw(float time) {
         /*BEGRUSSUNG*/ {"panya_begrussung.png", "panya_ok.png"},
         /*TOMOBE    */ {"panya_ok.png", "panya_nachdenklich.png"},
         /*SIEVERT   */ {"panya_wow.png", "panya_sauer.png", "panya_fragend.png"},
-        /*TAMURA    */ {"panya_fragend.png", "panya_ok.png", "panya_ok.png", "panya_ok.png"},
+        /*TAMURA    */ {"panya_fragend.png", "panya_fragend.png", "panya_ok.png", "panya_ok.png"},
         /*KATSU 13  */ {"panya_fragend.png"},
         /*KATSU 14  */ {"panya_nachdenklich.png", "panya_sauer.png", "panya_wow.png"},
         /*ABSCHIED  */ {"panya_begrussung.png"},

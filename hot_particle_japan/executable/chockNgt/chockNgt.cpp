@@ -48,6 +48,7 @@ static int *creditsTexData[1024*1024];
 float fCurTime = 0.0f;
 
 float last_red_flash = -10.0f;
+float end_start_time = -100.0f;
 
 float subtitle_start_time_ = -100.0f;
 float subtitle_end_time_ = -90.0f;
@@ -142,6 +143,9 @@ void DrawQuadColor(float startX, float endX, float startY, float endY,
     glEnable(GL_TEXTURE_2D);
     glDepthMask(GL_FALSE);
     glDisable(GL_DEPTH_TEST);
+
+    //green += 1.0f / 10.0f * red;
+    //blue += 1.0f / 8.0f * green;
 
     // Pre-multiply alpha
     if (alpha > 1.0f) alpha = 1.0f;
@@ -497,15 +501,18 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
         }
         glBindTexture(GL_TEXTURE_2D, texID);
         DrawQuad(-0.5f, 0.5f, 0.7f, -0.7f, 0.0f, 1.0f, 1.0f);
+#endif
 
-		//if (whatIsShown == SHOW_ENDING)
+		if (end_start_time >= 0.0f)
 		{
-            float end_start_time = 1.0f;
+            GLuint texID;
+            char errorString[MAX_ERROR_LENGTH + 1];
 			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+			//glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+            glBlendFunc(GL_ONE, GL_ONE);
 
 			// Draw icon
-			if (textureManager.getTextureID("icon.tga", &texID, errorString))
+			if (textureManager.getTextureID("icon.png", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 				return -1;
@@ -514,10 +521,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			float alpha;
 			if (fCurTime - end_start_time < 0.4f) alpha = 0.0f;
 			else alpha = 1.0f;
-			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+			//DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha);
+            DrawQuad(-0.5f, 0.5f, -0.68f, 1.1f, 0.0f, 1.0f, alpha);
 
 			// Draw first highlight
-			if (textureManager.getTextureID("icon_highlight1.tga", &texID, errorString))
+			if (textureManager.getTextureID("icon_highlight1.png", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 				return -1;
@@ -528,10 +536,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			if (alpha < 0.0f) alpha = 0.0f;
 			if (alpha > 1.0f) alpha = 1.0f;
 			alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
-			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
+			//DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
+            DrawQuad(-0.5f, 0.5f, -0.68f, 1.1f, 0.0f, 1.0f, alpha);
 
 			// Draw second highlight
-			if (textureManager.getTextureID("icon_highlight2.tga", &texID, errorString))
+			if (textureManager.getTextureID("icon_highlight2.png", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 				return -1;
@@ -543,10 +552,11 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 			if (alpha > 1.0f) alpha = 1.0f;
 			alpha = 0.5f - 0.5f * (float)cos(alpha * 3.14159);
 			alpha *= 0.75f;
-			DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
+			//DrawQuad(-0.5f, 0.5f, -0.5f, 0.91f, 0.0f, 1.0f, alpha*0.75f);
+            DrawQuad(-0.5f, 0.5f, -0.68f, 1.1f, 0.0f, 1.0f, alpha);
 
 			// draw some sparkles
-			if (textureManager.getTextureID("sparkle.tga", &texID, errorString))
+			if (textureManager.getTextureID("sparkle.png", &texID, errorString))
 			{
 				MessageBox(mainWnd, errorString, "Texture Manager get texture ID", MB_OK);
 				return -1;
@@ -560,26 +570,28 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 				{
 					float amount = sqrtf(sinf((sparkleTime / sparkleDuration * 3.1415f)));
 					float iconDistance = 0.5f;
-					float ASPECT_RATIO = 240.0f / 170.0f;
+					//float ASPECT_RATIO = 240.0f / 170.0f;
+                    float aspect_correction = 16.0f / 9.0f;
 					float centerX = -0.3f + iconDistance * (0.55f + 0.35f * sinf(i*2.1f + 7.3f));
 					centerX += (0.7f+0.15f*sinf(i*1.4f+8.3f)) * iconDistance / sparkleDuration * sparkleTime -
 							   0.1f * sparkleTime*sparkleTime/sparkleDuration/sparkleDuration;
-					float centerY = 0.5f + iconDistance * ASPECT_RATIO * (0.8f + 0.3f * sinf(i*4.6f + 2.9f) - 1.0f);
-					centerY += (0.5f+0.2f*sinf(i*6.8f+3.0f)) * iconDistance / sparkleDuration * sparkleTime * ASPECT_RATIO -
+					float centerY = 0.5f + iconDistance * aspect_correction * (0.8f + 0.3f * sinf(i*4.6f + 2.9f) - 1.0f);
+					centerY += (0.5f+0.2f*sinf(i*6.8f+3.0f)) * iconDistance / sparkleDuration * sparkleTime * aspect_correction -
 							   0.4f * sparkleTime*sparkleTime/sparkleDuration/sparkleDuration;
 					float width = iconDistance * 0.25f;
 					DrawQuad(centerX - width, centerX + width,
-							 centerY - width * ASPECT_RATIO, centerY + width * ASPECT_RATIO,
+							 centerY - width * aspect_correction, centerY + width * aspect_correction,
 							 0.0f, 1.0f, amount);
 				}
 			}
 
 
 			glDisable(GL_BLEND);
-		}
-#endif
+		} else {
+/// End of sparkling sparcle logo
 
-        float alpha = 1.0f - fCurTime + last_red_flash;
+        float alpha = 1.6f - fCurTime + last_red_flash;
+        if (alpha > 1.0f) alpha = 1.0f;
         GLuint tex_id;
         textureManager.getTextureID("white.tga", &tex_id, error_string);
         glBindTexture(GL_TEXTURE_2D, tex_id);
@@ -610,6 +622,7 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                                     subtitle_script_,
                                     fCurTime - subtitle_start_time_, &textureManager,
                                     kMaxCharactersPerLine);
+        }
 
         // swap buffers
 		wglSwapLayerBuffers(mainDC, WGL_SWAP_MAIN_PLANE);
@@ -780,6 +793,12 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
                 if (cur_mod_key) {
                     EndCurrentScene(true);
                     next_scene_id_ = 12;
+                } else {
+                    if (end_start_time < 0.0f) {
+                        end_start_time = fCurTime;
+                    } else {
+                        end_start_time = -100.0f;
+                    }
                 }
                 break;
             case 'R':
@@ -958,7 +977,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
             case 'X':
                 if (fCurTime - last_music_change_time > 3.0f) {
                     if (!music_is_playing) {
-                        audio_.PlaySound("musik_bearb.wav", 5, false, -1, error_string,0.4F);
+                        audio_.PlaySound("musik_bearb.wav", 5, false, -1, error_string, 1.0F);
                         audio_.StopSound(3, 18.0f, error_string);
                         noise_is_playing = false;
                         music_is_playing = true;
