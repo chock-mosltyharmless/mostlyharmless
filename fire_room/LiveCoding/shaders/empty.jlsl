@@ -1,0 +1,8 @@
+void main(void) {                                                     
+float depth = sDepth(ppos);                                           
+                                                                      
+vec3 color = vec3(depth);                                             
+                                                                      
+gl_FragColor = vec4(color,1.);                                        
+}                                                                     
+                                                                      
