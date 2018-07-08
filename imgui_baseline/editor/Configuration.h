@@ -4,14 +4,14 @@
 
 // This header contains all the configuration macros that are
 // used to set the resolution and so on.
-#define XRES 1024
-#define YRES (1024*9/16)
+#define XRES 640
+#define YRES (XRES * 9 / 16)
 
 // The resolution of the background stuff
 #define X_OFFSCREEN XRES
 #define Y_OFFSCREEN YRES
-#define X_HIGHLIGHT 400
-#define Y_HIGHLIGHT 300
+#define X_HIGHLIGHT 320
+#define Y_HIGHLIGHT (X_HIGHLIGHT * 9 / 16)
 
 // The maximum number of chars in an error message.
 // Make error fields one larger!

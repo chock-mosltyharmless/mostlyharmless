@@ -116,6 +116,15 @@
     <None Include="shaders\SimpleTexture.gprg">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\example.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\example.jlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\example.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

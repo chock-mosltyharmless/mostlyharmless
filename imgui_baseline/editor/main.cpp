@@ -194,10 +194,9 @@ static int window_init( WININFO *info )
 	window_rect.right = XRES;
 	window_rect.bottom = YRES;
 
-    info->hWnd = CreateWindowEx( dwExStyle, wc.lpszClassName, "live coding", dwStyle,
-                               (GetSystemMetrics(SM_CXSCREEN)-rec.right+rec.left)>>1,
-                               (GetSystemMetrics(SM_CYSCREEN)-rec.bottom+rec.top)>>1,
-                               rec.right-rec.left, rec.bottom-rec.top, 0, 0, info->hInstance, 0 );
+    info->hWnd = CreateWindowEx(dwExStyle, wc.lpszClassName, "Editor", dwStyle,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        0, 0, info->hInstance, 0 );
     if( !info->hWnd )
         return( 0 );
 
@@ -222,60 +221,50 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
-#if 0
-static void intro_do(long t)
+static void intro_do(float time)
 {
 	char errorText[MAX_ERROR_LENGTH+1];
-	float ftime = 0.001f*(float)t;
 	GLuint textureID;
 
 	glDisable(GL_BLEND);
 	glDisable(GL_DEPTH_TEST);
 
+    glClearColor(0.7f, 0.5f , 0.3f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+
 	// Set the program uniforms
 	GLuint programID;
-	shaderManager.getProgramID("empty.gprg", &programID, errorText);
+	shaderManager.getProgramID("example.gprg", &programID, errorText);
 	glUseProgram(programID);
 
     // Set texture identifiers
 	GLint texture_location;
-	texture_location = glGetUniformLocation(programID, "Noise3DTexture");
-	glUniform1i(texture_location, 0);
-	texture_location = glGetUniformLocation(programID, "DepthSensorTexture");
+    texture_location = glGetUniformLocation(programID, "BGTexture");
+    glUniform1i(texture_location, 0);
+    texture_location = glGetUniformLocation(programID, "Noise3DTexture");
 	glUniform1i(texture_location, 1);
-	texture_location = glGetUniformLocation(programID, "BGTexture");
-	glUniform1i(texture_location, 2);
 
 	// render to larger offscreen texture
-	glActiveTexture(GL_TEXTURE2);
-	textureManager.getTextureID("hermaniak.png", &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-    // Only do if you want to use depth sensor texture
-//	glActiveTexture(GL_TEXTURE1);
-//	textureManager.getTextureID(TM_DEPTH_SENSOR_NAME, &textureID, errorText);
-//	glBindTexture(GL_TEXTURE_2D, textureID);
 	glActiveTexture(GL_TEXTURE0);
+	textureManager.getTextureID("background.png", &textureID, errorText);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glActiveTexture(GL_TEXTURE1);
 	textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_3D, textureID);
+    glActiveTexture(GL_TEXTURE0);
 
-	if (false) {
-		glViewport(0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
-	} else {
-		glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
-	}
+    glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+
+    GLuint loc = glGetUniformLocation(programID, "time");
+    glUniform1f(loc, time);
+
     glColor4f(1.0f, 0.5f, 0.2f, 1.0f);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
 	// Copy backbuffer to texture
-	if (false) {
-		textureManager.getTextureID(TM_HIGHLIGHT_NAME, &textureID, errorText);
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_HIGHLIGHT, Y_HIGHLIGHT);
-	} else {
-		textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
-		glBindTexture(GL_TEXTURE_2D, textureID);
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
-	}
+    textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 
 	// Copy backbuffer to front (so far no improvement)
 	int xres = window_rect.right - window_rect.left;
@@ -287,23 +276,7 @@ static void intro_do(long t)
 		shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
 	}
 	glUseProgram(programID);
-	GLuint loc = glGetUniformLocation(programID, "time");
-	glUniform1f(loc, (float)(t * 0.001f));
-	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
-	glDisable(GL_BLEND);
-
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0f, 0.0f);
-	glVertex2f(-1.0f, -1.0f);
-	glTexCoord2f(1.0f, 0.0f);
-	glVertex2f(1.0f, -1.0f);
-	glTexCoord2f(1.0f, 1.0f);
-	glVertex2f(1.0f, 1.0f);
-	glTexCoord2f(0.0f, 1.0f);
-	glVertex2f(-1.0f, 1.0f);
-	glEnd();
 }
-#endif
 
 int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
@@ -321,8 +294,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 0;
 	}
 
-    //intro_init();
-
 	// start music playback
 #ifdef MUSIC
 	BASS_Init(-1,44100,0,info->hWnd,NULL);
@@ -336,8 +307,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (FAILED(hr)) exit(-1);
 
     // IMGUI STUFF
-    bool show_demo_window = true;
-    bool show_another_window = false;
+    bool show_demo_window = false;
+    bool show_preview_window = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     MSG msg;
@@ -348,6 +319,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     QueryPerformanceFrequency((LARGE_INTEGER *)&ticks_per_second);
     float time = 0.0f;
     bool done = false;
+    
     while (!done) {
         INT64 ticks;
         QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
@@ -360,6 +332,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
+
+        intro_do(time);
 
         // Start the ImGui frame
         ImGui_ImplOpenGL2_NewFrame();
@@ -376,7 +350,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
 
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
+            ImGui::Checkbox("Preview Window", &show_preview_window);
 
             if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
                 counter++;
@@ -386,12 +360,16 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
         }
         // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
-        if (show_another_window)
+        if (show_preview_window)
         {
-            ImGui::Begin("Another Window", &show_another_window);
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
+            char error_text[MAX_ERROR_LENGTH + 1];
+            GLuint texture_id;
+            ImGui::Begin("Another Window", &show_preview_window);
+            if (textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text)) {
+                MessageBox(info->hWnd, error_text, "Get Renderbuffer", MB_OK);
+                break;
+            }
+            ImGui::Image((ImTextureID)texture_id, ImVec2(XRES, YRES));
             ImGui::End();
         }
         // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
@@ -401,8 +379,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             ImGui::ShowDemoWindow(&show_demo_window);
         }
 
-        //intro_do(t);
-
         // Rendering imgui
         ImGui::EndFrame();
         ImGui::Render();
@@ -411,13 +387,13 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         glViewport(0, 0, w, h);
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
-        //glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code.
+        glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code.
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 
-		SwapBuffers( info->hDC );
+		SwapBuffers(info->hDC);
 	}    
 
-    window_end( info );
+    window_end(info);
 
 #ifdef MUSIC
 	// music uninit
