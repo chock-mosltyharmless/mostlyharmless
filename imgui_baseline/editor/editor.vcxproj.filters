@@ -95,9 +95,6 @@
     <None Include="shaders\DitherTexture.flsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\empty.jlsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="shaders\DitherTexture.gprg">
       <Filter>Shaders</Filter>
     </None>
@@ -119,10 +116,13 @@
     <None Include="shaders\example.gprg">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\example.jlsl">
+    <None Include="shaders\example.vlsl">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="shaders\example.vlsl">
+    <None Include="shaders\empty.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\example.flsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

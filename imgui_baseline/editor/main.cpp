@@ -364,7 +364,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         {
             char error_text[MAX_ERROR_LENGTH + 1];
             GLuint texture_id;
-            ImGui::Begin("Another Window", &show_preview_window);
+            ImGui::Begin("Preview Window", &show_preview_window,
+                         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
             if (textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text)) {
                 MessageBox(info->hWnd, error_text, "Get Renderbuffer", MB_OK);
                 break;

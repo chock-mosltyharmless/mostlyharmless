@@ -1,3 +1,0 @@
-void main(void) {
-	gl_FragColor = vec4(0.5 + ppos.x, 0.5 + ppos.y, 0.5, 1.0);
-}

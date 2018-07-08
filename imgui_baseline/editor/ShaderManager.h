@@ -59,7 +59,6 @@ private: // data
 	// The shaderID will stay the same all the time
 	GLuint shaderID;
 	GLenum type;
-	const static char *jlslHeader;
 };
 
 // Currently only support for two shaders

@@ -85,10 +85,10 @@
     <None Include="shaders\DitherTexture.flsl" />
     <None Include="shaders\DitherTexture.gprg" />
     <None Include="shaders\empty.gprg" />
-    <None Include="shaders\empty.jlsl" />
+    <None Include="shaders\empty.flsl" />
     <None Include="shaders\empty.vlsl" />
     <None Include="shaders\example.gprg" />
-    <None Include="shaders\example.jlsl" />
+    <None Include="shaders\example.flsl" />
     <None Include="shaders\example.vlsl" />
     <None Include="shaders\SimpleTexture.flsl" />
     <None Include="shaders\SimpleTexture.gprg" />

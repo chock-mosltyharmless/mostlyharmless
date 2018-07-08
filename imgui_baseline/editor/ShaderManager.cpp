@@ -4,69 +4,6 @@
 #include "GLnames.h"
 #include "Configuration.h"
 
-// I should make this local to the Shader class
-const char *Shader::jlslHeader =
-"#version 120\n"
-"varying vec4 color;                                                   "
-"varying vec2 ppos;                                                    "
-"uniform sampler2D BGTexture;                                 "
-"uniform sampler3D Noise3DTexture;                                     "
-"uniform float time;                                                   "
-"vec4 vnoise1(vec3 pos) {                              "
-"vec3 pos2 = floor(pos*16.) +                                          "
-"smoothstep(0.,1., (pos*16.) - floor(pos*16.)) - 0.5;                  "
-"return texture3D(Noise3DTexture, pos2/16.);                     "
-"}                                                                     "
-"vec4 background(vec2 pos) {"
-"  return texture2D(BGTexture,"
-"                   vec2(0.5*pos.x + 0.5, 0.5 + 0.5*pos.y));"
-"}"
-"vec4 vnoise3(vec3 pos, float reduction) {                              "
-"float intensity = 1.;                                                 "
-"float size = 1.;                                                      "
-"vec4 result = vec4(0.0);                                              "
-"for (int k = 0; k < 3; k++) {                                "
-"vec3 pos2 = floor(pos*size*16.) +                             "        
-"smoothstep(0.,1., (pos*size*16.) - floor(pos*size*16.)) - 0.5; "       
-"vec4 inp = texture3D(Noise3DTexture, pos2/16.);           "      
-"result = result + inp*intensity;                                 " 
-"intensity = intensity * reduction;                                "    
-"size = size * 2.;                                                  "   
-"}"
-"return result;            "
-"}                          "
-"vec4 vnoise5(vec3 pos, float reduction) {             "
-"float intensity = 1.;                                 "                
-"float size = 1.;                                       "               
-"vec4 result = vec4(0.0);  "
-"for (int k = 0; k < 5; k++) {                        "        
-"vec3 pos2 = floor(pos*size*16.) +                     "                
-"smoothstep(0.,1., (pos*size*16.) - floor(pos*size*16.)) - 0.5;    "    
-"vec4 inp = texture3D(Noise3DTexture, pos2/16.);              "   
-"result = result + inp*intensity;                                  "
-"intensity = intensity * reduction;                                 "   
-"size = size * 2.;                                                   "  
-"}"
-"return result;                                                        "
-"}"
-"vec4 vnoise8(vec3 pos, float reduction) {             "
-"float intensity = 1.;                                 "                
-"float size = 1.;                                       "               
-"vec4 result = vec4(0.0);  "
-"for (int k = 0; k < 8; k++) {                        "        
-"vec3 pos2 = floor(pos*size*16.) +                     "                
-"smoothstep(0.,1., (pos*size*16.) - floor(pos*size*16.)) - 0.5;    "    
-"vec4 inp = texture3D(Noise3DTexture, pos2/16.);              "   
-"result = result + inp*intensity;                                  "
-"intensity = intensity * reduction;                                 "   
-"size = size * 2.;                                                   "  
-"}"
-"return result;                                                        "
-"}"
-"vec2 rotate(vec2 pos, float angle) {                             "
-"return pos*mat2(cos(angle),-sin(angle),sin(angle),cos(angle));   "
-"}                                                   ";
-
 Shader::Shader(GLenum type)
 {
 	shaderID = glCreateShader(type);
@@ -114,17 +51,7 @@ int Shader::compileShader(char *errorString)
 {
 	GLchar *compilationText = new GLchar[2*SM_MAX_PROGRAM_LENGTH+1];
 
-	// If this is a jlsl, add the constant stuff ahead of everything
-	if (shaderName[strlen(shaderName)-4] == 'j' ||
-		shaderName[strlen(shaderName)-4] == 'J')
-	{
-		strcpy_s(compilationText, SM_MAX_PROGRAM_LENGTH, jlslHeader);
-		strcat_s(compilationText, SM_MAX_PROGRAM_LENGTH, shaderText);
-	}
-	else
-	{
-		strcpy_s(compilationText, SM_MAX_PROGRAM_LENGTH, shaderText);
-	}
+	strcpy_s(compilationText, SM_MAX_PROGRAM_LENGTH, shaderText);
 	const GLchar *ptText = compilationText;
 	glShaderSource(shaderID, 1, &ptText, NULL);
 	glCompileShader(shaderID);
