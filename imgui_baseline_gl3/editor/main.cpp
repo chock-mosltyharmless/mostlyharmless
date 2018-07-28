@@ -4,12 +4,12 @@
 #include "stdafx.h"
 #include "main.h"
 #include "Configuration.h"
-#include "glext.h"
+#include "../glext.h"
 #include "GLNames.h"
 #include "ShaderManager.h"
 #include "TextureManager.h"
 #include "../imgui/imgui.h"
-#include "../imgui/imgui_impl_opengl2.h"
+#include "../imgui/imgui_impl_opengl3.h"
 #include "../imgui/imgui_impl_win32.h"
 
 #define MAX_LOADSTRING 100
@@ -27,7 +27,15 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glTexImage3D", "glGetShaderiv","glGetShaderInfoLog",
 	 "glDeleteProgram", "glDeleteShader",
 	 "glActiveTexture", "glGetUniformLocation", "glUniform1i", "glUniform1f",
-	 "glMultiTexCoord2f"
+	 "glMultiTexCoord2f",
+     "wglCreateContextAttribsARB",
+     "glGenVertexArrays", "glBindVertexArray", "glGenBuffers",
+     "glBindBuffer", "glBufferData", "glVertexAttribPointer",
+     "glBindAttribLocation", "glEnableVertexAttribArray",
+     "glGetProgramiv", "glBlendEquation", "glUniformMatrix4fv",
+     "glBindSampler", "glDeleteVertexArrays",
+     "glBlendEquationSeparate", "glBlendFuncSeparate",
+     "glGetAttribLocation", "glDeleteBuffers", "glDetachShader"
 };
 
 /*************************************************
@@ -98,10 +106,17 @@ static int initGL(WININFO *win_info) {
 		return -1;
 	}
 
+    // Test GL version
+    int nMajorVersion = -1;
+    int nMinorVersion = -1;
+    glGetIntegerv(GL_MAJOR_VERSION, &nMajorVersion);
+    glGetIntegerv(GL_MINOR_VERSION, &nMinorVersion);
+    //printf("Reported GL Version %d.%d [Supported]\n", nMajorVersion, nMinorVersion);
+
     // imGUI initialization
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGui_ImplOpenGL2_Init();
+    ImGui_ImplOpenGL3_Init();
     ImGui_ImplWin32_Init(win_info->hWnd);
     ImGui::StyleColorsDark();
 
@@ -144,7 +159,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
 }
 
 static void window_end (WININFO *info) {
-    ImGui_ImplOpenGL2_Shutdown();
+    ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
     
@@ -333,7 +348,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         intro_do(time);
 
         // Start the ImGui frame
-        ImGui_ImplOpenGL2_NewFrame();
+        ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
@@ -386,7 +401,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code.
-        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		SwapBuffers(info->hDC);
 	}    
