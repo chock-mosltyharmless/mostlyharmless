@@ -106,10 +106,10 @@ struct Camera {
     // update background image and calculate delta
     void Update(bool update_background, bool refresh_accumulate) {
         if (NULL == accumulate_buffer_) {
-            accumulate_buffer_ = new int[width_ * height_ * 4];
+            accumulate_buffer_ = new int[width_ * height_];
         }
 
-        for (int i = 0; i < width_ * height_ * 4; i++) {
+        for (int i = 0; i < width_ * height_; i++) {
             if (refresh_accumulate) {
                 accumulate_buffer_[i] = 0;
             }
@@ -126,7 +126,7 @@ struct Camera {
             accumulate_buffer_[i] += static_cast<int>(buffer_[i]);
 
             // Use accumulate buffer instead of buffer
-            int out = accumulate_buffer_[i] / 16;
+            int out = accumulate_buffer_[i] / 1;
             if (out > 255) out = 255;
             buffer_[i] = static_cast<unsigned char>(out);
         }
@@ -137,7 +137,7 @@ struct Camera {
         int count = 0;
         const float kFlashThreshold = 64;
         const int kCountThreshold = 5000;
-        for (int i = 0; i < width_ * height_ * 4; i++) {
+        for (int i = 0; i < width_ * height_; i++) {
             if (buffer_[i] >= kFlashThreshold) count++;
         }
         return (count >= kCountThreshold);
@@ -160,10 +160,10 @@ struct Camera {
             for (int x = 0; x < width_; x++) {
                 int factor = 1;  // multiplicative brightness from multiply_buffer
                 if (multiply_buffer) {
-                    int index = (y * width_ + x) * 4 + 3;
+                    int index = y * width_ + x;
                     factor = multiply_buffer[index];
                 }
-                int index = (y * width_ + x) * 4 + 3;
+                int index = y * width_ + x;
                 int brightness = buffer[index] * factor;
                 if (brightness > brightest) {
                     brightest_x = x;
@@ -184,10 +184,10 @@ struct Camera {
                     abs(y - brightest_y) > kClosePixelDistance) {
                     int factor = 1;  // multiplicative brightness from multiply_buffer
                     if (multiply_buffer) {
-                        int index = (y * width_ + x) * 4 + 3;
+                        int index = y * width_ + x;
                         factor = multiply_buffer[index];
                     }
-                    int index = (y * width_ + x) * 4 + 3;
+                    int index = y * width_ + x;
                     int brightness = buffer[index] * factor;
                     if (brightness > second_brightest) {
                         second_brightest = brightness;
@@ -216,7 +216,7 @@ struct Camera {
         for (int y_start = 0; y_start < height_; y_start++) {
             for (int x_start = 0; x_start < width_; x_start++) {
                 int start_index = y_start * width_ + x_start;
-                if (area_id[start_index] < 0 && buffer[start_index * 4 + 3] >= check_brightness) {
+                if (area_id[start_index] < 0 && buffer[start_index] >= check_brightness) {
                     int area_size = 0;
                     current_area++;
                     int num_check_next = 1;
@@ -225,7 +225,7 @@ struct Camera {
                         num_check_next--;
                         int index = check_next[num_check_next];
                         if (index >= 0 && index < width_ * height_ &&
-                            area_id[index] < 0 && buffer[index * 4 + 3] >= check_brightness_next) {
+                            area_id[index] < 0 && buffer[index] >= check_brightness_next) {
                             area_size++;
                             area_id[index] = current_area;
                             check_next[num_check_next] = index - 1;
@@ -245,10 +245,7 @@ struct Camera {
                             if (index >= 0 && index < width_ * height_ &&
                                 area_id[index] == current_area) {
                                 area_id[index]--;
-                                buffer[index * 4 + 0] = 0;
-                                buffer[index * 4 + 1] = 0;
-                                buffer[index * 4 + 2] = 0;
-                                buffer[index * 4 + 3] = 0;
+                                buffer[index] = 0;
                                 check_next[num_check_next] = index - 1;
                                 check_next[num_check_next + 1] = index + 1;
                                 check_next[num_check_next + 2] = index + width_;
@@ -356,7 +353,7 @@ int InitCamera() {
     CHECK_HR(pSrcOutMediaType->GetUINT64(MF_MT_FRAME_SIZE, &value), "Could not get video dimension");
     camera_.width_ = HI32(value);
     camera_.height_ = LO32(value);
-    int texture_size = camera_.width_ * camera_.height_ * 4;
+    int texture_size = camera_.width_ * camera_.height_;
     camera_.buffer_ = new unsigned char[texture_size];
     for (int i = 0; i < texture_size; i++) {
         camera_.buffer_[i] = 0;
@@ -374,9 +371,9 @@ int InitCamera() {
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); 
     //glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); 
     glEnable(GL_TEXTURE_2D);						// Enable Texture Mapping
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE,
         camera_.width_, camera_.height_,
-        0, GL_BGRA, GL_UNSIGNED_BYTE, camera_.buffer_);
+        0, GL_LUMINANCE, GL_UNSIGNED_BYTE, camera_.buffer_);
 
     return 0;
 }
@@ -437,20 +434,20 @@ int GetFrame(bool update_background, bool refresh_accumulate) {
                 int c = y0 - 16;
                 int d = u0 - 128;
                 int e = v0 - 128;
-                ptrOut[0] = clip(( 298 * c + 516 * d + 128) >> 8); // blue
-                ptrOut[1] = clip(( 298 * c - 100 * d - 208 * e + 128) >> 8); // green
-                ptrOut[2] = clip(( 298 * c + 409 * e + 128) >> 8); // red
-                ptrOut[3] = y0;
+                //ptrOut[0] = clip(( 298 * c + 516 * d + 128) >> 8); // blue
+                //ptrOut[1] = clip(( 298 * c - 100 * d - 208 * e + 128) >> 8); // green
+                //ptrOut[2] = clip(( 298 * c + 409 * e + 128) >> 8); // red
+                ptrOut[0] = y0;
                 c = y1 - 16;
-                ptrOut[4] = clip(( 298 * c + 516 * d + 128) >> 8); // blue
-                ptrOut[5] = clip(( 298 * c - 100 * d - 208 * e + 128) >> 8); // green
-                ptrOut[6] = clip(( 298 * c + 409 * e + 128) >> 8); // red
-                ptrOut[7] = y1;
+                //ptrOut[4] = clip(( 298 * c + 516 * d + 128) >> 8); // blue
+                //ptrOut[5] = clip(( 298 * c - 100 * d - 208 * e + 128) >> 8); // green
+                //ptrOut[6] = clip(( 298 * c + 409 * e + 128) >> 8); // red
+                ptrOut[1] = y1;
 
                 //ptrOut[0] = ptrOut[1] = ptrOut[2] = x;
                 //ptrOut[4] = ptrOut[5] = ptrOut[6] = x;
 
-                ptrOut += 8;
+                ptrOut += 2;
             }
         }
 
@@ -464,7 +461,7 @@ int GetFrame(bool update_background, bool refresh_accumulate) {
         glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
         glBindTexture(GL_TEXTURE_2D, camera_.texture_id_);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, camera_.width_, camera_.height_,
-            GL_BGRA, GL_UNSIGNED_BYTE, camera_.buffer_);
+            GL_LUMINANCE, GL_UNSIGNED_BYTE, camera_.buffer_);
 
         buf->Release();
         videoSample->Release();
@@ -686,8 +683,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 // This is the last time that the column is shown - check it
                 if (index >= 0 && index < CALIBRATION_X_RESOLUTION) {
                     // Save image...
-                    row_accumulate_buffer[x_index] = new int[camera_.width_ * camera_.height_ * 4];
-                    for (int i = 0; i < camera_.width_ * camera_.height_ * 4; i++) {
+                    row_accumulate_buffer[x_index] = new int[camera_.width_ * camera_.height_];
+                    for (int i = 0; i < camera_.width_ * camera_.height_; i++) {
                         row_accumulate_buffer[x_index][i] = camera_.accumulate_buffer_[i];
                     }
                 }

@@ -270,8 +270,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 float distance = sqrtf((ball_x - scaled_x) * (ball_x - scaled_x) +
                     (ball_y - scaled_y) * (ball_y - scaled_y) +
                     (ball_z - scaled_z) * (ball_z - scaled_z));
-                //float brightness = calibration_brightness_[z][x] / maximum_brightness * 16.0f;
-                float brightness = 1.0f;
+                float brightness = calibration_brightness_[z][x];
+                brightness *= brightness;
+                //float brightness = 1.0f;
                 if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
                 if (brightness > 1.0f) brightness = 1.0f;
                 if (distance > 1.0f) brightness = 0.0f;

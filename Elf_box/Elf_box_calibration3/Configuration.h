@@ -25,15 +25,15 @@
 //#define USE_MULTISAMPLE
 
 // Time until calibration starts after program launch in ms
-//#define CALIBRATION_DELAY (240 * 1000)
-#define CALIBRATION_DELAY (1 * 1000)
+#define CALIBRATION_DELAY (240 * 1000)
+//#define CALIBRATION_DELAY (1 * 1000)
 // Must be more than in latency measurement
 //#define USE_BACKGROUND_UPDATE (2 * 1000)
 //#define USE_LATENCY 1000
 //#define NUM_ACCUMULATE 90
 #define USE_BACKGROUND_UPDATE (500)
 #define USE_LATENCY 400
-#define NUM_ACCUMULATE 90
+#define NUM_ACCUMULATE 120
 
 // Parameters to ignore larger fields
 #define SUPPRESS_RELATIVE_BRIGHTNESS 0.5
