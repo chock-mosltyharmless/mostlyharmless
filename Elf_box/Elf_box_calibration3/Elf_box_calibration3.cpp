@@ -126,7 +126,7 @@ struct Camera {
             accumulate_buffer_[i] += static_cast<int>(buffer_[i]);
 
             // Use accumulate buffer instead of buffer
-            int out = accumulate_buffer_[i] / 1;
+            int out = accumulate_buffer_[i] / ACCUMULATE_NORMALIZATION_FACTOR;
             if (out > 255) out = 255;
             buffer_[i] = static_cast<unsigned char>(out);
         }
@@ -196,14 +196,18 @@ struct Camera {
             }
         }
 
+        float absolute_brightness = ((float)brightest) / 255.0f / ACCUMULATE_NORMALIZATION_FACTOR / ACCUMULATE_NORMALIZATION_FACTOR;
+        if (absolute_brightness > 1.0f) absolute_brightness = 1.0f;
+        if (absolute_brightness < 0.0f) absolute_brightness = 0.0f;
+
         float relative_brightness = static_cast<float>(brightest - second_brightest) /
             static_cast<float>(brightest);
 
-        return relative_brightness;
+        return relative_brightness * absolute_brightness;
     }
 
     // Remove large areas of bright stuff
-    void SuppressAreas(unsigned char *buffer) {
+    void SuppressAreas() {
         // Get absolute brightest first...
         int check_brightness = (int)(SUPPRESS_RELATIVE_BRIGHTNESS * 255);
         int check_brightness_next = (int)(SUPPRESS_RELATIVE_BRIGHTNESS_NEXT * 255);
@@ -216,7 +220,7 @@ struct Camera {
         for (int y_start = 0; y_start < height_; y_start++) {
             for (int x_start = 0; x_start < width_; x_start++) {
                 int start_index = y_start * width_ + x_start;
-                if (area_id[start_index] < 0 && buffer[start_index] >= check_brightness) {
+                if (area_id[start_index] < 0 && buffer_[start_index] >= check_brightness) {
                     int area_size = 0;
                     current_area++;
                     int num_check_next = 1;
@@ -225,7 +229,7 @@ struct Camera {
                         num_check_next--;
                         int index = check_next[num_check_next];
                         if (index >= 0 && index < width_ * height_ &&
-                            area_id[index] < 0 && buffer[index] >= check_brightness_next) {
+                            area_id[index] < 0 && buffer_[index] >= check_brightness_next) {
                             area_size++;
                             area_id[index] = current_area;
                             check_next[num_check_next] = index - 1;
@@ -245,7 +249,7 @@ struct Camera {
                             if (index >= 0 && index < width_ * height_ &&
                                 area_id[index] == current_area) {
                                 area_id[index]--;
-                                buffer[index] = 0;
+                                buffer_[index] = 64;
                                 check_next[num_check_next] = index - 1;
                                 check_next[num_check_next + 1] = index + 1;
                                 check_next[num_check_next + 2] = index + width_;
@@ -455,7 +459,7 @@ int GetFrame(bool update_background, bool refresh_accumulate) {
         camera_.Update(update_background, refresh_accumulate);
 
         // Suppress larger parts
-        camera_.SuppressAreas(camera_.buffer_);
+        camera_.SuppressAreas();
 
         // Update texture
         glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
@@ -644,17 +648,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 #ifdef MATRIX_CALIBRATION
         static int *row_accumulate_buffer[CALIBRATION_X_RESOLUTION];
         static bool do_row_calibration = false;
+        const int kNumZBlocks = 8;
+        static int z_block = 0;  // Z Block for which computation is done
+        int block_z_resolution = CALIBRATION_Z_RESOLUTION / kNumZBlocks;
 
         if (do_row_calibration) {  // Check for second pass (row calibration)
-            int z_index = (index * 7919) % CALIBRATION_Z_RESOLUTION;
+            int z_index = (index * 23) % block_z_resolution;
+            int final_z_index = z_index + z_block * block_z_resolution;
 
             if (check_calibration) {
                 // This is the last time that the row is shown - check it
-                if (index >= 0 && index < CALIBRATION_Z_RESOLUTION) {
+                if (index >= 0 && index < block_z_resolution) {
                     for (int column = 0; column < CALIBRATION_X_RESOLUTION; column++) {
                         int x_index = column;
-                        brightness[z_index][x_index] = camera_.FindBrightestPixel(
-                            &(calibration_x[z_index][x_index]), &(calibration_y[z_index][x_index]),
+                        brightness[final_z_index][x_index] = camera_.FindBrightestPixel(
+                            &(calibration_x[final_z_index][x_index]), &(calibration_y[final_z_index][x_index]),
                             camera_.accumulate_buffer_, row_accumulate_buffer[column]);
                     }
                 }
@@ -662,22 +670,32 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 // This may have taken a long time, so really read the current time
                 last_flash = timeGetTime() - start_time;
                 index++;
-                if (index >= CALIBRATION_Z_RESOLUTION) {
-                    done = true;
+                if (index >= block_z_resolution) {
+                    for (int k = 0; k < CALIBRATION_X_RESOLUTION; k++) {
+                        delete[] row_accumulate_buffer[k];
+                        row_accumulate_buffer[k] = 0;
+                    }
+                    do_row_calibration = false;
+                    z_block++;
+                    index = 0;
+
+                    if (z_block >= kNumZBlocks) {
+                        done = true;
+                    }
                 }
             }
 
             if (show_image) {
-                if (index >= 0 && index < CALIBRATION_Z_RESOLUTION) {
+                if (index >= 0 && index < block_z_resolution) {
                     float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
-                    float z_pos = z_index * depth - 1.0f;
+                    float z_pos = final_z_index * depth - 1.0f;
                     glColor3f(1.0f, 1.0f, 1.0f);
                     glRectf(-1.0f, z_pos, 1.0f, z_pos + depth);
                 }
             }
 
         } else {  // Do first pass (columns)
-            int x_index = (index * 7919) % CALIBRATION_X_RESOLUTION;
+            int x_index = (index * 23) % CALIBRATION_X_RESOLUTION;
 
             if (check_calibration) {
                 // This is the last time that the column is shown - check it
@@ -702,7 +720,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                     float width = 2.0f / CALIBRATION_X_RESOLUTION;
                     float x_pos = x_index * width - 1.0f;
                     glColor3f(1.0f, 1.0f, 1.0f);
-                    glRectf(x_pos, -1.0f, x_pos + width, 1.0f);
+                    float start_z = -1.0f + 2.0f * z_block / kNumZBlocks - 2.0f / CALIBRATION_Z_RESOLUTION;
+                    float end_z = -1.0f + 2.0f * (z_block + 1) / kNumZBlocks + 2.0f / CALIBRATION_Z_RESOLUTION;
+                    glRectf(x_pos, start_z, x_pos + width, end_z);
                 }
             }
         }

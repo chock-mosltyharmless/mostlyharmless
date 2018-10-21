@@ -19,7 +19,7 @@
 #endif
 
 // Maximum distance where a pixel is considered nearby
-#define CLOSE_PIXEL_DISTANCE 15
+#define CLOSE_PIXEL_DISTANCE 20
 
 // Using multisample sounds like a bad idea
 //#define USE_MULTISAMPLE
@@ -33,20 +33,23 @@
 //#define NUM_ACCUMULATE 90
 #define USE_BACKGROUND_UPDATE (500)
 #define USE_LATENCY 400
-#define NUM_ACCUMULATE 120
+#define NUM_ACCUMULATE 30
+
+// Parameters for abosulte accumulation normazliation
+#define ACCUMULATE_NORMALIZATION_FACTOR 8
 
 // Parameters to ignore larger fields
-#define SUPPRESS_RELATIVE_BRIGHTNESS 0.5
-#define SUPPRESS_RELATIVE_BRIGHTNESS_NEXT 0.1
-#define SUPPRESS_MINIMUM_SIZE 10
+#define SUPPRESS_RELATIVE_BRIGHTNESS 10.5
+#define SUPPRESS_RELATIVE_BRIGHTNESS_NEXT 0.2
+#define SUPPRESS_MINIMUM_SIZE 20
 
-#define CALIBRATION_X_RESOLUTION 1280
-#define CALIBRATION_Z_RESOLUTION 800
-//#define CALIBRATION_X_RESOLUTION 20
+#define CALIBRATION_X_RESOLUTION 320
+#define CALIBRATION_Z_RESOLUTION 400
+//#define CALIBRATION_X_RESOLUTION 16
 //#define CALIBRATION_Z_RESOLUTION 20
 
 #define USE_CAMERA
 //#define LIST_DEVICES
 //#define LATENCY_MEASUREMENT
-#define SHOW_HEIGHT
-//#define MATRIX_CALIBRATION
+//#define SHOW_HEIGHT
+#define MATRIX_CALIBRATION
