@@ -20,8 +20,12 @@
 #define USE_LATENCY 500
 #define NUM_ACCUMULATE 50
 
-#define CALIBRATION_X_RESOLUTION 1280
-#define CALIBRATION_Z_RESOLUTION 800
+#define CALIBRATION_X_RESOLUTION 320
+#define CALIBRATION_Z_RESOLUTION 400
+
+#define MAX_Z_DRAW (6.7f / 8.0f)
+// Minimum calibration brightness where stuff is actually being drawn
+#define MIN_DRAW_BRIGHTNESS 0.99f
 
 //#define SHOW_HEIGHT
 //#define SHOW_BALL

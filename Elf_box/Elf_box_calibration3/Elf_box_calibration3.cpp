@@ -500,7 +500,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     UINT numFormats;
     float fAttributes[] = { 0, 0 };
     //const int kMaxNumMultisamples = 16;
-    const int kMaxNumMultisamples = 8;
+    const int kMaxNumMultisamples = 1;
     // These Attributes Are The Bits We Want To Test For In Our Sample
     // Everything Is Pretty Standard, The Only One We Want To
     // Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
@@ -648,9 +648,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 #ifdef MATRIX_CALIBRATION
         static int *row_accumulate_buffer[CALIBRATION_X_RESOLUTION];
         static bool do_row_calibration = false;
-        const int kNumZBlocks = 8;
         static int z_block = 0;  // Z Block for which computation is done
-        int block_z_resolution = CALIBRATION_Z_RESOLUTION / kNumZBlocks;
+        int block_z_resolution = CALIBRATION_Z_RESOLUTION / NUMBER_OF_Z_SLIZES;
 
         if (do_row_calibration) {  // Check for second pass (row calibration)
             int z_index = (index * 23) % block_z_resolution;
@@ -679,7 +678,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                     z_block++;
                     index = 0;
 
-                    if (z_block >= kNumZBlocks) {
+                    if (z_block >= NUMBER_OF_Z_SLIZES) {
                         done = true;
                     }
                 }
@@ -720,8 +719,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                     float width = 2.0f / CALIBRATION_X_RESOLUTION;
                     float x_pos = x_index * width - 1.0f;
                     glColor3f(1.0f, 1.0f, 1.0f);
-                    float start_z = -1.0f + 2.0f * z_block / kNumZBlocks - 2.0f / CALIBRATION_Z_RESOLUTION;
-                    float end_z = -1.0f + 2.0f * (z_block + 1) / kNumZBlocks + 2.0f / CALIBRATION_Z_RESOLUTION;
+                    float start_z = -1.0f + 2.0f * z_block / NUMBER_OF_Z_SLIZES - 2.0f / CALIBRATION_Z_RESOLUTION;
+                    float end_z = -1.0f + 2.0f * (z_block + 1) / NUMBER_OF_Z_SLIZES + 2.0f / CALIBRATION_Z_RESOLUTION;
                     glRectf(x_pos, start_z, x_pos + width, end_z);
                 }
             }
@@ -772,7 +771,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             }
         }
 
-        for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
+        int num_displayed = 0;
+        for (int z = 0; (float)z < CALIBRATION_Z_RESOLUTION * MAX_Z_DRAW; z++) {
             for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
                 float width = 2.0f / CALIBRATION_X_RESOLUTION;
                 float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
@@ -781,18 +781,21 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 float distance = fabsf(show_height - calibration_y_[z][x]);
                 //float brightness = calibration_brightness_[z][x] / maximum_brightness * 2.0f;
                 float brightness = 1.0f;
-                if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
-                if (brightness > 1.0f) brightness = 1.0f;
-                brightness *= 1.0f - (distance * 10.0f);
-                if (brightness < 0.0f) brightness = 0.0f;
-                //float red = col_range * brightness;
-                //float green = (1.0f - col_range) * brightness;
-                //float blue = 0.0f * brightness;
-                //glColor3f(red, green, blue);
-                glColor3f(brightness, brightness, brightness);
-                float x_pos = x * width - 1.0f;
-                float z_pos = z * depth - 1.0f;
-                glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+                if (calibration_brightness_[z][x] >= MIN_DRAW_BRIGHTNESS)
+                {
+                    if (brightness > 1.0f) brightness = 1.0f;
+                    brightness *= 1.0f - (distance * 10.0f);
+                    if (brightness < 0.0f) brightness = 0.0f;
+                    //float red = col_range * brightness;
+                    //float green = (1.0f - col_range) * brightness;
+                    //float blue = 0.0f * brightness;
+                    //glColor3f(red, green, blue);
+                    glColor3f(brightness, brightness, brightness);
+                    float x_pos = x * width - 1.0f;
+                    float z_pos = z * depth - 1.0f;
+                    glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+                    num_displayed++;
+                }
             }
         }
 #endif

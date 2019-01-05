@@ -214,33 +214,36 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             }
         }
 
-        for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
+        for (int z = 0; (float)z < CALIBRATION_Z_RESOLUTION * MAX_Z_DRAW; z++) {
             for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
-                float width = 2.0f / CALIBRATION_X_RESOLUTION;
-                float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
-                //float col_range = calibration_y_[z][x] * 0.5f + 0.5f;
-                float show_height = sinf(static_cast<float>(cur_time) * 0.0003f);
-                float distance = fabsf(show_height - calibration_y_[z][x]);
-                //float brightness = calibration_brightness_[z][x] / maximum_brightness * 16.0f;
-                float brightness = 1.0f;
-                if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
-                if (brightness > 1.0f) brightness = 1.0f;
-                brightness *= 1.0f - (distance * 10.0f);
-                if (brightness < 0.0f) brightness = 0.0f;
-                //float red = col_range * brightness;
-                //float green = (1.0f - col_range) * brightness;
-                //float blue = 0.0f * brightness;
-                //glColor3f(red, green, blue);
-                glColor3f(brightness, brightness, brightness);
-                float x_pos = x * width - 1.0f;
-                float z_pos = z * depth - 1.0f;
-                glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+                if (calibration_brightness_[z][x] >= MIN_DRAW_BRIGHTNESS)
+                {
+                    float width = 2.0f / CALIBRATION_X_RESOLUTION;
+                    float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
+                    //float col_range = calibration_y_[z][x] * 0.5f + 0.5f;
+                    float show_height = sinf(static_cast<float>(cur_time) * 0.0003f);
+                    float distance = fabsf(show_height - calibration_y_[z][x]);
+                    //float brightness = calibration_brightness_[z][x] / maximum_brightness * 16.0f;
+                    float brightness = 1.0f;
+                    if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
+                    if (brightness > 1.0f) brightness = 1.0f;
+                    brightness *= 1.0f - (distance * 10.0f);
+                    if (brightness < 0.0f) brightness = 0.0f;
+                    //float red = col_range * brightness;
+                    //float green = (1.0f - col_range) * brightness;
+                    //float blue = 0.0f * brightness;
+                    //glColor3f(red, green, blue);
+                    glColor3f(brightness, brightness, brightness);
+                    float x_pos = x * width - 1.0f;
+                    float z_pos = z * depth - 1.0f;
+                    glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+                }        
             }
         }
 #endif
 
         // Scaling to make it somewhat cubic
-        const float kYScale = 4.0f;
+        const float kYScale = 2.5f;
         const float kXScale = 2.5f;
         const float kZScale = 2.0f;
         float ftime = static_cast<float>(cur_time) * 0.001f;
@@ -256,28 +259,31 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             0.75f * sinf(ftime * 0.48f + 2.9f) +
             0.5f * sinf(ftime * 0.91f + 1.7f);
 
-        for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
+        for (int z = 0; (float)z < CALIBRATION_Z_RESOLUTION * MAX_Z_DRAW; z++) {
             for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
-                float width = 2.0f / CALIBRATION_X_RESOLUTION;
-                float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
-                float x_pos = x * width - 1.0f;
-                float z_pos = z * depth - 1.0f;
-                float y_pos = calibration_y_[z][x];
-                float scaled_x = x_pos * kXScale;
-                float scaled_y = y_pos * kYScale;
-                float scaled_z = z_pos * kZScale;
+                if (calibration_brightness_[z][x] >= MIN_DRAW_BRIGHTNESS)
+                {
+                    float width = 2.0f / CALIBRATION_X_RESOLUTION;
+                    float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
+                    float x_pos = x * width - 1.0f;
+                    float z_pos = z * depth - 1.0f;
+                    float y_pos = calibration_y_[z][x];
+                    float scaled_x = x_pos * kXScale;
+                    float scaled_y = y_pos * kYScale;
+                    float scaled_z = z_pos * kZScale;
 
-                float distance = sqrtf((ball_x - scaled_x) * (ball_x - scaled_x) +
-                    (ball_y - scaled_y) * (ball_y - scaled_y) +
-                    (ball_z - scaled_z) * (ball_z - scaled_z));
-                float brightness = calibration_brightness_[z][x];
-                brightness *= brightness;
-                //float brightness = 1.0f;
-                if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
-                if (brightness > 1.0f) brightness = 1.0f;
-                if (distance > 1.0f) brightness = 0.0f;
-                glColor3f(brightness, brightness, brightness);
-                glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+                    float distance = sqrtf((ball_x - scaled_x) * (ball_x - scaled_x) +
+                        (ball_y - scaled_y) * (ball_y - scaled_y) +
+                        (ball_z - scaled_z) * (ball_z - scaled_z));
+                    //float brightness = calibration_brightness_[z][x];
+                    //brightness *= brightness;
+                    float brightness = 1.0f;
+                    if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
+                    if (brightness > 1.0f) brightness = 1.0f;
+                    if (distance > 1.0f) brightness = 0.0f;
+                    glColor3f(brightness, brightness, brightness);
+                    glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+                }
             }
         }
 #endif
@@ -293,44 +299,51 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             0.75f * sinf(ftime * 0.48f + 2.9f) +
             0.5f * sinf(ftime * 0.91f + 1.7f);
 
-        for (int z = 0; z < CALIBRATION_Z_RESOLUTION; z++) {
+        for (int z = 0; (float)z < CALIBRATION_Z_RESOLUTION * MAX_Z_DRAW; z++) {
             for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++) {
-                float width = 2.0f / CALIBRATION_X_RESOLUTION;
-                float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
-                float x_pos = x * width - 1.0f;
-                float z_pos = z * depth - 1.0f;
-                float y_pos = calibration_y_[z][x];
-                float scaled_x = x_pos * kXScale;
-                float scaled_y = y_pos * kYScale;
-                float scaled_z = z_pos * kZScale;
+                if (calibration_brightness_[z][x] >= MIN_DRAW_BRIGHTNESS)
+                {
+                    float width = 2.0f / CALIBRATION_X_RESOLUTION;
+                    float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
+                    float x_pos = x * width - 1.0f;
+                    float z_pos = z * depth - 1.0f;
+                    float y_pos = calibration_y_[z][x];
+                    float scaled_x = x_pos * kXScale;
+                    float scaled_y = y_pos * kYScale;
+                    float scaled_z = z_pos * kZScale;
 
-                float distance = sqrtf((ball_x - scaled_x) * (ball_x - scaled_x) +
-                    (ball_y - scaled_y) * (ball_y - scaled_y) +
-                    (ball_z - scaled_z) * (ball_z - scaled_z));
+                    float distance = sqrtf((ball_x - scaled_x) * (ball_x - scaled_x) +
+                        (ball_y - scaled_y) * (ball_y - scaled_y) +
+                        (ball_z - scaled_z) * (ball_z - scaled_z));
 
-                const float kDistancePhase = 5.0f;
-                const float kTimePhase = 6.0f;
-                float phase = distance * kDistancePhase - ftime * kTimePhase;
-                int index = static_cast<int>(phase / 3.14153f / 2.0f);
+                    const float kDistancePhase = 6.0f;
+                    const float kTimePhase = 7.0f;
+                    float phase = distance * kDistancePhase - ftime * kTimePhase;
+                    int index = static_cast<int>(phase / 3.14153f / 2.0f);
 
-                float red = 0.5f + 0.5f * sinf(index * 3.0f);
-                float green = 0.5f + 0.5f * sinf(index * 2.3f);
-                float blue = 0.5f + 0.5f * sinf(index * 4.6f);
+                    float red = 0.7f + 0.5f * sinf(index * 3.0f);
+                    float green = 0.7f + 0.5f * sinf(index * 2.3f);
+                    float blue = 0.7f + 0.5f * sinf(index * 4.6f);
+                    
+                    float alpha = 0.5f + sinf(index * 0.5f);
+                    if (alpha < 0.0f) alpha = 0.0f; else alpha = 1.0f;
+                    alpha = 2.0f * alpha / (1.0f + distance * distance);
 
-                //float brightness = calibration_brightness_[z][x] / maximum_brightness * 16.0f;
-                float brightness = 1.0f;
-                if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
-                if (brightness > 1.0f) brightness = 1.0f;
-                float rainbow = 2.0f * sin(phase) - 0.75f;
-                if (rainbow < 0.0f) rainbow = 0.0f;
-                //if (rainbow > 1.0f) rainbow = 1.0f;
-                brightness *= rainbow;
-                float dist_brightness = 1.5f / (distance + 0.3f);
-                if (dist_brightness < 0.0f) dist_brightness = 0.0f;
-                //if (dist_brightness > 1.0f) dist_brightness = 1.0f;
-                brightness *= dist_brightness;
-                glColor3f(red * brightness, green * brightness, blue * brightness);
-                glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+                    //float brightness = calibration_brightness_[z][x] / maximum_brightness * 16.0f;
+                    float brightness = alpha;
+                    //if (calibration_brightness_[z][x] < 0.5f) brightness = 0.0f;
+                    if (brightness > 1.0f) brightness = 1.0f;
+                    float rainbow = 2.0f * sin(phase) - 0.75f;
+                    if (rainbow < 0.0f) rainbow = 0.0f;
+                    //if (rainbow > 1.0f) rainbow = 1.0f;
+                    brightness *= rainbow;
+                    float dist_brightness = 1.5f / (distance + 0.3f);
+                    if (dist_brightness < 0.0f) dist_brightness = 0.0f;
+                    //if (dist_brightness > 1.0f) dist_brightness = 1.0f;
+                    brightness *= dist_brightness;
+                    glColor3f(red * brightness, green * brightness, blue * brightness);
+                    glRectf(x_pos, z_pos, x_pos + width, z_pos + depth);
+                }
             }
         }
 #endif

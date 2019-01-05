@@ -26,38 +26,29 @@
 
 // Time until calibration starts after program launch in ms
 #define CALIBRATION_DELAY (240 * 1000)
-//#define CALIBRATION_DELAY (1 * 1000)
+//#define CALIBRATION_DELAY (5 * 1000)
 // Must be more than in latency measurement
-//#define USE_BACKGROUND_UPDATE (2 * 1000)
 //#define USE_LATENCY 1000
 //#define NUM_ACCUMULATE 90
-#define USE_BACKGROUND_UPDATE (500)
-#define USE_LATENCY 400
-#define NUM_ACCUMULATE 30
+#define USE_LATENCY 500
+#define NUM_ACCUMULATE 50
 
-// Parameters for abosulte accumulation normazliation
-#define ACCUMULATE_NORMALIZATION_FACTOR 8
+// Threshold when accumulated stuff is considered a bright spot
+#define VISIBLE_THRESHOLD 2200
 
-// Number of Z-slices to do calibration on.
-// Larger numbers should give better results, but calibration durations grows linearly
-#define NUMBER_OF_Z_SLIZES 20
-
-// Parameters to ignore larger fields
-#define SUPPRESS_RELATIVE_BRIGHTNESS 10.5
-#define SUPPRESS_RELATIVE_BRIGHTNESS_NEXT 0.2
-#define SUPPRESS_MINIMUM_SIZE 20
-
-#define CALIBRATION_X_RESOLUTION 320
-#define CALIBRATION_Z_RESOLUTION 400
+#define CALIBRATION_X_RESOLUTION 960
+#define CALIBRATION_Z_RESOLUTION 1024
 //#define CALIBRATION_X_RESOLUTION 16
 //#define CALIBRATION_Z_RESOLUTION 20
 
-#define MAX_Z_DRAW (6.7f / 8.0f)
+//#define MAX_Z_DRAW (6.7f / 8.0f)
+
 // Minimum calibration brightness where stuff is actually being drawn
 #define MIN_DRAW_BRIGHTNESS 0.99f
 
 #define USE_CAMERA
 //#define LIST_DEVICES
 //#define LATENCY_MEASUREMENT
-#define SHOW_HEIGHT
+//#define SHOW_HEIGHT
 //#define MATRIX_CALIBRATION
+#define LINE_CALIBRATION
