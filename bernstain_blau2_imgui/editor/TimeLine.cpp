@@ -10,6 +10,29 @@ KeyFrame::KeyFrame(float time)
     }
 }
 
+void KeyFrame::Load(FILE *fid)
+{
+    fscanf(fid, "%f\t%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+        &time_,
+        &value_[0], &value_[1], &value_[2],
+        &value_[3], &value_[4], &value_[5],
+        &value_[6], &value_[7], &value_[8],
+        &value_[9], &value_[10], &value_[11],
+        &value_[12], &value_[13], &value_[14],
+        &value_[15], &value_[16], &value_[17]);
+}
+
+void KeyFrame::Save(FILE *fid)
+{
+    fprintf(fid, "%.2f\t", time_);
+    for (int i = 0; i < KF_NUM_VALUES; i++)
+    {
+        if (i != 0) fprintf(fid, " ");
+        fprintf(fid, "%.5f", value_[i]);
+    }
+    fprintf(fid, "\n");
+}
+
 TimeLine::TimeLine()
 {
 }
@@ -22,6 +45,27 @@ void TimeLine::Init(float duration)
 {
     keyframe_.push_back(KeyFrame(0.0f));
     keyframe_.push_back(KeyFrame(duration));
+}
+
+void TimeLine::Save(FILE *fid)
+{
+    fprintf(fid, "%d\n", (int)keyframe_.size());
+    for (int i = 0; i < (int)keyframe_.size(); i++)
+    {
+        keyframe_[i].Save(fid);
+    }
+}
+
+void TimeLine::Load(FILE *fid)
+{
+    int count = 0;
+    fscanf(fid, "%d\n", &count);
+    keyframe_.clear();
+    for (int i = 0; i < count; i++)
+    {
+        keyframe_.push_back(KeyFrame(0.0f));
+        keyframe_[i].Load(fid);
+    }
 }
 
 void TimeLine::GetValues(float time, float value[KF_NUM_VALUES])
@@ -84,7 +128,7 @@ bool TimeLine::AddKeyFrame(int id)
 
 void TimeLine::SetKeyFrameTime(int id, float time)
 {
-    if (id <= 0 || id >= keyframe_.size() - 1) return;
+    if (id <= 0 || id >= (int)keyframe_.size() - 1) return;
 
     float min = keyframe_[id - 1].time() + 0.01f;
     float max = keyframe_[id + 1].time() - 0.01f;

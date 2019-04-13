@@ -292,6 +292,21 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         case VK_SPACE:
             PauseResume();
             break;
+        case 'B':
+        case 'b':
+            music_time_ = (double)timeline_.time(edit_keyframe_id_);
+            BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, (float)music_time_), BASS_POS_BYTE);
+            break;
+        case 'N':
+        case 'n':
+            edit_keyframe_id_--;
+            if (edit_keyframe_id_ < 0) edit_keyframe_id_ = 0;
+            break;
+        case 'M':
+        case 'm':
+            edit_keyframe_id_++;
+            if (edit_keyframe_id_ >= timeline_.NumKeyFrames()) edit_keyframe_id_ = timeline_.NumKeyFrames() - 1;
+            break;
 
         default:
             break;
@@ -308,6 +323,58 @@ void NotifyParamChange(int index, float value)
     switch (index)
     {
     case 2:
+        timeline_.SetValue(edit_keyframe_id_, 9, value);
+        break;
+    case 3:
+        timeline_.SetValue(edit_keyframe_id_, 10, value);
+        break;
+    case 4:
+        timeline_.SetValue(edit_keyframe_id_, 11, value);
+        break;
+    case 5:
+        timeline_.SetValue(edit_keyframe_id_, 12, value);
+        break;
+    case 6:
+        timeline_.SetValue(edit_keyframe_id_, 13, value);
+        break;
+    case 8:
+        timeline_.SetValue(edit_keyframe_id_, 14, value);
+        break;
+    case 9:
+        timeline_.SetValue(edit_keyframe_id_, 15, value);
+        break;
+    case 12:
+        timeline_.SetValue(edit_keyframe_id_, 16, value);
+        break;
+    case 13:
+        timeline_.SetValue(edit_keyframe_id_, 17, value);
+        break;
+    case 14:
+        timeline_.SetValue(edit_keyframe_id_, 0, value);
+        break;
+    case 15:
+        timeline_.SetValue(edit_keyframe_id_, 1, value);
+        break;
+    case 16:
+        timeline_.SetValue(edit_keyframe_id_, 2, value);
+        break;
+    case 17:
+        timeline_.SetValue(edit_keyframe_id_, 3, value);
+        break;
+    case 18:
+        timeline_.SetValue(edit_keyframe_id_, 4, value);
+        break;
+    case 19:
+        timeline_.SetValue(edit_keyframe_id_, 5, value);
+        break;
+    case 20:
+        timeline_.SetValue(edit_keyframe_id_, 6, value);
+        break;
+    case 21:
+        timeline_.SetValue(edit_keyframe_id_, 7, value);
+        break;
+    case 22:
+        timeline_.SetValue(edit_keyframe_id_, 8, value);
         break;
     default:
         break;
@@ -383,7 +450,7 @@ static int window_init( WININFO *info )
     if( !wglMakeCurrent(info->hDC,info->hRC) )
         return( 0 );
     
-    ShowWindow(info->hWnd, SW_SHOWDEFAULT);
+    ShowWindow(info->hWnd, SW_MAXIMIZE);
     UpdateWindow(info->hWnd);
 
     return( 1 );
@@ -573,6 +640,13 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     timeline_.Init((float)music_length_);
 
+    FILE *fid = fopen("script.autosave.txt", "rb");
+    if (fid)
+    {
+        timeline_.Load(fid);
+        fclose(fid);
+    }
+
     while (!done) {
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
             if (msg.message == WM_QUIT) done = true;
@@ -606,14 +680,21 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 music_time_ = f;
                 BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, f), BASS_POS_BYTE);
             }
+            ImGui::PopItemWidth();
             
             if (playback_ && ImGui::Button("Pause <SPACE>")) PauseResume();
             if (!playback_ && ImGui::Button("Play  <SPACE>")) PauseResume();
             ImGui::SameLine();
             if (ImGui::Button("Restart"))
             {
-                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, 0.0f), BASS_POS_BYTE);
                 music_time_ = 0.0f;
+                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, (float)music_time_), BASS_POS_BYTE);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("To Keyframe <B>"))
+            {
+                music_time_ = (double)timeline_.time(edit_keyframe_id_);
+                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, (float)music_time_), BASS_POS_BYTE);
             }
 
             //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
@@ -624,17 +705,48 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             //ImGui::Text("counter = %d", counter);
             //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
             
-            ImGui::SliderInt("Keyframe ID", &edit_keyframe_id_, 0, timeline_.NumKeyFrames() - 1, "Keyframe ID: %d");
+            char id_text[200];
+            sprintf(id_text, "Keyframe ID: %%d (%d)", timeline_.NumKeyFrames() - 1);
+            ImGui::SliderInt("", &edit_keyframe_id_, 0, timeline_.NumKeyFrames() - 1, id_text);
             static float keyframe_time = 0.0f;
+            
             keyframe_time = timeline_.time(edit_keyframe_id_);
+            ImGui::PushItemWidth(-1);
             if (ImGui::SliderFloat("KeyFrame time", &keyframe_time, 0.0f, (float)music_length_, "Keyframe Time %.2f s"))
             {
                 timeline_.SetKeyFrameTime(edit_keyframe_id_, keyframe_time);
             }
+            ImGui::PopItemWidth();
 
+            if (ImGui::Button("Previous (N)"))
+            {
+                edit_keyframe_id_--;
+                if (edit_keyframe_id_ < 0) edit_keyframe_id_ = 0;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Next (M)"))
+            {
+                edit_keyframe_id_++;
+                if (edit_keyframe_id_ >= timeline_.NumKeyFrames()) edit_keyframe_id_ = timeline_.NumKeyFrames() - 1;
+            }
+            ImGui::SameLine();
             if (ImGui::Button("Add Keyframe"))
             {
                 timeline_.AddKeyFrame(edit_keyframe_id_);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Save"))
+            {
+                FILE *fid = fopen("script.txt", "wb");
+                timeline_.Save(fid);
+                fclose(fid);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Load"))
+            {
+                FILE *fid = fopen("script.txt", "rb");
+                timeline_.Load(fid);
+                fclose(fid);
             }
 
             ImGui::End();
@@ -645,7 +757,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             char error_text[MAX_ERROR_LENGTH + 1];
             GLuint texture_id;
             ImGui::Begin("Preview Window", 0 /* Always shown */,
-                         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
+                         0 /*ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar*/);
             if (textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text))
             {
                 MessageBox(info->hWnd, error_text, "Get Renderbuffer", MB_OK);
@@ -701,6 +813,10 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}    
 
     window_end(info);
+
+    fid = fopen("script.autosave.txt", "wb");
+    timeline_.Save(fid);
+    fclose(fid);
 
 #ifdef MUSIC
 	// music uninit

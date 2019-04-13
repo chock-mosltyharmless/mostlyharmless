@@ -14,6 +14,8 @@ public:
     float value(int i) const {if (i < 0 || i >= KF_NUM_VALUES) return -1; return value_[i];}
     float *values() {return &(value_[0]);}
     void SetValue(int index, float value) {if (index >= 0 && index < KF_NUM_VALUES) value_[index] = value;}
+    void Save(FILE *fid);
+    void Load(FILE *fid);
 
 private:
     float time_;  // between 0 and music_length_
@@ -38,6 +40,9 @@ public:
     bool AddKeyFrame(int id);  // Adds one keyframe after the specified one
     float time(int id) {if (id < 0 || id >= (int)keyframe_.size()) return -1.0f; return keyframe_[id].time();}
     void SetKeyFrameTime(int id, float time);
+
+    void Save(FILE *fid);
+    void Load(FILE *fid);
 
     int NumKeyFrames(void) {return keyframe_.size();}
 
