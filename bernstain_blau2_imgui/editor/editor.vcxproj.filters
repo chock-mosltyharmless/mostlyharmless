@@ -34,6 +34,9 @@
     <ClCompile Include="Parameter.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="TimeLine.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bass.h">
@@ -94,6 +97,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Parameter.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeLine.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>
@@ -167,5 +173,8 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="editor.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="bass.lib" />
   </ItemGroup>
 </Project>

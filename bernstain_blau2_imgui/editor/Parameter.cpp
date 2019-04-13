@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 
+void NotifyParamChange(int index, float value);
+
 static bool CopyToClipboard(char *strText)
 {
 	bool bRet = true;
@@ -104,6 +106,12 @@ float Parameter::getParam(int index, float defaultValue)
 	return value[index];
 }
 
+void Parameter::setParam(int index, float v)
+{
+    value[index] = v;
+    changed[index] = true;  // So that not the default is returned
+}
+
 void CALLBACK Parameter::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInstance, DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
 	if (wMsg == MIM_DATA)
@@ -112,6 +120,8 @@ void CALLBACK Parameter::MidiInProc(HMIDIIN hMidiIn, UINT wMsg, DWORD_PTR dwInst
 		int second = (dwParam1 >> 16) & 255;
 		params.changed[first] = true;
 		params.value[first] = (float)second / 128.0f;
+
+        NotifyParamChange(first, params.value[first]);
 	}
 }
 

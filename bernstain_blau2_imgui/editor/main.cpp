@@ -9,6 +9,8 @@
 #include "ShaderManager.h"
 #include "TextureManager.h"
 #include "Parameter.h"
+#include "bass.h"
+#include "TimeLine.h"
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_opengl2.h"
 #include "../imgui/imgui_impl_win32.h"
@@ -17,6 +19,19 @@
 
 // Gloabal aspect ratio of everything
 float aspect_ratio_ = (float)XRES / (float)YRES;
+
+// Script data
+TimeLine timeline_;
+
+// music data
+HSTREAM mp3Str_;
+double music_time_ = 0.0f;
+double music_length_ = 0.0f;
+
+// Global GUI stuff
+float playback_ = true;
+int edit_keyframe_id_ = 0;
+
 
 /*************************************************
  * GL Core variables
@@ -235,6 +250,13 @@ static int ReleaseGL(WININFO *win_info) {
     return 0;
 }
 
+void PauseResume(void)
+{
+    if (playback_) BASS_Pause();
+    else BASS_Start();
+    playback_ = !playback_;
+}
+
 /*************************************************
  * Windows callback
  *************************************************/
@@ -263,7 +285,33 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
         }
     }
 
+    if (uMsg == WM_KEYDOWN)
+    {
+        switch(wParam)
+        {
+        case VK_SPACE:
+            PauseResume();
+            break;
+
+        default:
+            break;
+        }
+    }
+
     return DefWindowProc(hWnd, uMsg, wParam, lParam);
+}
+
+// Callback from Midi:
+// This function modifies the values of the currently selected keyframe
+void NotifyParamChange(int index, float value)
+{
+    switch (index)
+    {
+    case 2:
+        break;
+    default:
+        break;
+    }
 }
 
 static void window_end (WININFO *info) {
@@ -363,7 +411,7 @@ static void intro_do(float time)
 	glUseProgram(programID);
 
     // Set texture identifiers
-	GLint texture_location;
+	//GLint texture_location;
     //texture_location = glGetUniformLocation(programID, "BGTexture");
     //glUniform1i(texture_location, 0);
     //texture_location = glGetUniformLocation(programID, "Noise3DTexture");
@@ -373,6 +421,7 @@ static void intro_do(float time)
     float parameterMatrix[4][4];
     //parameterMatrix[0][0] = itime / 44100.0f;
 
+#if 0
     // Set parameters to other locations
     parameterMatrix[0][1] = params.getParam(2, 0.5f);
     parameterMatrix[0][2] = params.getParam(3, 0.5f);
@@ -385,6 +434,7 @@ static void intro_do(float time)
 
     parameterMatrix[2][0] = params.getParam(12, 0.5f);
     parameterMatrix[2][1] = params.getParam(13, 0.5f);
+    // from here: top row
     parameterMatrix[2][2] = params.getParam(14, 0.5f);
     parameterMatrix[2][3] = params.getParam(15, 0.5f);
 
@@ -401,6 +451,38 @@ static void intro_do(float time)
     parameterMatrix[0][2] = params.getParam(21, 0.5f);
     parameterMatrix[0][3] = params.getParam(22, 0.5f);
     glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
+#else
+    // Get parameters from timeline (top row first)
+    float values[KF_NUM_VALUES];
+    timeline_.GetValues((float)music_time_, values);
+    parameterMatrix[0][1] = values[9];
+    parameterMatrix[0][2] = values[10];
+    parameterMatrix[0][3] = values[11];
+
+    parameterMatrix[1][0] = values[12];
+    parameterMatrix[1][1] = values[13];
+    parameterMatrix[1][2] = values[14];
+    parameterMatrix[1][3] = values[15];
+
+    parameterMatrix[2][0] = values[16];
+    parameterMatrix[2][1] = values[17];
+    // from here: top row
+    parameterMatrix[2][2] = values[0];
+    parameterMatrix[2][3] = values[1];
+
+    parameterMatrix[3][0] = values[2];
+    parameterMatrix[3][1] = values[3];
+    parameterMatrix[3][2] = values[4];
+    parameterMatrix[3][3] = values[5];
+    int location = glGetUniformLocation(programID, "r");
+    glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
+    location = glGetUniformLocation(programID, "R");
+    parameterMatrix[0][1] = values[6];
+    parameterMatrix[0][2] = values[7];
+    parameterMatrix[0][3] = values[8];
+    glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
+#endif
+    
 
 	// render to larger offscreen texture
 	glActiveTexture(GL_TEXTURE0);
@@ -479,26 +561,32 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     MSG msg;
     ZeroMemory(&msg, sizeof(msg));
 
-    INT64 last_ticks, ticks_per_second;
-    QueryPerformanceCounter((LARGE_INTEGER *)&last_ticks);
-    QueryPerformanceFrequency((LARGE_INTEGER *)&ticks_per_second);
-    float time = 0.0f;
     bool done = false;
     
-    while (!done) {
-        INT64 ticks;
-        QueryPerformanceCounter((LARGE_INTEGER *)&ticks);
-        QueryPerformanceFrequency((LARGE_INTEGER *)&ticks_per_second);
-        time += (float)((INT64)ticks - (INT64)last_ticks) / (float)ticks_per_second;
-        last_ticks = ticks;
+    // start music playback
+    BASS_Init(-1, 44100, 0, info->hWnd, NULL);
+    mp3Str_ = BASS_StreamCreateFile(FALSE, "music.mp3", 0, 0, 0);
+    BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, 0.0), BASS_POS_BYTE);
+    BASS_ChannelPlay(mp3Str_, TRUE);
+    music_length_ = BASS_ChannelBytes2Seconds(mp3Str_, BASS_ChannelGetLength(mp3Str_, BASS_POS_BYTE));
+    BASS_Start();
 
+    timeline_.Init((float)music_length_);
+
+    while (!done) {
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
             if (msg.message == WM_QUIT) done = true;
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
 
-        intro_do(time);
+        music_time_ = BASS_ChannelBytes2Seconds(mp3Str_, BASS_ChannelGetPosition(mp3Str_, BASS_POS_BYTE));
+        if (music_time_ >= music_length_ - 0.001f)
+        {
+            BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, 0.0), BASS_POS_BYTE);
+            music_time_ = 0.0f;
+        }
+        intro_do((float)music_time_);
 
         // Start the ImGui frame
         ImGui_ImplOpenGL2_NewFrame();
@@ -508,30 +596,58 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // 1. Show a simple window.
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets automatically appears in a window called "Debug".
         {
+            ImGui::Begin("Timeline Window");
             static float f = 0.0f;
-            static int counter = 0;
-            ImGui::Text("Current time: %f", time);
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f    
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
-            ImGui::Checkbox("Preview Window", &show_preview_window);
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
-                counter++;
+            f = (float)music_time_;
+            //ImGui::Text("Current time: %f", music_time_);
+            ImGui::PushItemWidth(-1);
+            if (ImGui::SliderFloat("Playback Time", &f, 0.0f, (float)music_length_, "Playback Time: %.2f s"))            // Edit 1 float using a slider from 0.0f to music_time_
+            {
+                music_time_ = f;
+                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, f), BASS_POS_BYTE);
+            }
+            
+            if (playback_ && ImGui::Button("Pause <SPACE>")) PauseResume();
+            if (!playback_ && ImGui::Button("Play  <SPACE>")) PauseResume();
             ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
+            if (ImGui::Button("Restart"))
+            {
+                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, 0.0f), BASS_POS_BYTE);
+                music_time_ = 0.0f;
+            }
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+            //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
+            //ImGui::Checkbox("Preview Window", &show_preview_window);
+            //if (ImGui::Button("Button"))  counter++;                          // Buttons return true when clicked (NB: most widgets return true when edited/activated)  
+            //ImGui::SameLine();
+            //ImGui::Text("counter = %d", counter);
+            //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            
+            ImGui::SliderInt("Keyframe ID", &edit_keyframe_id_, 0, timeline_.NumKeyFrames() - 1, "Keyframe ID: %d");
+            static float keyframe_time = 0.0f;
+            keyframe_time = timeline_.time(edit_keyframe_id_);
+            if (ImGui::SliderFloat("KeyFrame time", &keyframe_time, 0.0f, (float)music_length_, "Keyframe Time %.2f s"))
+            {
+                timeline_.SetKeyFrameTime(edit_keyframe_id_, keyframe_time);
+            }
+
+            if (ImGui::Button("Add Keyframe"))
+            {
+                timeline_.AddKeyFrame(edit_keyframe_id_);
+            }
+
+            ImGui::End();
         }
         // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
         if (show_preview_window)
         {
             char error_text[MAX_ERROR_LENGTH + 1];
             GLuint texture_id;
-            ImGui::Begin("Preview Window", &show_preview_window,
+            ImGui::Begin("Preview Window", 0 /* Always shown */,
                          ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
-            if (textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text)) {
+            if (textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text))
+            {
                 MessageBox(info->hWnd, error_text, "Get Renderbuffer", MB_OK);
                 break;
             }
@@ -539,10 +655,35 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             ImGui::End();
         }
         // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
+#if 0
         if (show_demo_window)
         {
             ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver); // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
             ImGui::ShowDemoWindow(&show_demo_window);
+        }
+#endif
+        // 4. The current keyframe image
+        {
+            ImGui::Begin("Keyframe Values Window");
+            const float spacing = 8;
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
+            static float values[KF_NUM_VALUES] = { 0.5f };
+            ImGui::PushID("set1");
+            for (int i = 0; i < KF_NUM_VALUES; i++)
+            {
+                values[i] = timeline_.value(edit_keyframe_id_, i);
+                if (i > 0 && i != KF_NUM_VALUES / 2) ImGui::SameLine();
+                ImGui::PushID(i);
+                if (ImGui::VSliderFloat("##v", ImVec2(18, 160), &values[i], 0.0f, 1.0f, ""))
+                {
+                    timeline_.SetValue(edit_keyframe_id_, i, values[i]);
+                }
+                if (ImGui::IsItemActive() || ImGui::IsItemHovered()) ImGui::SetTooltip("%.3f", values[i]);
+                ImGui::PopID();
+            }
+            ImGui::PopID();
+            ImGui::PopStyleVar();
+            ImGui::End();
         }
 
         // Rendering imgui
