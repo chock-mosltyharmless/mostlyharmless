@@ -38,6 +38,7 @@ public:
         if (id >= 0 && id < (int)keyframe_.size()) keyframe_[id].SetValue(index, value);
     }
     bool AddKeyFrame(int id);  // Adds one keyframe after the specified one
+    bool DeleteKeyFrame(int id);  // Removes this keyframe if possible
     float time(int id) {if (id < 0 || id >= (int)keyframe_.size()) return -1.0f; return keyframe_[id].time();}
     void SetKeyFrameTime(int id, float time);
 

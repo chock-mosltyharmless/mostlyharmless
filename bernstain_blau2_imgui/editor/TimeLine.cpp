@@ -88,6 +88,23 @@ void TimeLine::GetValues(float time, float value[KF_NUM_VALUES])
     }
 }
 
+bool TimeLine::DeleteKeyFrame(int id)
+{
+    if (id <= 0 || id >= keyframe_.size() - 1)
+    {
+        return false;
+    }
+
+    // Copy everything after id
+    for (int i = id; i < keyframe_.size() - 1; i++)
+    {
+        // I hope the values are copied?
+        keyframe_[i] = keyframe_[i + 1];
+    }
+
+    keyframe_.pop_back();
+}
+
 bool TimeLine::AddKeyFrame(int id)
 {
     if (id == keyframe_.size() - 1)

@@ -450,7 +450,8 @@ static int window_init( WININFO *info )
     if( !wglMakeCurrent(info->hDC,info->hRC) )
         return( 0 );
     
-    ShowWindow(info->hWnd, SW_MAXIMIZE);
+    //ShowWindow(info->hWnd, SW_MAXIMIZE);
+    ShowWindow(info->hWnd, SW_SHOWDEFAULT);
     UpdateWindow(info->hWnd);
 
     return( 1 );
@@ -488,37 +489,6 @@ static void intro_do(float time)
     float parameterMatrix[4][4];
     //parameterMatrix[0][0] = itime / 44100.0f;
 
-#if 0
-    // Set parameters to other locations
-    parameterMatrix[0][1] = params.getParam(2, 0.5f);
-    parameterMatrix[0][2] = params.getParam(3, 0.5f);
-    parameterMatrix[0][3] = params.getParam(4, 0.5f);
-
-    parameterMatrix[1][0] = params.getParam(5, 0.5f);
-    parameterMatrix[1][1] = params.getParam(6, 0.5f);
-    parameterMatrix[1][2] = params.getParam(8, 0.5f);
-    parameterMatrix[1][3] = params.getParam(9, 0.5f);
-
-    parameterMatrix[2][0] = params.getParam(12, 0.5f);
-    parameterMatrix[2][1] = params.getParam(13, 0.5f);
-    // from here: top row
-    parameterMatrix[2][2] = params.getParam(14, 0.5f);
-    parameterMatrix[2][3] = params.getParam(15, 0.5f);
-
-    parameterMatrix[3][0] = params.getParam(16, 0.5f);
-    parameterMatrix[3][1] = params.getParam(17, 0.5f);
-    parameterMatrix[3][2] = params.getParam(18, 0.5f);
-    parameterMatrix[3][3] = params.getParam(19, 0.5f);
-
-    int location = glGetUniformLocation(programID, "r");
-    glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
-
-    location = glGetUniformLocation(programID, "R");
-    parameterMatrix[0][1] = params.getParam(20, 0.5f);
-    parameterMatrix[0][2] = params.getParam(21, 0.5f);
-    parameterMatrix[0][3] = params.getParam(22, 0.5f);
-    glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
-#else
     // Get parameters from timeline (top row first)
     float values[KF_NUM_VALUES];
     timeline_.GetValues((float)music_time_, values);
@@ -547,9 +517,7 @@ static void intro_do(float time)
     parameterMatrix[0][1] = values[6];
     parameterMatrix[0][2] = values[7];
     parameterMatrix[0][3] = values[8];
-    glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
-#endif
-    
+    glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));    
 
 	// render to larger offscreen texture
 	glActiveTexture(GL_TEXTURE0);
@@ -735,6 +703,11 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 timeline_.AddKeyFrame(edit_keyframe_id_);
             }
             ImGui::SameLine();
+            if (ImGui::Button("Delete Keyframe"))
+            {
+                timeline_.DeleteKeyFrame(edit_keyframe_id_);
+            }
+            ImGui::SameLine();
             if (ImGui::Button("Save"))
             {
                 FILE *fid = fopen("script.txt", "wb");
@@ -794,6 +767,27 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                 ImGui::PopID();
             }
             ImGui::PopID();
+            ImGui::PopStyleVar();
+            ImGui::End();
+        }
+        //  5. The interpolated keyframe image
+        {
+            ImGui::Begin("Current Values Window");
+            const float spacing = 8;
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(0.3f, 0.2f, 0.5f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(0.3f, 0.3f, 0.5f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(0.3f, 0.4f, 0.5f));
+            ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(0.3f, 0.5f, 0.9f));
+            static float values[KF_NUM_VALUES] = { 0.5f };
+            for (int i = 0; i < KF_NUM_VALUES; i++)
+            {
+                timeline_.GetValues((float)music_time_, values);
+                if (i > 0 && i != KF_NUM_VALUES / 2) ImGui::SameLine();
+                ImGui::VSliderFloat("##v", ImVec2(18, 160), &values[i], 0.0f, 1.0f, "");
+                if (ImGui::IsItemActive() || ImGui::IsItemHovered()) ImGui::SetTooltip("%.3f", values[i]);
+            }
+            ImGui::PopStyleColor(4);
             ImGui::PopStyleVar();
             ImGui::End();
         }
