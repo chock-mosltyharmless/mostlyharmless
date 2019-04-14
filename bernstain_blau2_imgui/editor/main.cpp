@@ -29,6 +29,8 @@ double music_time_ = 0.0f;
 double music_length_ = 0.0f;
 
 // Global GUI stuff
+bool is_editor_ = false;  // If set to false run fullscreen without ImGui
+bool loop_ = false;  // Re-start after end.
 float playback_ = true;
 int edit_keyframe_id_ = 0;
 
@@ -289,6 +291,9 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     {
         switch(wParam)
         {
+        case VK_ESCAPE:
+            PostQuitMessage(0);
+            return 0;
         case VK_SPACE:
             PauseResume();
             break;
@@ -415,23 +420,18 @@ static int window_init( WININFO *info )
         return( 0 );
 
     dwExStyle = 0;
-    dwStyle = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU |
-        WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SIZEBOX;
-
-    rec.left   = 0;
-    rec.top    = 0;
-    rec.right  = XRES;
-    rec.bottom = YRES;
-    AdjustWindowRect( &rec, dwStyle, 0 );
-    RECT window_rect;
-	window_rect.left = 0;
-	window_rect.top = 0;
-	window_rect.right = XRES;
-	window_rect.bottom = YRES;
-
+    if (is_editor_)
+    {
+        dwStyle = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU |
+            WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SIZEBOX;
+    }
+    else
+    {
+        dwStyle = WS_VISIBLE | WS_POPUP;
+    }
     info->hWnd = CreateWindowEx(dwExStyle, wc.lpszClassName, "Editor", dwStyle,
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        0, 0, info->hInstance, 0 );
+          CW_USEDEFAULT, CW_USEDEFAULT, 1480, 760,
+          0, 0, info->hInstance, 0 );
     if( !info->hWnd )
         return( 0 );
 
@@ -450,9 +450,11 @@ static int window_init( WININFO *info )
     if( !wglMakeCurrent(info->hDC,info->hRC) )
         return( 0 );
     
-    //ShowWindow(info->hWnd, SW_MAXIMIZE);
-    ShowWindow(info->hWnd, SW_SHOWDEFAULT);
+    if (is_editor_) ShowWindow(info->hWnd, SW_SHOWDEFAULT);
+    else ShowWindow(info->hWnd, SW_MAXIMIZE);
     UpdateWindow(info->hWnd);
+
+    if (!is_editor_) ShowCursor(false);
 
     return( 1 );
 }
@@ -528,7 +530,10 @@ static void intro_do(float time)
 	glBindTexture(GL_TEXTURE_3D, textureID);
     glActiveTexture(GL_TEXTURE0);
 
-    glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+    if (is_editor_)
+    {
+        glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+    }
 
     GLuint loc = glGetUniformLocation(programID, "time");
     glUniform1f(loc, time);
@@ -537,27 +542,27 @@ static void intro_do(float time)
     glEnable(GL_BLEND);
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDrawArrays(GL_POINTS, 0, TOTAL_NUM_PARTICLES);
-    //glColor4f(1.0f, 0.5f, 0.2f, 1.0f);
-	//glRectf(-1.0, -1.0, 1.0, 1.0);
 
-	// Copy backbuffer to texture
-    textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+    if (is_editor_)
+    {
+	    // Copy backbuffer to texture
+        textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
+	    glBindTexture(GL_TEXTURE_2D, textureID);
+	    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 
-	// Copy backbuffer to front (so far no improvement)
-	int xres = window_rect.right - window_rect.left;
-	int yres = window_rect.bottom - window_rect.top;
-	glViewport(0, 0, xres, yres);
-	if (false) {
-		shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
-	} else {
-		shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
-	}
-	glUseProgram(programID);
+	    // Copy backbuffer to front (so far no improvement)
+	    int xres = window_rect.right - window_rect.left;
+	    int yres = window_rect.bottom - window_rect.top;
+	    glViewport(0, 0, xres, yres);
+	    if (false) {
+		    shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
+	    } else {
+		    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+	    }
+    }
 
-    glBindVertexArray(0); // Bind our Vertex Array Object so we can use it  
-    glBindBuffer(GL_ARRAY_BUFFER, 0); // Bind our Vertex Buffer Object  
+    glBindVertexArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
 int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
@@ -565,6 +570,9 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     WININFO     *info = &wininfo;
 
     info->hInstance = GetModuleHandle( 0 );
+
+    if (strstr(lpCmdLine, "-editor")) is_editor_ = true;
+    if (strstr(lpCmdLine, "-loop")) loop_ = true;
 
     if (!window_init(info)) {
         window_end(info);
@@ -608,12 +616,16 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     timeline_.Init((float)music_length_);
 
-    FILE *fid = fopen("script.autosave.txt", "rb");
+    FILE *fid;
+    if (is_editor_) fid = fopen("script.autosave.txt", "rb");
+    else fid = fopen("script.txt", "rb");
     if (fid)
     {
         timeline_.Load(fid);
         fclose(fid);
     }
+
+    if (is_editor_) loop_ = true;
 
     while (!done) {
         while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -623,194 +635,208 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         music_time_ = BASS_ChannelBytes2Seconds(mp3Str_, BASS_ChannelGetPosition(mp3Str_, BASS_POS_BYTE));
-        if (music_time_ >= music_length_ - 0.001f)
+        if (music_time_ >= music_length_ - 0.1f)
         {
-            BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, 0.0), BASS_POS_BYTE);
-            music_time_ = 0.0f;
+            if (loop_)
+            {
+                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, 0.0), BASS_POS_BYTE);
+                music_time_ = 0.0f;
+                if (!is_editor_) BASS_Start();
+            }
+            else
+            {
+                done = true;
+            }
         }
         intro_do((float)music_time_);
 
-        // Start the ImGui frame
-        ImGui_ImplOpenGL2_NewFrame();
-        ImGui_ImplWin32_NewFrame();
-        ImGui::NewFrame();
-
-        // 1. Show a simple window.
-        // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets automatically appears in a window called "Debug".
+        if (is_editor_)
         {
-            ImGui::Begin("Timeline Window");
-            static float f = 0.0f;
-            f = (float)music_time_;
-            //ImGui::Text("Current time: %f", music_time_);
-            ImGui::PushItemWidth(-1);
-            if (ImGui::SliderFloat("Playback Time", &f, 0.0f, (float)music_length_, "Playback Time: %.2f s"))            // Edit 1 float using a slider from 0.0f to music_time_
-            {
-                music_time_ = f;
-                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, f), BASS_POS_BYTE);
-            }
-            ImGui::PopItemWidth();
-            
-            if (playback_ && ImGui::Button("Pause <SPACE>")) PauseResume();
-            if (!playback_ && ImGui::Button("Play  <SPACE>")) PauseResume();
-            ImGui::SameLine();
-            if (ImGui::Button("Restart"))
-            {
-                music_time_ = 0.0f;
-                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, (float)music_time_), BASS_POS_BYTE);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("To Keyframe <B>"))
-            {
-                music_time_ = (double)timeline_.time(edit_keyframe_id_);
-                BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, (float)music_time_), BASS_POS_BYTE);
-            }
+            // Start the ImGui frame
+            ImGui_ImplOpenGL2_NewFrame();
+            ImGui_ImplWin32_NewFrame();
+            ImGui::NewFrame();
 
-            //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-            //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
-            //ImGui::Checkbox("Preview Window", &show_preview_window);
-            //if (ImGui::Button("Button"))  counter++;                          // Buttons return true when clicked (NB: most widgets return true when edited/activated)  
-            //ImGui::SameLine();
-            //ImGui::Text("counter = %d", counter);
-            //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            
-            char id_text[200];
-            sprintf(id_text, "Keyframe ID: %%d (%d)", timeline_.NumKeyFrames() - 1);
-            ImGui::SliderInt("", &edit_keyframe_id_, 0, timeline_.NumKeyFrames() - 1, id_text);
-            static float keyframe_time = 0.0f;
-            
-            keyframe_time = timeline_.time(edit_keyframe_id_);
-            ImGui::PushItemWidth(-1);
-            if (ImGui::SliderFloat("KeyFrame time", &keyframe_time, 0.0f, (float)music_length_, "Keyframe Time %.2f s"))
+            // 1. Show a simple window.
+            // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets automatically appears in a window called "Debug".
             {
-                timeline_.SetKeyFrameTime(edit_keyframe_id_, keyframe_time);
-            }
-            ImGui::PopItemWidth();
-
-            if (ImGui::Button("Previous (N)"))
-            {
-                edit_keyframe_id_--;
-                if (edit_keyframe_id_ < 0) edit_keyframe_id_ = 0;
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Next (M)"))
-            {
-                edit_keyframe_id_++;
-                if (edit_keyframe_id_ >= timeline_.NumKeyFrames()) edit_keyframe_id_ = timeline_.NumKeyFrames() - 1;
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Add Keyframe"))
-            {
-                timeline_.AddKeyFrame(edit_keyframe_id_);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Delete Keyframe"))
-            {
-                timeline_.DeleteKeyFrame(edit_keyframe_id_);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Save"))
-            {
-                FILE *fid = fopen("script.txt", "wb");
-                timeline_.Save(fid);
-                fclose(fid);
-            }
-            ImGui::SameLine();
-            if (ImGui::Button("Load"))
-            {
-                FILE *fid = fopen("script.txt", "rb");
-                timeline_.Load(fid);
-                fclose(fid);
-            }
-
-            ImGui::End();
-        }
-        // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
-        if (show_preview_window)
-        {
-            char error_text[MAX_ERROR_LENGTH + 1];
-            GLuint texture_id;
-            ImGui::Begin("Preview Window", 0 /* Always shown */,
-                         0 /*ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar*/);
-            if (textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text))
-            {
-                MessageBox(info->hWnd, error_text, "Get Renderbuffer", MB_OK);
-                break;
-            }
-            ImGui::Image((ImTextureID)texture_id, ImVec2(XRES, YRES));
-            ImGui::End();
-        }
-        // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
-#if 0
-        if (show_demo_window)
-        {
-            ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver); // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
-            ImGui::ShowDemoWindow(&show_demo_window);
-        }
-#endif
-        // 4. The current keyframe image
-        {
-            ImGui::Begin("Keyframe Values Window");
-            const float spacing = 8;
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
-            static float values[KF_NUM_VALUES] = { 0.5f };
-            ImGui::PushID("set1");
-            for (int i = 0; i < KF_NUM_VALUES; i++)
-            {
-                values[i] = timeline_.value(edit_keyframe_id_, i);
-                if (i > 0 && i != KF_NUM_VALUES / 2) ImGui::SameLine();
-                ImGui::PushID(i);
-                if (ImGui::VSliderFloat("##v", ImVec2(18, 160), &values[i], 0.0f, 1.0f, ""))
+                ImGui::Begin("Timeline Window");
+                static float f = 0.0f;
+                f = (float)music_time_;
+                //ImGui::Text("Current time: %f", music_time_);
+                ImGui::PushItemWidth(-1);
+                if (ImGui::SliderFloat("Playback Time", &f, 0.0f, (float)music_length_, "Playback Time: %.2f s"))            // Edit 1 float using a slider from 0.0f to music_time_
                 {
-                    timeline_.SetValue(edit_keyframe_id_, i, values[i]);
+                    music_time_ = f;
+                    BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, f), BASS_POS_BYTE);
                 }
-                if (ImGui::IsItemActive() || ImGui::IsItemHovered()) ImGui::SetTooltip("%.3f", values[i]);
-                ImGui::PopID();
-            }
-            ImGui::PopID();
-            ImGui::PopStyleVar();
-            ImGui::End();
-        }
-        //  5. The interpolated keyframe image
-        {
-            ImGui::Begin("Current Values Window");
-            const float spacing = 8;
-            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
-            ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(0.3f, 0.2f, 0.5f));
-            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(0.3f, 0.3f, 0.5f));
-            ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(0.3f, 0.4f, 0.5f));
-            ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(0.3f, 0.5f, 0.9f));
-            static float values[KF_NUM_VALUES] = { 0.5f };
-            for (int i = 0; i < KF_NUM_VALUES; i++)
-            {
-                timeline_.GetValues((float)music_time_, values);
-                if (i > 0 && i != KF_NUM_VALUES / 2) ImGui::SameLine();
-                ImGui::VSliderFloat("##v", ImVec2(18, 160), &values[i], 0.0f, 1.0f, "");
-                if (ImGui::IsItemActive() || ImGui::IsItemHovered()) ImGui::SetTooltip("%.3f", values[i]);
-            }
-            ImGui::PopStyleColor(4);
-            ImGui::PopStyleVar();
-            ImGui::End();
-        }
+                ImGui::PopItemWidth();
+            
+                if (playback_ && ImGui::Button("Pause <SPACE>")) PauseResume();
+                if (!playback_ && ImGui::Button("Play  <SPACE>")) PauseResume();
+                ImGui::SameLine();
+                if (ImGui::Button("Restart"))
+                {
+                    music_time_ = 0.0f;
+                    BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, (float)music_time_), BASS_POS_BYTE);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("To Keyframe <B>"))
+                {
+                    music_time_ = (double)timeline_.time(edit_keyframe_id_);
+                    BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, (float)music_time_), BASS_POS_BYTE);
+                }
 
-        // Rendering imgui
-        ImGui::EndFrame();
-        ImGui::Render();
-        int w = window_rect.right - window_rect.left;
-        int h = window_rect.bottom - window_rect.top;
-        glViewport(0, 0, w, h);
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-        glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code.
-        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+                //ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+                //ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
+                //ImGui::Checkbox("Preview Window", &show_preview_window);
+                //if (ImGui::Button("Button"))  counter++;                          // Buttons return true when clicked (NB: most widgets return true when edited/activated)  
+                //ImGui::SameLine();
+                //ImGui::Text("counter = %d", counter);
+                //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+            
+                char id_text[200];
+                sprintf(id_text, "Keyframe ID: %%d (%d)", timeline_.NumKeyFrames() - 1);
+                ImGui::SliderInt("", &edit_keyframe_id_, 0, timeline_.NumKeyFrames() - 1, id_text);
+                static float keyframe_time = 0.0f;
+            
+                keyframe_time = timeline_.time(edit_keyframe_id_);
+                ImGui::PushItemWidth(-1);
+                if (ImGui::SliderFloat("KeyFrame time", &keyframe_time, 0.0f, (float)music_length_, "Keyframe Time %.2f s"))
+                {
+                    timeline_.SetKeyFrameTime(edit_keyframe_id_, keyframe_time);
+                }
+                ImGui::PopItemWidth();
+
+                if (ImGui::Button("Previous (N)"))
+                {
+                    edit_keyframe_id_--;
+                    if (edit_keyframe_id_ < 0) edit_keyframe_id_ = 0;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Next (M)"))
+                {
+                    edit_keyframe_id_++;
+                    if (edit_keyframe_id_ >= timeline_.NumKeyFrames()) edit_keyframe_id_ = timeline_.NumKeyFrames() - 1;
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Add Keyframe"))
+                {
+                    timeline_.AddKeyFrame(edit_keyframe_id_);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Delete Keyframe"))
+                {
+                    timeline_.DeleteKeyFrame(edit_keyframe_id_);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Save"))
+                {
+                    FILE *fid = fopen("script.txt", "wb");
+                    timeline_.Save(fid);
+                    fclose(fid);
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Load"))
+                {
+                    FILE *fid = fopen("script.txt", "rb");
+                    timeline_.Load(fid);
+                    fclose(fid);
+                }
+
+                ImGui::End();
+            }
+            // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
+            if (show_preview_window)
+            {
+                char error_text[MAX_ERROR_LENGTH + 1];
+                GLuint texture_id;
+                ImGui::Begin("Preview Window", 0 /* Always shown */,
+                             0 /*ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar*/);
+                if (textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text))
+                {
+                    MessageBox(info->hWnd, error_text, "Get Renderbuffer", MB_OK);
+                    break;
+                }
+                ImGui::Image((ImTextureID)texture_id, ImVec2(XRES, YRES));
+                ImGui::End();
+            }
+            // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
+    #if 0
+            if (show_demo_window)
+            {
+                ImGui::SetNextWindowPos(ImVec2(650, 20), ImGuiCond_FirstUseEver); // Normally user code doesn't need/want to call this because positions are saved in .ini file anyway. Here we just want to make the demo initial state a bit more friendly!
+                ImGui::ShowDemoWindow(&show_demo_window);
+            }
+    #endif
+            // 4. The current keyframe image
+            {
+                ImGui::Begin("Keyframe Values Window");
+                const float spacing = 8;
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
+                static float values[KF_NUM_VALUES] = { 0.5f };
+                ImGui::PushID("set1");
+                for (int i = 0; i < KF_NUM_VALUES; i++)
+                {
+                    values[i] = timeline_.value(edit_keyframe_id_, i);
+                    if (i > 0 && i != KF_NUM_VALUES / 2) ImGui::SameLine();
+                    ImGui::PushID(i);
+                    if (ImGui::VSliderFloat("##v", ImVec2(18, 160), &values[i], 0.0f, 1.0f, ""))
+                    {
+                        timeline_.SetValue(edit_keyframe_id_, i, values[i]);
+                    }
+                    if (ImGui::IsItemActive() || ImGui::IsItemHovered()) ImGui::SetTooltip("%.3f", values[i]);
+                    ImGui::PopID();
+                }
+                ImGui::PopID();
+                ImGui::PopStyleVar();
+                ImGui::End();
+            }
+            //  5. The interpolated keyframe image
+            {
+                ImGui::Begin("Current Values Window");
+                const float spacing = 8;
+                ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing, spacing));
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(0.3f, 0.2f, 0.5f));
+                ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(0.3f, 0.3f, 0.5f));
+                ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(0.3f, 0.4f, 0.5f));
+                ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(0.3f, 0.5f, 0.9f));
+                static float values[KF_NUM_VALUES] = { 0.5f };
+                for (int i = 0; i < KF_NUM_VALUES; i++)
+                {
+                    timeline_.GetValues((float)music_time_, values);
+                    if (i > 0 && i != KF_NUM_VALUES / 2) ImGui::SameLine();
+                    ImGui::VSliderFloat("##v", ImVec2(18, 160), &values[i], 0.0f, 1.0f, "");
+                    if (ImGui::IsItemActive() || ImGui::IsItemHovered()) ImGui::SetTooltip("%.3f", values[i]);
+                }
+                ImGui::PopStyleColor(4);
+                ImGui::PopStyleVar();
+                ImGui::End();
+            }
+
+            // Rendering imgui
+            ImGui::EndFrame();
+            ImGui::Render();
+            int w = window_rect.right - window_rect.left;
+            int h = window_rect.bottom - window_rect.top;
+            glViewport(0, 0, w, h);
+            glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+            glClear(GL_COLOR_BUFFER_BIT);
+            glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code.
+            ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
+        }
 
 		SwapBuffers(info->hDC);
 	}    
 
     window_end(info);
 
-    fid = fopen("script.autosave.txt", "wb");
-    timeline_.Save(fid);
-    fclose(fid);
+    if (is_editor_)
+    {
+        fid = fopen("script.autosave.txt", "wb");
+        timeline_.Save(fid);
+        fclose(fid);
+    }
 
 #ifdef MUSIC
 	// music uninit

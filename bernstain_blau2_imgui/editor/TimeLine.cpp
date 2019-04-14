@@ -68,6 +68,13 @@ void TimeLine::Load(FILE *fid)
     }
 }
 
+static float smooth(float t)
+{
+    if (t < 0.0f) return 0.0f;
+    if (t > 1.0f) return 1.0f;
+    return 0.5f - 0.5f * cos(t * 3.12425f);
+}
+
 void TimeLine::GetValues(float time, float value[KF_NUM_VALUES])
 {
     int start_index = 0;
@@ -81,10 +88,24 @@ void TimeLine::GetValues(float time, float value[KF_NUM_VALUES])
         (keyframe_[start_index + 1].time() - keyframe_[start_index].time() + 0.00001f);
 
     // Here I want higher order approximation.
+    int pp = start_index - 1;
+    if (pp < 0) pp = 0;  // keyframe_.size() - 1;
+    int n = start_index + 1;
+    int nn = start_index + 2;
+    if (nn >= (int)keyframe_.size()) nn = (int)keyframe_.size() - 1;  // nn = 0;
     for (int i = 0; i < KF_NUM_VALUES; i++)
     {
-        value[i] = (1.0f - t) * keyframe_[start_index].value(i) +
-            t * keyframe_[start_index + 1].value(i);
+        //value[i] = (1.0f - smooth(t)) * keyframe_[start_index].value(i) +
+        //    smooth(t) * keyframe_[start_index + 1].value(i);
+        float k = 0.75f;
+        float d = (1.0f - k) / 2.0f;
+        value[i] =
+            smooth(d - k * t) * keyframe_[pp].value(i) +
+            smooth(1.0f - d - k * t) * keyframe_[start_index].value(i) +
+            smooth(d + k * t) * keyframe_[n].value(i) +
+            smooth(-k + d + k * t) * keyframe_[nn].value(i);
+        float amount_sum = smooth(d - k * t) + smooth(1.0f - d - k * t) + smooth(d + k * t) + smooth(-k + d + k * t);
+        value[i] /= amount_sum;
     }
 }
 
