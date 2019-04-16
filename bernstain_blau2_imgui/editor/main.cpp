@@ -61,7 +61,7 @@ TextureManager textureManager;
 /*************************************************
 * Particle stuff
 *************************************************/
-#define NUM_PARTICLES_PER_DIM 128
+#define NUM_PARTICLES_PER_DIM 160
 #define TOTAL_NUM_PARTICLES (NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM)
 // The vertex array and vertex buffer
 unsigned int vaoID;
@@ -492,8 +492,13 @@ static void intro_do(float time)
     //parameterMatrix[0][0] = itime / 44100.0f;
 
     // Get parameters from timeline (top row first)
+#if 1
     float values[KF_NUM_VALUES];
     timeline_.GetValues((float)music_time_, values);
+#else
+    float *values = timeline_.GetStartValues();
+#endif
+    
     parameterMatrix[0][1] = values[9];
     parameterMatrix[0][2] = values[10];
     parameterMatrix[0][3] = values[11];
@@ -510,9 +515,9 @@ static void intro_do(float time)
     parameterMatrix[2][3] = values[1];
 
     parameterMatrix[3][0] = values[2];
-    parameterMatrix[3][1] = values[3];
-    parameterMatrix[3][2] = values[4];
-    parameterMatrix[3][3] = values[5];
+    parameterMatrix[3][1] = values[3] * 0.5f;
+    parameterMatrix[3][2] = values[4] * 0.5f;
+    parameterMatrix[3][3] = values[5] * 0.5f;
     int location = glGetUniformLocation(programID, "r");
     glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
     location = glGetUniformLocation(programID, "R");

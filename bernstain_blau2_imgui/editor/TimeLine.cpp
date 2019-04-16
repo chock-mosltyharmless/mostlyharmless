@@ -75,6 +75,11 @@ static float smooth(float t)
     return 0.5f - 0.5f * cos(t * 3.12425f);
 }
 
+float *TimeLine::GetStartValues(void)
+{
+    return keyframe_[0].values();
+}
+
 void TimeLine::GetValues(float time, float value[KF_NUM_VALUES])
 {
     int start_index = 0;
@@ -111,19 +116,21 @@ void TimeLine::GetValues(float time, float value[KF_NUM_VALUES])
 
 bool TimeLine::DeleteKeyFrame(int id)
 {
-    if (id <= 0 || id >= keyframe_.size() - 1)
+    if (id <= 0 || id >= (int)keyframe_.size() - 1)
     {
         return false;
     }
 
     // Copy everything after id
-    for (int i = id; i < keyframe_.size() - 1; i++)
+    for (int i = id; i < (int)keyframe_.size() - 1; i++)
     {
         // I hope the values are copied?
         keyframe_[i] = keyframe_[i + 1];
     }
 
     keyframe_.pop_back();
+
+    return true;
 }
 
 bool TimeLine::AddKeyFrame(int id)

@@ -30,6 +30,7 @@ public:
 
     void Init(float duration);
     void GetValues(float time, float value[KF_NUM_VALUES]);
+    float *GetStartValues(void);
     float value(int id, int index) const {
         if (id < 0 || id >= (int)keyframe_.size()) return -1.0f;
         return keyframe_[id].value(index);
