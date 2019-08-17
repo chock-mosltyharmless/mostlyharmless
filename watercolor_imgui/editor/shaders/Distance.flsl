@@ -1,0 +1,58 @@
+#version 120
+
+uniform sampler2D Texture0;
+varying vec4 color;
+
+uniform float x_step;
+// Size of one pixel in float domain. Use 0.0 for x-distance calculation
+uniform float y_step;
+// Step size in aspect-ratio adjusted space.
+// Generally you can set it to A / X_RES (or some other for very wide or anything)
+// Because I have a resolution of 1/256 for distance, this needs some thought.
+uniform float aspect_ratio_step;
+
+void main(void) {
+	vec3 o = gl_TexCoord[0].xyx;
+	vec4 col = texture2D(Texture0, gl_TexCoord[0].xy);
+	float read_distance = 1.0 - col.b;
+	float material = col.r;
+	float distance = 0.0;
+	float best_squared_distance = read_distance * read_distance;
+	vec2 step = vec2(x_step, y_step);
+
+	for (int i = 0; i < 100; i++)
+	{
+		distance += aspect_ratio_step * 2.56;
+		
+		if (distance * distance >= best_squared_distance) break;
+
+		vec4 pixel_col = texture2D(Texture0, gl_TexCoord[0].xy - step);
+		read_distance = 1.0 - pixel_col.b;
+		float current_squared_distance = read_distance * read_distance + distance * distance;
+		if (current_squared_distance < best_squared_distance) best_squared_distance = current_squared_distance;
+		float pixel_material = pixel_col.r;
+		if (abs(pixel_material - material) > 1.0 / 1024.0) 
+		{
+			best_squared_distance = distance * distance;
+			break;
+		}
+
+		pixel_col = texture2D(Texture0, gl_TexCoord[0].xy + step);
+		read_distance = 1.0 - pixel_col.b;
+		current_squared_distance = read_distance * read_distance + distance * distance;
+		if (current_squared_distance < best_squared_distance) best_squared_distance = current_squared_distance;
+		pixel_material = pixel_col.r;
+		if (abs(pixel_material - material) > 1.0 / 1024.0) 
+		{
+			best_squared_distance = distance * distance;
+			break;
+		}
+
+		step += vec2(x_step, y_step);
+	}
+
+	float final_distance = sqrt(best_squared_distance);
+	col.b = 1.0 - final_distance;
+	if (final_distance < 0.0) col.r = 0;
+	gl_FragColor = col;
+}
