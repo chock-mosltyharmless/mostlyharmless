@@ -24,6 +24,9 @@ public:
     Fractal();
     virtual ~Fractal();
 
+    // Draw ImGUI window from generated list
+    void ImGUIDraw(void);
+
     // Generate IFS fractal in point_ array
     void Generate(void);
 

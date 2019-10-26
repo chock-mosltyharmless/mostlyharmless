@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "main.h"
 #include "Configuration.h"
+#include "Fractal.h"
 #include "glext.h"
 #include "GLNames.h"
 #include "../imgui/imgui.h"
@@ -36,6 +37,8 @@ TCHAR szTitle[MAX_LOADSTRING];					// Titelleistentext
 TCHAR szWindowClass[MAX_LOADSTRING];			// Klassenname des Hauptfensters
 // The size of the window that we render to...
 RECT window_rect;
+
+Fractal fractal_;
 
 typedef struct
 {
@@ -73,8 +76,6 @@ static WININFO wininfo = {  0,0,0,0,
  * OpenGL initialization
  *************************************************/
 static int initGL(WININFO *win_info) {
-	char errorString[MAX_ERROR_LENGTH + 1];
-
 	// Create openGL functions
 	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
 
@@ -214,14 +215,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return 0;
 	}
 
-	// start music playback
-#ifdef MUSIC
-	BASS_Init(-1,44100,0,info->hWnd,NULL);
-	HSTREAM mp3Str=BASS_StreamCreateFile(FALSE,"Musik/set1.mp3",0,0,0);
-	BASS_ChannelPlay(mp3Str, TRUE);
-	BASS_Start();
-#endif
-
 	// Initialize COM
 	HRESULT hr = CoInitialize(NULL);
 	if (FAILED(hr)) exit(-1);
@@ -280,25 +273,8 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
         if (show_preview_window)
         {
-            ImGui::SetNextWindowSize(ImVec2(640, 320), ImGuiCond_FirstUseEver);
-            if (!ImGui::Begin("Preview Window", &show_preview_window,
-                              ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
-            {
-                ImGui::End();
-                return 0;
-            }
-
-            // Tip: If you do a lot of custom rendering, you probably want to use your own geometrical types and benefit of overloaded operators, etc.
-            // Define IM_VEC2_CLASS_EXTRA in imconfig.h to create implicit conversions between your types and ImVec2/ImVec4. 
-            // ImGui defines overloaded operators but they are internal to imgui.cpp and not exposed outside (to avoid messing with your types) 
-            // In this example we are not using the maths operators! 
-            ImDrawList* draw_list = ImGui::GetWindowDrawList();
-            //ImGui::Text("Primitives");
-            const ImU32 kColor = ImColor(1.0f, 1.0f, 1.0f, 1.0f);
-            const ImVec2 p = ImGui::GetCursorScreenPos();
-            //draw_list->AddCircleFilled(ImVec2(20.0f + p.x, 20.0f + p.y), 10.0f, kColor, 8);
-            draw_list->AddRectFilled(ImVec2(15.0f + p.x, 15.0f + p.y), ImVec2(18.0f + p.x, 18.0f + p.y), kColor); 
-            ImGui::End();
+            fractal_.Generate();
+            fractal_.ImGUIDraw();
         }
         // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
         if (show_demo_window)
@@ -322,13 +298,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}    
 
     window_end(info);
-
-#ifdef MUSIC
-	// music uninit
-	BASS_ChannelStop(mp3Str);
-	BASS_StreamFree(mp3Str);
-	BASS_Free();
-#endif
 
     if (ReleaseGL(info)) {
         return 0;
