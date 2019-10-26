@@ -82,19 +82,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="shaders\DitherTexture.flsl" />
-    <None Include="shaders\DitherTexture.gprg" />
-    <None Include="shaders\empty.gprg" />
-    <None Include="shaders\empty.flsl" />
-    <None Include="shaders\empty.vlsl" />
-    <None Include="shaders\example.gprg" />
-    <None Include="shaders\example.flsl" />
-    <None Include="shaders\example.vlsl" />
-    <None Include="shaders\SimpleTexture.flsl" />
-    <None Include="shaders\SimpleTexture.gprg" />
-    <None Include="shaders\SimpleTexture.vlsl" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h" />
     <ClInclude Include="..\imgui\imgui.h" />
     <ClInclude Include="..\imgui\imgui_impl_opengl2.h" />
@@ -110,11 +97,8 @@
     <ClInclude Include="GLNames.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="ShaderManager.h" />
-    <ClInclude Include="stb_image.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
-    <ClInclude Include="TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\imgui\imgui.cpp" />
@@ -124,13 +108,10 @@
     <ClCompile Include="..\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="Fractal.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="ShaderManager.cpp" />
-    <ClCompile Include="stb_image.c" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="TextureManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="editor.ico" />

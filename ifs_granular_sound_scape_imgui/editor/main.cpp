@@ -6,8 +6,6 @@
 #include "Configuration.h"
 #include "glext.h"
 #include "GLNames.h"
-#include "ShaderManager.h"
-#include "TextureManager.h"
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_opengl2.h"
 #include "../imgui/imgui_impl_win32.h"
@@ -29,12 +27,6 @@ const static char* glnames[NUM_GL_NAMES]={
 	 "glActiveTexture", "glGetUniformLocation", "glUniform1i", "glUniform1f",
 	 "glMultiTexCoord2f"
 };
-
-/*************************************************
- * The core managing units that hold the resources
- *************************************************/
-ShaderManager shaderManager;
-TextureManager textureManager;
 
 /*************************************************
  * Window core variables
@@ -85,18 +77,6 @@ static int initGL(WININFO *win_info) {
 
 	// Create openGL functions
 	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
-
-	// Create and initialize the shader manager
-	if (shaderManager.init(errorString)) {
-		MessageBox(win_info->hWnd, errorString, "Shader Manager Load", MB_OK);
-		return -1;
-	}
-
-	// Create and initialize everything needed for texture Management
-	if (textureManager.init(errorString)) {
-		MessageBox(win_info->hWnd, errorString, "Texture Manager Load", MB_OK);
-		return -1;
-	}
 
     // imGUI initialization
     IMGUI_CHECKVERSION();
@@ -218,63 +198,6 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
-static void intro_do(float time)
-{
-	char errorText[MAX_ERROR_LENGTH+1];
-	GLuint textureID;
-
-	glDisable(GL_BLEND);
-	glDisable(GL_DEPTH_TEST);
-
-    glClearColor(0.7f, 0.5f , 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-	// Set the program uniforms
-	GLuint programID;
-	shaderManager.getProgramID("example.gprg", &programID, errorText);
-	glUseProgram(programID);
-
-    // Set texture identifiers
-	GLint texture_location;
-    texture_location = glGetUniformLocation(programID, "BGTexture");
-    glUniform1i(texture_location, 0);
-    texture_location = glGetUniformLocation(programID, "Noise3DTexture");
-	glUniform1i(texture_location, 1);
-
-	// render to larger offscreen texture
-	glActiveTexture(GL_TEXTURE0);
-	textureManager.getTextureID("background.png", &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glActiveTexture(GL_TEXTURE1);
-	textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
-	glBindTexture(GL_TEXTURE_3D, textureID);
-    glActiveTexture(GL_TEXTURE0);
-
-    glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
-
-    GLuint loc = glGetUniformLocation(programID, "time");
-    glUniform1f(loc, time);
-
-    glColor4f(1.0f, 0.5f, 0.2f, 1.0f);
-	glRectf(-1.0, -1.0, 1.0, 1.0);
-
-	// Copy backbuffer to texture
-    textureManager.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
-
-	// Copy backbuffer to front (so far no improvement)
-	int xres = window_rect.right - window_rect.left;
-	int yres = window_rect.bottom - window_rect.top;
-	glViewport(0, 0, xres, yres);
-	if (false) {
-		shaderManager.getProgramID("DitherTexture.gprg", &programID, errorText);
-	} else {
-		shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
-	}
-	glUseProgram(programID);
-}
-
 int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
     WININFO     *info = &wininfo;
@@ -330,8 +253,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DispatchMessage(&msg);
         }
 
-        intro_do(time);
-
         // Start the ImGui frame
         ImGui_ImplOpenGL2_NewFrame();
         ImGui_ImplWin32_NewFrame();
@@ -359,18 +280,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
         if (show_preview_window)
         {
-#if 0
-            char error_text[MAX_ERROR_LENGTH + 1];
-            GLuint texture_id;
-            ImGui::Begin("Preview Window", &show_preview_window,
-                         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
-            if (textureManager.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text)) {
-                MessageBox(info->hWnd, error_text, "Get Renderbuffer", MB_OK);
-                break;
-            }
-            ImGui::Image((ImTextureID)texture_id, ImVec2(XRES, YRES));
-            ImGui::End();
-#else
             ImGui::SetNextWindowSize(ImVec2(640, 320), ImGuiCond_FirstUseEver);
             if (!ImGui::Begin("Preview Window", &show_preview_window,
                               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
@@ -390,7 +299,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             //draw_list->AddCircleFilled(ImVec2(20.0f + p.x, 20.0f + p.y), 10.0f, kColor, 8);
             draw_list->AddRectFilled(ImVec2(15.0f + p.x, 15.0f + p.y), ImVec2(18.0f + p.x, 18.0f + p.y), kColor); 
             ImGui::End();
-#endif
         }
         // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
         if (show_demo_window)
