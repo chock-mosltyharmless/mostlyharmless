@@ -170,6 +170,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	mp3Str=BASS_StreamCreateFile(FALSE,"GT_muc.mp3",0,0,0);
 	BASS_ChannelPlay(mp3Str, TRUE);
 	BASS_Start();
+    BASS_Pause();
+    BASS_ChannelSetPosition(mp3Str, BASS_ChannelSeconds2Bytes(mp3Str, 40.0), BASS_POS_BYTE);
+    BASS_Start();
 	float fCurTime;
 	GetAsyncKeyState(VK_ESCAPE);
 
@@ -193,6 +196,9 @@ int WINAPI WinMain ( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 		long deltaTime = curTime - lastTime;
 		float fDeltaTime = (float) deltaTime * 0.001f;
 		lastTime = curTime;
+
+        double bass_time = BASS_ChannelBytes2Seconds(mp3Str, BASS_ChannelGetPosition(mp3Str, BASS_POS_BYTE));
+        fCurTime = (float)bass_time;
 
 		// render
 		wglMakeCurrent(mainDC, mainRC);
