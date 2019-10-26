@@ -141,9 +141,10 @@ void Fractal::CreateObjects(pos max_size) {
 }
 
 void Fractal::Draw(void) {
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_id_[0]); // Bind our Vertex Buffer Object
-    glEnableVertexAttribArray(1);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo_id_[1]); // Bind our Vertex Buffer Object
+    glBindBuffer(GL_ARRAY_BUFFER, 0); // Un-bind buffer
+    //glEnableVertexAttribArray(0);
+    //glBindBuffer(GL_ARRAY_BUFFER, vbo_id_[0]); // Bind our Vertex Buffer Object
+    //glEnableVertexAttribArray(1);
+    //glBindBuffer(GL_ARRAY_BUFFER, vbo_id_[1]); // Bind our Vertex Buffer Object
     glDrawArrays(GL_TRIANGLES, 0, num_triangles_ * 3);
 }
