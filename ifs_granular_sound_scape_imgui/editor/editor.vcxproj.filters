@@ -1,0 +1,159 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="ShaderManager.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureManager.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image.c">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui.cpp">
+      <Filter>Source\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_demo.cpp">
+      <Filter>Source\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_draw.cpp">
+      <Filter>Source\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_impl_opengl2.cpp">
+      <Filter>Source\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="..\imgui\imgui_impl_win32.cpp">
+      <Filter>Source\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Fractal.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="bass.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="glext.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GLNames.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ShaderManager.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Resource.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="TextureManager.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="stb_image.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imconfig.h">
+      <Filter>Headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui.h">
+      <Filter>Headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui_internal.h">
+      <Filter>Headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\stb_rect_pack.h">
+      <Filter>Headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\stb_textedit.h">
+      <Filter>Headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\stb_truetype.h">
+      <Filter>Headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui_impl_opengl2.h">
+      <Filter>Headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="..\imgui\imgui_impl_win32.h">
+      <Filter>Headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Fractal.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\DitherTexture.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\DitherTexture.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\empty.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\empty.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\SimpleTexture.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\SimpleTexture.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\SimpleTexture.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\example.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\example.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\empty.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\example.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{3cc9d983-9b91-4060-8892-ad3784d6faa0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{ab331df5-c80e-4bbf-9b51-3528cc5825d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{7c7a9d26-8a42-4c35-85ec-5071add1e0ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers\imgui">
+      <UniqueIdentifier>{850eb1d0-3bb7-4c5d-9da2-a58214c3f7a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\imgui">
+      <UniqueIdentifier>{88be3577-c8f6-484f-8437-3e10202d793b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="editor.ico" />
+    <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="editor.rc" />
+  </ItemGroup>
+</Project>
