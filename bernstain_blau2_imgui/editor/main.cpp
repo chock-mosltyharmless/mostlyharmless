@@ -450,8 +450,9 @@ static int window_init( WININFO *info )
     if( !wglMakeCurrent(info->hDC,info->hRC) )
         return( 0 );
     
-    if (is_editor_) ShowWindow(info->hWnd, SW_SHOWDEFAULT);
-    else ShowWindow(info->hWnd, SW_MAXIMIZE);
+    //if (is_editor_) ShowWindow(info->hWnd, SW_SHOWDEFAULT);
+    //else ShowWindow(info->hWnd, SW_MAXIMIZE);
+    ShowWindow(info->hWnd, SW_MAXIMIZE);
     UpdateWindow(info->hWnd);
 
     if (!is_editor_) ShowCursor(false);
@@ -527,13 +528,13 @@ static void intro_do(float time)
     glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));    
 
 	// render to larger offscreen texture
-	glActiveTexture(GL_TEXTURE0);
-	textureManager.getTextureID("background.png", &textureID, errorText);
+	//glActiveTexture(GL_TEXTURE0);
+	textureManager.getTextureID("code.png", &textureID, errorText);
 	glBindTexture(GL_TEXTURE_2D, textureID);
-	glActiveTexture(GL_TEXTURE1);
-	textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
-	glBindTexture(GL_TEXTURE_3D, textureID);
-    glActiveTexture(GL_TEXTURE0);
+	//glActiveTexture(GL_TEXTURE1);
+	//textureManager.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
+	//glBindTexture(GL_TEXTURE_3D, textureID);
+    //glActiveTexture(GL_TEXTURE0);
 
     if (is_editor_)
     {
@@ -548,6 +549,72 @@ static void intro_do(float time)
     glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDrawArrays(GL_POINTS, 0, TOTAL_NUM_PARTICLES);
 
+    // Draw some texture
+    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
+    glUseProgram(programID);
+
+    glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+    textureManager.getTextureID("vignette.png", &textureID, errorText);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    glBegin(GL_QUADS);
+    float alpha = 1.0f;
+    alpha = 17.0f - ((float)music_time_) / 10.0f;
+    if (alpha < 0.5f) alpha = 0.5f;
+    glColor4f(alpha, alpha, alpha, 1.0f);
+    glTexCoord2f(0.0f, 0.0f);
+    glVertex3f(-1.0f, 1.0f, 0.5f);
+    glTexCoord2f(1.0f, 0.0f);
+    glVertex3f(1.0f, 1.0f, 0.5f);
+    glTexCoord2f(1.0f, 1.0f);
+    glVertex3f(1.0f, -1.0f, 0.5f);
+    glTexCoord2f(0.0f, 1.0f);
+    glVertex3f(-1.0f, -1.0f, 0.5f);
+    glEnd();
+
+    glBlendFunc(GL_ONE, GL_ONE);
+    //glRectf(-0.5, -0.5, 0.5, 0.5);
+    if (music_time_ > 160 && music_time_ < 165)
+    {
+        textureManager.getTextureID("code.png", &textureID, errorText);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glBegin(GL_QUADS);
+        float xp = -0.25f;
+        float yp = -0.15f;
+        float width = sin((music_time_ - 160.0f) / 5.0f * 3.1415f);
+        float alpha = sqrtf(width);
+        glColor4f(alpha, alpha, alpha, 1.0f);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex3f(width * -0.5f+xp, 0.2f+yp, 0.5f);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex3f(width * 0.5f+xp, 0.2f+yp, 0.5f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex3f(width * 0.5f+xp, -0.2f+yp, 0.5f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex3f(width * -0.5f+xp, -0.2f+yp, 0.5f);
+        glEnd();
+    }
+    if (music_time_ > 163 && music_time_ < 168)
+    {
+        textureManager.getTextureID("music.png", &textureID, errorText);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glBegin(GL_QUADS);
+        float xp = +0.15f;
+        float yp = -0.4f;
+        float width = sin((music_time_ - 163.0f) / 5.0f * 3.1415f);
+        float alpha = sqrtf(width);
+        glColor4f(alpha, alpha, alpha, 1.0f);
+        glTexCoord2f(0.0f, 0.0f);
+        glVertex3f(width * -0.5f + xp, 0.2f + yp, 0.5f);
+        glTexCoord2f(1.0f, 0.0f);
+        glVertex3f(width * 0.5f + xp, 0.2f + yp, 0.5f);
+        glTexCoord2f(1.0f, 1.0f);
+        glVertex3f(width * 0.5f + xp, -0.2f + yp, 0.5f);
+        glTexCoord2f(0.0f, 1.0f);
+        glVertex3f(width * -0.5f + xp, -0.2f + yp, 0.5f);
+        glEnd();
+    }
+
+
     if (is_editor_)
     {
 	    // Copy backbuffer to texture
@@ -556,7 +623,8 @@ static void intro_do(float time)
 	    glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 
 	    // Copy backbuffer to front (so far no improvement)
-	    int xres = window_rect.right - window_rect.left;
+#if 0	    
+        int xres = window_rect.right - window_rect.left;
 	    int yres = window_rect.bottom - window_rect.top;
 	    glViewport(0, 0, xres, yres);
 	    if (false) {
@@ -564,6 +632,7 @@ static void intro_do(float time)
 	    } else {
 		    shaderManager.getProgramID("SimpleTexture.gprg", &programID, errorText);
 	    }
+#endif
     }
 
     glBindVertexArray(0);
@@ -640,13 +709,13 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         music_time_ = BASS_ChannelBytes2Seconds(mp3Str_, BASS_ChannelGetPosition(mp3Str_, BASS_POS_BYTE));
-        if (music_time_ >= music_length_ - 0.1f)
+        if (music_time_ >= music_length_ - 0.2f)
         {
             if (loop_)
             {
                 BASS_ChannelSetPosition(mp3Str_, BASS_ChannelSeconds2Bytes(mp3Str_, 0.0), BASS_POS_BYTE);
                 music_time_ = 0.0f;
-                if (!is_editor_) BASS_Start();
+                //if (!is_editor_) BASS_Start();
             }
             else
             {
