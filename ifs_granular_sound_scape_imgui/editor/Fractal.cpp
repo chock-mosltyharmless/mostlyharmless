@@ -4,6 +4,7 @@
 
 #include <math.h>
 #include <memory.h>
+#include <stdio.h>
 
 Matrix2x3::Matrix2x3(void)
 {
@@ -91,6 +92,46 @@ void Fractal::ImGUIDraw(void)
     }
     
     
+    ImGui::End();
+}
+
+void Fractal::ImGUIControl(void)
+{
+    ImGui::SetNextWindowSize(ImVec2(700, 320));
+    if (!ImGui::Begin("Fractal Control", 0))
+    {
+        ImGui::End();
+        return;
+    }
+
+    bool first_index = true;
+    for (int function_id = 0; function_id < kNumFunctions; function_id++)
+    {
+        //ImGui::Text("Function %d", function_id + 1);
+        for (int i = 0; i < 2; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                char name[128];
+                sprintf(name, "f%d a%d%d", function_id + 1, i + 1, j + 1);
+                //ImGui::SliderFloat(name, &function_[function_id].a_[i][j], -1.0f, 1.0f);
+
+                if (!first_index > 0) ImGui::SameLine();
+                first_index = false;
+
+                int index = i * 3 + j;
+                ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(index / 7.0f, 0.5f, 0.5f));
+                ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(index / 7.0f, 0.6f, 0.5f));
+                ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(index / 7.0f, 0.7f, 0.5f));
+                ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(index / 7.0f, 0.9f, 0.9f));
+                ImGui::PushID(name);
+                ImGui::VSliderFloat("##", ImVec2(18, 280), &function_[function_id].a_[i][j], -1.0f, 1.0f, "");
+                ImGui::PopID();
+                ImGui::PopStyleColor(4);
+            }
+        }
+    }
+
     ImGui::End();
 }
 

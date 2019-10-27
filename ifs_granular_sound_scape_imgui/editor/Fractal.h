@@ -27,6 +27,9 @@ public:
     // Draw ImGUI window from generated list
     void ImGUIDraw(void);
 
+    // Draw a control window for setting values
+    void ImGUIControl(void);
+
     // Generate IFS fractal in point_ array
     void Generate(void);
 

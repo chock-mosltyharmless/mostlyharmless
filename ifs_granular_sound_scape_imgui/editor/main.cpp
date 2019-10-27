@@ -144,7 +144,6 @@ static int window_init( WININFO *info )
 {
 	unsigned int	PixelFormat;
     DWORD			dwExStyle, dwStyle;
-	RECT			rec;
 
     WNDCLASS		wc;
 
@@ -160,17 +159,6 @@ static int window_init( WININFO *info )
     dwExStyle = 0;
     dwStyle = WS_VISIBLE | WS_CAPTION | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_SYSMENU |
         WS_MAXIMIZEBOX | WS_MINIMIZEBOX | WS_SIZEBOX;
-
-    rec.left   = 0;
-    rec.top    = 0;
-    rec.right  = XRES;
-    rec.bottom = YRES;
-    AdjustWindowRect( &rec, dwStyle, 0 );
-    RECT window_rect;
-	window_rect.left = 0;
-	window_rect.top = 0;
-	window_rect.right = XRES;
-	window_rect.bottom = YRES;
 
     info->hWnd = CreateWindowEx(dwExStyle, wc.lpszClassName, "Editor", dwStyle,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
@@ -273,6 +261,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
         if (show_preview_window)
         {
+            fractal_.ImGUIControl();
             fractal_.Generate();
             fractal_.ImGUIDraw();
         }
