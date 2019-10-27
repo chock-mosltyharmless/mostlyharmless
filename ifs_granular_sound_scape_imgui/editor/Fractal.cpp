@@ -5,6 +5,7 @@
 #include <math.h>
 #include <memory.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 Matrix2x3::Matrix2x3(void)
 {
@@ -43,17 +44,30 @@ void Matrix2x3::Multiply(const Matrix2x3 *first, const Matrix2x3 *second)
 #endif
 }
 
-float Matrix2x3::Size(void) const
+float Matrix2x3::SquareSize(void) const
 {
+#ifdef USE_CROSS_PRODUCT_SIZE
     float cross_product = a_[0][0] * a_[1][1] - a_[1][0] * a_[0][1];
     return fabsf(cross_product);
+#else
+    float square_length1 = a_[0][0] * a_[0][0] + a_[0][1] * a_[0][1];
+    float square_length2 = a_[1][0] * a_[1][0] + a_[1][1] * a_[1][1];
+#endif
+    return square_length1 > square_length2 ? square_length1 : square_length2;
 }
 
+static float frand(float kMin = 0.0f, float kMax = 1.0f)
+{
+    float f = static_cast<float>(rand()) / RAND_MAX;
+    return kMin + f * (kMax - kMin);
+}
 
 Fractal::Fractal()
 {
-    function_[0].Set(0.7f, 0.3f, 0.16f, -0.31f, 0.5f, -0.41f);
-    function_[1].Set(0.5f, 0.3f, -0.13f, 0.83f, -0.87f, 0.03f);
+    for (int i = 0; i < kNumFunctions; i++)
+    {
+        function_[i].Set(frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f));
+    }
 }
 
 Fractal::~Fractal()
@@ -87,7 +101,21 @@ void Fractal::ImGUIDraw(void)
         {
             ImVec2 center = ImVec2(IMGUI_WIDTH * 0.5f * point_[i].a_[0][2] + p.x + IMGUI_WIDTH * 0.5f,
                                    IMGUI_HEIGHT * 0.5f * point_[i].a_[1][2] + p.y + IMGUI_HEIGHT * 0.5f);
-            draw_list->AddRectFilled(center, ImVec2(center.x + 1.0f, center.y + 1.0f), kColor);
+            //draw_list->AddRectFilled(center, ImVec2(center.x + 1.0f, center.y + 1.0f), kColor);
+            ImVec2 right = ImVec2(IMGUI_WIDTH * 0.5f * point_[i].a_[0][0],
+                                  IMGUI_HEIGHT * 0.5f * point_[i].a_[1][0]);
+            ImVec2 down = ImVec2(IMGUI_WIDTH * 0.5f * point_[i].a_[0][1],
+                                 IMGUI_HEIGHT * 0.5f * point_[i].a_[1][1]);
+            // Make smaller
+            const float size = 0.5f;
+            right.x *= size;
+            right.y *= size;
+            down.x *= size;
+            down.y *= size;
+            draw_list->AddQuadFilled(ImVec2(center.x + right.x + down.x, center.y + right.y + down.y),
+                                     ImVec2(center.x - right.x + down.x, center.y - right.y + down.y),
+                                     ImVec2(center.x - right.x - down.x, center.y - right.y - down.y),
+                                     ImVec2(center.x + right.x - down.x, center.y + right.y - down.y), kColor);
         }
     }
     
@@ -113,10 +141,10 @@ void Fractal::ImGUIControl(void)
             for (int j = 0; j < 3; j++)
             {
                 char name[128];
-                sprintf(name, "f%d a%d%d", function_id + 1, i + 1, j + 1);
+                sprintf_s<128>(name, "f%d a%d%d", function_id + 1, i + 1, j + 1);
                 //ImGui::SliderFloat(name, &function_[function_id].a_[i][j], -1.0f, 1.0f);
 
-                if (!first_index > 0) ImGui::SameLine();
+                if (!first_index) ImGui::SameLine();
                 first_index = false;
 
                 int index = i * 3 + j;
@@ -125,7 +153,10 @@ void Fractal::ImGUIControl(void)
                 ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(index / 7.0f, 0.7f, 0.5f));
                 ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(index / 7.0f, 0.9f, 0.9f));
                 ImGui::PushID(name);
-                ImGui::VSliderFloat("##", ImVec2(18, 280), &function_[function_id].a_[i][j], -1.0f, 1.0f, "");
+                //ImGui::VSliderFloat("##", ImVec2(18, 280), &function_[function_id].a_[i][j], -1.0f, 1.0f, "");
+                int int_slider_pos = static_cast<int>(function_[function_id].a_[i][j] * 128);
+                ImGui::VSliderInt("##", ImVec2(30, 256), &int_slider_pos, -128, 127);
+                function_[function_id].a_[i][j] = static_cast<float>(int_slider_pos) / 128.0f;
                 ImGui::PopID();
                 ImGui::PopStyleColor(4);
             }
@@ -135,11 +166,12 @@ void Fractal::ImGUIControl(void)
     ImGui::End();
 }
 
-void Fractal::Generate(void)
+void Fractal::Generate(float min_size)
 {
     point_[0].Set(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
     draw_point_[0] = true;
     num_active_points_ = 1;
+    float min_square_size = min_size * min_size;
 
     for (int read_point_index = 0; read_point_index < num_active_points_; read_point_index++)
     {
@@ -147,7 +179,7 @@ void Fractal::Generate(void)
         if (num_active_points_ == kMaxNumPoints) break;
 
         // Check for size [TODO: Implement the size check (with parameter?)]
-        if (true)
+        if (point_[read_point_index].SquareSize() > min_square_size)
         {
             for (int function_id = 0; function_id < kNumFunctions; function_id++)
             {

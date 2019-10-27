@@ -12,7 +12,7 @@ public:
     }
 
     void Multiply(const Matrix2x3 *first, const Matrix2x3 *second);
-    float Size(void) const;
+    float SquareSize(void) const;
 
 public:
     float a_[2][3];
@@ -31,7 +31,7 @@ public:
     void ImGUIControl(void);
 
     // Generate IFS fractal in point_ array
-    void Generate(void);
+    void Generate(float min_size);
 
 public:
     // Functions can be set from outside the class to determine shape

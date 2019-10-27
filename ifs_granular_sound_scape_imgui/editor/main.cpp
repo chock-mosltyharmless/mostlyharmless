@@ -241,28 +241,27 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         // 1. Show a simple window.
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets automatically appears in a window called "Debug".
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-            ImGui::Text("Current time: %f", time);
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f    
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+        static float fractal_min_size = 0.05f;
+        static int counter = 0;
+        ImGui::Text("Current time: %f", time);
+        ImGui::SliderFloat("Fractal Minimum Size", &fractal_min_size, 0.0f, 0.1f);            // Edit 1 float using a slider from 0.0f to 1.0f    
+        ImGui::ColorEdit3("Clear Color", (float*)&clear_color); // Edit 3 floats representing a color
 
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
-            ImGui::Checkbox("Preview Window", &show_preview_window);
+        ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
+        ImGui::Checkbox("Preview Window", &show_preview_window);
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
+        if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
+            counter++;
+        ImGui::SameLine();
+        ImGui::Text("counter = %d", counter);
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        }
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
         // 2. Show another simple window. In most cases you will use an explicit Begin/End pair to name your windows.
         if (show_preview_window)
         {
             fractal_.ImGUIControl();
-            fractal_.Generate();
+            fractal_.Generate(fractal_min_size);
             fractal_.ImGUIDraw();
         }
         // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
