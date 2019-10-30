@@ -33,11 +33,15 @@ public:
     // Generate IFS fractal in point_ array
     void Generate(float min_size);
 
+    void Play(void);
+
 public:
     // Functions can be set from outside the class to determine shape
     static constexpr int kNumFunctions = 2;
     Matrix2x3 function_[kNumFunctions];
-
+    float final_rotation_ = 0.0f;
+    float final_scale_[2] = {1.0f, 1.0f};
+    float final_translation_[2] = {0.0f, 0.0f};
 
 private:
     static constexpr int kMaxNumPoints = 10000;

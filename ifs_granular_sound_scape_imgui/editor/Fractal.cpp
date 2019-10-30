@@ -1,11 +1,35 @@
 #include "Fractal.h"
 
+#pragma comment(lib,"winmm.lib")
+
 #include "../imgui/imgui.h"
 
+#include <Windows.h>
 #include <math.h>
 #include <memory.h>
+#include <mmsystem.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define MZK_RATE 44100
+#define MZK_NUMCHANNELS 1
+// 5 second audio
+#define MZK_NUMSAMPLES (5 * MZK_RATE)
+#define MZK_NUMSAMPLESC (MZK_NUMSAMPLES * MZK_NUMCHANNELS)
+
+static const int kWavHeader[11] = {
+    0x46464952,
+    MZK_NUMSAMPLESC * sizeof(short) + 36,
+    0x45564157,
+    0x20746D66,
+    16,
+    WAVE_FORMAT_PCM | (MZK_NUMCHANNELS << 16),
+    MZK_RATE,
+    MZK_RATE*MZK_NUMCHANNELS * sizeof(short),
+    (MZK_NUMCHANNELS * sizeof(short)) | ((8 * sizeof(short)) << 16),
+    0x61746164,
+    MZK_NUMSAMPLESC * sizeof(short)
+};
 
 Matrix2x3::Matrix2x3(void)
 {
@@ -95,17 +119,28 @@ void Fractal::ImGUIDraw(void)
     const ImU32 kColor = ImColor(1.0f, 1.0f, 1.0f, 1.0f);
     const ImVec2 p = ImGui::GetCursorScreenPos();
     
+    Matrix2x3 final_transform;
+    final_transform.a_[0][0] = cosf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[0];
+    final_transform.a_[0][1] = -sinf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[0];
+    final_transform.a_[1][0] = sinf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[1];
+    final_transform.a_[1][1] = cosf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[1];
+    final_transform.a_[0][2] = final_translation_[0];
+    final_transform.a_[1][2] = final_translation_[1];
+
     for (int i = 0; i < num_active_points_; i++)
     {
         if (draw_point_[i])
         {
-            ImVec2 center = ImVec2(IMGUI_WIDTH * 0.5f * point_[i].a_[0][2] + p.x + IMGUI_WIDTH * 0.5f,
-                                   IMGUI_HEIGHT * 0.5f * point_[i].a_[1][2] + p.y + IMGUI_HEIGHT * 0.5f);
+            Matrix2x3 transformed;
+            transformed.Multiply(&final_transform, &(point_[i]));
+
+            ImVec2 center = ImVec2(IMGUI_WIDTH * 0.5f * transformed.a_[0][2] + p.x + IMGUI_WIDTH * 0.5f,
+                                   IMGUI_HEIGHT * 0.5f * transformed.a_[1][2] + p.y + IMGUI_HEIGHT * 0.5f);
             //draw_list->AddRectFilled(center, ImVec2(center.x + 1.0f, center.y + 1.0f), kColor);
-            ImVec2 right = ImVec2(IMGUI_WIDTH * 0.5f * point_[i].a_[0][0],
-                                  IMGUI_HEIGHT * 0.5f * point_[i].a_[1][0]);
-            ImVec2 down = ImVec2(IMGUI_WIDTH * 0.5f * point_[i].a_[0][1],
-                                 IMGUI_HEIGHT * 0.5f * point_[i].a_[1][1]);
+            ImVec2 right = ImVec2(IMGUI_WIDTH * 0.5f * transformed.a_[0][0],
+                                  IMGUI_HEIGHT * 0.5f * transformed.a_[1][0]);
+            ImVec2 down = ImVec2(IMGUI_WIDTH * 0.5f * transformed.a_[0][1],
+                                 IMGUI_HEIGHT * 0.5f * transformed.a_[1][1]);
             // Make smaller
             const float size = 0.5f;
             right.x *= size;
@@ -164,6 +199,20 @@ void Fractal::ImGUIControl(void)
     }
 
     ImGui::End();
+
+    ImGui::SetNextWindowSize(ImVec2(300, 150));
+    if (!ImGui::Begin("Fractal Final Transform", 0))
+    {
+        ImGui::End();
+        return;
+    }
+
+    ImGui::SliderFloat("Rotation", &final_rotation_, 0.0f, 1.0f);
+    ImGui::SliderFloat("Scale X", &(final_scale_[0]), -2.0f, 2.0f);
+    ImGui::SliderFloat("Scale Y", &(final_scale_[1]), -2.0f, 2.0f);
+    ImGui::SliderFloat("Translate X", &(final_translation_[0]), -1.0f, 1.0f);
+    ImGui::SliderFloat("Translate Y", &(final_translation_[1]), -1.0f, 1.0f);
+    ImGui::End();
 }
 
 void Fractal::Generate(float min_size)
@@ -195,4 +244,15 @@ void Fractal::Generate(float min_size)
             }
         }
     }
+}
+
+void Fractal::Play(void)
+{
+    short *music = new short[MZK_NUMSAMPLESC + sizeof(kWavHeader)];
+    memset(music, 0, MZK_NUMSAMPLESC * sizeof(short) + sizeof(kWavHeader));
+
+    memcpy(music, kWavHeader, 44);
+    sndPlaySound((const char*)&music, SND_ASYNC | SND_MEMORY);
+
+    delete [] music;
 }
