@@ -100,8 +100,10 @@ Fractal::~Fractal()
 
 #define IMGUI_WIDTH 640
 #define IMGUI_HEIGHT 320
-void Fractal::ImGUIDraw(void)
+void Fractal::ImGUIDraw(float min_size)
 {
+    Generate(min_size, 10000);
+
     ImGui::SetNextWindowSize(ImVec2(IMGUI_WIDTH, IMGUI_HEIGHT), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Preview Window", 0,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
@@ -215,8 +217,10 @@ void Fractal::ImGUIControl(void)
     ImGui::End();
 }
 
-void Fractal::Generate(float min_size)
+void Fractal::Generate(float min_size, int max_num_points)
 {
+    if (max_num_points > kMaxNumPoints) max_num_points = kMaxNumPoints;
+
     point_[0].Set(1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
     draw_point_[0] = true;
     num_active_points_ = 1;
@@ -225,7 +229,7 @@ void Fractal::Generate(float min_size)
     for (int read_point_index = 0; read_point_index < num_active_points_; read_point_index++)
     {
         // Pre-emptive quit if nothing more can be done
-        if (num_active_points_ == kMaxNumPoints) break;
+        if (num_active_points_ == max_num_points) break;
 
         // Check for size [TODO: Implement the size check (with parameter?)]
         if (point_[read_point_index].SquareSize() > min_square_size)
@@ -233,7 +237,7 @@ void Fractal::Generate(float min_size)
             for (int function_id = 0; function_id < kNumFunctions; function_id++)
             {
                 // Pre-emptive quit if nothing more can be done
-                if (num_active_points_ == kMaxNumPoints) break;
+                if (num_active_points_ == max_num_points) break;
 
                 point_[num_active_points_].Multiply(&(point_[read_point_index]), &(function_[function_id]));
                 draw_point_[num_active_points_] = true;

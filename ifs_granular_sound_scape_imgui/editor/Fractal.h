@@ -25,13 +25,10 @@ public:
     virtual ~Fractal();
 
     // Draw ImGUI window from generated list
-    void ImGUIDraw(void);
+    void ImGUIDraw(float min_size);
 
     // Draw a control window for setting values
     void ImGUIControl(void);
-
-    // Generate IFS fractal in point_ array
-    void Generate(float min_size);
 
     void Play(void);
 
@@ -43,8 +40,11 @@ public:
     float final_scale_[2] = {1.0f, 1.0f};
     float final_translation_[2] = {0.0f, 0.0f};
 
+    // Generate IFS fractal in point_ array
+    void Generate(float min_size, int max_num_points);
+
 private:
-    static constexpr int kMaxNumPoints = 10000;
+    static constexpr int kMaxNumPoints = 100000;
     Matrix2x3 point_[kMaxNumPoints];
     // The number of points in point_ array that should be considered for drawing
     int num_active_points_ = 0;

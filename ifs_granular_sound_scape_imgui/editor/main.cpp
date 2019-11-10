@@ -261,8 +261,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         if (show_preview_window)
         {
             fractal_.ImGUIControl();
-            fractal_.Generate(fractal_min_size);
-            fractal_.ImGUIDraw();
+            fractal_.ImGUIDraw(fractal_min_size);
         }
         // 3. Show the ImGui demo window. Most of the sample code is in ImGui::ShowDemoWindow(). Read its code to learn more about Dear ImGui!
         if (show_demo_window)
