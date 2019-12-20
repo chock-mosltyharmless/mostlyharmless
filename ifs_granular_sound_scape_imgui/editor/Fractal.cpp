@@ -4,6 +4,8 @@
 
 #include "../imgui/imgui.h"
 
+#include <memory>
+
 #include <Windows.h>
 #include <math.h>
 #include <memory.h>
@@ -11,13 +13,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define TWO_PI (2.0f * 3.1415f)
 #define MZK_RATE 44100
 #define MZK_NUMCHANNELS 1
 // 5 second audio
 #define MZK_NUMSAMPLES (5 * MZK_RATE)
 #define MZK_NUMSAMPLESC (MZK_NUMSAMPLES * MZK_NUMCHANNELS)
 
-static const int kWavHeader[11] = {
+static short music[MZK_NUMSAMPLESC + 22];
+static const int kWavHeader_[11] = {
     0x46464952,
     MZK_NUMSAMPLESC * sizeof(short) + 36,
     0x45564157,
@@ -98,19 +102,79 @@ Fractal::~Fractal()
 {
 }
 
+void Fractal::Play(float min_size)
+{
+    const float kMaxFreq = 20000.0f;
+    const float kMinFreq = 40.0f;
+    float kMaxLogFreq = logf(kMaxFreq / kMinFreq);
+
+    const int kNumPlayPoints = kMaxNumPoints;
+    //const int kNumPlayPoints = 1000;
+    Generate(min_size, kNumPlayPoints);
+
+    memset(music, 0, sizeof(music));
+
+    I need more versatile granules. So that I can get percussion like stuff. Take the width? Or start+end freq?
+
+    for (int i = 0; i < num_active_points_; i++)
+    {
+        if (draw_point_[i] &&
+            point_[i].a_[0][2] > -1.0f && point_[i].a_[0][2] < 1.0f &&
+            point_[i].a_[1][2] > -1.0f && point_[i].a_[1][2] < 1.0f)
+        {
+            int time_sample = static_cast<int>(MZK_NUMSAMPLES * (0.5f * point_[i].a_[0][2] + 0.5f));
+            float log_freq = kMaxLogFreq * (0.5f - 0.5f * point_[i].a_[1][2]);
+            float freq = kMinFreq * expf(log_freq);
+
+            //int end_sample = time_sample + 3 * static_cast<int>(MZK_RATE / freq);
+            // 50 ms sample
+            float sample_duration = MZK_RATE / 1000.0f * 50.0f;
+            if (sample_duration < 3 * MZK_RATE / freq) sample_duration = 3 * MZK_RATE / freq;
+            int end_sample = time_sample + static_cast<int>(sample_duration);
+
+            for (int sample = time_sample; sample < end_sample; sample++)
+            {
+                if (sample >= 0 && sample < MZK_NUMSAMPLES)
+                {
+                    float T = static_cast<float>(sample - time_sample) / sample_duration;
+                    float hann = sinf(3.1415f * T);
+                    hann *= hann;
+                    int input = music[sample];
+                    float fT = freq * (sample - time_sample) / MZK_RATE * TWO_PI;
+                    input += static_cast<short>(hann * 500.0f * cos(fT));
+                    if (input < -32768) input = -32768;
+                    if (input > 32767) input = 32767;
+                    music[sample] = input;
+                }
+            }
+        }
+    }
+
+    memcpy(music, kWavHeader_, sizeof(kWavHeader_));
+    sndPlaySound((const char*)&music, SND_ASYNC | SND_MEMORY);
+
+    FILE *fid = fopen("tmp.wav", "wb");
+    fwrite(music, 1, sizeof(music), fid);
+    fclose(fid);
+}
+
 #define IMGUI_WIDTH 640
 #define IMGUI_HEIGHT 320
 void Fractal::ImGUIDraw(float min_size)
 {
     Generate(min_size, 10000);
 
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.1f, 0.08f, 1.0f));
     ImGui::SetNextWindowSize(ImVec2(IMGUI_WIDTH, IMGUI_HEIGHT), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Preview Window", 0,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
     {
+        ImGui::PopStyleColor();
         ImGui::End();
         return;
     }
+
+    ImVec2 window_size = ImGui::GetWindowSize();
 
     // Tip: If you do a lot of custom rendering, you probably want to use your own geometrical types and benefit of overloaded operators, etc.
     // Define IM_VEC2_CLASS_EXTRA in imconfig.h to create implicit conversions between your types and ImVec2/ImVec4. 
@@ -121,28 +185,17 @@ void Fractal::ImGUIDraw(float min_size)
     const ImU32 kColor = ImColor(1.0f, 1.0f, 1.0f, 1.0f);
     const ImVec2 p = ImGui::GetCursorScreenPos();
     
-    Matrix2x3 final_transform;
-    final_transform.a_[0][0] = cosf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[0];
-    final_transform.a_[0][1] = -sinf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[0];
-    final_transform.a_[1][0] = sinf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[1];
-    final_transform.a_[1][1] = cosf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[1];
-    final_transform.a_[0][2] = final_translation_[0];
-    final_transform.a_[1][2] = final_translation_[1];
-
     for (int i = 0; i < num_active_points_; i++)
     {
         if (draw_point_[i])
         {
-            Matrix2x3 transformed;
-            transformed.Multiply(&final_transform, &(point_[i]));
-
-            ImVec2 center = ImVec2(IMGUI_WIDTH * 0.5f * transformed.a_[0][2] + p.x + IMGUI_WIDTH * 0.5f,
-                                   IMGUI_HEIGHT * 0.5f * transformed.a_[1][2] + p.y + IMGUI_HEIGHT * 0.5f);
+            ImVec2 center = ImVec2(window_size.x * 0.5f * point_[i].a_[0][2] + p.x + window_size.x * 0.5f,
+                                   window_size.y * 0.5f * point_[i].a_[1][2] + p.y + window_size.y * 0.5f);
             //draw_list->AddRectFilled(center, ImVec2(center.x + 1.0f, center.y + 1.0f), kColor);
-            ImVec2 right = ImVec2(IMGUI_WIDTH * 0.5f * transformed.a_[0][0],
-                                  IMGUI_HEIGHT * 0.5f * transformed.a_[1][0]);
-            ImVec2 down = ImVec2(IMGUI_WIDTH * 0.5f * transformed.a_[0][1],
-                                 IMGUI_HEIGHT * 0.5f * transformed.a_[1][1]);
+            ImVec2 right = ImVec2(window_size.x * 0.5f * point_[i].a_[0][0],
+                                  window_size.y * 0.5f * point_[i].a_[1][0]);
+            ImVec2 down = ImVec2(window_size.x * 0.5f * point_[i].a_[0][1],
+                                 window_size.y * 0.5f * point_[i].a_[1][1]);
             // Make smaller
             const float size = 0.5f;
             right.x *= size;
@@ -156,8 +209,8 @@ void Fractal::ImGUIDraw(float min_size)
         }
     }
     
-    
     ImGui::End();
+    ImGui::PopStyleColor();
 }
 
 void Fractal::ImGUIControl(void)
@@ -248,15 +301,22 @@ void Fractal::Generate(float min_size, int max_num_points)
             }
         }
     }
-}
 
-void Fractal::Play(void)
-{
-    short *music = new short[MZK_NUMSAMPLESC + sizeof(kWavHeader)];
-    memset(music, 0, MZK_NUMSAMPLESC * sizeof(short) + sizeof(kWavHeader));
+    Matrix2x3 final_transform;
+    final_transform.a_[0][0] = cosf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[0];
+    final_transform.a_[0][1] = -sinf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[0];
+    final_transform.a_[1][0] = sinf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[1];
+    final_transform.a_[1][1] = cosf(final_rotation_ * 3.1415f * 2.0f) * final_scale_[1];
+    final_transform.a_[0][2] = final_translation_[0];
+    final_transform.a_[1][2] = final_translation_[1];
 
-    memcpy(music, kWavHeader, 44);
-    sndPlaySound((const char*)&music, SND_ASYNC | SND_MEMORY);
-
-    delete [] music;
+    for (int i = 0; i < num_active_points_; i++)
+    {
+        if (draw_point_[i])
+        {
+            Matrix2x3 transformed;
+            transformed.Multiply(&final_transform, &(point_[i]));
+            point_[i] = transformed;
+        }
+    }
 }

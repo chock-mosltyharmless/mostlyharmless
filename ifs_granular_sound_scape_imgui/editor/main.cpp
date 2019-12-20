@@ -250,10 +250,10 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
         ImGui::Checkbox("Preview Window", &show_preview_window);
 
-        if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
-            counter++;
-        ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
+        if (ImGui::Button("Play"))
+        {
+            fractal_.Play(fractal_min_size);
+        }
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 

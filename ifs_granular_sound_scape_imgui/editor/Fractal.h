@@ -30,7 +30,8 @@ public:
     // Draw a control window for setting values
     void ImGUIControl(void);
 
-    void Play(void);
+    // Render the fractal to audio and play the wav file
+    void Play(float min_size);
 
 public:
     // Functions can be set from outside the class to determine shape
