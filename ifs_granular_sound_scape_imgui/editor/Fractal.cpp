@@ -46,6 +46,19 @@ Matrix2x3::~Matrix2x3()
 {
 }
 
+void Matrix2x3::Set(float radians, float scale_x, float scale_y, float trans_x, float trans_y)
+{
+    Matrix2x3 scale;
+    scale.ScaleInit(scale_x, scale_y);
+    Matrix2x3 rotation;
+    rotation.RotationInit(radians);
+    Matrix2x3 translation;
+    translation.TranslateInit(trans_x, trans_y);
+    Matrix2x3 tmp;
+    tmp.Multiply(&translation, &rotation);
+    Multiply(&tmp, &scale);
+}
+
 void Matrix2x3::Multiply(const Matrix2x3 *first, const Matrix2x3 *second)
 {
 #if 0
@@ -94,12 +107,40 @@ Fractal::Fractal()
 {
     for (int i = 0; i < kNumFunctions; i++)
     {
-        function_[i].Set(frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f));
+        function_[i].Set(frand(-1.0f, 1.0f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f), frand(-0.8f, 0.8f));
     }
+
+    // Hard-coded function
+    //function_[0].Set(-4 / 128.0f, 83 / 128.0f, -39 / 128.0f, -62 / 128.0f, 38 / 128.0f, -55 / 128.0f);
+    //function_[1].Set(69 / 128.0f, -65 / 128.0f, 30 / 128.0f, 50 / 128.0f, 77 / 128.0f, 18 / 128.0f);
+    function_[0].Set(-8 / 128.0f, 81 / 128.0f, -110 / 128.0f, 45 / 128.0f, -3 / 128.0f);
+    function_[1].Set(20 / 128.0f, 87 / 128.0f, 57 / 128.0f, -47 / 128.0f, 11 / 128.0f);
 }
 
 Fractal::~Fractal()
 {
+}
+
+float Fractal::GetLine(int index, float *start_x, float *start_y, float *end_x, float *end_y)
+{
+    ImVec2 center = ImVec2(point_[index].a_[0][2], point_[index].a_[1][2]);
+    ImVec2 right = ImVec2(point_[index].a_[0][0], point_[index].a_[1][0]);
+    ImVec2 down = ImVec2(point_[index].a_[0][1], point_[index].a_[1][1]);
+
+    // Make smaller
+    const float kLengthModifier = 1.0f;
+    right.x *= kLengthModifier;
+    right.y *= kLengthModifier;
+
+    const float kAlphaFactor = 100.0f;
+    float width = sqrtf((point_[index].a_[0][1] * point_[index].a_[0][1]) + (point_[index].a_[1][1] * point_[index].a_[1][1]));
+
+    *start_x = center.x - right.x;
+    *start_y = center.y - right.y;
+    *end_x = center.x + right.x;
+    *end_y = center.y + right.y;
+
+    return width;
 }
 
 void Fractal::Play(float min_size)
@@ -114,14 +155,14 @@ void Fractal::Play(float min_size)
 
     memset(music, 0, sizeof(music));
 
-    I need more versatile granules. So that I can get percussion like stuff. Take the width? Or start+end freq?
-
     for (int i = 0; i < num_active_points_; i++)
     {
         if (draw_point_[i] &&
             point_[i].a_[0][2] > -1.0f && point_[i].a_[0][2] < 1.0f &&
             point_[i].a_[1][2] > -1.0f && point_[i].a_[1][2] < 1.0f)
         {
+#if 0
+            // Single point in the middle
             int time_sample = static_cast<int>(MZK_NUMSAMPLES * (0.5f * point_[i].a_[0][2] + 0.5f));
             float log_freq = kMaxLogFreq * (0.5f - 0.5f * point_[i].a_[1][2]);
             float freq = kMinFreq * expf(log_freq);
@@ -147,6 +188,43 @@ void Fractal::Play(float min_size)
                     music[sample] = input;
                 }
             }
+#else
+            // Straight line
+            float start[2];
+            float end[2];
+            float width = GetLine(i, &start[0], &start[1], &end[0], &end[1]);
+
+            int start_sample = static_cast<int>(MZK_NUMSAMPLES * (0.5f * start[0] + 0.5f) - 1);
+            int end_sample = static_cast<int>(MZK_NUMSAMPLES * (0.5f * end[0] + 0.5f) + 1);
+            int sample_duration = end_sample - start_sample;
+
+            float log_freq = kMaxLogFreq * (0.5f - 0.5f * start[1]);
+            float start_freq = kMinFreq * expf(log_freq);
+            log_freq = kMaxLogFreq * (0.5f - 0.5f * end[1]);
+            float end_freq = kMinFreq * expf(log_freq);
+            float freq_step = (end_freq - start_freq) / sample_duration;
+
+            float phase = 0.0f;
+            float freq = start_freq;
+
+            for (int sample = start_sample; sample < end_sample; sample++)
+            {
+                if (sample >= 0 && sample < MZK_NUMSAMPLES)
+                {
+                    float T = static_cast<float>(sample - start_sample) / sample_duration;
+                    float hann = sinf(3.1415f * T);
+                    //hann *= hann;
+                    int input = music[sample];
+                    //float fT = freq * (sample - time_sample) / MZK_RATE * TWO_PI;
+                    input += static_cast<short>(hann * 200.0f * cos(phase));
+                    if (input < -32768) input = -32768;
+                    if (input > 32767) input = 32767;
+                    music[sample] = input;
+                }
+                phase += freq / MZK_RATE * TWO_PI;
+                freq += freq_step;
+            }
+#endif
         }
     }
 
@@ -162,9 +240,9 @@ void Fractal::Play(float min_size)
 #define IMGUI_HEIGHT 320
 void Fractal::ImGUIDraw(float min_size)
 {
-    Generate(min_size, 10000);
+    Generate(min_size, kNumDrawPoints);
 
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.2f, 0.1f, 0.08f, 1.0f));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.f, 0.f, 0.f, 1.0f));
     ImGui::SetNextWindowSize(ImVec2(IMGUI_WIDTH, IMGUI_HEIGHT), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("Preview Window", 0,
         ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar))
@@ -184,11 +262,13 @@ void Fractal::ImGUIDraw(float min_size)
     //ImGui::Text("Primitives");
     const ImU32 kColor = ImColor(1.0f, 1.0f, 1.0f, 1.0f);
     const ImVec2 p = ImGui::GetCursorScreenPos();
-    
+
     for (int i = 0; i < num_active_points_; i++)
     {
         if (draw_point_[i])
         {
+            const float kAlphaFactor = 100.0f;
+#if 0
             ImVec2 center = ImVec2(window_size.x * 0.5f * point_[i].a_[0][2] + p.x + window_size.x * 0.5f,
                                    window_size.y * 0.5f * point_[i].a_[1][2] + p.y + window_size.y * 0.5f);
             //draw_list->AddRectFilled(center, ImVec2(center.x + 1.0f, center.y + 1.0f), kColor);
@@ -197,15 +277,29 @@ void Fractal::ImGUIDraw(float min_size)
             ImVec2 down = ImVec2(window_size.x * 0.5f * point_[i].a_[0][1],
                                  window_size.y * 0.5f * point_[i].a_[1][1]);
             // Make smaller
-            const float size = 0.5f;
-            right.x *= size;
-            right.y *= size;
-            down.x *= size;
-            down.y *= size;
-            draw_list->AddQuadFilled(ImVec2(center.x + right.x + down.x, center.y + right.y + down.y),
-                                     ImVec2(center.x - right.x + down.x, center.y - right.y + down.y),
-                                     ImVec2(center.x - right.x - down.x, center.y - right.y - down.y),
-                                     ImVec2(center.x + right.x - down.x, center.y + right.y - down.y), kColor);
+            const float kLengthModifier = 0.5f;
+            right.x *= kLengthModifier;
+            right.y *= kLengthModifier;
+            
+            float width = sqrtf((point_[i].a_[0][1] * point_[i].a_[0][1]) + (point_[i].a_[1][1] * point_[i].a_[1][1]));
+            float alpha = kAlphaFactor * width;
+            //draw_list->AddQuadFilled(ImVec2(center.x + right.x + down.x, center.y + right.y + down.y),
+            //                         ImVec2(center.x - right.x + down.x, center.y - right.y + down.y),
+            //                         ImVec2(center.x - right.x - down.x, center.y - right.y - down.y),
+            //                         ImVec2(center.x + right.x - down.x, center.y + right.y - down.y), kColor);
+            draw_list->AddLine(ImVec2(center.x + right.x, center.y + right.y),
+                               ImVec2(center.x - right.x, center.y - right.y),
+                               ImColor(1.0f, 1.0f, 1.0f, alpha));
+#else
+            ImVec2 start;
+            ImVec2 end;
+            float width = GetLine(i, &start.x, &start.y, &end.x, &end.y);
+            draw_list->AddLine(ImVec2(window_size.x * 0.5f * start.x + p.x + window_size.x * 0.5f,
+                                      window_size.y * 0.5f * start.y + p.y + window_size.y * 0.5f),
+                               ImVec2(window_size.x * 0.5f * end.x + p.x + window_size.x * 0.5f,
+                                      window_size.y * 0.5f * end.y + p.y + window_size.y * 0.5f),
+                               ImColor(1.0f, 1.0f, 1.0f, width * kAlphaFactor));
+#endif
         }
     }
     
@@ -226,31 +320,29 @@ void Fractal::ImGUIControl(void)
     for (int function_id = 0; function_id < kNumFunctions; function_id++)
     {
         //ImGui::Text("Function %d", function_id + 1);
-        for (int i = 0; i < 2; i++)
+        for (int i = 0; i < 5; i++)
         {
-            for (int j = 0; j < 3; j++)
-            {
-                char name[128];
-                sprintf_s<128>(name, "f%d a%d%d", function_id + 1, i + 1, j + 1);
-                //ImGui::SliderFloat(name, &function_[function_id].a_[i][j], -1.0f, 1.0f);
+            char name[128];
+            sprintf_s<128>(name, "f%d p%d", function_id + 1, i + 1);
+            //ImGui::SliderFloat(name, &function_[function_id].a_[i][j], -1.0f, 1.0f);
 
-                if (!first_index) ImGui::SameLine();
-                first_index = false;
+            if (!first_index) ImGui::SameLine();
+            first_index = false;
 
-                int index = i * 3 + j;
-                ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(index / 7.0f, 0.5f, 0.5f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(index / 7.0f, 0.6f, 0.5f));
-                ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(index / 7.0f, 0.7f, 0.5f));
-                ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(index / 7.0f, 0.9f, 0.9f));
-                ImGui::PushID(name);
-                //ImGui::VSliderFloat("##", ImVec2(18, 280), &function_[function_id].a_[i][j], -1.0f, 1.0f, "");
-                int int_slider_pos = static_cast<int>(function_[function_id].a_[i][j] * 128);
-                ImGui::VSliderInt("##", ImVec2(30, 256), &int_slider_pos, -128, 127);
-                function_[function_id].a_[i][j] = static_cast<float>(int_slider_pos) / 128.0f;
-                ImGui::PopID();
-                ImGui::PopStyleColor(4);
-            }
+            int index = i;
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, (ImVec4)ImColor::HSV(index / 7.0f, 0.5f, 0.5f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgHovered, (ImVec4)ImColor::HSV(index / 7.0f, 0.6f, 0.5f));
+            ImGui::PushStyleColor(ImGuiCol_FrameBgActive, (ImVec4)ImColor::HSV(index / 7.0f, 0.7f, 0.5f));
+            ImGui::PushStyleColor(ImGuiCol_SliderGrab, (ImVec4)ImColor::HSV(index / 7.0f, 0.9f, 0.9f));
+            ImGui::PushID(name);
+            //ImGui::VSliderFloat("##", ImVec2(18, 280), &function_[function_id].a_[i][j], -1.0f, 1.0f, "");
+            int int_slider_pos = static_cast<int>(function_[function_id].parameters[index] * 128);
+            ImGui::VSliderInt("##", ImVec2(30, 256), &int_slider_pos, -128, 127);
+            function_[function_id].parameters[index] = static_cast<float>(int_slider_pos) / 128.0f;
+            ImGui::PopID();
+            ImGui::PopStyleColor(4);
         }
+        function_[function_id].CreateMatrix();
     }
 
     ImGui::End();
@@ -292,7 +384,7 @@ void Fractal::Generate(float min_size, int max_num_points)
                 // Pre-emptive quit if nothing more can be done
                 if (num_active_points_ == max_num_points) break;
 
-                point_[num_active_points_].Multiply(&(point_[read_point_index]), &(function_[function_id]));
+                point_[num_active_points_].Multiply(&(point_[read_point_index]), &(function_[function_id].matrix));
                 draw_point_[num_active_points_] = true;
                 num_active_points_++;
 

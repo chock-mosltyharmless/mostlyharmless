@@ -241,7 +241,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         // 1. Show a simple window.
         // Tip: if we don't call ImGui::Begin()/ImGui::End() the widgets automatically appears in a window called "Debug".
-        static float fractal_min_size = 0.05f;
+        static float fractal_min_size = 0.02f;
         static int counter = 0;
         ImGui::Text("Current time: %f", time);
         ImGui::SliderFloat("Fractal Minimum Size", &fractal_min_size, 0.0f, 0.1f);            // Edit 1 float using a slider from 0.0f to 1.0f    
