@@ -196,6 +196,8 @@ void Fractal::Play(float min_size)
 
             int start_sample = static_cast<int>(MZK_NUMSAMPLES * (0.5f * start[0] + 0.5f) - 1);
             int end_sample = static_cast<int>(MZK_NUMSAMPLES * (0.5f * end[0] + 0.5f) + 1);
+            int kMinNumSamplesDuration = MZK_RATE * 10 / 1000;  // 10 ms
+            if (end_sample - start_sample < kMinNumSamplesDuration) end_sample = start_sample + kMinNumSamplesDuration;
             int sample_duration = end_sample - start_sample;
 
             float log_freq = kMaxLogFreq * (0.5f - 0.5f * start[1]);
@@ -209,14 +211,15 @@ void Fractal::Play(float min_size)
 
             for (int sample = start_sample; sample < end_sample; sample++)
             {
+                float amplitude = width / sample_duration * 100000000.0f;
                 if (sample >= 0 && sample < MZK_NUMSAMPLES)
                 {
-                    float T = static_cast<float>(sample - start_sample) / sample_duration;
-                    float hann = sinf(3.1415f * T);
-                    //hann *= hann;
+                    //float T = static_cast<float>(sample - start_sample) / sample_duration;
+                    //float hann = sinf(3.1415f * T);
+                    float hann = 0.5f * (1.0f - cosf(2.0f * 3.1415f * (sample - start_sample) / (sample_duration - 1)));
                     int input = music[sample];
                     //float fT = freq * (sample - time_sample) / MZK_RATE * TWO_PI;
-                    input += static_cast<short>(hann * 200.0f * cos(phase));
+                    input += static_cast<short>(hann * amplitude * cos(phase));
                     if (input < -32768) input = -32768;
                     if (input > 32767) input = 32767;
                     music[sample] = input;
