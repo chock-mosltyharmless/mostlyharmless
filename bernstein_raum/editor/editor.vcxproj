@@ -110,6 +110,7 @@
     <ClInclude Include="GLNames.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Microphone.h" />
+    <ClInclude Include="ProjectionRoom.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="ShaderManager.h" />
     <ClInclude Include="stb_image.h" />
@@ -126,6 +127,7 @@
     <ClCompile Include="Error.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Microphone.cpp" />
+    <ClCompile Include="ProjectionRoom.cpp" />
     <ClCompile Include="ShaderManager.cpp" />
     <ClCompile Include="stb_image.c" />
     <ClCompile Include="stdafx.cpp">

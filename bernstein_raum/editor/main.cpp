@@ -10,6 +10,7 @@
 #include "ShaderManager.h"
 #include "TextureManager.h"
 #include "Microphone.h"
+#include "ProjectionRoom.h"
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_opengl2.h"
 #include "../imgui/imgui_impl_win32.h"
@@ -38,6 +39,7 @@ const static char* glnames[NUM_GL_NAMES]={
 ShaderManager shader_manager_;
 TextureManager texture_manager_;
 Microphone microphone_;
+ProjectionRoom projection_room_;
 
 /*************************************************
  * Window core variables
@@ -45,16 +47,15 @@ Microphone microphone_;
 HINSTANCE hInst;								// Aktuelle Instanz
 TCHAR szTitle[MAX_LOADSTRING];					// Titelleistentext
 TCHAR szWindowClass[MAX_LOADSTRING];			// Klassenname des Hauptfensters
-// The size of the window that we render to...
-RECT window_rect;
 
 typedef struct
 {
     //---------------
     HINSTANCE   hInstance;
-    HDC         hDC;
-    HGLRC       hRC;
-    HWND        hWnd;
+    HDC         hDC[2];
+    HGLRC       hRC[2];
+    // First one is ImGUI, second will be fullscreen on the projector
+    HWND        hWnd[2];
     //---------------
     char        wndclass[4];	// window class and title :)
     //---------------
@@ -76,7 +77,7 @@ static const PIXELFORMATDESCRIPTOR pfd =
     0, 0, 0, 0
     };
 
-static WININFO wininfo = {  0,0,0,0,
+static WININFO wininfo = {  0,{0,0},{0,0},{0,0},
 							{'l','c','_',0}
                             };
 
@@ -87,25 +88,31 @@ static int initGL(WININFO *win_info) {
 	char errorString[MAX_ERROR_LENGTH + 1];
 
 	// Create openGL functions
-	for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
+    for (int context = 0; context < 2; context++)
+    {
+        if (!wglMakeCurrent(win_info->hDC[context], win_info->hRC[context])) return(-1);
 
-	// Create and initialize the shader manager
-	if (shader_manager_.init(errorString)) {
-		MessageBox(win_info->hWnd, errorString, "Shader Manager Load", MB_OK);
-		return -1;
-	}
+	    for (int i=0; i<NUM_GL_NAMES; i++) glFP[i] = (GenFP)wglGetProcAddress(glnames[i]);
 
-	// Create and initialize everything needed for texture Management
-	if (texture_manager_.init(errorString)) {
-		MessageBox(win_info->hWnd, errorString, "Texture Manager Load", MB_OK);
-		return -1;
-	}
+	    // Create and initialize the shader manager
+	    if (shader_manager_.init(errorString)) {
+		    MessageBox(win_info->hWnd[0], errorString, "Shader Manager Load", MB_OK);
+		    return -1;
+	    }
+
+	    // Create and initialize everything needed for texture Management
+	    if (texture_manager_.init(errorString)) {
+		    MessageBox(win_info->hWnd[0], errorString, "Texture Manager Load", MB_OK);
+		    return -1;
+	    }
+    }
 
     // imGUI initialization
+    if (!wglMakeCurrent(win_info->hDC[0], win_info->hRC[0])) return(-1);
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui_ImplOpenGL2_Init();
-    ImGui_ImplWin32_Init(win_info->hWnd);
+    ImGui_ImplWin32_Init(win_info->hWnd[0]);
     ImGui::StyleColorsDark();
 
 	return 0;
@@ -131,6 +138,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     }
 
     if (uMsg == WM_SIZE) {
+        RECT window_rect;
         GetClientRect(hWnd, &window_rect);
         glViewport(0, 0, window_rect.right - window_rect.left, abs(window_rect.bottom - window_rect.top));
         aspect_ratio_ = (float)(window_rect.right - window_rect.left) / (float)(abs(window_rect.bottom - window_rect.top));
@@ -151,13 +159,19 @@ static void window_end (WININFO *info) {
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
     
-    if (info->hRC) {
+    if (info->hRC[0]) {
         wglMakeCurrent( 0, 0 );
-        wglDeleteContext( info->hRC );
+        wglDeleteContext( info->hRC[0] );
+    }
+    if (info->hRC[1]) {
+        wglMakeCurrent(0, 0);
+        wglDeleteContext(info->hRC[1]);
     }
 
-    if (info->hDC) ReleaseDC(info->hWnd, info->hDC);
-    if (info->hWnd) DestroyWindow(info->hWnd);
+    if (info->hDC[0]) ReleaseDC(info->hWnd[0], info->hDC[0]);
+    if (info->hDC[1]) ReleaseDC(info->hWnd[0], info->hDC[1]);
+    if (info->hWnd[0]) DestroyWindow(info->hWnd[0]);
+    if (info->hWnd[1]) DestroyWindow(info->hWnd[2]);
 
     UnregisterClass(info->wndclass, info->hInstance);
 }
@@ -194,30 +208,23 @@ static int window_init( WININFO *info )
 	window_rect.right = XRES;
 	window_rect.bottom = YRES;
 
-    info->hWnd = CreateWindowEx(dwExStyle, wc.lpszClassName, "Editor", dwStyle,
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        0, 0, info->hInstance, 0 );
-    if( !info->hWnd )
-        return( 0 );
+    for (int i = 0; i < 2; i++)
+    {
+        info->hWnd[i] = CreateWindowEx(dwExStyle, wc.lpszClassName, "Editor", dwStyle,
+            CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+            0, 0, info->hInstance, 0 );
+        if( !info->hWnd[0] )
+            return( 0 );
+        if( !(info->hDC[i]=GetDC(info->hWnd[i])) ) return( 0 );
+        if( !(PixelFormat=ChoosePixelFormat(info->hDC[i], &pfd)) ) return( 0 );
+        if( !SetPixelFormat(info->hDC[i], PixelFormat, &pfd) ) return( 0 );
+        if( !(info->hRC[i]=wglCreateContext(info->hDC[i])) ) return( 0 );
+        if( !wglMakeCurrent(info->hDC[i], info->hRC[i]) ) return( 0 );
 
-    if( !(info->hDC=GetDC(info->hWnd)) )
-        return( 0 );
-
-    if( !(PixelFormat=ChoosePixelFormat(info->hDC,&pfd)) )
-        return( 0 );
-
-    if( !SetPixelFormat(info->hDC,PixelFormat,&pfd) )
-        return( 0 );
-
-    if( !(info->hRC=wglCreateContext(info->hDC)) )
-        return( 0 );
-
-    if( !wglMakeCurrent(info->hDC,info->hRC) )
-        return( 0 );
+        ShowWindow(info->hWnd[i], SW_SHOWDEFAULT);
+        UpdateWindow(info->hWnd[i]);
+    }
     
-    ShowWindow(info->hWnd, SW_SHOWDEFAULT);
-    UpdateWindow(info->hWnd);
-
     return( 1 );
 }
 
@@ -253,7 +260,8 @@ static void intro_do(float time)
 	glBindTexture(GL_TEXTURE_3D, textureID);
     glActiveTexture(GL_TEXTURE0);
 
-    glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
+    // Render to whole picture
+    //glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 
     GLuint loc = glGetUniformLocation(programID, "time");
     glUniform1f(loc, time);
@@ -261,12 +269,15 @@ static void intro_do(float time)
     glColor4f(1.0f, 0.5f, 0.2f, 1.0f);
 	glRectf(-1.0, -1.0, 1.0, 1.0);
 
-	// Copy backbuffer to texture
+#if 0
+    // Copy backbuffer to texture
     texture_manager_.getTextureID(TM_OFFSCREEN_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, X_OFFSCREEN, Y_OFFSCREEN);
 
 	// Copy backbuffer to front (so far no improvement)
+    RECT window_rect;
+    GetClientRect(hWnd, &window_rect);
 	int xres = window_rect.right - window_rect.left;
 	int yres = window_rect.bottom - window_rect.top;
 	glViewport(0, 0, xres, yres);
@@ -275,6 +286,7 @@ static void intro_do(float time)
 	} else {
 		shader_manager_.getProgramID("SimpleTexture.gprg", &programID, errorText);
 	}
+#endif
 	glUseProgram(programID);
 }
 
@@ -339,7 +351,12 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DispatchMessage(&msg);
         }
 
+        if (!wglMakeCurrent(info->hDC[1], info->hRC[1])) return(0);
         intro_do(time);
+        SwapBuffers(info->hDC[1]);
+
+        // Start rendering the controls
+        if (!wglMakeCurrent(info->hDC[0], info->hRC[0])) return(0);
 
         // Start the ImGui frame
         ImGui_ImplOpenGL2_NewFrame();
@@ -389,7 +406,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             ImGui::Begin("Preview Window", &show_preview_window,
                          ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar);
             if (texture_manager_.getTextureID(TM_OFFSCREEN_NAME, &texture_id, error_text)) {
-                MessageBox(info->hWnd, error_text, "Get Renderbuffer", MB_OK);
+                MessageBox(info->hWnd[0], error_text, "Get Renderbuffer", MB_OK);
                 break;
             }
             ImGui::Image((ImTextureID)texture_id, ImVec2(XRES, YRES));
@@ -402,9 +419,13 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             ImGui::ShowDemoWindow(&show_demo_window);
         }
 
+        projection_room_.ImGUIControl();
+
         // Rendering imgui
         ImGui::EndFrame();
         ImGui::Render();
+        RECT window_rect;
+        GetClientRect(info->hWnd[0], &window_rect);
         int w = window_rect.right - window_rect.left;
         int h = window_rect.bottom - window_rect.top;
         glViewport(0, 0, w, h);
@@ -413,7 +434,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         glUseProgram(0); // You may want this if using this code in an OpenGL 3+ context where shaders may be bound, but prefer using the GL3+ code.
         ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
 
-		SwapBuffers(info->hDC);
+		SwapBuffers(info->hDC[0]);
 	}    
 
     window_end(info);

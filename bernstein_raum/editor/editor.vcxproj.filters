@@ -37,6 +37,7 @@
     <ClCompile Include="Error.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="ProjectionRoom.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bass.h">
@@ -102,6 +103,7 @@
     <ClInclude Include="Microphone.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="ProjectionRoom.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\DitherTexture.flsl">
