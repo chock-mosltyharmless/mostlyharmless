@@ -82,6 +82,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="shaders\calibration.flsl" />
+    <None Include="shaders\calibration.gprg" />
+    <None Include="shaders\calibration.vlsl" />
     <None Include="shaders\DitherTexture.flsl" />
     <None Include="shaders\DitherTexture.gprg" />
     <None Include="shaders\empty.gprg" />

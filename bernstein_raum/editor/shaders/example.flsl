@@ -38,10 +38,6 @@ vec2 rotate(vec2 pos, float angle) {
 }
 
 void main(void) {
-	//gl_FragColor = vnoise(0.2 * vec3(ppos.xy, 0.3 * time), 0.7, 5) + 0.5;
 	vec3 location = vec3(ppos.x / ppos.z, ppos.y / ppos.z, 1.0 / ppos.z);
-	float brightness = 0.2 + 0.8 * fract(location.z * 5.0);
-	gl_FragColor.r = (0.5 + 0.5 * normal.x) * brightness;
-	gl_FragColor.g = (0.5 + 0.5 * normal.y) * brightness;
-	gl_FragColor.b = (0.5 - 0.5 * normal.z) * brightness;
+	gl_FragColor = vnoise(0.2 * vec3(location) + time * 0.1, 0.7, 5) + 0.5;
 }

@@ -139,6 +139,15 @@
     <None Include="shaders\example.flsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\calibration.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\calibration.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\calibration.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

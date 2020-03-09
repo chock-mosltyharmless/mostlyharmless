@@ -228,7 +228,7 @@ static int window_init( WININFO *info )
     return( 1 );
 }
 
-static void intro_do(float time)
+static void intro_do(float time, bool calibrate)
 {
 	char errorText[MAX_ERROR_LENGTH+1];
 	GLuint textureID;
@@ -239,10 +239,17 @@ static void intro_do(float time)
     glClearColor(0.7f, 0.5f , 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-	// Set the program uniforms
-	GLuint programID;
-	shader_manager_.getProgramID("example.gprg", &programID, errorText);
-	glUseProgram(programID);
+    // Set the program uniforms
+    GLuint programID;
+    if (calibrate)
+    {
+        shader_manager_.getProgramID("calibration.gprg", &programID, errorText);
+    }
+    else
+    {
+        shader_manager_.getProgramID("example.gprg", &programID, errorText);
+    }
+    glUseProgram(programID);
 
     // Set texture identifiers
 	GLint texture_location;
@@ -327,6 +334,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     bool show_demo_window = false;
     bool show_preview_window = false;
     bool fullscreen = false;
+    bool calibrate = true;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     MSG msg;
@@ -356,7 +364,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         GetClientRect(info->hWnd[1], &window_rect);
         glViewport(0, 0, window_rect.right - window_rect.left, abs(window_rect.bottom - window_rect.top));
         aspect_ratio_ = (float)(window_rect.right - window_rect.left) / (float)(abs(window_rect.bottom - window_rect.top));
-        intro_do(time);
+        intro_do(time, calibrate);
         SwapBuffers(info->hDC[1]);
 
         // Start rendering the controls
@@ -378,6 +386,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
             ImGui::Checkbox("Preview Window", &show_preview_window);
+            ImGui::Checkbox("Calibrate", &calibrate);
 
             bool old_fullscreen = fullscreen;
             ImGui::Checkbox("Fullscreen", &fullscreen);
