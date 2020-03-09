@@ -267,7 +267,9 @@ static void intro_do(float time)
     glUniform1f(loc, time);
 
     glColor4f(1.0f, 0.5f, 0.2f, 1.0f);
-	glRectf(-1.0, -1.0, 1.0, 1.0);
+	//glRectf(-1.0, -1.0, 1.0, 1.0);
+
+    projection_room_.RenderAll();
 
 #if 0
     // Copy backbuffer to texture
@@ -326,7 +328,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // IMGUI STUFF
     bool show_demo_window = false;
-    bool show_preview_window = true;
+    bool show_preview_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     MSG msg;

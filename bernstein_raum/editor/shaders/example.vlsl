@@ -6,9 +6,13 @@
 
 varying vec4 color;
 varying vec2 ppos;
+varying vec3 location;
+varying vec3 normal;
 
 void main(void) {
 	color = gl_Color;
 	ppos = vec2(gl_Vertex.x, gl_Vertex.y);
+	location = vec3(gl_Vertex.x * gl_Vertex.z * 16.0 / 9.0, gl_Vertex.y * gl_Vertex.z, 1.0 / gl_Vertex.z);
+	normal = gl_Normal;
 	gl_Position = vec4(gl_Vertex.x, gl_Vertex.y, 0.5, 1.0);
 }
