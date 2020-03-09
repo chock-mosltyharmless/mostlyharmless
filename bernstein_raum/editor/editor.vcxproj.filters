@@ -148,6 +148,15 @@
     <None Include="shaders\calibration.vlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\absolute_territory.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\absolute_territory.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\absolute_territory.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

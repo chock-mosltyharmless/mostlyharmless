@@ -1,0 +1,36 @@
+#version 120
+
+varying vec4 color;
+varying vec3 ppos;
+varying vec3 location;
+varying vec3 normal;
+uniform sampler2D BGTexture;
+uniform sampler3D Noise3DTexture;
+uniform float time;
+uniform vec3 center;
+
+// smoothstep but with a low-high-low
+// value must be in range 0..1
+float smoothrect (float value, float blur)
+{
+	if (value < 0.5) return smoothstep(0.25 - blur, 0.25 + blur, value);
+	else return smoothstep(0.75 + blur, 0.75 - blur, value);
+}
+
+void main(void) {
+	vec3 location = vec3(ppos.x / ppos.z, ppos.y / ppos.z, 1.0 / ppos.z);
+	float distance = length(location - center);
+	float float_step = 14.0 * (fract(0.3 * time));
+	float multiplier = exp2(0.7 * floor(float_step));
+	float distance_step = fract(distance * multiplier);
+	float brightness;
+	float blur = 0.003 * multiplier;
+	brightness = smoothrect(distance_step, blur);
+
+	brightness *= smoothrect(fract(float_step), 0.3);
+
+	// Pause after tiny
+	if (float_step > 8.0) brightness = 0.0;
+
+	gl_FragColor = vec4(vec3(brightness), 1.0);
+}

@@ -4,7 +4,7 @@ typedef void (*GenFP)(void);
 extern GenFP glFP[];
 
 // Stuff that I need for opengl
-#define NUM_GL_NAMES 17
+#define NUM_GL_NAMES 18
 #define glCreateShader ((PFNGLCREATESHADERPROC)glFP[0])
 #define glCreateProgram ((PFNGLCREATEPROGRAMPROC)glFP[1])
 #define glShaderSource ((PFNGLSHADERSOURCEPROC)glFP[2])
@@ -21,4 +21,5 @@ extern GenFP glFP[];
 #define glGetUniformLocation ((PFNGLGETUNIFORMLOCATIONPROC)glFP[13])
 #define glUniform1i ((PFNGLUNIFORM1IPROC)glFP[14])
 #define glUniform1f ((PFNGLUNIFORM1FPROC)glFP[15])
-#define glMultiTexCoord2f ((PFNGLMULTITEXCOORD2FPROC)glFP[16])
+#define glUniform3fv ((PFNGLUNIFORM3FVPROC)glFP[16])
+#define glMultiTexCoord2f ((PFNGLMULTITEXCOORD2FPROC)glFP[17])

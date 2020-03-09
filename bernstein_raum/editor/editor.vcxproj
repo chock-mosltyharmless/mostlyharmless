@@ -82,6 +82,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <None Include="shaders\absolute_territory.flsl" />
+    <None Include="shaders\absolute_territory.gprg" />
+    <None Include="shaders\absolute_territory.vlsl" />
     <None Include="shaders\calibration.flsl" />
     <None Include="shaders\calibration.gprg" />
     <None Include="shaders\calibration.vlsl" />

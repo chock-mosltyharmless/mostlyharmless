@@ -29,7 +29,7 @@ const static char* glnames[NUM_GL_NAMES]={
      "glAttachShader", "glLinkProgram", "glUseProgram",
 	 "glTexImage3D", "glGetShaderiv","glGetShaderInfoLog",
 	 "glDeleteProgram", "glDeleteShader",
-	 "glActiveTexture", "glGetUniformLocation", "glUniform1i", "glUniform1f",
+	 "glActiveTexture", "glGetUniformLocation", "glUniform1i", "glUniform1f", "glUniform3fv",
 	 "glMultiTexCoord2f"
 };
 
@@ -247,7 +247,8 @@ static void intro_do(float time, bool calibrate)
     }
     else
     {
-        shader_manager_.getProgramID("example.gprg", &programID, errorText);
+        //shader_manager_.getProgramID("example.gprg", &programID, errorText);
+        shader_manager_.getProgramID("absolute_territory.gprg", &programID, errorText);
     }
     glUseProgram(programID);
 
@@ -269,6 +270,16 @@ static void intro_do(float time, bool calibrate)
 
     GLuint loc = glGetUniformLocation(programID, "time");
     glUniform1f(loc, time);
+
+    loc = glGetUniformLocation(programID, "center");
+    if (loc >= 0)
+    {
+        float center[3] = {0.2f, 0.2f, 1.5f};
+        center[0] = sinf(time * 0.3f);
+        center[1] = sinf(time * 0.27f);
+        center[2] = 2.0f * sinf(time * 0.21f) + 1.5f;
+        glUniform3fv(loc, 1, center);
+    }
 
     glColor4f(1.0f, 0.5f, 0.2f, 1.0f);
 	//glRectf(-1.0, -1.0, 1.0, 1.0);
