@@ -260,9 +260,6 @@ static void intro_do(float time)
 	glBindTexture(GL_TEXTURE_3D, textureID);
     glActiveTexture(GL_TEXTURE0);
 
-    // Render to whole picture
-    //glViewport(0, 0, X_OFFSCREEN, Y_OFFSCREEN);
-
     GLuint loc = glGetUniformLocation(programID, "time");
     glUniform1f(loc, time);
 
@@ -329,6 +326,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // IMGUI STUFF
     bool show_demo_window = false;
     bool show_preview_window = false;
+    bool fullscreen = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     MSG msg;
@@ -354,6 +352,10 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         }
 
         if (!wglMakeCurrent(info->hDC[1], info->hRC[1])) return(0);
+        RECT window_rect;
+        GetClientRect(info->hWnd[1], &window_rect);
+        glViewport(0, 0, window_rect.right - window_rect.left, abs(window_rect.bottom - window_rect.top));
+        aspect_ratio_ = (float)(window_rect.right - window_rect.left) / (float)(abs(window_rect.bottom - window_rect.top));
         intro_do(time);
         SwapBuffers(info->hDC[1]);
 
@@ -376,6 +378,15 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
             ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our windows open/close state
             ImGui::Checkbox("Preview Window", &show_preview_window);
+
+            bool old_fullscreen = fullscreen;
+            ImGui::Checkbox("Fullscreen", &fullscreen);
+            if (fullscreen && !old_fullscreen)
+            {
+                // TODO: Minimization again.
+                SetWindowLong(info->hWnd[1], GWL_STYLE, WS_POPUP | WS_VISIBLE);
+                ShowWindow(info->hWnd[1], SW_MAXIMIZE);
+            }
 
             if (ImGui::Button("Button"))                            // Buttons return true when clicked (NB: most widgets return true when edited/activated)
                 counter++;
@@ -426,7 +437,6 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         // Rendering imgui
         ImGui::EndFrame();
         ImGui::Render();
-        RECT window_rect;
         GetClientRect(info->hWnd[0], &window_rect);
         int w = window_rect.right - window_rect.left;
         int h = window_rect.bottom - window_rect.top;

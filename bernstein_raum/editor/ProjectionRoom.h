@@ -14,7 +14,7 @@ struct RoomEdge
         location[2] = coord[2];
         gl_coord[0] = coord[0];
         gl_coord[1] = coord[1];
-        gl_coord[2] = 1.0f / gl_coord[2];
+        gl_coord[2] = 1.0f / coord[2];
     }
 
 public:
