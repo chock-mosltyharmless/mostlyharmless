@@ -71,41 +71,61 @@ void ProjectionRoom::RenderAll(void)
     // center:
     GetNormal(edge_[0].location, edge_[1].location, edge_[2].location, normal);
     glNormal3fv(normal);
+    glTexCoord3f(1.0f, 1.0f, 1.0f);
     glVertex3fv(edge_[0].gl_coord);
+    glTexCoord3f(-1.0f, 1.0f, 1.0f);
     glVertex3fv(edge_[1].gl_coord);
+    glTexCoord3f(-1.0f, -1.0f, 1.0f);
     glVertex3fv(edge_[2].gl_coord);
+    glTexCoord3f(1.0f, -1.0f, 1.0f);
     glVertex3fv(edge_[3].gl_coord);
 
     // right:
     GetNormal(edge_[0].location, edge_[3].location, edge_[7].location, normal);
     glNormal3fv(normal);
+    glTexCoord3f(1.0f, 1.0f, 1.0f);
     glVertex3fv(edge_[0].gl_coord);
+    glTexCoord3f(1.0f, -1.0f, 1.0f);
     glVertex3fv(edge_[3].gl_coord);
+    glTexCoord3f(1.0f, -1.0f, -1.0f);
     glVertex3fv(edge_[7].gl_coord);
+    glTexCoord3f(1.0f, 1.0f, -1.0f);
     glVertex3fv(edge_[4].gl_coord);
 
     // left:
     GetNormal(edge_[1].location, edge_[5].location, edge_[6].location, normal);
     glNormal3fv(normal);
+    glTexCoord3f(-1.0f, 1.0f, 1.0f);
     glVertex3fv(edge_[1].gl_coord);
+    glTexCoord3f(-1.0f, 1.0f, -1.0f);
     glVertex3fv(edge_[5].gl_coord);
+    glTexCoord3f(-1.0f, -1.0f, -1.0f);
     glVertex3fv(edge_[6].gl_coord);
+    glTexCoord3f(-1.0f, -1.0f, 1.0f);
     glVertex3fv(edge_[2].gl_coord);
 
     // top:
     GetNormal(edge_[4].location, edge_[5].location, edge_[1].location, normal);
     glNormal3fv(normal);
+    glTexCoord3f(1.0f, 1.0f, -1.0f);
     glVertex3fv(edge_[4].gl_coord);
+    glTexCoord3f(-1.0f, 1.0f, -1.0f);
     glVertex3fv(edge_[5].gl_coord);
+    glTexCoord3f(-1.0f, 1.0f, 1.0f);
     glVertex3fv(edge_[1].gl_coord);
+    glTexCoord3f(1.0f, 1.0f, 1.0f);
     glVertex3fv(edge_[0].gl_coord);
 
     // bottom:
     GetNormal(edge_[3].location, edge_[2].location, edge_[6].location, normal);
     glNormal3fv(normal);
+    glTexCoord3f(1.0f, -1.0f, 1.0f);
     glVertex3fv(edge_[3].gl_coord);
+    glTexCoord3f(-1.0f, -1.0f, 1.0f);
     glVertex3fv(edge_[2].gl_coord);
+    glTexCoord3f(-1.0f, -1.0f, -1.0f);
     glVertex3fv(edge_[6].gl_coord);
+    glTexCoord3f(1.0f, -1.0f, -1.0f);
     glVertex3fv(edge_[7].gl_coord);
 
     glEnd();

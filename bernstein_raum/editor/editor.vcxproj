@@ -99,6 +99,9 @@
     <None Include="shaders\SimpleTexture.flsl" />
     <None Include="shaders\SimpleTexture.gprg" />
     <None Include="shaders\SimpleTexture.vlsl" />
+    <None Include="shaders\water_dragon.flsl" />
+    <None Include="shaders\water_dragon.gprg" />
+    <None Include="shaders\water_dragon.vlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h" />

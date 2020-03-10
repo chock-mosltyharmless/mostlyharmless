@@ -1,0 +1,68 @@
+#version 120
+
+varying vec4 color;
+varying vec3 ppos;
+varying vec3 location;
+varying vec3 normal;
+uniform sampler2D BGTexture;
+uniform sampler3D Noise3DTexture;
+uniform float time;
+
+void main(void) {
+	float glow_amount = 0.5 + 0.5 * sin(time * 1.5);  // Uniform?
+	float dragon_amount = 0.55 + 0.35 * sin(time * 0.3);  // How much of the dragon is visible - Uniform?
+	float wave_amount = 0.5 + 0.5 * sin(time * 0.1);  // Uniform?
+
+	// Real location in 3D space
+	vec3 location = vec3(ppos.x / ppos.z, ppos.y / ppos.z, 1.0 / ppos.z);
+
+	// Normalized coordinate in 3D space
+	vec3 tex_coord = gl_TexCoord[0].xyz / ppos.z;
+	vec2 tex_location = tex_coord.zy;
+	if (tex_location.y > 0.5) tex_location.y += 1.0 - tex_coord.x;
+	if (tex_location.y < 0.5) tex_location.y -= 1.0 - tex_coord.x;
+	tex_location.y *= -0.6;
+	tex_location.x *= -1.3;
+	tex_location.y -= 0.0;
+	tex_location.x -= 0.2;
+
+	// You have to find the right coordinates by hand...
+	float distance_to_center = length(location - vec3(0.6, 0.1, 1.2));
+
+	vec4 bg_color = vec4(vec3(0.4 - 0.2 * dragon_amount), 1.0);
+
+	// Wave form lighting
+	float adjusted_wave_amount = smoothstep(0.5 * wave_amount, 0.0, distance_to_center);
+	float wave_height = 0.3 * adjusted_wave_amount * sin(30.0 * length(tex_location) - 9.0 * time);
+	//vec2 tex_direction = vec2(1.0, 0.0);
+	//if (length(tex_location) > 1.0e-5) tex_direction = -normalize(tex_location);
+	vec2 tex_direction = tex_location.yx;
+	vec3 wave_normal = normalize(normal + vec3(0.0, wave_height * tex_direction));
+	vec3 light_direction = -normalize(location);
+	float real_light_amount = dot(light_direction, normal);
+	float wanted_light_amount = dot(light_direction, wave_normal);
+
+	vec4 tex_col = texture2D(BGTexture, tex_location * 0.5 + vec2(0.5));
+	float glow_blur = 0.8;
+	float dragon_blur = 0.1 * dragon_amount;
+	float dragon_print = smoothstep(dragon_amount + dragon_blur, dragon_amount - dragon_blur, 1.0 - tex_col.r);
+	float adjusted_glow = glow_amount * dragon_amount;
+	float adjusted_blur = glow_blur * dragon_amount;
+	float dragon_glow = smoothstep(adjusted_glow, adjusted_glow - adjusted_blur, 1.0 - tex_col.r);
+	
+	vec4 glow_color = vec4(2.0, 1.7, 1.1, 1.0);
+	vec4 color = mix(bg_color, vec4(0.1, 0.1, 0.2, 1.0), dragon_print);
+
+	color.rgb *= wanted_light_amount / real_light_amount;
+
+	color = mix(color, glow_color, dragon_glow);
+
+	float glow_overlay_amount = smoothstep(4.0 * adjusted_glow, -3.0, distance_to_center) * adjusted_glow;
+	color = mix(color, glow_color, glow_overlay_amount);
+
+	gl_FragColor = color;
+
+	// global vignette
+	float vignette = smoothstep(1.0, 0.9, length(ppos.xy));
+	gl_FragColor.rgb *= vignette;
+}

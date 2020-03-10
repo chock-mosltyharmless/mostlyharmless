@@ -37,7 +37,9 @@
     <ClCompile Include="Error.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="ProjectionRoom.cpp" />
+    <ClCompile Include="ProjectionRoom.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bass.h">
@@ -103,7 +105,9 @@
     <ClInclude Include="Microphone.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="ProjectionRoom.h" />
+    <ClInclude Include="ProjectionRoom.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="shaders\DitherTexture.flsl">
@@ -155,6 +159,15 @@
       <Filter>Shaders</Filter>
     </None>
     <None Include="shaders\absolute_territory.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\water_dragon.flsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\water_dragon.gprg">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="shaders\water_dragon.vlsl">
       <Filter>Shaders</Filter>
     </None>
   </ItemGroup>

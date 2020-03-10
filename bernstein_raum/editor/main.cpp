@@ -248,7 +248,8 @@ static void intro_do(float time, bool calibrate)
     else
     {
         //shader_manager_.getProgramID("example.gprg", &programID, errorText);
-        shader_manager_.getProgramID("absolute_territory.gprg", &programID, errorText);
+        //shader_manager_.getProgramID("absolute_territory.gprg", &programID, errorText);
+        shader_manager_.getProgramID("water_dragon.gprg", &programID, errorText);
     }
     glUseProgram(programID);
 
@@ -261,7 +262,7 @@ static void intro_do(float time, bool calibrate)
 
 	// render to larger offscreen texture
 	glActiveTexture(GL_TEXTURE0);
-	texture_manager_.getTextureID("background.png", &textureID, errorText);
+	texture_manager_.getTextureID("dragon2.png", &textureID, errorText);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glActiveTexture(GL_TEXTURE1);
 	texture_manager_.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
@@ -345,7 +346,7 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     bool show_demo_window = false;
     bool show_preview_window = false;
     bool fullscreen = false;
-    bool calibrate = true;
+    bool calibrate = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     MSG msg;
