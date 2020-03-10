@@ -14,10 +14,27 @@ ProjectionRoom::ProjectionRoom()
     edge_[5].coord[0] = -1.0f; edge_[5].coord[1] = 1.0f; edge_[5].coord[2] = 0.5f;
     edge_[6].coord[0] = -1.0f; edge_[6].coord[1] = -1.0f; edge_[6].coord[2] = 0.5f;
     edge_[7].coord[0] = 1.0f; edge_[7].coord[1] = -1.0f; edge_[7].coord[2] = 0.5f;
+
+    FILE *fid = fopen("textures/calibration.bin", "rb");
+    if (fid)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            fread(edge_[i].coord, sizeof(float), 3, fid);
+        }
+    }
 }
 
 ProjectionRoom::~ProjectionRoom()
 {
+    FILE *fid = fopen("textures/calibration.bin", "wb");
+    if (fid)
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            fwrite(edge_[i].coord, sizeof(float), 3, fid);
+        }
+    }
 }
 
 void ProjectionRoom::GetNormal(const float *a, const float *b, const float *c, float *normal)
