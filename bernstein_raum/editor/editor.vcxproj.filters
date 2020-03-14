@@ -40,6 +40,9 @@
     <ClCompile Include="ProjectionRoom.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="ProjectionPyramid.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bass.h">
@@ -106,6 +109,9 @@
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="ProjectionRoom.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="ProjectionPyramid.h">
       <Filter>Headers</Filter>
     </ClInclude>
   </ItemGroup>

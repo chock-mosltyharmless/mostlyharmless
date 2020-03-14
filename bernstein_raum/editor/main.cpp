@@ -10,7 +10,7 @@
 #include "ShaderManager.h"
 #include "TextureManager.h"
 #include "Microphone.h"
-#include "ProjectionRoom.h"
+#include "ProjectionPyramid.h"
 #include "../imgui/imgui.h"
 #include "../imgui/imgui_impl_opengl2.h"
 #include "../imgui/imgui_impl_win32.h"
@@ -39,7 +39,7 @@ const static char* glnames[NUM_GL_NAMES]={
 ShaderManager shader_manager_;
 TextureManager texture_manager_;
 Microphone microphone_;
-ProjectionRoom projection_room_;
+ProjectionPyramid projection_room_;
 
 /*************************************************
  * Window core variables

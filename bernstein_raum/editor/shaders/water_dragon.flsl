@@ -61,6 +61,6 @@ void main(void) {
 	gl_FragColor = color;
 
 	// global vignette
-	float vignette = smoothstep(1.0, 0.9, length(ppos.xy));
+	float vignette = smoothstep(1.0, 0.5, length(ppos.xy));
 	gl_FragColor.rgb *= vignette;
 }
