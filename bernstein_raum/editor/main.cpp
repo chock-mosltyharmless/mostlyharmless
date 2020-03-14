@@ -248,8 +248,8 @@ static void intro_do(float time, bool calibrate)
     else
     {
         //shader_manager_.getProgramID("example.gprg", &programID, errorText);
-        //shader_manager_.getProgramID("absolute_territory.gprg", &programID, errorText);
-        shader_manager_.getProgramID("water_dragon.gprg", &programID, errorText);
+        shader_manager_.getProgramID("absolute_territory.gprg", &programID, errorText);
+        //shader_manager_.getProgramID("water_dragon.gprg", &programID, errorText);
     }
     glUseProgram(programID);
 
@@ -276,9 +276,9 @@ static void intro_do(float time, bool calibrate)
     if (loc >= 0)
     {
         float center[3] = {0.2f, 0.2f, 1.5f};
-        center[0] = sinf(time * 0.3f);
-        center[1] = sinf(time * 0.27f);
-        center[2] = 2.0f * sinf(time * 0.21f) + 1.5f;
+        center[0] = 0.7f * sinf(time * 0.4f);
+        center[1] = 0.7f * sinf(time * 0.27f);
+        center[2] = 1.5f * sinf(time * 0.21f) + 1.0f;
         glUniform3fv(loc, 1, center);
     }
 

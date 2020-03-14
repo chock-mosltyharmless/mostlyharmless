@@ -10,7 +10,7 @@ uniform float time;
 
 void main(void) {
 	float glow_amount = 0.5 + 0.5 * sin(time * 1.5);  // Uniform?
-	float dragon_amount = 0.55 + 0.35 * sin(time * 0.3);  // How much of the dragon is visible - Uniform?
+	float dragon_amount = 0.6 + 0.35 * sin(time * 0.3);  // How much of the dragon is visible - Uniform?
 	float wave_amount = 0.5 + 0.5 * sin(time * 0.1);  // Uniform?
 
 	// Real location in 3D space
@@ -27,17 +27,15 @@ void main(void) {
 	tex_location.x -= 0.2;
 
 	// You have to find the right coordinates by hand...
-	float distance_to_center = length(location - vec3(0.6, 0.1, 1.2));
+	vec3 center_location = vec3(0.5, 0.1, 1.2);
+	float distance_to_center = length(location - center_location);
 
 	vec4 bg_color = vec4(vec3(0.4 - 0.2 * dragon_amount), 1.0);
 
 	// Wave form lighting
-	float adjusted_wave_amount = smoothstep(0.5 * wave_amount, 0.0, distance_to_center);
-	float wave_height = 0.3 * adjusted_wave_amount * sin(30.0 * length(tex_location) - 9.0 * time);
-	//vec2 tex_direction = vec2(1.0, 0.0);
-	//if (length(tex_location) > 1.0e-5) tex_direction = -normalize(tex_location);
-	vec2 tex_direction = tex_location.yx;
-	vec3 wave_normal = normalize(normal + vec3(0.0, wave_height * tex_direction));
+	float adjusted_wave_amount = smoothstep(.6 * wave_amount, 0.0, distance_to_center);
+	float wave_height = 0.3 * adjusted_wave_amount * sin(30.0 * distance_to_center - 12.0 * time);
+	vec3 wave_normal = normalize(normal + wave_height * (location - center_location));
 	vec3 light_direction = -normalize(location);
 	float real_light_amount = dot(light_direction, normal);
 	float wanted_light_amount = dot(light_direction, wave_normal);
@@ -57,7 +55,7 @@ void main(void) {
 
 	color = mix(color, glow_color, dragon_glow);
 
-	float glow_overlay_amount = smoothstep(4.0 * adjusted_glow, -3.0, distance_to_center) * adjusted_glow;
+	float glow_overlay_amount = smoothstep(2.5 * adjusted_glow - 0.5, -3.0, distance_to_center) * adjusted_glow;
 	color = mix(color, glow_color, glow_overlay_amount);
 
 	gl_FragColor = color;
