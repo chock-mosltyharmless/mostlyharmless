@@ -1,0 +1,17 @@
+#version 120
+
+varying vec4 color;
+varying vec3 ppos;
+varying vec3 location;
+varying vec3 normal;
+uniform sampler2D BGTexture;
+uniform sampler3D Noise3DTexture;
+uniform float time;
+
+void main(void) {
+	vec3 location = vec3(ppos.x / ppos.z, ppos.y / ppos.z, 1.0 / ppos.z);
+	float brightness = 0.2 + 0.8 * fract(location.z * 5.0);
+	gl_FragColor.r = (0.5 + 0.5 * normal.x) * brightness;
+	gl_FragColor.g = (0.5 + 0.5 * normal.y) * brightness;
+	gl_FragColor.b = (0.5 - 0.5 * normal.z) * brightness;
+}

@@ -1,0 +1,48 @@
+#version 120
+
+varying vec4 color;
+varying vec3 ppos;
+varying vec3 location;
+varying vec3 normal;
+uniform sampler2D BGTexture;
+uniform sampler3D Noise3DTexture;
+uniform float time;
+uniform vec3 center;
+
+// smoothstep but with a low-high-low
+// value must be in range 0..1
+float smoothrect (float value, float blur)
+{
+	if (value < 0.5) return smoothstep(0.25 - blur, 0.25 + blur, value);
+	else return smoothstep(0.75 + blur, 0.75 - blur, value);
+}
+
+void main(void) {
+	vec3 location = vec3(ppos.x / ppos.z, ppos.y / ppos.z, 1.0 / ppos.z);
+	
+	// Normal distance, as expected
+	float distance[2];
+	distance[0] = length(location - center) - time * 0.8;
+	// Change distance based on screen space coordinate?
+	distance[1] = distance[0] + 0.3 * length(sin(1.5 * location.xyz));
+
+	gl_FragColor = vec4(1.0);
+
+	for (int i = 0; i < 2; i++)
+	{
+		const float multiplier = 1.5;
+		float distance_step = fract(distance[i] * multiplier);
+		float index = distance[i] * multiplier - distance_step;
+		float center = sin(distance_step * 3.1415);
+		float brightness;
+		float blur = 0.03;
+		brightness = smoothrect(distance_step, blur);
+		vec3 color = vec3(abs(sin(index + 5. * normal.x)), abs(sin(2 * index + 1.0 + 5. * normal.y)), abs(sin(3 * index + 5. * normal.z)));
+		color = brightness * color + vec3(center*center);
+		if (i == 0) gl_FragColor.rgb = 0.5 * color;
+		else gl_FragColor.rgb *= color;
+	}
+	// global vignette
+	float vignette = smoothstep(1.0, 0.5, length(ppos.xy));
+	gl_FragColor.rgb *= vignette;
+}
