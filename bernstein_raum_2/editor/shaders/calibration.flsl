@@ -10,8 +10,13 @@ uniform float time;
 
 void main(void) {
 	vec3 location = vec3(ppos.x / ppos.z, ppos.y / ppos.z, 1.0 / ppos.z);
-	float brightness = 0.2 + 0.8 * fract(location.z * 5.0);
-	gl_FragColor.r = (0.5 + 0.5 * normal.x) * brightness;
-	gl_FragColor.g = (0.5 + 0.5 * normal.y) * brightness;
-	gl_FragColor.b = (0.5 - 0.5 * normal.z) * brightness;
+	vec2 tex_coord = gl_TexCoord[0].xy / ppos.z;
+
+	//float brightness = 0.2 + 0.8 * fract(location.z * 5.0);
+	//gl_FragColor.r = (0.5 + 0.5 * normal.x) * brightness;
+	//gl_FragColor.g = (0.5 + 0.5 * normal.y) * brightness;
+	//gl_FragColor.b = (0.5 - 0.5 * normal.z) * brightness;
+	vec4 col = texture2D(BGTexture, tex_coord);
+	gl_FragColor = col * color;
+
 }

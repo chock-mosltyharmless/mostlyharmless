@@ -9,6 +9,7 @@ varying vec3 ppos;
 varying vec3 normal;
 
 void main(void) {
+	gl_TexCoord[0] = gl_MultiTexCoord0 * gl_Vertex.z;
 	color = gl_Color;
 	ppos = vec3(gl_Vertex.x, gl_Vertex.y, gl_Vertex.z);
 	normal = gl_Normal;

@@ -2,7 +2,6 @@
 
 varying vec4 color;
 varying vec3 ppos;
-varying vec3 location;
 varying vec3 normal;
 uniform sampler2D BGTexture;
 uniform sampler3D Noise3DTexture;
@@ -19,6 +18,7 @@ float smoothrect (float value, float blur)
 
 void main(void) {
 	vec3 location = vec3(ppos.x / ppos.z, ppos.y / ppos.z, 1.0 / ppos.z);
+	location.x *= 16.0 / 9.0;
 	
 	// Normal distance, as expected
 	float distance[2];

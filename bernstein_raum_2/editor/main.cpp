@@ -245,11 +245,19 @@ static void intro_do(float time, bool calibrate, HWND hWnd)
     GLuint programID;
     if (calibrate)
     {
-        //shader_manager_.getProgramID("calibration.gprg", &programID, errorText);
-        shader_manager_.getProgramID("SimpleTexture.gprg", &programID, errorText);
+        glActiveTexture(GL_TEXTURE0);
+        texture_manager_.getTextureID("background.png", &textureID, errorText);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
+        shader_manager_.getProgramID("calibration.gprg", &programID, errorText);
+        //shader_manager_.getProgramID("SimpleTexture.gprg", &programID, errorText);
     }
     else
     {
+        glActiveTexture(GL_TEXTURE0);
+        texture_manager_.getTextureID("watercolor.png", &textureID, errorText);
+        glBindTexture(GL_TEXTURE_2D, textureID);
+
         //shader_manager_.getProgramID("example.gprg", &programID, errorText);
         shader_manager_.getProgramID("absolute_territory.gprg", &programID, errorText);
         //shader_manager_.getProgramID("water_dragon.gprg", &programID, errorText);
@@ -264,9 +272,6 @@ static void intro_do(float time, bool calibrate, HWND hWnd)
 	glUniform1i(texture_location, 1);
 
 	// render to larger offscreen texture
-	glActiveTexture(GL_TEXTURE0);
-	texture_manager_.getTextureID("background.png", &textureID, errorText);
-	glBindTexture(GL_TEXTURE_2D, textureID);
 	glActiveTexture(GL_TEXTURE1);
 	texture_manager_.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
 	glBindTexture(GL_TEXTURE_3D, textureID);
