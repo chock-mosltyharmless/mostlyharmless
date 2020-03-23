@@ -259,8 +259,8 @@ static void intro_do(float time, bool calibrate, HWND hWnd)
         glBindTexture(GL_TEXTURE_2D, textureID);
 
         //shader_manager_.getProgramID("example.gprg", &programID, errorText);
-        shader_manager_.getProgramID("absolute_territory.gprg", &programID, errorText);
-        //shader_manager_.getProgramID("water_dragon.gprg", &programID, errorText);
+        //shader_manager_.getProgramID("absolute_territory.gprg", &programID, errorText);
+        shader_manager_.getProgramID("water_dragon.gprg", &programID, errorText);
     }
     glUseProgram(programID);
 

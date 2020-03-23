@@ -131,9 +131,9 @@ void ProjectionPyramid::RenderAll(void)
     glNormal3fv(normal);
     glTexCoord2f(0.0f, 0.0f);
     glVertex3fv(edge_[0].gl_coord);
-    glTexCoord2f(lengths[2], 0.0f);
+    glTexCoord2f(0.0f, lengths[2]);
     glVertex3fv(edge_[3].gl_coord);
-    glTexCoord2f(0.0f, lengths[0]);
+    glTexCoord2f(lengths[0], 0.0f);
     glVertex3fv(edge_[1].gl_coord);
 
     glEnd();
