@@ -245,7 +245,8 @@ static void intro_do(float time, bool calibrate, HWND hWnd)
     GLuint programID;
     if (calibrate)
     {
-        shader_manager_.getProgramID("calibration.gprg", &programID, errorText);
+        //shader_manager_.getProgramID("calibration.gprg", &programID, errorText);
+        shader_manager_.getProgramID("SimpleTexture.gprg", &programID, errorText);
     }
     else
     {
@@ -264,7 +265,7 @@ static void intro_do(float time, bool calibrate, HWND hWnd)
 
 	// render to larger offscreen texture
 	glActiveTexture(GL_TEXTURE0);
-	texture_manager_.getTextureID("dragon2.png", &textureID, errorText);
+	texture_manager_.getTextureID("background.png", &textureID, errorText);
 	glBindTexture(GL_TEXTURE_2D, textureID);
 	glActiveTexture(GL_TEXTURE1);
 	texture_manager_.getTextureID(TM_NOISE3D_NAME, &textureID, errorText);
@@ -279,9 +280,9 @@ static void intro_do(float time, bool calibrate, HWND hWnd)
     {
         float center[3] = {0.2f, 0.2f, 1.5f};
         projection_room_.GetCenter(center);
-        center[0] += 3. * cosf(time * 0.34f);
-        center[1] += 3. * sinf(time * 0.29f);
-        center[2] += 3. * sinf(time * 0.18f);
+        center[0] += 3.f * cosf(time * 0.34f);
+        center[1] += 3.f * sinf(time * 0.29f);
+        center[2] += 3.f * sinf(time * 0.18f);
         center[2] += 0.5f;
         glUniform3fv(loc, 1, center);
     }
@@ -429,6 +430,10 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             ImGui::Text("counter = %d", counter);
 
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            float angles[3];
+            projection_room_.GetNormalAngles(angles);
+            ImGui::Text("Room angles (in degrees): %f %f %f", angles[0], angles[1], angles[2]);
 
             // Show microphone loudness (and update it)
             float microphone_amplitude;

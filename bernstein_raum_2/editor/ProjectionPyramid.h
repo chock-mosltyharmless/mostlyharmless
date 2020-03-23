@@ -35,10 +35,11 @@ public:
     void ImGUIControl(void);
     void RenderAll(void);
     void GetCenter(float position[3]) {
-        position[0] = edge_[0].location[0] * edge_[0].location[2];
-        position[1] = edge_[0].location[1] * edge_[0].location[2];
+        position[0] = edge_[0].location[0];
+        position[1] = edge_[0].location[1];
         position[2] = edge_[0].location[2];
     }
+    void GetNormalAngles(float angles[3]);
 
 private:  // Functions
     // Calculates a normal based on three points

@@ -35,6 +35,27 @@ ProjectionPyramid::~ProjectionPyramid()
     }
 }
 
+void ProjectionPyramid::GetNormalAngles(float angles[3])
+{
+    float normal[3][3];  // For the three walls
+    for (int i = 0; i < 3; i++)
+    {
+        int j = (i + 1) % 3;
+        GetNormal(edge_[0].location, edge_[i + 1].location, edge_[j + 1].location, normal[i]);
+    }
+
+    for (int i = 0; i < 3; i++)
+    {
+        int j = (i + 1) % 3;
+        float scalar_product = 0.0f;
+        for (int dim = 0; dim < 3; dim++)
+        {
+            scalar_product += normal[i][dim] * normal[j][dim];
+        }
+        angles[i] = (float)acos(scalar_product) * 180.0f / 3.1415f;
+    }
+}
+
 void ProjectionPyramid::GetNormal(const float *a, const float *b, const float *c, float *normal)
 {
     float right[3];
@@ -65,35 +86,54 @@ void ProjectionPyramid::RenderAll(void)
         edge_[i].Update();
     }
 
+    // Calculate the length of the lines in real space
+    float lengths[3];
+    float max_length = 1.0e-5;
+    for (int i = 0; i < 3; i++)
+    {
+        lengths[i] = 0.0f;
+        for (int dim = 0; dim < 3; dim++)
+        {
+            float difference = edge_[0].location[dim] - edge_[i + 1].location[dim];
+            lengths[i] += (difference * difference);
+        }
+        lengths[i] = sqrtf(lengths[i]);
+        if (lengths[i] > max_length) max_length = lengths[i];
+    }
+    for (int i = 0; i < 3; i++)
+    {
+        lengths[i] /= max_length;
+    }
+
     glBegin(GL_TRIANGLES);
     // top:
     GetNormal(edge_[0].location, edge_[1].location, edge_[2].location, normal);
     glNormal3fv(normal);
-    glTexCoord3f(0.0f, 0.0f, 1.0f);
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3fv(edge_[0].gl_coord);
-    glTexCoord3f(1.0f, 1.0f, -1.0f);
+    glTexCoord2f(lengths[0], 0.0f);
     glVertex3fv(edge_[1].gl_coord);
-    glTexCoord3f(-1.0f, 1.0f, -1.0f);
+    glTexCoord2f(0.0f, lengths[1]);
     glVertex3fv(edge_[2].gl_coord);
 
     // left:
     GetNormal(edge_[0].location, edge_[2].location, edge_[3].location, normal);
     glNormal3fv(normal);
-    glTexCoord3f(0.0f, 0.0f, 0.0f);
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3fv(edge_[0].gl_coord);
-    glTexCoord3f(-1.0f, 1.0f, -1.0f);
+    glTexCoord2f(lengths[1], 0.0f);
     glVertex3fv(edge_[2].gl_coord);
-    glTexCoord3f(0.0f, -1.0f, -1.0f);
+    glTexCoord2f(0.0f, lengths[2]);
     glVertex3fv(edge_[3].gl_coord);
 
     // right:
     GetNormal(edge_[0].location, edge_[3].location, edge_[1].location, normal);
     glNormal3fv(normal);
-    glTexCoord3f(0.0f, 0.0f, 0.0f);
+    glTexCoord2f(0.0f, 0.0f);
     glVertex3fv(edge_[0].gl_coord);
-    glTexCoord3f(0.0f, -1.0f, -1.0f);
+    glTexCoord2f(lengths[2], 0.0f);
     glVertex3fv(edge_[3].gl_coord);
-    glTexCoord3f(1.0f, 1.0f, -1.0f);
+    glTexCoord2f(0.0f, lengths[0]);
     glVertex3fv(edge_[1].gl_coord);
 
     glEnd();
