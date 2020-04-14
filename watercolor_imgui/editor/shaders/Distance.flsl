@@ -1,6 +1,7 @@
 #version 120
 
 uniform sampler2D Texture0;
+uniform sampler3D Texture1;
 varying vec4 color;
 
 uniform float x_step;
@@ -12,13 +13,12 @@ uniform float y_step;
 uniform float aspect_ratio_step;
 
 void main(void) {
-	vec3 o = gl_TexCoord[0].xyx;
 	vec4 col = texture2D(Texture0, gl_TexCoord[0].xy);
 	float read_distance = 1.0 - col.b;
 	float material = col.r;
 	float distance = 0.0;
 	float best_squared_distance = read_distance * read_distance;
-	vec2 step = vec2(x_step, y_step);
+	vec2 step = 0. * vec2(x_step, y_step);
 
 	for (int i = 0; i < 100; i++)
 	{
@@ -52,7 +52,27 @@ void main(void) {
 	}
 
 	float final_distance = sqrt(best_squared_distance);
-	col.b = 1.0 - final_distance;
-	if (final_distance < 0.0) col.r = 0;
-	gl_FragColor = col;
+
+	// Apply noise to distance, 2nd pass only
+	if (y_step > 0.)
+	{
+	    final_distance -= abs(texture3D(Texture1, gl_TexCoord[0].xyx * 4.0 + vec3(0.0, 0.0, material)).a) * 0.08 + 0.015;
+		if (final_distance > 1.0) final_distance = 1.0;
+		if (final_distance < 0.0) final_distance = 0.0;
+		float sqrt_distance = pow(final_distance, 0.3);
+		float amount = 0.8*sqrt_distance*sqrt_distance - 1.6*sqrt_distance + 1.;
+		if (sqrt_distance < 0.1)
+		{
+			amount += -100.0 * sqrt_distance*sqrt_distance + 20.0 * sqrt_distance - 1.0;
+		}
+		amount += abs(texture3D(Texture1, gl_TexCoord[0].xyy * 10.0).a) * 0.1;
+
+		col.rgb = (1.0 - amount) * vec3(1.0) + amount * vec3(material, 0.4, 0.2);
+		gl_FragColor = col;
+    }
+	else
+	{
+		col.b = 1.0 - final_distance;
+		gl_FragColor = col;
+	}
 }
