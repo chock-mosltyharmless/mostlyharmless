@@ -661,39 +661,68 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 #ifndef LATENCY_MEASUREMENT
         static bool do_row_calibration = false;
 
-        if (do_row_calibration)
-        {  // Check for second pass (row calibration)
-            done = true;  // Calibration is done.
-        }
-        else
+        if (do_row_calibration)  // Check for second pass (row calibration)
         {
-            // Do first pass (columns)
-            bool is_index_valid = (index >= 0 && index < CALIBRATION_LOG_Y_RESOLUTION);
-
             if (check_calibration)
             {
                 // This is the last time that the column is shown - check it
                 camera_.NormalizeAccumulateBuffer();
-                if (is_index_valid)
+                // Apply data to calibration
+                for (int i = 0; i < camera_.width_ * camera_.height_; i++)
                 {
-                    // Apply data to calibration
-                    for (int i = 0; i < camera_.width_ * camera_.height_; i++)
+                    if (camera_.accumulate_buffer_[i * 4 + 3] > CALIBRATION_THRESHOLD)
                     {
-                        if (camera_.accumulate_buffer_[i * 4 + 3] > CALIBRATION_THRESHOLD)
-                        {
-                            camera_to_projector[i][1] += 1 << (CALIBRATION_LOG_Y_RESOLUTION - index - 1);
-                        }
+                        camera_to_projector[i][0] += 1 << (CALIBRATION_LOG_Y_RESOLUTION - index - 1);
                     }
-
-                    // Debugging: Save calibration image
-                    char filename[1024];
-                    sprintf(filename, "pictures/columns.%d.tga", index);
-                    PictureWriter::SaveTGA(camera_.width_, camera_.height_, camera_to_projector, filename, CALIBRATION_X_RESOLUTION);
                 }
+
+                // Debugging: Save calibration image
+                char filename[1024];
+                sprintf(filename, "pictures/rows.%d.tga", index);
+                PictureWriter::SaveTGA(camera_.width_, camera_.height_, camera_to_projector, filename, CALIBRATION_X_RESOLUTION);
 
                 index++;
                 // All columns processed, go to row mode
-                if (!is_index_valid)
+                if (index >= CALIBRATION_LOG_X_RESOLUTION) done = true;
+
+                last_flash = timeGetTime() - start_time;
+            }
+
+            // show image (for calibration)
+            int num_bars = 1 << index;
+            float bar_width = 1.0f / (float)num_bars;
+
+            for (int bar = 0; bar < num_bars; bar++)
+            {
+                float x_pos = bar_width * (1 + 2 * bar) - 1.0f;
+                glColor3f(1.0f, 1.0f, 1.0f);
+                glRectf(x_pos, -1.0f, x_pos + bar_width, 1.0f);
+            }
+        }
+        else
+        {
+            // Do first pass (columns)
+            if (check_calibration)
+            {
+                // This is the last time that the column is shown - check it
+                camera_.NormalizeAccumulateBuffer();
+                // Apply data to calibration
+                for (int i = 0; i < camera_.width_ * camera_.height_; i++)
+                {
+                    if (camera_.accumulate_buffer_[i * 4 + 3] > CALIBRATION_THRESHOLD)
+                    {
+                        camera_to_projector[i][1] += 1 << (CALIBRATION_LOG_Y_RESOLUTION - index - 1);
+                    }
+                }
+
+                // Debugging: Save calibration image
+                char filename[1024];
+                sprintf(filename, "pictures/columns.%d.tga", index);
+                PictureWriter::SaveTGA(camera_.width_, camera_.height_, camera_to_projector, filename, CALIBRATION_X_RESOLUTION);
+
+                index++;
+                // All columns processed, go to row mode
+                if (index >= CALIBRATION_LOG_Y_RESOLUTION)
                 {
                     do_row_calibration = true;
                     index = 0;
@@ -703,17 +732,14 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             }
 
             // show image (for calibration)
-            if (is_index_valid)
-            {
-                int num_bars = 1 << index;
-                float bar_height = 1.0f / (float)num_bars;
+            int num_bars = 1 << index;
+            float bar_height = 1.0f / (float)num_bars;
 
-                for (int bar = 0; bar < num_bars; bar++)
-                {
-                    float y_pos = bar_height * (1 + 2 * bar) - 1.0f;
-                    glColor3f(1.0f, 1.0f, 1.0f);
-                    glRectf(-1.0f, y_pos, 1.0f, y_pos + bar_height);
-                }
+            for (int bar = 0; bar < num_bars; bar++)
+            {
+                float y_pos = bar_height * (1 + 2 * bar) - 1.0f;
+                glColor3f(1.0f, 1.0f, 1.0f);
+                glRectf(-1.0f, y_pos, 1.0f, y_pos + bar_height);
             }
         }
 #endif

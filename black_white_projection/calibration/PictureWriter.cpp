@@ -70,6 +70,7 @@ void PictureWriter::SaveTGA(int width, int height, int(*texture_data)[2], const 
     {
         for (int x = 0; x < width; x++)
         {
+            write_data[write_pos++] = 0;  // blue
             for (int c = 0; c < 2; c++)
             {
                 int value = texture_data[(height - y - 1) * width + x][c];
@@ -77,7 +78,6 @@ void PictureWriter::SaveTGA(int width, int height, int(*texture_data)[2], const 
                 if (value < 0) value = 0;
                 write_data[write_pos++] = value * 255 / max_value;
             }
-            write_data[write_pos++] = 0;  // red?
             write_data[write_pos++] = 255;  //alpha?
         }
     }
