@@ -5,6 +5,7 @@
 
 #include "Configuration.h"
 
+#include <algorithm>
 #include <stdio.h>
 #include <tchar.h>
 #include <evr.h>
@@ -443,6 +444,39 @@ int GetFrame(bool refresh_accumulate) {
     return result;
 }
 
+void RemoveNoise(int (*data)[2], int size[2], int dimension, int window_radius)
+{
+    const int kWindowSize = window_radius * 2 + 1;
+    int *window = new int[kWindowSize];
+    int *tmp_data = new int[size[0] * size[1]];
+    int x_stride = 1;
+    int y_stride = 1;
+    if (dimension == 0) y_stride = size[0];
+    if (dimension == 1) x_stride = size[0];
+
+    // Copy to tmpdata
+    for (int i = 0; i < size[0] * size[1]; i++) tmp_data[i] = data[i][dimension];
+
+    for (int y = 0; y < size[1 - dimension]; y++)
+    {
+        int y_pos = y_stride * y;
+        for (int x = window_radius; x < size[dimension] - window_radius; x++)
+        {
+            int start_pos = y_pos + x_stride * x;
+            for (int i = -window_radius; i <= window_radius; i++)
+            {
+                window[i + window_radius] = tmp_data[start_pos + i * x_stride];
+            }
+            std::sort(window, window + kWindowSize);
+            
+            data[start_pos][dimension] = window[window_radius];  // simple median smoothing
+        }
+    }
+
+    delete [] tmp_data;
+    delete [] window;
+}
+
 int APIENTRY wWinMain(_In_ HINSTANCE instance,
                      _In_opt_ HINSTANCE hPrevInstance,
                      _In_ LPWSTR lpCmdLine,
@@ -453,7 +487,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     // TODO: Place code here.
 
     // Perform application initialization:
-    if (!InitInstance(instance, nCmdShow, false, 0, kMainWindowClassName, &main_window_, "On Projector")) {
+    if (!InitInstance(instance, nCmdShow, false, 0, kMainWindowClassName, &main_window_, "On Projector"))
+    {
         return FALSE;
     }
 
@@ -543,6 +578,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     const int kCalibrationDelay = CALIBRATION_DELAY;
     while (timeGetTime() - start_time < kCalibrationDelay && !done)
     {
+        GetFrame(true);  // Force camera to turn on...
         Sleep(100);
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE)) {
             if (msg.message == WM_QUIT) done = 1;
@@ -632,7 +668,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         }
 
         // Draw main window:
-        if (!wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_)) return false;
+        if (!wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_)) return -1;
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         
@@ -668,16 +704,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 // This is the last time that the column is shown - check it
                 camera_.NormalizeAccumulateBuffer();
                 // Apply data to calibration
+                int add_amount = 1 << (CALIBRATION_LOG_X_RESOLUTION - index - 1);
                 for (int i = 0; i < camera_.width_ * camera_.height_; i++)
                 {
                     if (camera_.accumulate_buffer_[i * 4 + 3] > CALIBRATION_THRESHOLD)
                     {
-                        camera_to_projector[i][0] += 1 << (CALIBRATION_LOG_X_RESOLUTION - index - 1);
+                        camera_to_projector[i][0] += add_amount;
                     }
                 }
 
                 // Debugging: Save calibration image
                 char filename[1024];
+                sprintf(filename, "pictures/rows.%d.prefilter.tga", index);
+                PictureWriter::SaveTGA(camera_.width_, camera_.height_, camera_to_projector, filename, CALIBRATION_X_RESOLUTION);
+
+                int size[2] = {camera_.width_, camera_.height_};
+                int window_radius = CALIBRATION_LOG_X_RESOLUTION - index + 1;
+                if (window_radius > 3) window_radius = 3;
+                RemoveNoise(camera_to_projector, size, 0, window_radius);
+
+                // Debugging: Save calibration image
                 sprintf(filename, "pictures/rows.%d.tga", index);
                 PictureWriter::SaveTGA(camera_.width_, camera_.height_, camera_to_projector, filename, CALIBRATION_X_RESOLUTION);
 
@@ -717,6 +763,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
                 // Debugging: Save calibration image
                 char filename[1024];
+                sprintf(filename, "pictures/columns.%d.prefilter.tga", index);
+                PictureWriter::SaveTGA(camera_.width_, camera_.height_, camera_to_projector, filename, CALIBRATION_X_RESOLUTION);
+
+                int size[2] = { camera_.width_, camera_.height_ };
+                int window_radius = CALIBRATION_LOG_Y_RESOLUTION - index + 1;
+                if (window_radius > 3) window_radius = 3;
+                RemoveNoise(camera_to_projector, size, 1, window_radius);
+
+                // Debugging: Save calibration image
                 sprintf(filename, "pictures/columns.%d.tga", index);
                 PictureWriter::SaveTGA(camera_.width_, camera_.height_, camera_to_projector, filename, CALIBRATION_X_RESOLUTION);
 

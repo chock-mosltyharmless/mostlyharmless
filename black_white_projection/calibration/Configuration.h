@@ -31,7 +31,7 @@
 //#define USE_LATENCY 1000
 //#define NUM_ACCUMULATE 90
 #define USE_LATENCY 500
-#define NUM_ACCUMULATE 10
+#define NUM_ACCUMULATE 20
 
 // Resolution of the calibration
 #define CALIBRATION_LOG_X_RESOLUTION 7     // width 128
@@ -39,7 +39,7 @@
 #define CALIBRATION_LOG_Y_RESOLUTION 6     // height 64
 #define CALIBRATION_Y_RESOLUTION (1 << CALIBRATION_LOG_Y_RESOLUTION)
 
-#define CALIBRATION_THRESHOLD 128  // How bright the image has to be to be considered white.
+#define CALIBRATION_THRESHOLD 80  // How bright the image has to be to be considered white.
 
 //#define LIST_DEVICES
 //#define LATENCY_MEASUREMENT
