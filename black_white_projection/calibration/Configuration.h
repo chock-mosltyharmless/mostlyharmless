@@ -47,9 +47,5 @@
 // Minimum calibration brightness where stuff is actually being drawn
 #define MIN_DRAW_BRIGHTNESS 0.99f
 
-#define USE_CAMERA
 //#define LIST_DEVICES
 //#define LATENCY_MEASUREMENT
-//#define SHOW_HEIGHT
-//#define MATRIX_CALIBRATION
-#define LINE_CALIBRATION

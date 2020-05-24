@@ -535,9 +535,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     int num_accumulated = 0;
     int index = 0;  // Index of currently handled point/line
 
-#ifdef USE_CAMERA
     if (InitCamera() < 0) return -1;
-#endif
 
     MSG msg;
 
@@ -603,9 +601,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         }
 #endif
 
-#ifdef USE_CAMERA
         num_processed_frames = GetFrame(refresh_accumulate);  // Check return value?
-#endif
 
 #ifndef LATENCY_MEASUREMENT
         if (cur_time - last_flash > USE_LATENCY)
@@ -652,13 +648,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
 
         glLoadIdentity();  // Reset The View
 
-#if defined(LINE_CALIBRATION)
+#ifndef LATENCY_MEASUREMENT
         static float brightness[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static float calibration_x[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
         static float calibration_y[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
 #endif
 
-#ifdef LINE_CALIBRATION
+#ifndef LATENCY_MEASUREMENT
         static int *row_accumulate_buffer[CALIBRATION_X_RESOLUTION];
         static bool do_row_calibration = false;
         static int z_block = 0;  // Z Block for which computation is done
