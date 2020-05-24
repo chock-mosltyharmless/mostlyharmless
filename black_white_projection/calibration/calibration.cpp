@@ -672,7 +672,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 {
                     if (camera_.accumulate_buffer_[i * 4 + 3] > CALIBRATION_THRESHOLD)
                     {
-                        camera_to_projector[i][0] += 1 << (CALIBRATION_LOG_Y_RESOLUTION - index - 1);
+                        camera_to_projector[i][0] += 1 << (CALIBRATION_LOG_X_RESOLUTION - index - 1);
                     }
                 }
 

@@ -39,7 +39,7 @@
 #define CALIBRATION_LOG_Y_RESOLUTION 6     // height 64
 #define CALIBRATION_Y_RESOLUTION (1 << CALIBRATION_LOG_Y_RESOLUTION)
 
-#define CALIBRATION_THRESHOLD 120  // How bright the image has to be to be considered white.
+#define CALIBRATION_THRESHOLD 128  // How bright the image has to be to be considered white.
 
 //#define LIST_DEVICES
 //#define LATENCY_MEASUREMENT
