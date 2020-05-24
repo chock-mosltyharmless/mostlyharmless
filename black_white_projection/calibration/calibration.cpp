@@ -583,6 +583,15 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     // Reset the time for accumulate
     last_flash = timeGetTime() - start_time;
 
+#ifndef LATENCY_MEASUREMENT
+    int(*camera_to_projector)[2] = new int[camera_.width_ * camera_.height_][2];
+    for (int i = 0; i < camera_.width_ * camera_.height_; i++)
+    {
+        camera_to_projector[i][0] = 0;
+        camera_to_projector[i][1] = 0;
+    }
+#endif
+
     while (!done) {
         long cur_time = timeGetTime() - start_time;
         float time_seconds = 0.001f * static_cast<float>(cur_time);
@@ -615,7 +624,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         }
 #endif
 
-        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE) ) {
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        {
             if (msg.message == WM_QUIT) done = 1;
             TranslateMessage(&msg);
             DispatchMessage(&msg);
@@ -649,122 +659,42 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
         glLoadIdentity();  // Reset The View
 
 #ifndef LATENCY_MEASUREMENT
-        static float brightness[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
-        static float calibration_x[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
-        static float calibration_y[CALIBRATION_Z_RESOLUTION][CALIBRATION_X_RESOLUTION];
-#endif
-
-#ifndef LATENCY_MEASUREMENT
-        static int *row_accumulate_buffer[CALIBRATION_X_RESOLUTION];
         static bool do_row_calibration = false;
-        static int z_block = 0;  // Z Block for which computation is done
 
-        // The rows are done for blocks without brightness overlap
-        // The index in row_evaluation_index defines whether update is done for that block
-        int row_evaluation_index[CALIBRATION_X_RESOLUTION];
+        if (do_row_calibration)
+        {  // Check for second pass (row calibration)
+            done = true;  // Calibration is done.
+        }
+        else
+        {
+            // Do first pass (columns)
+            bool is_index_valid = (index >= 0 && index < CALIBRATION_LOG_Y_RESOLUTION);
 
-        if (do_row_calibration) {  // Check for second pass (row calibration)
-            int z_index = (index * 23) % CALIBRATION_Z_RESOLUTION;
-            int final_z_index = z_index + z_block * CALIBRATION_Z_RESOLUTION;
-
-            if (check_calibration) {
-                camera_.NormalizeAccumulateBuffer();
-
-                // This is the last time that the row is shown - check it
-                if (index >= 0 && index < CALIBRATION_Z_RESOLUTION) {
-                    // Do something with the accumulation buffer here!!!
-                }
-
-                //last_flash = cur_time;
-                // This may have taken a long time, so really read the current time
-                last_flash = timeGetTime() - start_time;
-                index++;
-                if (index >= CALIBRATION_Z_RESOLUTION) {
-                    done = true;
-                }
-            }
-
-            // Show image (always!)
-            if (index >= 0 && index < CALIBRATION_Z_RESOLUTION) {
-                float depth = 2.0f / CALIBRATION_Z_RESOLUTION;
-                float z_pos = final_z_index * depth - 1.0f;
-                glColor3f(1.0f, 1.0f, 1.0f);
-                glRectf(-1.0f, z_pos, 1.0f, z_pos + depth);
-            }
-        } else {  // Do first pass (columns)
-            int x_index = (index * 23) % CALIBRATION_X_RESOLUTION;
-
-            if (check_calibration) {
+            if (check_calibration)
+            {
                 // This is the last time that the column is shown - check it
                 camera_.NormalizeAccumulateBuffer();
-                if (index >= 0 && index < CALIBRATION_X_RESOLUTION) {
-                    // Save image...
-                    row_accumulate_buffer[x_index] = new int[camera_.width_ * camera_.height_];
-                    for (int i = 0; i < camera_.width_ * camera_.height_; i++) {
-                        row_accumulate_buffer[x_index][i] = camera_.accumulate_buffer_[4 * i + 3];  // brightness only
+                if (is_index_valid)
+                {
+                    // Apply data to calibration
+                    for (int i = 0; i < camera_.width_ * camera_.height_; i++)
+                    {
+                        if (camera_.accumulate_buffer_[i * 4 + 3] > CALIBRATION_THRESHOLD)
+                        {
+                            camera_to_projector[i][1] += 1 << (CALIBRATION_LOG_Y_RESOLUTION - index - 1);
+                        }
                     }
 
+                    // Debugging: Save calibration image
                     char filename[1024];
-                    sprintf(filename, "pictures/columns.%d.tga", x_index);
-                    PictureWriter::SaveTGA(camera_.width_, camera_.height_, (int (*)[4])camera_.accumulate_buffer_, filename, 2 * VISIBLE_THRESHOLD);
+                    sprintf(filename, "pictures/columns.%d.tga", index);
+                    PictureWriter::SaveTGA(camera_.width_, camera_.height_, camera_to_projector, filename, CALIBRATION_X_RESOLUTION);
                 }
 
                 index++;
                 // All columns processed, go to row mode
-                if (index >= CALIBRATION_X_RESOLUTION) {
-
-                    FILE *fid = fopen("c:\\d\\num_clusters.txt", "w");
-
-                    // Calculate clusters of compute
-                    int num_clusters = 0;
-                    for (int l = 0; l < CALIBRATION_X_RESOLUTION; l++)
-                    {
-                        row_evaluation_index[l] = -1;
-                    }
-                    int *cluster_accumulate_buffer = new int [camera_.width_ * camera_.height_];
-                    for (int cluster = 0; cluster < CALIBRATION_X_RESOLUTION; cluster++)
-                    {
-                        int num_fitting = 0;
-                        for (int l = 0; l < camera_.width_ * camera_.height_; l++)
-                        {
-                            cluster_accumulate_buffer[l] = 0;
-                        }
-                        for (int x_column = 0; x_column < CALIBRATION_X_RESOLUTION; x_column++)
-                        {
-                            if (row_evaluation_index[x_column] < 0)
-                            {
-                                num_clusters = cluster;  // Wasn't finished before, so update the count
-                                bool is_disjoint = true;
-                                for (int l = 0; l < camera_.width_ * camera_.height_; l++)
-                                {
-                                    if (cluster_accumulate_buffer[l] > VISIBLE_THRESHOLD &&
-                                        row_accumulate_buffer[x_column][l] > VISIBLE_THRESHOLD)
-                                    {
-                                        is_disjoint = false;
-                                        break;
-                                    }
-                                }
-                                if (is_disjoint)
-                                {
-                                    num_fitting++;
-                                    row_evaluation_index[x_column] = cluster;
-                                    for (int l = 0; l < camera_.width_ * camera_.height_; l++)
-                                    {
-                                        if (row_accumulate_buffer[x_column][l] > cluster_accumulate_buffer[l])
-                                        {
-                                            cluster_accumulate_buffer[l] = row_accumulate_buffer[x_column][l];
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        fprintf(fid, "Fitting for cluster %d: %d\n", cluster, num_fitting);
-                    }
-
-                    fprintf(fid, "Total #Clusters: %d\n", num_clusters);
-                    fclose(fid);
-                    delete [] cluster_accumulate_buffer;
-                    
+                if (!is_index_valid)
+                {
                     do_row_calibration = true;
                     index = 0;
                 }
@@ -772,14 +702,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
                 last_flash = timeGetTime() - start_time;
             }
 
-            // show image (always)
-            if (index >= 0 && index < CALIBRATION_X_RESOLUTION) {
-                float width = 2.0f / CALIBRATION_X_RESOLUTION;
-                float x_pos = x_index * width - 1.0f;
-                glColor3f(1.0f, 1.0f, 1.0f);
-                float start_z = -1.0f;
-                float end_z = 1.0f;
-                glRectf(x_pos, start_z, x_pos + width, end_z);
+            // show image (for calibration)
+            if (is_index_valid)
+            {
+                int num_bars = 1 << index;
+                float bar_height = 1.0f / (float)num_bars;
+
+                for (int bar = 0; bar < num_bars; bar++)
+                {
+                    float y_pos = bar_height * (1 + 2 * bar) - 1.0f;
+                    glColor3f(1.0f, 1.0f, 1.0f);
+                    glRectf(-1.0f, y_pos, 1.0f, y_pos + bar_height);
+                }
             }
         }
 #endif

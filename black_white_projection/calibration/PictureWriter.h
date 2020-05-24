@@ -32,5 +32,5 @@ public:
 
 public:
     static void SaveTGA(int width, int height, float (*texture_data)[3], const char *filename);
-    static void SaveTGA(int width, int height, int (*data)[4], const char *filename, int max_value);
+    static void SaveTGA(int width, int height, int (*data)[2], const char *filename, int max_value);
 };

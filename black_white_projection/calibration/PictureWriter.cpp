@@ -46,7 +46,7 @@ void PictureWriter::SaveTGA(int width, int height, float (*texture_data)[3], con
     }
 }
 
-void PictureWriter::SaveTGA(int width, int height, int(*texture_data)[4], const char * filename, int max_value)
+void PictureWriter::SaveTGA(int width, int height, int(*texture_data)[2], const char * filename, int max_value)
 {
     // generate TGA header
     TGAHeader tgaHeader;
@@ -66,14 +66,19 @@ void PictureWriter::SaveTGA(int width, int height, int(*texture_data)[4], const 
     unsigned char * write_data = new unsigned char[width * height * 4];
 
     int write_pos = 0;
-    for (int y = 0; y < height; y++) {
-        for (int x = 0; x < width; x++) {
-            for (int c = 0; c < 4; c++) {
+    for (int y = 0; y < height; y++)
+    {
+        for (int x = 0; x < width; x++)
+        {
+            for (int c = 0; c < 2; c++)
+            {
                 int value = texture_data[(height - y - 1) * width + x][c];
                 if (value > max_value) value = max_value;
                 if (value < 0) value = 0;
                 write_data[write_pos++] = value * 255 / max_value;
             }
+            write_data[write_pos++] = 0;  // red?
+            write_data[write_pos++] = 255;  //alpha?
         }
     }
 
