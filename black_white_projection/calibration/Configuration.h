@@ -4,6 +4,7 @@
 #define YRES 768
 
 
+// #define LIST_DEVICES
 #if 0  // Microsoft camera
 // <--- Set to 0 to use default system webcam.
 #define WEBCAM_DEVICE_INDEX 0
@@ -41,5 +42,4 @@
 
 #define CALIBRATION_THRESHOLD 80  // How bright the image has to be to be considered white.
 
-//#define LIST_DEVICES
 //#define LATENCY_MEASUREMENT
