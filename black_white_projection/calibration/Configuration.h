@@ -1,7 +1,7 @@
 #pragma once
 
-#define XRES 1024
-#define YRES 768
+#define XRES (1920/2)
+#define YRES (1080/2)
 
 
 // #define LIST_DEVICES
@@ -16,7 +16,9 @@
 // <--- Set to 0 to use default system webcam.
 #define WEBCAM_DEVICE_INDEX 0
 // Use this for "AUKEY PC-LM1A Webcam"
-#define MEDIA_TYPE_INDEX 62 /* 640x480, YUY2, 30 FPS, ~147MBPS */
+//#define MEDIA_TYPE_INDEX 62 /* 640x480, YUY2, 30 FPS, ~147MBPS */
+#define MEDIA_TYPE_INDEX 12 /* 1920x1080, NV12, 30 FPS */
+#define MEDIA_SUBTYPE_NV12  // I should read this from the structure
 #endif
 
 // Maximum distance where a pixel is considered nearby
@@ -35,9 +37,9 @@
 #define NUM_ACCUMULATE 20
 
 // Resolution of the calibration
-#define CALIBRATION_LOG_X_RESOLUTION 7     // width 128
+#define CALIBRATION_LOG_X_RESOLUTION 8     // width 256
 #define CALIBRATION_X_RESOLUTION (1 << CALIBRATION_LOG_X_RESOLUTION)
-#define CALIBRATION_LOG_Y_RESOLUTION 6     // height 64
+#define CALIBRATION_LOG_Y_RESOLUTION 7     // height 128
 #define CALIBRATION_Y_RESOLUTION (1 << CALIBRATION_LOG_Y_RESOLUTION)
 
 #define CALIBRATION_THRESHOLD 80  // How bright the image has to be to be considered white.
