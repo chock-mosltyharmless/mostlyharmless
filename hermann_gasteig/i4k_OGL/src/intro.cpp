@@ -317,13 +317,13 @@ void rhytmPolice(float ftime)
 
 	/* Rhythmic stuff */
 	static float camDist = 0.0f;
-	camDist *= exp(-2.0f * fDeltaTime);
+	camDist *= (float)exp(-2.0f * fDeltaTime);
 	if (keyPressed[41] == 1) camDist = 0.3f;
 	static float brightAdder = 0.0f;
-	brightAdder *= exp(-2.0f * fDeltaTime);
+	brightAdder *= (float)exp(-2.0f * fDeltaTime);
 	if (keyPressed[40] == 1) brightAdder = 1.0f;
 	static float moveAdder = 0.0f;
-	moveAdder *= exp(-5.0f * fDeltaTime);
+	moveAdder *= (float)exp(-5.0f * fDeltaTime);
 	if (keyPressed[39] == 1) moveAdder = 10.0f;
 
 	/* init */
@@ -527,7 +527,7 @@ void hermaniak(float ftime)
 	static float phase = 0.0f;
 	float jumpTime = (ftime * jumpsPerSecond) + phase;
 	//float jumpTime = (ftime * jumpsPerSecond) + interpolatedParameters[22]; // JumpTime goes from 0 to 1 between two beats
-	jumpTime -= floor(jumpTime);
+	jumpTime -= (float)floor(jumpTime);
 #if 1
 	if (keyPressed[41] == 1)
 	{
