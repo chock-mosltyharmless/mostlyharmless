@@ -332,12 +332,6 @@ int Camera::GetFrame(bool refresh_accumulate)
         // Update with background
         Update(refresh_accumulate);
 
-        // Update texture
-        glEnable(GL_TEXTURE_2D);				// Enable Texture Mapping
-        glBindTexture(GL_TEXTURE_2D, texture_id_);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width(), height(),
-            GL_BGRA, GL_UNSIGNED_BYTE, debug_buffer_);
-
         buf->Release();
         videoSample->Release();
         result = 1;
@@ -350,4 +344,6 @@ void Camera::SetTexture(void)
 {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width(), height(),
+        GL_BGRA, GL_UNSIGNED_BYTE, debug_buffer_);
 }

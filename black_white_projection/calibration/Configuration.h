@@ -16,9 +16,9 @@
 // <--- Set to 0 to use default system webcam.
 #define WEBCAM_DEVICE_INDEX 0
 // Use this for "AUKEY PC-LM1A Webcam"
-//#define MEDIA_TYPE_INDEX 62 /* 640x480, YUY2, 30 FPS, ~147MBPS */
-#define MEDIA_TYPE_INDEX 12 /* 1920x1080, NV12, 30 FPS */
-#define MEDIA_SUBTYPE_NV12  // I should read this from the structure
+#define MEDIA_TYPE_INDEX 62 /* 640x480, YUY2, 30 FPS, ~147MBPS */
+//#define MEDIA_TYPE_INDEX 12 /* 1920x1080, NV12, 30 FPS */
+//#define MEDIA_SUBTYPE_NV12  // I should read this from the structure
 #endif
 
 // Maximum distance where a pixel is considered nearby
@@ -43,5 +43,3 @@
 #define CALIBRATION_Y_RESOLUTION (1 << CALIBRATION_LOG_Y_RESOLUTION)
 
 #define CALIBRATION_THRESHOLD 80  // How bright the image has to be to be considered white.
-
-//#define LATENCY_MEASUREMENT
