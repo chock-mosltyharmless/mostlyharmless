@@ -45,11 +45,17 @@ Calibrator::Calibrator()
 
 Calibrator::~Calibrator()
 {
+    if (project_buffer_) delete [] project_buffer_;
 }
 
 bool Calibrator::Init(HDC main_window_device_handle, HGLRC main_window_resource_handle,
                       HDC debug_window_device_handle, HGLRC debug_window_resource_handle)
 {
+    main_window_device_handle_ = main_window_device_handle;
+    main_window_resource_handle_ = main_window_resource_handle;
+    debug_window_device_handle_ = debug_window_device_handle;
+    debug_window_resource_handle_ = debug_window_resource_handle;
+    
     long start_time = timeGetTime();
 
     if (camera_.Init() < 0) return false;
@@ -110,11 +116,25 @@ bool Calibrator::Init(HDC main_window_device_handle, HGLRC main_window_resource_
     camera_.CalibrateCameraToBlack();
 #endif
 
+    // Initialize the texture used for projection
+    if (!wglMakeCurrent(main_window_device_handle, main_window_resource_handle)) return false;
+    project_buffer_ = new unsigned char[CALIBRATION_Y_RESOLUTION * CALIBRATION_X_RESOLUTION][4];
+    memset(project_buffer_, 0, CALIBRATION_X_RESOLUTION * CALIBRATION_Y_RESOLUTION * 4);
+
+    glEnable(GL_TEXTURE_2D);						                    // Enable Texture Mapping
+    glGenTextures(1, &(texture_id_));
+    glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);	// Linear Filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);	// Linear Filtering
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+                 CALIBRATION_X_RESOLUTION, CALIBRATION_Y_RESOLUTION,
+                 0, GL_BGRA, GL_UNSIGNED_BYTE, project_buffer_);
+    if (!wglMakeCurrent(debug_window_device_handle, debug_window_resource_handle)) return false;
+
     return true;
 }
 
-bool Calibrator::Calibrate(HDC main_window_device_handle, HGLRC main_window_resource_handle,
-                           HDC debug_window_device_handle, HGLRC debug_window_resource_handle)
+bool Calibrator::Calibrate()
 {
     camera_to_projector_ = new int[camera_.width() * camera_.height()][2];
     for (int i = 0; i < camera_.width() * camera_.height(); i++)
@@ -167,14 +187,14 @@ bool Calibrator::Calibrate(HDC main_window_device_handle, HGLRC main_window_reso
         }
 
         // Draw main window:
-        if (!wglMakeCurrent(main_window_device_handle, main_window_resource_handle)) return false;
-
+        if (!wglMakeCurrent(main_window_device_handle_, main_window_resource_handle_)) return false;
+        
+        glDisable(GL_TEXTURE_2D);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-
         glClearDepth(1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glDisable(GL_BLEND);
+        //glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
         glLoadIdentity();  // Reset The View
 
@@ -281,29 +301,16 @@ bool Calibrator::Calibrate(HDC main_window_device_handle, HGLRC main_window_reso
             }
         }
 
-        SwapBuffers(main_window_device_handle);
+        SwapBuffers(main_window_device_handle_);
 
-        DrawCameraDebug(debug_window_device_handle, debug_window_resource_handle);
+        DrawCameraDebug(debug_window_device_handle_, debug_window_resource_handle_);
     }
 
     return true;
 }
 
-void Calibrator::DrawCameraDebug(HDC debug_window_device_handle, HGLRC debug_window_resource_handle)
+static void DrawQuad(void)
 {
-    // Render camera window
-    if (!wglMakeCurrent(debug_window_device_handle, debug_window_resource_handle)) return;
-
-    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    glClearDepth(1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    // Set transformation matrix to do aspect ratio adjustment
-    glLoadIdentity();  // Reset The View
-
-    camera_.SetTexture();
-
-    // Rendering of the camera rect
     glBegin(GL_TRIANGLES);
     glColor3f(1.0f, 1.0f, 1.0f);
     glTexCoord2f(0.0f, 0.0f);
@@ -319,6 +326,42 @@ void Calibrator::DrawCameraDebug(HDC debug_window_device_handle, HGLRC debug_win
     glTexCoord2f(0.0f, 0.0f);
     glVertex2f(-1.0f, +1.0f);
     glEnd();
+}
 
+void Calibrator::ShowConstColor(unsigned char red, unsigned char green, unsigned char blue)
+{
+    // This is incorrect: Just use the color
+    for (int y = 1; y < CALIBRATION_Y_RESOLUTION - 1; y++)
+    {
+        for (int x = 1; x < CALIBRATION_X_RESOLUTION - 1; x++)
+        {
+            int index = y * CALIBRATION_X_RESOLUTION + x;
+            project_buffer_[index][0] = blue;
+            project_buffer_[index][1] = green;
+            project_buffer_[index][2] = red;
+            project_buffer_[index][3] = 255;
+        }
+    }
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, CALIBRATION_X_RESOLUTION, CALIBRATION_Y_RESOLUTION,
+                     GL_BGRA, GL_UNSIGNED_BYTE, project_buffer_);
+
+    // Rendering of the camera rect
+    glLoadIdentity();  // Reset The View
+    DrawQuad();
+}
+
+void Calibrator::DrawCameraDebug(HDC debug_window_device_handle, HGLRC debug_window_resource_handle)
+{
+    // Render camera window
+    if (!wglMakeCurrent(debug_window_device_handle, debug_window_resource_handle)) return;
+
+    // Set transformation matrix to do aspect ratio adjustment
+    glLoadIdentity();  // Reset The View
+
+    camera_.SetTexture();
+
+    DrawQuad();
     SwapBuffers(debug_window_device_handle);
 }
