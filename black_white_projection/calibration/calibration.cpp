@@ -163,24 +163,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
     if (!calibrator_.Init(main_window_.device_context_handle_, main_window_.resource_context_handle_,
                           debug_window_.device_context_handle_, debug_window_.resource_context_handle_)) return -1;
 
+    if (!calibrator_.Calibrate()) return -1;
+
 #if 1
-    for (int i = 0; i < 10000; i++)
+    bool done = false;
+    while (!done)
     {
         MSG msg;
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
-            if (msg.message == WM_QUIT) return 0;
+            if (msg.message == WM_QUIT) done = true;
             TranslateMessage(&msg);
             DispatchMessage(&msg);
         }
 
-        if (!wglMakeCurrent(main_window_.device_context_handle_, main_window_.resource_context_handle_)) return -1;
         calibrator_.ShowConstColor(30, 70, 100);
-        SwapBuffers(main_window_.device_context_handle_);
     }
 #endif
-
-    if (!calibrator_.Calibrate()) return -1;
 
     // Cleanup
     main_window_.End();

@@ -31,6 +31,8 @@ private:
 
     // This RGBA buffer holds the CPU data for what is shown in the texture
     unsigned char (*project_buffer_)[4];
+    unsigned int (*back_buffer_)[4];  // The same as project_buffer_, but scaled by 65536
+    unsigned int (*error_buffer_)[4];  // This is the accumlated error from the camera
 
     // Data for where to display stuff
     HDC main_window_device_handle_;

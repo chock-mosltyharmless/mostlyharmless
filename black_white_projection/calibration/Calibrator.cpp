@@ -120,6 +120,11 @@ bool Calibrator::Init(HDC main_window_device_handle, HGLRC main_window_resource_
     if (!wglMakeCurrent(main_window_device_handle, main_window_resource_handle)) return false;
     project_buffer_ = new unsigned char[CALIBRATION_Y_RESOLUTION * CALIBRATION_X_RESOLUTION][4];
     memset(project_buffer_, 0, CALIBRATION_X_RESOLUTION * CALIBRATION_Y_RESOLUTION * 4);
+    error_buffer_ = new unsigned int[CALIBRATION_Y_RESOLUTION * CALIBRATION_X_RESOLUTION][4];
+    memset(error_buffer_, 0, CALIBRATION_X_RESOLUTION * CALIBRATION_Y_RESOLUTION * 4 * sizeof(int));
+    back_buffer_ = new unsigned int[CALIBRATION_Y_RESOLUTION * CALIBRATION_X_RESOLUTION][4];
+    memset(back_buffer_, 0, CALIBRATION_X_RESOLUTION * CALIBRATION_Y_RESOLUTION * 4 * sizeof(int));
+
 
     glEnable(GL_TEXTURE_2D);						                    // Enable Texture Mapping
     glGenTextures(1, &(texture_id_));
@@ -309,27 +314,28 @@ bool Calibrator::Calibrate()
     return true;
 }
 
-static void DrawQuad(void)
+static void DrawQuad(float flip_y = 0.0f)
 {
     glBegin(GL_TRIANGLES);
     glColor3f(1.0f, 1.0f, 1.0f);
-    glTexCoord2f(0.0f, 0.0f);
+    glTexCoord2f(0.0f, flip_y);
     glVertex2f(-1.0f, 1.0f);
-    glTexCoord2f(1.0f, 0.0f);
+    glTexCoord2f(1.0f, flip_y);
     glVertex2f(+1.0f, 1.0f);
-    glTexCoord2f(1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f - flip_y);
     glVertex2f(+1.0f, -1.0f);
-    glTexCoord2f(1.0f, 1.0f);
+    glTexCoord2f(1.0f, 1.0f - flip_y);
     glVertex2f(+1.0f, -1.0f);
-    glTexCoord2f(0.0f, 1.0f);
+    glTexCoord2f(0.0f, 1.0f - flip_y);
     glVertex2f(-1.0f, -1.0f);
-    glTexCoord2f(0.0f, 0.0f);
+    glTexCoord2f(0.0f, flip_y);
     glVertex2f(-1.0f, +1.0f);
     glEnd();
 }
 
 void Calibrator::ShowConstColor(unsigned char red, unsigned char green, unsigned char blue)
 {
+#if 0
     // This is incorrect: Just use the color
     for (int y = 1; y < CALIBRATION_Y_RESOLUTION - 1; y++)
     {
@@ -342,14 +348,68 @@ void Calibrator::ShowConstColor(unsigned char red, unsigned char green, unsigned
             project_buffer_[index][3] = 255;
         }
     }
+#else
+    // Take a new frame from the camera
+    camera_.GetFrame(false);
+
+    // Delete the error buffer
+    memset(error_buffer_, 0, CALIBRATION_X_RESOLUTION * CALIBRATION_Y_RESOLUTION * 4 * sizeof(int));
+
+    // Accumulate error
+    int height = camera_.height();
+    int width = camera_.width();
+    int camera_size = width * height;
+    int dest_color[3] = {blue, green, red};
+    for (int i = 0; i < camera_size; i++)
+    {
+        int y = camera_to_projector_[i][1];
+        int x = camera_to_projector_[i][0];
+
+        for (int c = 0; c < 3; c++)
+        {
+            int source_color = camera_.raw_data(i * 4 + c);
+            int error = dest_color[c] - source_color;
+            error_buffer_[y * CALIBRATION_X_RESOLUTION + x][c] += error;
+        }
+    }
+
+    const int kUpdateRate = 50;  // (50 / 65536)
+    for (int y = 1; y < CALIBRATION_Y_RESOLUTION - 1; y++)
+    {
+        for (int x = 1; x < CALIBRATION_X_RESOLUTION - 1; x++)
+        {
+            int index = y * CALIBRATION_X_RESOLUTION + x;
+            
+            for (int c = 0; c < 3; c++)
+            {
+                int orig_color = back_buffer_[index][c];
+                int new_color = (kUpdateRate * error_buffer_[index][c]) + orig_color;
+                if (new_color < 0) new_color = 0;
+                if (new_color > 255 * 65536) new_color = 255 * 65536;
+                back_buffer_[index][c] = new_color;
+            }
+        }
+    }
+
+    // Copy to texture buffer
+    for (int i = 0; i < CALIBRATION_Y_RESOLUTION * CALIBRATION_X_RESOLUTION * 4; i++)
+    {
+        project_buffer_[0][i] = back_buffer_[0][i] >> 16;
+    }
+
+#endif
+    // Display on main screen
+    wglMakeCurrent(main_window_device_handle_, main_window_resource_handle_);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture_id_);
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, CALIBRATION_X_RESOLUTION, CALIBRATION_Y_RESOLUTION,
                      GL_BGRA, GL_UNSIGNED_BYTE, project_buffer_);
-
-    // Rendering of the camera rect
     glLoadIdentity();  // Reset The View
-    DrawQuad();
+    DrawQuad(1.0f);  // Flip y for some reason.
+    SwapBuffers(main_window_device_handle_);
+
+    // Display error on debug screen
+
 }
 
 void Calibrator::DrawCameraDebug(HDC debug_window_device_handle, HGLRC debug_window_resource_handle)

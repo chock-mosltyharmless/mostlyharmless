@@ -41,6 +41,9 @@ public:
     int height() const { return height_; }
 
     int *accumulate_buffer_;  // RGBA sum of values over time, if no background update is done
+    unsigned char raw_data(int index) {
+        return buffer_[index];
+    }
 
 private:
     float GetAverageBrightness(void);  // In accumulate buffer
