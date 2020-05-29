@@ -14,11 +14,13 @@ public:
               HDC debug_window_device_handle, HGLRC debug_window_resource_handle);
     bool Calibrate();
 
+    void MakeBlackAndWhite(unsigned char brightness);
+
     // This is a mode that tries to create one solid color for the whole screen (except borders)
     void ShowConstColor(unsigned char red, unsigned char green, unsigned char blue);
 
 private:
-    void DrawCameraDebug(HDC debug_window_device_handle, HGLRC debug_window_resource_handle);
+    void DrawCameraDebug(bool show_raw_data);
 
     Camera camera_;
 

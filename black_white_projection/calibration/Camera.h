@@ -35,7 +35,7 @@ public:
     bool DetectFlash();
 
     // Set texture of captured image
-    void SetTexture(void);
+    void SetTexture(bool show_raw_signal = false);
 
     int width() const { return width_; }
     int height() const { return height_; }

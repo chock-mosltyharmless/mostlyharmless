@@ -16,9 +16,9 @@
 // <--- Set to 0 to use default system webcam.
 #define WEBCAM_DEVICE_INDEX 0
 // Use this for "AUKEY PC-LM1A Webcam"
-//#define MEDIA_TYPE_INDEX 62 /* 640x480, YUY2, 30 FPS, ~147MBPS */
-#define MEDIA_TYPE_INDEX 12 /* 1920x1080, NV12, 30 FPS */
-#define MEDIA_SUBTYPE_NV12  // I should read this from the structure
+#define MEDIA_TYPE_INDEX 62 /* 640x480, YUY2, 30 FPS, ~147MBPS */
+//#define MEDIA_TYPE_INDEX 12 /* 1920x1080, NV12, 30 FPS */
+//#define MEDIA_SUBTYPE_NV12  // I should read this from the structure
 #endif
 
 // Maximum distance where a pixel is considered nearby
@@ -29,7 +29,7 @@
 
 // Time until calibration starts after program launch in ms
 //#define CALIBRATION_DELAY (240 * 1000)
-#define CALIBRATION_DELAY (5 * 1000)
+#define CALIBRATION_DELAY (7 * 1000)
 // Must be more than in latency measurement
 //#define USE_LATENCY 1000
 //#define NUM_ACCUMULATE 90

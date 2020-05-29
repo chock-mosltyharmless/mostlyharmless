@@ -66,7 +66,7 @@ bool Calibrator::Init(HDC main_window_device_handle, HGLRC main_window_resource_
     const int kCalibrationDelay = CALIBRATION_DELAY;
     while (timeGetTime() - start_time < kCalibrationDelay)
     {
-        Sleep(10);
+        Sleep(100);
         while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
             bool quit = false;
@@ -83,12 +83,8 @@ bool Calibrator::Init(HDC main_window_device_handle, HGLRC main_window_resource_
         SwapBuffers(main_window_device_handle);
 
         // Force camera to turn on and show debug window
-        for (int i = 0; i < NUM_ACCUMULATE; i++)
-        {
-            while (camera_.GetFrame(i == 0) <= 0) Sleep(10);
-        }
-        camera_.NormalizeAccumulateBuffer();  // So that the debug display can be shown
-        DrawCameraDebug(debug_window_device_handle, debug_window_resource_handle);
+        while (camera_.GetFrame(false) <= 0) Sleep(10);
+        DrawCameraDebug(true);
     }
 
     start_time = timeGetTime();
@@ -308,7 +304,7 @@ bool Calibrator::Calibrate()
 
         SwapBuffers(main_window_device_handle_);
 
-        DrawCameraDebug(debug_window_device_handle_, debug_window_resource_handle_);
+        DrawCameraDebug(false);
     }
 
     return true;
@@ -333,22 +329,87 @@ static void DrawQuad(float flip_y = 0.0f)
     glEnd();
 }
 
-void Calibrator::ShowConstColor(unsigned char red, unsigned char green, unsigned char blue)
+void Calibrator::MakeBlackAndWhite(unsigned char brightness)
 {
-#if 0
-    // This is incorrect: Just use the color
+    // Take a new frame from the camera
+    camera_.GetFrame(false);
+
+    // Delete the error buffer
+    memset(error_buffer_, 0, CALIBRATION_X_RESOLUTION * CALIBRATION_Y_RESOLUTION * 4 * sizeof(int));
+
+    // Accumulate error
+    int height = camera_.height();
+    int width = camera_.width();
+    int camera_size = width * height;
+    for (int i = 0; i < camera_size; i++)
+    {
+        int y = camera_to_projector_[i][1];
+        int x = camera_to_projector_[i][0];
+
+        int mean_color = 0;
+        for (int c = 0; c < 3; c++)
+        {
+            mean_color += camera_.raw_data(i * 4 + c);
+        }
+        mean_color = (mean_color + 1) / 3;
+        for (int c = 0; c < 3; c++)
+        {
+            int source_color = camera_.raw_data(i * 4 + c);
+            int error = mean_color - source_color;
+            error_buffer_[y * CALIBRATION_X_RESOLUTION + x][c] += error;
+        }
+    }
+
+    const int kUpdateRate = 50;  // (50 / 65536)
+    int new_color[3];
     for (int y = 1; y < CALIBRATION_Y_RESOLUTION - 1; y++)
     {
         for (int x = 1; x < CALIBRATION_X_RESOLUTION - 1; x++)
         {
             int index = y * CALIBRATION_X_RESOLUTION + x;
-            project_buffer_[index][0] = blue;
-            project_buffer_[index][1] = green;
-            project_buffer_[index][2] = red;
-            project_buffer_[index][3] = 255;
+
+            for (int c = 0; c < 3; c++)
+            {
+                int orig_color = back_buffer_[index][c];
+                new_color[c] = (kUpdateRate * error_buffer_[index][c]) + orig_color;
+            }
+
+            // Dirty brightness approximation
+            int new_color_brightness =
+                (new_color[0] + 4 * new_color[1] + 3 * new_color[2]) / 8 + 1;
+            int color_shift = 65536 * brightness - new_color_brightness;
+
+            for (int c = 0; c < 3; c++)
+            {
+                new_color[c] += color_shift;
+                if (new_color[c] < 0) new_color[c] = 0;
+                if (new_color[c] > 255 * 65536) new_color[c] = 255 * 65536;
+                back_buffer_[index][c] = new_color[c];
+            }
         }
     }
-#else
+
+    // Copy to texture buffer
+    for (int i = 0; i < CALIBRATION_Y_RESOLUTION * CALIBRATION_X_RESOLUTION * 4; i++)
+    {
+        project_buffer_[0][i] = back_buffer_[0][i] >> 16;
+    }
+
+    // Display on main screen
+    wglMakeCurrent(main_window_device_handle_, main_window_resource_handle_);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture_id_);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, CALIBRATION_X_RESOLUTION, CALIBRATION_Y_RESOLUTION,
+        GL_BGRA, GL_UNSIGNED_BYTE, project_buffer_);
+    glLoadIdentity();  // Reset The View
+    DrawQuad(1.0f);  // Flip y for some reason.
+    SwapBuffers(main_window_device_handle_);
+
+    DrawCameraDebug(true);
+}
+
+void Calibrator::ShowConstColor(unsigned char red, unsigned char green, unsigned char blue)
+{
     // Take a new frame from the camera
     camera_.GetFrame(false);
 
@@ -397,7 +458,6 @@ void Calibrator::ShowConstColor(unsigned char red, unsigned char green, unsigned
         project_buffer_[0][i] = back_buffer_[0][i] >> 16;
     }
 
-#endif
     // Display on main screen
     wglMakeCurrent(main_window_device_handle_, main_window_resource_handle_);
     glEnable(GL_TEXTURE_2D);
@@ -408,20 +468,19 @@ void Calibrator::ShowConstColor(unsigned char red, unsigned char green, unsigned
     DrawQuad(1.0f);  // Flip y for some reason.
     SwapBuffers(main_window_device_handle_);
 
-    // Display error on debug screen
-
+    DrawCameraDebug(true);
 }
 
-void Calibrator::DrawCameraDebug(HDC debug_window_device_handle, HGLRC debug_window_resource_handle)
+void Calibrator::DrawCameraDebug(bool show_raw_data)
 {
     // Render camera window
-    if (!wglMakeCurrent(debug_window_device_handle, debug_window_resource_handle)) return;
+    if (!wglMakeCurrent(debug_window_device_handle_, debug_window_resource_handle_)) return;
 
     // Set transformation matrix to do aspect ratio adjustment
     glLoadIdentity();  // Reset The View
 
-    camera_.SetTexture();
+    camera_.SetTexture(show_raw_data);
 
     DrawQuad();
-    SwapBuffers(debug_window_device_handle);
+    SwapBuffers(debug_window_device_handle_);
 }

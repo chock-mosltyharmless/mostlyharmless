@@ -177,7 +177,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance,
             DispatchMessage(&msg);
         }
 
-        calibrator_.ShowConstColor(30, 70, 100);
+        //calibrator_.ShowConstColor(30, 70, 100);
+        calibrator_.MakeBlackAndWhite(80);
     }
 #endif
 

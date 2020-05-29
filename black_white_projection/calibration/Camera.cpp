@@ -340,10 +340,12 @@ int Camera::GetFrame(bool refresh_accumulate)
     return result;
 }
 
-void Camera::SetTexture(void)
+void Camera::SetTexture(bool show_raw_signal)
 {
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, texture_id_);
+    const void *show_buffer = debug_buffer_;
+    if (show_raw_signal) show_buffer = buffer_;
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width(), height(),
-        GL_BGRA, GL_UNSIGNED_BYTE, debug_buffer_);
+        GL_BGRA, GL_UNSIGNED_BYTE, show_buffer);
 }
