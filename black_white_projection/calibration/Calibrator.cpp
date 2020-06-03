@@ -360,6 +360,42 @@ void Calibrator::MakeBlackAndWhite(unsigned char brightness)
         }
     }
 
+    // Normalize error buffer to 0
+    for (int y = 0; y < CALIBRATION_Y_RESOLUTION; y++)
+    {
+        for (int x = 0; x < CALIBRATION_X_RESOLUTION; x++)
+        {
+            int mean_error = 0;
+            for (int c = 0; c < 3; c++)
+            {
+                mean_error += error_buffer_[y * CALIBRATION_X_RESOLUTION + x][c];
+            }
+            mean_error = (mean_error + 1) / 3;
+            for (int c = 0; c < 3; c++)
+            {
+                error_buffer_[y * CALIBRATION_X_RESOLUTION + x][c] -= mean_error;
+            }
+        }
+    }
+
+    // propagate error to neighbor cells
+    for (int y = 1; y < CALIBRATION_Y_RESOLUTION - 1; y++)
+    {
+        for (int x = 1; x < CALIBRATION_Y_RESOLUTION - 1; x++)
+        {
+            for (int c = 0; c < 3; c++)
+            {
+                int error = error_buffer_[y * CALIBRATION_X_RESOLUTION + x][c];
+                int diffuse = error / 6;
+                error_buffer_[(y - 1) * CALIBRATION_X_RESOLUTION + x][c] += diffuse;
+                error_buffer_[(y + 1) * CALIBRATION_X_RESOLUTION + x][c] += diffuse;
+                error_buffer_[y * CALIBRATION_X_RESOLUTION + x - 1][c] += diffuse;
+                error_buffer_[y * CALIBRATION_X_RESOLUTION + x + 1][c] += diffuse;
+                error_buffer_[y * CALIBRATION_X_RESOLUTION + x][c] -= 4 * diffuse;
+            }
+        }
+    }
+
     const int kUpdateRate = 50;  // (50 / 65536)
     int new_color[3];
     for (int y = 1; y < CALIBRATION_Y_RESOLUTION - 1; y++)
@@ -376,7 +412,7 @@ void Calibrator::MakeBlackAndWhite(unsigned char brightness)
 
             // Dirty brightness approximation
             int new_color_brightness =
-                (new_color[0] + 4 * new_color[1] + 3 * new_color[2]) / 8 + 1;
+                (new_color[0] + 4 * new_color[1] + 3 * new_color[2] + 4) / 8;
             int color_shift = 65536 * brightness - new_color_brightness;
 
             for (int c = 0; c < 3; c++)
@@ -433,6 +469,8 @@ void Calibrator::ShowConstColor(unsigned char red, unsigned char green, unsigned
             error_buffer_[y * CALIBRATION_X_RESOLUTION + x][c] += error;
         }
     }
+
+    // Probably I should low-pass filter the error_buffer_ so that pixel errors don't escalate.
 
     const int kUpdateRate = 50;  // (50 / 65536)
     for (int y = 1; y < CALIBRATION_Y_RESOLUTION - 1; y++)
