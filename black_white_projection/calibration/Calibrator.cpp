@@ -8,6 +8,8 @@
 
 static void RemoveNoise(int(*data)[2], int size[2], int dimension, int window_radius)
 {
+    if (window_radius > 3) window_radius = 3;
+
     const int kWindowSize = window_radius * 2 + 1;
     int *window = new int[kWindowSize];
     int *tmp_data = new int[size[0] * size[1]];
@@ -41,11 +43,14 @@ static void RemoveNoise(int(*data)[2], int size[2], int dimension, int window_ra
 
 Calibrator::Calibrator()
 {
+    project_buffer_ = 0;
+    gray_brightness_buffer_ = 0;
 }
 
 Calibrator::~Calibrator()
 {
     if (project_buffer_) delete [] project_buffer_;
+    if (gray_brightness_buffer_) delete [] gray_brightness_buffer_;
 }
 
 bool Calibrator::Init(HDC main_window_device_handle, HGLRC main_window_resource_handle,
@@ -135,6 +140,79 @@ bool Calibrator::Init(HDC main_window_device_handle, HGLRC main_window_resource_
     return true;
 }
 
+void Calibrator::GetGrayBrightness(void)
+{    
+    if (gray_brightness_buffer_) delete [] gray_brightness_buffer_;
+    gray_brightness_buffer_ = new int[camera_.width() * camera_.height()];
+
+    bool done = false;
+    MSG msg;
+    long start_time = timeGetTime();
+    int num_accumulated = 0;
+
+    while (!done)
+    {
+        long cur_time = timeGetTime() - start_time;
+        float time_seconds = 0.001f * static_cast<float>(cur_time);
+        bool refresh_accumulate = true;  // Flag that deletes accumulate buffer in camera
+        bool check_calibration = false;  // Use accumulate buffer to check
+
+        if (cur_time > USE_LATENCY) refresh_accumulate = false;
+
+        int num_processed_frames = camera_.GetFrame(refresh_accumulate);  // Check return value?
+
+        if (cur_time > USE_LATENCY)
+        {
+            num_accumulated += num_processed_frames;
+            if (num_accumulated >= NUM_ACCUMULATE)
+            {
+                // The gray image is ready, read it out
+                camera_.NormalizeAccumulateBuffer();
+#ifdef USE_CALIBRATION_PICTURES
+                camera_.LoadAccumulateBuffer("pictures_testing/gray.tga");
+#endif
+
+                // Just write it out...
+                PictureWriter::SaveRGBATGA(camera_.width(), camera_.height(), camera_.accumulate_buffer_,
+                                           "pictures/gray.tga");
+
+                return;
+            }
+        }
+
+        while (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_QUIT) done = 1;
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        // Draw main window:
+        if (!wglMakeCurrent(main_window_device_handle_, main_window_resource_handle_)) return;
+
+        glDisable(GL_TEXTURE_2D);
+        glClearColor(0.5f, 0.5f, 0.5f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        SwapBuffers(main_window_device_handle_);
+        DrawCameraDebug(false);
+    }
+}
+
+void Calibrator::ApplyCalibrationData(int add_amount, int dimension)
+{
+    for (int i = 0; i < camera_.width() * camera_.height(); i++)
+    {
+        int brightness = camera_.accumulate_buffer_[i * 4]
+                       + camera_.accumulate_buffer_[i * 4 + 1]
+                       + camera_.accumulate_buffer_[i * 4 + 2];
+        if (brightness > CALIBRATION_THRESHOLD)
+        {
+            camera_to_projector_[i][dimension] += add_amount;
+        }
+    }
+}
+
 bool Calibrator::Calibrate()
 {
     camera_to_projector_ = new int[camera_.width() * camera_.height()][2];
@@ -143,6 +221,8 @@ bool Calibrator::Calibrate()
         camera_to_projector_[i][0] = 0;
         camera_to_projector_[i][1] = 0;
     }
+
+    GetGrayBrightness();
 
     MSG msg;
     int num_accumulated = 0;
@@ -205,26 +285,27 @@ bool Calibrator::Calibrate()
         {
             if (check_calibration)
             {
+                char filename[1024];
+
                 // This is the last time that the column is shown - check it
                 camera_.NormalizeAccumulateBuffer();
+#ifdef USE_CALIBRATION_PICTURES
+                sprintf(filename, "pictures_testing/rows.%d.accumulate_buffer.tga", index);
+                camera_.LoadAccumulateBuffer(filename);
+#endif
+
                 // Apply data to calibration
                 int add_amount = 1 << (CALIBRATION_LOG_X_RESOLUTION - index - 1);
-                for (int i = 0; i < camera_.width() * camera_.height(); i++)
-                {
-                    if (camera_.accumulate_buffer_[i * 4 + 3] > CALIBRATION_THRESHOLD)
-                    {
-                        camera_to_projector_[i][0] += add_amount;
-                    }
-                }
+                ApplyCalibrationData(add_amount, 0);
 
                 // Debugging: Save calibration image
-                char filename[1024];
                 sprintf(filename, "pictures/rows.%d.prefilter.tga", index);
                 PictureWriter::SaveTGA(camera_.width(), camera_.height(), camera_to_projector_, filename, CALIBRATION_X_RESOLUTION);
+                sprintf(filename, "pictures/rows.%d.accumulate_buffer.tga", index);
+                PictureWriter::SaveRGBATGA(camera_.width(), camera_.height(), camera_.accumulate_buffer_, filename);
 
                 int size[2] = { camera_.width(), camera_.height() };
                 int window_radius = CALIBRATION_LOG_X_RESOLUTION - index + 1;
-                if (window_radius > 3) window_radius = 3;
                 RemoveNoise(camera_to_projector_, size, 0, window_radius);
 
                 // Debugging: Save calibration image
@@ -254,25 +335,27 @@ bool Calibrator::Calibrate()
             // Do first pass (columns)
             if (check_calibration)
             {
+                char filename[1024];
+
                 // This is the last time that the column is shown - check it
                 camera_.NormalizeAccumulateBuffer();
+#ifdef USE_CALIBRATION_PICTURES
+                sprintf(filename, "pictures_testing/columns.%d.accumulate_buffer.tga", index);
+                camera_.LoadAccumulateBuffer(filename);
+#endif
+
                 // Apply data to calibration
-                for (int i = 0; i < camera_.width() * camera_.height(); i++)
-                {
-                    if (camera_.accumulate_buffer_[i * 4 + 3] > CALIBRATION_THRESHOLD)
-                    {
-                        camera_to_projector_[i][1] += 1 << (CALIBRATION_LOG_Y_RESOLUTION - index - 1);
-                    }
-                }
+                int add_amount = 1 << (CALIBRATION_LOG_Y_RESOLUTION - index - 1);
+                ApplyCalibrationData(add_amount, 1);
 
                 // Debugging: Save calibration image
-                char filename[1024];
                 sprintf(filename, "pictures/columns.%d.prefilter.tga", index);
                 PictureWriter::SaveTGA(camera_.width(), camera_.height(), camera_to_projector_, filename, CALIBRATION_X_RESOLUTION);
+                sprintf(filename, "pictures/columns.%d.accumulate_buffer.tga", index);
+                PictureWriter::SaveRGBATGA(camera_.width(), camera_.height(), camera_.accumulate_buffer_, filename);
 
                 int size[2] = { camera_.width(), camera_.height() };
                 int window_radius = CALIBRATION_LOG_Y_RESOLUTION - index + 1;
-                if (window_radius > 3) window_radius = 3;
                 RemoveNoise(camera_to_projector_, size, 1, window_radius);
 
                 // Debugging: Save calibration image

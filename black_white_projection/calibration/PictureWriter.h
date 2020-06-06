@@ -33,4 +33,6 @@ public:
 public:
     static void SaveTGA(int width, int height, float (*texture_data)[3], const char *filename);
     static void SaveTGA(int width, int height, int (*data)[2], const char *filename, int max_value);
+    static void SaveRGBATGA(int width, int height, int *data, const char *filename);
+    static bool LoadTGA(int width, int height, int *data, const char *filename);
 };

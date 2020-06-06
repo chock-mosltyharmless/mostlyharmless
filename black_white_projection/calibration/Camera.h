@@ -30,6 +30,8 @@ public:
 
     // Must be Called after all the data was accumulated  to retrieve accumulate buffer
     void NormalizeAccumulateBuffer(void);
+    // For development: Load picture from previous run
+    void LoadAccumulateBuffer(const char *filename);
 
     // Detect whether the camera saw light in the last Update()
     bool DetectFlash();

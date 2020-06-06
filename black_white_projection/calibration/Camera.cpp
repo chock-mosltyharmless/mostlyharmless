@@ -5,6 +5,7 @@
 
 #include "Configuration.h"
 #include "MFUtility.h"  // for CHECK_HR
+#include "PictureWriter.h"
 
 #pragma comment(lib, "mf.lib")
 #pragma comment(lib, "mfplat.lib")
@@ -225,6 +226,11 @@ void Camera::NormalizeAccumulateBuffer(void)
             debug_buffer_[index + col] = static_cast<unsigned char>(out);
         }
     }
+}
+
+void Camera::LoadAccumulateBuffer(const char * filename)
+{
+    PictureWriter::LoadTGA(width_, height_, accumulate_buffer_, filename);
 }
 
 void Camera::Update(bool refresh_accumulate)

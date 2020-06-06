@@ -21,12 +21,17 @@ public:
 
 private:
     void DrawCameraDebug(bool show_raw_data);
+    void GetGrayBrightness(void);
+    void ApplyCalibrationData(int add_amount, int dimension);
 
     Camera camera_;
 
     // This is a mapping from camera coordinates to projector virtual coordinates
     // in the projection texture
     int(*camera_to_projector_)[2];
+
+    // Buffer with the dimension of the camera that holds the brightness of full gray
+    int *gray_brightness_buffer_;
 
     // This is the GPU representation of the projector texture
     GLuint texture_id_;
