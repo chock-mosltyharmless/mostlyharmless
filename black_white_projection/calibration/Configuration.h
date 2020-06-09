@@ -40,4 +40,4 @@
 #define CALIBRATION_LOG_Y_RESOLUTION 7     // height 128
 #define CALIBRATION_Y_RESOLUTION (1 << CALIBRATION_LOG_Y_RESOLUTION)
 
-#define CALIBRATION_THRESHOLD 600  // How bright the image has to be to be considered white.
+#define CALIBRATION_THRESHOLD 500  // How bright the image has to be to be considered white.

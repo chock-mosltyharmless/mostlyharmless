@@ -37,8 +37,66 @@ static void RemoveNoise(int(*data)[2], int size[2], int dimension, int window_ra
         }
     }
 
-    delete[] tmp_data;
-    delete[] window;
+    delete [] tmp_data;
+    delete [] window;
+}
+
+static void RemoveObviousErrors(int(*data)[2], int size[2])
+{
+    const int window_size = 6;
+    const int error_threshold = 5;
+    int (*tmp_data)[2] = new int[size[0] * size[1]][2];
+
+    // Copy to tmpdata
+    for (int i = 0; i < size[0] * size[1]; i++) tmp_data[i][0] = data[i][0];
+    for (int i = 0; i < size[0] * size[1]; i++) tmp_data[i][1] = data[i][1];
+
+    for (int y = 0; y < size[1]; y++)
+    {
+        for (int x = 0; x < size[0]; x++)
+        {
+            int *cur_data = tmp_data[y * size[0] + x];
+            bool set_to_zero = false;
+            
+            if (cur_data[0] == 0 || cur_data[1] == 0) set_to_zero = true;
+            else
+            {
+                for (int yd = -window_size; yd <= window_size; yd++)
+                {
+                    for (int xd = -window_size; xd <= window_size; xd++)
+                    {
+                        int xp = x + xd;
+                        int yp = y + yd;
+                        if (xp >= 0 && xp < size[0] && yp >= 0 && yp < size[1])
+                        {
+                            for (int dim = 0; dim < 2; dim++)
+                            {
+                                int compare_data = data[yp * size[0] + xp][dim];
+
+                                if (compare_data > 0 && cur_data[dim] > compare_data + error_threshold)
+                                {
+                                    set_to_zero = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (set_to_zero)
+            {
+                data[y * size[0] + x][0] = 0;
+                data[y * size[0] + x][1] = 0;
+            }
+            else
+            {
+                data[y * size[0] + x][0] = cur_data[0];
+                data[y * size[0] + x][1] = cur_data[1];
+            }
+        }
+    }
+
+    delete [] tmp_data;
 }
 
 Calibrator::Calibrator()
@@ -389,6 +447,11 @@ bool Calibrator::Calibrate()
 
         DrawCameraDebug(false);
     }
+
+    // Do post processing of the image
+    int size[2] = { camera_.width(), camera_.height() };
+    RemoveObviousErrors(camera_to_projector_, size);
+    PictureWriter::SaveTGA(camera_.width(), camera_.height(), camera_to_projector_, "pictures/post_proc.tga", CALIBRATION_X_RESOLUTION);
 
     return true;
 }
