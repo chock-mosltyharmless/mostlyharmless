@@ -1,0 +1,12 @@
+.vs
+Debug
+Release
+ipch
+bass.dll
+bass.lib
+*.sdf
+*.opensdf
+music.mp3
+final
+final_final
+AUD-20210606-WA0007.mp3
