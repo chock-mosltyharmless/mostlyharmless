@@ -104,39 +104,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="shaders\DitherTexture.flsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\DitherTexture.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\empty.vlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\empty.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\SimpleTexture.vlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\SimpleTexture.flsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\SimpleTexture.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\example.gprg">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\example.vlsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\empty.flsl">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="shaders\example.flsl">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="shaders\fragment_main_particle.flsl">
       <Filter>Shaders</Filter>
     </None>
