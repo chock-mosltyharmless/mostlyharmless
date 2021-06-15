@@ -86,6 +86,7 @@
     <None Include="shaders\geometry_main_particle.glsl" />
     <None Include="shaders\main.gprg" />
     <None Include="shaders\vertex_main_particle.vlsl" />
+    <None Include="shaders\vertex_main_particle_chockngt4.vlsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\imgui\imconfig.h" />

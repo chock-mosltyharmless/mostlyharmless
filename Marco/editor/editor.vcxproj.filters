@@ -116,6 +116,9 @@
     <None Include="shaders\vertex_main_particle.vlsl">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="shaders\vertex_main_particle_chockngt4.vlsl">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Headers">

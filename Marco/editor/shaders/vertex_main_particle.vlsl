@@ -10,79 +10,39 @@ uniform float time;
 uniform mat4 r;
 uniform mat4 R;
 
-float GetImplicit(vec3 pos) {
-	float first_amount = r[0][1];
-	float second_amount = r[0][2];
-
-    pos.z -= sin(pos.y * cos(pos.x * 0.4) * 0.3) * second_amount * 5.5;
-    pos.x -= sin(pos.z*0.5) * second_amount * 5.5;
-    pos.y -= sin(pos.x*.25) * second_amount * 5.5;
-
-    pos.x -= sin(time * cos(pos.x * 2.1) * 0.3) * first_amount * 0.1;
-    pos.y -= cos(time * cos(pos.x * 0.5) * 0.4) * first_amount * 0.1;
-    pos.z -= sin(time * sin(pos.y * 0.2) * 0.5) * first_amount * 0.1;
-
-	float dist = r[3][1] * 25.0;
-	float dist2 = r[3][2] * 5.0;
-	float dist3 = r[3][3];
-
-    float implicit = length(pos) - sin(dist * length(pos)) * dist2 - dist3 - 0.2 * sin(time*0.);
-    return implicit;
-}
-
 void main(void) {
-    float yrot = cos(time*0.15)*0.5;
-    mat2 yrotmat = mat2(cos(yrot),sin(yrot),-sin(yrot),cos(yrot));
-
 	vec3 pos = position_.xyz;
 
-    float implicit = GetImplicit(pos.xyz);
-    float amount = 1. + r[1][1]*0.4 - smoothstep(0.0, 0.4, abs(implicit));
+    vec3 move_pos = vec3(0.3 * time + 0.5 * sin(time*0.5), 5.0 * sin(time * 0.05), 8.0 * sin(time * 0.03)) + pos;
+    vec3 swirl_pos = move_pos
+        + sin(move_pos.x + cos(5.0 * move_pos.y)) * vec3(0.7, -0.4, 0.3)
+        + sin(move_pos.y + cos(0.3 * move_pos.z)) * vec3(-0.6, 0.2, -0.8)
+        + cos(move_pos.z + sin(4.0 * move_pos.x)) * vec3(0.6, 0.8, -0.9);
+    swirl_pos = swirl_pos
+        + sin(swirl_pos.x + cos(5.0 * swirl_pos.y)) * vec3(0.7, -0.4, 0.3)
+        + sin(swirl_pos.y + cos(0.3 * swirl_pos.z)) * vec3(-0.6, 0.2, -0.8)
+        + cos(swirl_pos.z + sin(4.0 * swirl_pos.x)) * vec3(0.6, 0.8, -0.9);
 
-    const float dd = 0.01;
-    float dx_implicit = GetImplicit(pos.xyz + vec3(dd, 0., 0.)) - implicit;
-    float dy_implicit = GetImplicit(pos.xyz + vec3(0., dd, 0.)) - implicit;
-    float dz_implicit = GetImplicit(pos.xyz + vec3(0., 0., dd)) - implicit;
 
-	vec3 f = pos.xyz * 0.45;
-    f.x += sin(dy_implicit * pos.z * 200. * R[0][1]) * 0.2;
-    f.y += sin(dz_implicit * pos.x * 200. * R[0][2]) * 0.2;
-    f.z += sin(dx_implicit * pos.y * 200. * R[0][3]) * 0.2;
-    f.x += 12. * (r[1][0] * sin(time*0.49) * sin(pos.z*7.) + 1. - r[1][0]) * dx_implicit * amount * r[0][3];
-    f.y += 12. * (r[1][0] * sin(time*0.31) * sin(pos.x*5.) + 1. - r[1][0]) * dy_implicit * amount * r[0][3];
-    f.z += 12. * (r[1][0] * sin(time*0.37) * sin(pos.y*6.) + 1. - r[1][0]) * dz_implicit * amount * r[0][3];
-	f.xz = f.xz * yrotmat;
-    f.x *= 0.56;
-    f.z += 1.5 - 2. * r[2][2];
-    f.x += 0.5 - r[2][3];
-    f.y += 0.5 - r[3][0];
-	particle_magic_ = color_.a;
+    vec3 box_pos = fract(swirl_pos + vec3(0.5)) - vec3(0.5);
 
-    particle_color_.r = 0.8 - length(pos.xyz) * .1;
-    particle_color_.g = 1.2 - length(pos.xyz) * .8;
-    particle_color_.b = max(0., 1.5 - length(pos.xyz) * 1.3);
+    vec3 rel_pos = vec3(0.0, box_pos.yz);
+    float dist = length(rel_pos);
+    
+    float move_amount = 1.0 / (1.0 + 3.0 * dist);
+    vec3 new_pos = pos - move_amount * rel_pos;
 
-    particle_color_.rgb *= pow(1. - particle_magic_, 30.) * 3. + 1.0;
+    float hue_t = 0.5 * sin(swirl_pos.x) + 0.5;
+    vec3 hue = mix(vec3(1.0, 0.7, 0.0), vec3(0.0, 0.5, 1.0), hue_t);
+    float brightness = 0.5 * sin(swirl_pos.y) + 0.5;
+    float saturation = 0.5 * sin(swirl_pos.z) + 0.5;
 
-    particle_color_.rgb += pow(abs(sin(particle_magic_*100. + time)),10.);
+    particle_color_.rgb = mix(hue, vec3(1.0, 1.0, 1.0), saturation) * brightness;
+    particle_color_.a = smoothstep(0.0, 1.0, 1.0 - dist);
 
-    //particle_color_.rgb = vec3(particle_magic_, 0.0, 1.0 - particle_magic_);
+    // Move to show what's going on
+    new_pos.z += 0.5 * sin(0.4 * time) + 0.7;
 
-    particle_color_.a = 1.0;
-
-	particle_color_.rgb += sin(f * 1000.0) * sin(color_.a * 1000.0) * 0.1;
-
-    float darkener = abs(sin(pos.x * r[1][2] * 8.) + cos(pos.z * r[1][3] * 8.) - sin(pos.y * r[2][0] * 8.));
-    particle_color_.a += darkener * r[2][1];
-    particle_color_.rgb -= vec3(darkener) * r[2][1] * 3.0;
-
-    // flashing
-    //particle_color_.rgb *= 1. + pow(abs(sin(time*2.)), 10.) / (length(position_.xyz) + 0.1);
-
-    particle_color_.rgb = max(vec3(0.), particle_color_.rgb);
-
-	particle_color_ *= vec4(amount) * (1.0 - abs(particle_magic_ - 0.5));
-
-	gl_Position = vec4(f, f.z);
+	gl_Position = vec4(new_pos, new_pos.z);
     particle_magic_ = color_.a;
 }

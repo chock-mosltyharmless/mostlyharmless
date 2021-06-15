@@ -61,7 +61,7 @@ TextureManager textureManager;
 /*************************************************
 * Particle stuff
 *************************************************/
-#define NUM_PARTICLES_PER_DIM 160
+#define NUM_PARTICLES_PER_DIM 200
 #define TOTAL_NUM_PARTICLES (NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM * NUM_PARTICLES_PER_DIM)
 // The vertex array and vertex buffer
 unsigned int vaoID;
