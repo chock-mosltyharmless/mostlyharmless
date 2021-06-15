@@ -469,7 +469,8 @@ static void intro_do(float time)
 	glDisable(GL_DEPTH_TEST);
 
     //glClearColor(0.7f, 0.5f , 0.3f, 1.0f);
-    glClearColor(0.35f, 0.25f, 0.15f, 1.0f);
+    //glClearColor(0.35f, 0.25f, 0.15f, 1.0f);
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glBindVertexArray(vaoID); // Bind our Vertex Array Object so we can use it  
@@ -516,9 +517,9 @@ static void intro_do(float time)
     parameterMatrix[2][3] = values[1];
 
     parameterMatrix[3][0] = values[2];
-    parameterMatrix[3][1] = values[3] * 0.5f;
-    parameterMatrix[3][2] = values[4] * 0.5f;
-    parameterMatrix[3][3] = values[5] * 0.5f;
+    parameterMatrix[3][1] = values[3];
+    parameterMatrix[3][2] = values[4];
+    parameterMatrix[3][3] = values[5];
     int location = glGetUniformLocation(programID, "r");
     glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
     location = glGetUniformLocation(programID, "R");
