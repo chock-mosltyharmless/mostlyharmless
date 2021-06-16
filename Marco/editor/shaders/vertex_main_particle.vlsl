@@ -19,12 +19,17 @@ vec3 swirl(vec3 move_pos, float scale)
     return swirl_pos;
 }
 
+vec2 rotate(vec2 pos, float angle)
+{
+    return pos * mat2(cos(angle), sin(angle), -sin(angle), cos(angle));
+}
+
 void main(void) {
 	vec3 pos = position_.xyz;
 
     vec3 move_pos = vec3(0.3 * time + 0.5 * sin(time*0.5), 5.0 * sin(time * 0.05), 8.0 * sin(time * 0.03)) + pos;
     move_pos += 50.0 * vec3(r[1][3], r[2][0], r[2][1]);
-    vec3 swirl_pos = swirl(swirl(swirl(swirl(move_pos, 1.0), 2.0), 4.0), 12.0);
+    vec3 swirl_pos = swirl(swirl(swirl(swirl(move_pos, 1.0), 2.0), 4.0), 8.0);
 
     vec3 box_pos = fract(swirl_pos + vec3(0.5)) - vec3(0.5);
 
@@ -48,6 +53,11 @@ void main(void) {
 
     particle_color_.rgb = mix(hue, vec3(1.0, 1.0, 1.0), saturation) * brightness;
     particle_color_.a = smoothstep(0.0, 1.0, 1.0 - dist);
+
+    // Rotate camera a little
+    new_pos.xy = rotate(new_pos.xy, 0.2 * sin(0.3 * time + cos(time * 1.1 + 0.3 * sin(time * 2.5))));
+    new_pos.xz = rotate(new_pos.xz, 0.2 * sin(0.4 * time + cos(time * 1.2 + 0.3 * sin(time * 3.1))));
+    new_pos.yz = rotate(new_pos.yz, 0.2 * sin(0.37 * time + cos(time * 1.3 + 0.3 * sin(time * 2.7))));
 
     // Move to show what's going on
     new_pos.z += 0.5 * sin(0.4 * time) + 0.7;

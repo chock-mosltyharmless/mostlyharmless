@@ -520,6 +520,15 @@ static void intro_do(float time)
     parameterMatrix[3][1] = values[3];
     parameterMatrix[3][2] = values[4];
     parameterMatrix[3][3] = values[5];
+
+    float fly_start = 364.0f;
+    if ((float)music_time_ > fly_start)
+    {
+        float move = (music_time_ - fly_start) * (music_time_ - fly_start) * 0.004f;
+        if (move > (music_time_ - fly_start) * 0.05f) move = (music_time_ - fly_start) * 0.05f;
+        parameterMatrix[2][1] += move;
+    }
+
     int location = glGetUniformLocation(programID, "r");
     glUniformMatrix4fv(location, 1, GL_FALSE, &(parameterMatrix[0][0]));
     location = glGetUniformLocation(programID, "R");
