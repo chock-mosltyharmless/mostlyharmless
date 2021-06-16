@@ -522,10 +522,15 @@ static void intro_do(float time)
     parameterMatrix[3][3] = values[5];
 
     float fly_start = 364.0f;
+    float fly_slow = 500.0f;
     if ((float)music_time_ > fly_start)
     {
         float move = (music_time_ - fly_start) * (music_time_ - fly_start) * 0.004f;
         if (move > (music_time_ - fly_start) * 0.05f) move = (music_time_ - fly_start) * 0.05f;
+        if ((float)music_time_ > fly_slow)
+        {
+            move -= (music_time_ - fly_slow) * (music_time_ - fly_slow) * 0.0003f;
+        }
         parameterMatrix[2][1] += move;
     }
 

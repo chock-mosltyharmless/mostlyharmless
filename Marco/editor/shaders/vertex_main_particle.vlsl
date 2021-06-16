@@ -36,7 +36,7 @@ void main(void) {
     vec3 rel_pos = vec3(0.0, box_pos.yz);
     float dist = length(rel_pos);
     
-    float move_amount = 1.0 / (1.0 + 3.0 * dist);
+    float move_amount = 2.0 * r[0][2] / (1.0 + 6.0 * r[0][3] * dist);
     vec3 new_pos = pos - move_amount * rel_pos;
 
     vec3 color_pos = 2.0 * r[3][2] * swirl_pos;
