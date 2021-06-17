@@ -525,11 +525,17 @@ static void intro_do(float time)
     float fly_slow = 500.0f;
     if ((float)music_time_ > fly_start)
     {
-        float move = (music_time_ - fly_start) * (music_time_ - fly_start) * 0.004f;
-        if (move > (music_time_ - fly_start) * 0.05f) move = (music_time_ - fly_start) * 0.05f;
+        float quadratic = 0.003f;
+        float linear = 0.06f;
+        float intersection = linear / (2 * quadratic);
+        float move = (music_time_ - fly_start) * (music_time_ - fly_start) * quadratic;
+        if ((float)music_time_ > intersection + fly_start)
+        {
+            move = (music_time_ - fly_start) * linear - (linear * linear) / (4.0f * quadratic);
+        }
         if ((float)music_time_ > fly_slow)
         {
-            move -= (music_time_ - fly_slow) * (music_time_ - fly_slow) * 0.0003f;
+            move -= (music_time_ - fly_slow) * (music_time_ - fly_slow) * 0.00038f;
         }
         parameterMatrix[2][1] += move;
     }
