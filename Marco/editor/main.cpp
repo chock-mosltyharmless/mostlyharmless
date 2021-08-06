@@ -729,7 +729,14 @@ int WINAPI WinMain( HINSTANCE instance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             DispatchMessage(&msg);
         }
 
+#define FPS60
+#ifdef FPS60
+        static int counter = 0;
+        music_time_ = static_cast<float>(counter) / 60.0f;
+        counter++;
+#else
         music_time_ = BASS_ChannelBytes2Seconds(mp3Str_, BASS_ChannelGetPosition(mp3Str_, BASS_POS_BYTE));
+#endif
         if (music_time_ >= music_length_ - 0.2f)
         {
             if (loop_)
